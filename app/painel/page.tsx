@@ -48,9 +48,9 @@ export default function PainelPage() {
   }
 
   async function sair() {
-  await supabase.auth.signOut()
-  router.push('/login')
-}
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   async function atualizarStatus(id: string, status: string) {
     const { error } = await supabase
@@ -68,20 +68,20 @@ export default function PainelPage() {
   }
 
   useEffect(() => {
-      async function verificarLogin() {
-    const { data } = await supabase.auth.getSession()
+    async function verificarLogin() {
+      const { data } = await supabase.auth.getSession()
 
-    if (!data.session) {
-      router.push('/login')
-      return
+      if (!data.session) {
+        router.push('/login')
+        return
+      }
+
+      setAutenticado(true)
+      carregarPedidos()
     }
 
-    setAutenticado(true)
-    carregarPedidos()
-  }
-
-  verificarLogin()
-}, [router])
+    verificarLogin()
+  }, [router])
 
   const totalPedidos = pedidos.length
 
@@ -100,37 +100,53 @@ export default function PainelPage() {
 
   if (!autenticado) {
     return (
-    <main className="flex min-h-screen items-center justify-center bg-neutral-950 text-white">
-      <p className="text-neutral-400">Verificando acesso...</p>
-    </main>
-  )
-}
+      <main className="flex min-h-screen items-center justify-center bg-neutral-950 text-white">
+        <p className="text-neutral-400">Verificando acesso...</p>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-neutral-950 px-6 py-10 text-white">
       <section className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <p className="text-sm font-bold text-orange-400">
-            Gráfica Flash
-          </p>
+        <div className="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-center">
+          <div>
+            <p className="text-sm font-bold text-orange-400">
+              Gráfica Flash
+            </p>
 
-          <h1 className="mt-2 text-3xl font-black">
-            Painel de pedidos
-          </h1>
+            <h1 className="mt-2 text-3xl font-black">
+              Painel de pedidos
+            </h1>
 
-          <p className="mt-2 text-neutral-400">
-            Acompanhe os orçamentos recebidos e o andamento da produção.
-          </p>
+            <p className="mt-2 text-neutral-400">
+              Acompanhe os orçamentos recebidos e o andamento da produção.
+            </p>
+          </div>
+
+          <nav className="flex flex-wrap gap-3">
+            <Link
+              href="/painel"
+              className="rounded-xl bg-orange-400 px-5 py-3 font-black text-neutral-950 hover:bg-orange-500"
+            >
+              Pedidos
+            </Link>
+
+            <Link
+              href="/painel/produtos"
+              className="rounded-xl border border-neutral-700 px-5 py-3 font-bold text-white hover:bg-neutral-800"
+            >
+              Produtos
+            </Link>
+
+            <button
+              onClick={sair}
+              className="rounded-xl border border-neutral-700 px-5 py-3 font-bold text-white hover:bg-neutral-800"
+            >
+              Sair
+            </button>
+          </nav>
         </div>
-
-        <button
-          onClick={sair}
-          className="rounded-xl border border-neutral-700 px-5 py-3 font-bold text-neutral-200 hover:bg-neutral-800"
-        >
-          Sair
-        </button>
-      </div>
 
         <div className="mb-8 grid gap-4 md:grid-cols-4">
           <div className="rounded-2xl bg-neutral-900 p-5">
@@ -210,22 +226,26 @@ export default function PainelPage() {
                         Observações: {pedido.observacoes}
                       </p>
                     )}
-                    {pedido.arquivo_url && (
-                      <a
-                        href={pedido.arquivo_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-4 inline-block rounded-xl bg-orange-400 px-5 py-3 font-black text-neutral-950 hover:bg-orange-500"
-                      >
-                        Ver arte enviada
-                      </a>
+
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      {pedido.arquivo_url && (
+                        <a
+                          href={pedido.arquivo_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block rounded-xl bg-orange-400 px-5 py-3 font-black text-neutral-950 hover:bg-orange-500"
+                        >
+                          Ver arte enviada
+                        </a>
                       )}
-                  <Link
-                    href={`/painel/orcamento/${pedido.id}`}
-                    className="ml-3 mt-4 inline-block rounded-xl border border-neutral-700 px-5 py-3 font-black text-white hover:bg-neutral-800"
-                  >
-                    Gerar orçamento
-                  </Link>
+
+                      <Link
+                        href={`/painel/orcamento/${pedido.id}`}
+                        className="inline-block rounded-xl border border-neutral-700 px-5 py-3 font-black text-white hover:bg-neutral-800"
+                      >
+                        Gerar orçamento
+                      </Link>
+                    </div>
                   </div>
 
                   <div className="min-w-48">
