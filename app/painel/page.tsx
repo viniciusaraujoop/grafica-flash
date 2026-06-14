@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 type Pedido = {
   id: string
@@ -219,7 +220,12 @@ export default function PainelPage() {
                         Ver arte enviada
                       </a>
                       )}
-
+                  <Link
+                    href={`/painel/orcamento/${pedido.id}`}
+                    className="ml-3 mt-4 inline-block rounded-xl border border-neutral-700 px-5 py-3 font-black text-white hover:bg-neutral-800"
+                  >
+                    Gerar orçamento
+                  </Link>
                   </div>
 
                   <div className="min-w-48">

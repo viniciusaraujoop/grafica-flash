@@ -1,21 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-const precosPorMetro: Record<string, number> = {
-  'Banner em lona': 60,
-  Furadinho: 85,
-  Adesivo: 70,
-  Faixa: 55,
-  'Placa PVC': 120,
-  Plotagem: 50,
+type Produto = {
+  id: string
+  nome: string
+  preco: number
+  ativo: boolean
 }
 
 export default function OrcamentoPage() {
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
-  const [produto, setProduto] = useState('Banner em lona')
+  const [produto, setProduto] = useState('')
+  const [produtos, setProdutos] = useState<Produto[]>([])
   const [largura, setLargura] = useState('')
   const [altura, setAltura] = useState('')
   const [quantidade, setQuantidade] = useState('1')
@@ -29,9 +28,34 @@ export default function OrcamentoPage() {
   const alturaNumero = Number(altura)
   const quantidadeNumero = Number(quantidade)
 
+  async function carregarProdutos() {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('ativo', true)
+      .order('nome', { ascending: true })
+
+    if (error) {
+      setMensagem(`Erro ao carregar produtos: ${error.message}`)
+      return
+    }
+
+    setProdutos(data || [])
+
+    if (data && data.length > 0) {
+      setProduto(data[0].nome)
+    }
+  }
+
+  useEffect(() => {
+    carregarProdutos()
+  }, [])
+
+  const produtoSelecionado = produtos.find((item) => item.nome === produto)
+
   const precoEstimado =
-    larguraNumero > 0 && alturaNumero > 0
-      ? larguraNumero * alturaNumero * precosPorMetro[produto] * quantidadeNumero
+    larguraNumero > 0 && alturaNumero > 0 && produtoSelecionado
+      ? larguraNumero * alturaNumero * Number(produtoSelecionado.preco) * quantidadeNumero
       : 0
 
   async function enviarPedido(evento: React.FormEvent) {
@@ -151,8 +175,10 @@ export default function OrcamentoPage() {
               onChange={(e) => setProduto(e.target.value)}
               className="w-full rounded-xl bg-neutral-800 px-4 py-3 outline-none"
             >
-              {Object.keys(precosPorMetro).map((item) => (
-                <option key={item}>{item}</option>
+              {produtos.map((item) => (
+                <option key={item.id} value={item.nome}>
+                  {item.nome} - R$ {Number(item.preco).toFixed(2).replace('.', ',')}/m²
+                </option>
               ))}
             </select>
           </div>
