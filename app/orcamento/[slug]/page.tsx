@@ -27,6 +27,13 @@ function formatarDinheiro(valor: number) {
   return Number(valor || 0).toFixed(2).replace('.', ',')
 }
 
+function limparNomeArquivo(nome: string) {
+  return nome
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9.-]/g, '')
+}
+
 function montarNumeroWhatsapp(telefone: string) {
   const apenasNumeros = telefone.replace(/\D/g, '')
 
@@ -55,6 +62,7 @@ export default function OrcamentoPorEmpresaPage() {
   const [altura, setAltura] = useState('')
   const [quantidade, setQuantidade] = useState('1')
   const [observacoes, setObservacoes] = useState('')
+  const [arquivo, setArquivo] = useState<File | null>(null)
 
   const [carregando, setCarregando] = useState(true)
   const [enviando, setEnviando] = useState(false)
@@ -75,20 +83,13 @@ export default function OrcamentoPorEmpresaPage() {
 
     if (empresaError) {
       console.log('ERRO EMPRESA:', empresaError)
-      console.log('SLUG USADO:', slug)
 
-      setMensagem(
-        `Erro ao buscar empresa. Slug usado: ${slug}. Erro: ${empresaError.message}`
-      )
-
+      setMensagem(`Erro ao buscar empresa: ${empresaError.message}`)
       setCarregando(false)
       return
     }
 
     if (!empresaData) {
-      console.log('EMPRESA NÃO ENCONTRADA')
-      console.log('SLUG USADO:', slug)
-
       setMensagem(`Empresa não encontrada. Slug usado: ${slug}`)
       setCarregando(false)
       return
@@ -126,6 +127,26 @@ export default function OrcamentoPorEmpresaPage() {
     setCarregando(false)
   }
 
+  async function enviarArquivoPedido(companyId: string, arquivoSelecionado: File) {
+    const nomeArquivo = limparNomeArquivo(arquivoSelecionado.name)
+    const caminho = `${companyId}/${Date.now()}-${nomeArquivo}`
+
+    const { error } = await supabase.storage
+      .from('artes')
+      .upload(caminho, arquivoSelecionado, {
+        cacheControl: '3600',
+        upsert: true,
+      })
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    const { data } = supabase.storage.from('artes').getPublicUrl(caminho)
+
+    return data.publicUrl
+  }
+
   async function enviarPedido(evento: React.FormEvent) {
     evento.preventDefault()
 
@@ -161,36 +182,44 @@ export default function OrcamentoPorEmpresaPage() {
     setMensagem('')
     setLinkWhatsapp('')
 
-    const precoEstimado =
-      larguraNumero *
-      alturaNumero *
-      Number(produtoSelecionado.preco) *
-      quantidadeNumero
+    let arquivoUrl = ''
 
-    const { error } = await supabase.from('orders').insert({
-      company_id: empresa.id,
-      nome,
-      telefone,
-      produto: produtoSelecionado.nome,
-      largura: larguraNumero,
-      altura: alturaNumero,
-      quantidade: quantidadeNumero,
-      observacoes,
-      preco_estimado: precoEstimado,
-      status: 'Recebido',
-    })
+    try {
+      if (arquivo) {
+        arquivoUrl = await enviarArquivoPedido(empresa.id, arquivo)
+      }
 
-    if (error) {
-      console.log('ERRO AO ENVIAR PEDIDO:', error)
+      const precoEstimado =
+        larguraNumero *
+        alturaNumero *
+        Number(produtoSelecionado.preco) *
+        quantidadeNumero
 
-      setMensagem(`Erro ao enviar pedido: ${error.message}`)
-      setEnviando(false)
-      return
-    }
+      const { error } = await supabase.from('orders').insert({
+        company_id: empresa.id,
+        nome,
+        telefone,
+        produto: produtoSelecionado.nome,
+        largura: larguraNumero,
+        altura: alturaNumero,
+        quantidade: quantidadeNumero,
+        observacoes,
+        preco_estimado: precoEstimado,
+        arquivo_url: arquivoUrl || null,
+        status: 'Recebido',
+      })
 
-    const numeroEmpresa = montarNumeroWhatsapp(empresa.whatsapp || '')
+      if (error) {
+        console.log('ERRO AO ENVIAR PEDIDO:', error)
 
-    const textoWhatsapp = `Olá! Acabei de solicitar um orçamento pelo site.
+        setMensagem(`Erro ao enviar pedido: ${error.message}`)
+        setEnviando(false)
+        return
+      }
+
+      const numeroEmpresa = montarNumeroWhatsapp(empresa.whatsapp || '')
+
+      const textoWhatsapp = `Olá! Acabei de solicitar um orçamento pelo site.
 
 Nome: ${nome}
 Produto: ${produtoSelecionado.nome}
@@ -200,19 +229,26 @@ Valor estimado: R$ ${formatarDinheiro(precoEstimado)}
 
 ${observacoes ? `Observações: ${observacoes}` : ''}`
 
-    const link = `https://wa.me/${numeroEmpresa}?text=${encodeURIComponent(
-      textoWhatsapp
-    )}`
+      const link = `https://wa.me/${numeroEmpresa}?text=${encodeURIComponent(
+        textoWhatsapp
+      )}`
 
-    setLinkWhatsapp(link)
-    setMensagem('Pedido enviado com sucesso.')
+      setLinkWhatsapp(link)
+      setMensagem('Pedido enviado com sucesso.')
 
-    setNome('')
-    setTelefone('')
-    setLargura('')
-    setAltura('')
-    setQuantidade('1')
-    setObservacoes('')
+      setNome('')
+      setTelefone('')
+      setLargura('')
+      setAltura('')
+      setQuantidade('1')
+      setObservacoes('')
+      setArquivo(null)
+    } catch (erro) {
+      const mensagemErro =
+        erro instanceof Error ? erro.message : 'Erro desconhecido ao enviar pedido.'
+
+      setMensagem(`Erro: ${mensagemErro}`)
+    }
 
     setEnviando(false)
   }
@@ -245,7 +281,7 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
   if (carregando) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-neutral-950 px-6 text-white">
-        <div className="rounded-3xl border border-neutral-800 bg-neutral-900 p-8 text-center">
+        <div className="rounded-3xl border border-neutral-800 bg-neutral-900 p-8 text-center shadow-2xl">
           <p className="text-neutral-400">Carregando orçamento...</p>
         </div>
       </main>
@@ -255,7 +291,7 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
   if (!empresa) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-neutral-950 px-6 text-white">
-        <div className="max-w-md rounded-3xl border border-neutral-800 bg-neutral-900 p-8 text-center">
+        <div className="max-w-md rounded-3xl border border-neutral-800 bg-neutral-900 p-8 text-center shadow-2xl">
           <h1 className="text-2xl font-black text-red-400">
             Empresa não encontrada
           </h1>
@@ -271,7 +307,7 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
   if (!empresa.ativo) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-neutral-950 px-6 text-white">
-        <div className="max-w-md rounded-3xl border border-neutral-800 bg-neutral-900 p-8 text-center">
+        <div className="max-w-md rounded-3xl border border-neutral-800 bg-neutral-900 p-8 text-center shadow-2xl">
           <h1 className="text-2xl font-black text-orange-400">
             Orçamento indisponível
           </h1>
@@ -286,9 +322,9 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
 
   return (
     <main className="min-h-screen bg-neutral-950 px-4 py-8 text-white">
-      <section className="mx-auto max-w-6xl">
-        <header className="mb-8 rounded-3xl border border-neutral-800 bg-neutral-900 p-6">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+      <section className="mx-auto max-w-7xl">
+        <header className="mb-8 rounded-[2rem] border border-neutral-800 bg-neutral-900 p-6 shadow-2xl md:p-8">
+          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
             <div className="flex items-center gap-4">
               {empresa.logo_url ? (
                 <img
@@ -307,23 +343,27 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
 
               <div>
                 <p
-                  className="text-sm font-black uppercase tracking-widest"
+                  className="text-sm font-black uppercase tracking-[0.2em]"
                   style={{ color: corPrincipal }}
                 >
                   Orçamento online
                 </p>
 
-                <h1 className="mt-1 text-3xl font-black">
+                <h1 className="mt-2 text-3xl font-black md:text-5xl">
                   {empresa.nome}
                 </h1>
+
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400 md:text-base">
+                  Escolha um produto, informe as medidas e envie sua solicitação.
+                </p>
               </div>
             </div>
 
-            <div className="rounded-2xl bg-neutral-950 p-5">
+            <div className="rounded-[2rem] border border-neutral-800 bg-neutral-950 p-5">
               <p className="text-sm text-neutral-400">Valor estimado</p>
 
               <p
-                className="mt-1 text-3xl font-black"
+                className="mt-2 text-4xl font-black"
                 style={{ color: corPrincipal }}
               >
                 R$ {formatarDinheiro(precoEstimado)}
@@ -334,12 +374,12 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
 
         <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
           <section>
-            <h2 className="mb-4 text-2xl font-black">
+            <h2 className="mb-5 text-2xl font-black">
               Escolha o produto
             </h2>
 
             {produtos.length === 0 ? (
-              <div className="rounded-2xl bg-neutral-900 p-6 text-neutral-400">
+              <div className="rounded-3xl border border-neutral-800 bg-neutral-900 p-6 text-neutral-400">
                 Nenhum produto disponível no momento.
               </div>
             ) : (
@@ -352,16 +392,12 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
                       key={produto.id}
                       type="button"
                       onClick={() => setProdutoId(produto.id)}
-                      className={`overflow-hidden rounded-3xl border bg-neutral-900 text-left transition hover:-translate-y-1 ${
-                        selecionado
-                          ? 'border-orange-400'
-                          : 'border-neutral-800 hover:border-neutral-600'
-                      }`}
+                      className="overflow-hidden rounded-[2rem] border bg-neutral-900 text-left shadow-xl transition hover:-translate-y-1"
                       style={{
-                        borderColor: selecionado ? corPrincipal : undefined,
+                        borderColor: selecionado ? corPrincipal : '#262626',
                       }}
                     >
-                      <div className="h-44 bg-neutral-800">
+                      <div className="h-48 bg-neutral-800">
                         {produto.imagem_url ? (
                           <img
                             src={produto.imagem_url}
@@ -409,9 +445,13 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
           <section>
             <form
               onSubmit={enviarPedido}
-              className="rounded-3xl border border-neutral-800 bg-neutral-900 p-6"
+              className="rounded-[2rem] border border-neutral-800 bg-neutral-900 p-6 shadow-2xl"
             >
-              <h2 className="text-2xl font-black">
+              <p className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-500">
+                Dados do pedido
+              </p>
+
+              <h2 className="mt-1 text-2xl font-black">
                 Solicitar orçamento
               </h2>
 
@@ -420,14 +460,14 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   placeholder="Seu nome"
-                  className="rounded-xl bg-neutral-800 px-4 py-3 outline-none"
+                  className="rounded-2xl border border-neutral-700 bg-neutral-800 px-4 py-4 outline-none focus:border-orange-400"
                 />
 
                 <input
                   value={telefone}
                   onChange={(e) => setTelefone(e.target.value)}
                   placeholder="Seu WhatsApp"
-                  className="rounded-xl bg-neutral-800 px-4 py-3 outline-none"
+                  className="rounded-2xl border border-neutral-700 bg-neutral-800 px-4 py-4 outline-none focus:border-orange-400"
                 />
 
                 <div className="grid grid-cols-2 gap-4">
@@ -435,14 +475,14 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
                     value={largura}
                     onChange={(e) => setLargura(e.target.value)}
                     placeholder="Largura em m"
-                    className="rounded-xl bg-neutral-800 px-4 py-3 outline-none"
+                    className="rounded-2xl border border-neutral-700 bg-neutral-800 px-4 py-4 outline-none focus:border-orange-400"
                   />
 
                   <input
                     value={altura}
                     onChange={(e) => setAltura(e.target.value)}
                     placeholder="Altura em m"
-                    className="rounded-xl bg-neutral-800 px-4 py-3 outline-none"
+                    className="rounded-2xl border border-neutral-700 bg-neutral-800 px-4 py-4 outline-none focus:border-orange-400"
                   />
                 </div>
 
@@ -450,31 +490,55 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
                   value={quantidade}
                   onChange={(e) => setQuantidade(e.target.value)}
                   placeholder="Quantidade"
-                  className="rounded-xl bg-neutral-800 px-4 py-3 outline-none"
+                  className="rounded-2xl border border-neutral-700 bg-neutral-800 px-4 py-4 outline-none focus:border-orange-400"
                 />
 
                 <textarea
                   value={observacoes}
                   onChange={(e) => setObservacoes(e.target.value)}
-                  placeholder="Observações"
+                  placeholder="Observações, acabamento, prazo..."
                   rows={4}
-                  className="resize-none rounded-xl bg-neutral-800 px-4 py-3 outline-none"
+                  className="resize-none rounded-2xl border border-neutral-700 bg-neutral-800 px-4 py-4 outline-none focus:border-orange-400"
                 />
+
+                <label className="cursor-pointer rounded-2xl border border-dashed border-neutral-700 bg-neutral-800 px-4 py-4 text-sm text-neutral-300 hover:border-orange-400">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="truncate">
+                      {arquivo ? arquivo.name : 'Enviar arte ou referência'}
+                    </span>
+
+                    <span className="rounded-xl bg-white/10 px-3 py-1 text-xs font-bold">
+                      Upload
+                    </span>
+                  </div>
+
+                  <input
+                    type="file"
+                    onChange={(e) => setArquivo(e.target.files?.[0] || null)}
+                    className="hidden"
+                  />
+                </label>
 
                 <div className="rounded-2xl bg-neutral-950 p-5">
                   <p className="text-sm text-neutral-400">Total estimado</p>
 
                   <p
-                    className="mt-1 text-3xl font-black"
+                    className="mt-2 text-4xl font-black"
                     style={{ color: corPrincipal }}
                   >
                     R$ {formatarDinheiro(precoEstimado)}
                   </p>
+
+                  {produtoSelecionado && (
+                    <p className="mt-2 text-sm text-neutral-500">
+                      Produto: {produtoSelecionado.nome}
+                    </p>
+                  )}
                 </div>
 
                 <button
                   disabled={enviando || produtos.length === 0}
-                  className="rounded-xl px-5 py-4 font-black text-neutral-950 disabled:opacity-60"
+                  className="rounded-2xl px-5 py-4 font-black text-neutral-950 disabled:cursor-not-allowed disabled:opacity-60"
                   style={{ backgroundColor: corPrincipal }}
                 >
                   {enviando ? 'Enviando...' : 'Enviar orçamento'}
@@ -482,7 +546,7 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
               </div>
 
               {mensagem && (
-                <p className="mt-5 rounded-xl bg-neutral-800 p-4 text-sm text-neutral-300">
+                <p className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm font-bold text-neutral-300">
                   {mensagem}
                 </p>
               )}
@@ -492,7 +556,7 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
                   href={linkWhatsapp}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-4 block rounded-xl bg-green-500 px-5 py-4 text-center font-black text-white"
+                  className="mt-4 block rounded-2xl bg-green-500 px-5 py-4 text-center font-black text-white hover:bg-green-600"
                 >
                   Enviar mensagem no WhatsApp
                 </a>
