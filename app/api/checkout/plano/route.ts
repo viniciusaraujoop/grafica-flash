@@ -1,21 +1,29 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 type PlanoId = 'basico' | 'profissional' | 'premium'
 
 const planos: Record<PlanoId, { nome: string; valor: number }> = {
   basico: {
-    nome: 'BÃ¡sico',
-    valor: 49,
+    nome: 'Essencial',
+    valor: 49.9,
   },
   profissional: {
     nome: 'Profissional',
-    valor: 99,
+    valor: 99.9,
   },
   premium: {
     nome: 'Premium',
-    valor: 199,
+    valor: 149.9,
   },
+}
+
+function normalizarPlano(valor: unknown): PlanoId {
+  if (valor === 'basico' || valor === 'profissional' || valor === 'premium') {
+    return valor
+  }
+
+  return 'profissional'
 }
 
 function getSupabaseAdmin() {
@@ -23,7 +31,7 @@ function getSupabaseAdmin() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('VariÃ¡veis do Supabase nÃ£o configuradas no servidor.')
+    throw new Error('Variáveis do Supabase não configuradas no servidor.')
   }
 
   return createClient(supabaseUrl, serviceRoleKey, {
@@ -34,64 +42,49 @@ function getSupabaseAdmin() {
   })
 }
 
-function getSiteUrl(request: NextRequest) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-
-  if (siteUrl && siteUrl.trim()) {
-    return siteUrl.trim().replace(/\/$/, '')
-  }
-
-  const origin = request.headers.get('origin')
-
-  if (origin && origin.trim()) {
-    return origin.trim().replace(/\/$/, '')
-  }
-
-  return 'https://grafica-flash-xi.vercel.app'
-}
-
 export async function POST(request: NextRequest) {
   try {
     const mercadoPagoToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
     if (!mercadoPagoToken) {
       return NextResponse.json(
-        { error: 'MERCADO_PAGO_ACCESS_TOKEN nÃ£o configurado.' },
+        { error: 'MERCADO_PAGO_ACCESS_TOKEN não configurado.' },
         { status: 500 }
       )
     }
 
     const body = await request.json()
 
-    const planoRecebido = String(body.plano || 'profissional') as PlanoId
-    const companyId = String(body.companyId || '')
-    const email = String(body.email || '')
-    const nomeEmpresa = String(body.nomeEmpresa || 'Empresa')
+    const companyId = body.companyId
+    const email = body.email
+    const nomeEmpresa = body.nomeEmpresa || 'Empresa'
+    const planoRecebido = normalizarPlano(body.plano)
+    const plano = planos[planoRecebido]
 
     if (!companyId) {
       return NextResponse.json(
-        { error: 'companyId nÃ£o informado.' },
+        { error: 'companyId é obrigatório.' },
         { status: 400 }
       )
     }
 
     if (!email) {
       return NextResponse.json(
-        { error: 'E-mail nÃ£o informado.' },
-        { status: 400 }
-      )
-    }
-
-    const plano = planos[planoRecebido]
-
-    if (!plano) {
-      return NextResponse.json(
-        { error: 'Plano invÃ¡lido.' },
+        { error: 'email é obrigatório.' },
         { status: 400 }
       )
     }
 
     const supabaseAdmin = getSupabaseAdmin()
+
+    await supabaseAdmin
+      .from('companies')
+      .update({
+        assinatura_plano: planoRecebido,
+        plano: planoRecebido,
+      })
+      .eq('id', companyId)
 
     const { data: pagamento, error: pagamentoError } = await supabaseAdmin
       .from('plan_payments')
@@ -106,24 +99,18 @@ export async function POST(request: NextRequest) {
       .select('id')
       .single()
 
-    if (pagamentoError || !pagamento) {
+    if (pagamentoError) {
       return NextResponse.json(
-        {
-          error:
-            pagamentoError?.message ||
-            'NÃ£o foi possÃ­vel registrar o pagamento.',
-        },
+        { error: pagamentoError.message },
         { status: 500 }
       )
     }
-
-    const siteUrl = getSiteUrl(request)
 
     const preferencePayload = {
       items: [
         {
           id: planoRecebido,
-          title: `Plano ${plano.nome} - OrÃ§aly`,
+          title: `Plano ${plano.nome} - Orçaly`,
           description: `Assinatura mensal do plano ${plano.nome}`,
           quantity: 1,
           currency_id: 'BRL',
@@ -147,7 +134,7 @@ export async function POST(request: NextRequest) {
       notification_url: `${siteUrl}/api/mercado-pago/webhook`,
     }
 
-    const mpResponse = await fetch(
+    const mercadoPagoResponse = await fetch(
       'https://api.mercadopago.com/checkout/preferences',
       {
         method: 'POST',
@@ -159,48 +146,38 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    const mpData = await mpResponse.json()
+    const mercadoPagoData = await mercadoPagoResponse.json()
 
-    if (!mpResponse.ok) {
-      await supabaseAdmin
-        .from('plan_payments')
-        .update({
-          status: 'erro',
-          raw_payment: {
-            mercado_pago_error: mpData,
-            sent_payload: preferencePayload,
-          },
-        })
-        .eq('id', pagamento.id)
-
+    if (!mercadoPagoResponse.ok) {
       return NextResponse.json(
         {
-          error: mpData.message || mpData.error || 'Erro ao criar checkout no Mercado Pago.',
-          details: mpData,
-          sentPayload: preferencePayload,
+          error:
+            mercadoPagoData.message ||
+            mercadoPagoData.error ||
+            'Erro ao criar checkout no Mercado Pago.',
+          details: mercadoPagoData,
         },
         { status: 500 }
       )
     }
 
-    const checkoutUrl = mpData.init_point || mpData.sandbox_init_point
-
     await supabaseAdmin
       .from('plan_payments')
       .update({
-        mercado_pago_preference_id: mpData.id,
-        checkout_url: checkoutUrl,
+        mercado_pago_preference_id: mercadoPagoData.id,
+        checkout_url: mercadoPagoData.init_point || mercadoPagoData.sandbox_init_point,
       })
       .eq('id', pagamento.id)
 
     return NextResponse.json({
-      paymentId: pagamento.id,
-      preferenceId: mpData.id,
-      checkoutUrl,
+      id: mercadoPagoData.id,
+      init_point: mercadoPagoData.init_point,
+      sandbox_init_point: mercadoPagoData.sandbox_init_point,
+      checkout_url: mercadoPagoData.init_point || mercadoPagoData.sandbox_init_point,
     })
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Erro desconhecido no checkout.'
+      error instanceof Error ? error.message : 'Erro desconhecido ao criar checkout.'
 
     return NextResponse.json({ error: message }, { status: 500 })
   }

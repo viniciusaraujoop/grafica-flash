@@ -4,12 +4,12 @@ const planos = [
   {
     id: 'basico',
     nome: 'Essencial',
-    preco: 'R$ 49',
+    preco: 'R$ 49,90',
     destaque: false,
-    chamada: 'Para comecar com estrutura profissional.',
+    chamada: 'Para começar com uma estrutura profissional.',
     beneficios: [
-      'Pagina publica da empresa',
-      'Orcamentos online',
+      'Página pública da empresa',
+      'Orçamentos online',
       'Cadastro de produtos',
       'Painel de pedidos',
     ],
@@ -17,13 +17,13 @@ const planos = [
   {
     id: 'profissional',
     nome: 'Profissional',
-    preco: 'R$ 89',
+    preco: 'R$ 99,90',
     destaque: true,
-    chamada: 'O plano mais indicado para vender mais rapido.',
+    chamada: 'O plano mais indicado para vender com mais organização.',
     beneficios: [
       'Tudo do Essencial',
       'Mini-CRM de clientes',
-      'Historico de pedidos',
+      'Histórico de pedidos',
       'Filtros comerciais',
       'Prioridade nas melhorias',
     ],
@@ -31,13 +31,13 @@ const planos = [
   {
     id: 'premium',
     nome: 'Premium',
-    preco: 'R$ 149',
+    preco: 'R$ 149,90',
     destaque: false,
     chamada: 'Para empresas que querem operar com mais controle.',
     beneficios: [
       'Tudo do Profissional',
-      'Mais personalizacao',
-      'Acompanhamento avancado',
+      'Mais personalização',
+      'Acompanhamento avançado',
       'Recursos premium',
     ],
   },
@@ -57,13 +57,13 @@ export default function HomePage() {
           <Link href="/" className="inline-flex items-center">
             <img
               src="/logo-orcaly.png"
-              alt="Orcaly"
+              alt="Orçaly"
               className="h-12 w-auto object-contain"
             />
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm font-bold text-blue-100/80 md:flex">
-            <a href="#beneficios" className="hover:text-white">Beneficios</a>
+            <a href="#beneficios" className="hover:text-white">Benefícios</a>
             <a href="#planos" className="hover:text-white">Planos</a>
             <Link href="/login" className="hover:text-white">Entrar</Link>
           </nav>
@@ -72,23 +72,23 @@ export default function HomePage() {
             href="/cadastro?plano=profissional"
             className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#05245c] shadow-lg shadow-black/10 transition hover:-translate-y-0.5"
           >
-            Comecar agora
+            Começar agora
           </Link>
         </header>
 
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 pb-20 pt-10 sm:px-6 lg:grid-cols-[1.08fr_.92fr] lg:px-8 lg:pb-28 lg:pt-16">
           <div>
             <div className="inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-bold text-blue-100 backdrop-blur">
-              Sistema completo para empresas que querem vender com mais organizacao
+              Sistema completo para empresas que querem vender com mais organização
             </div>
 
             <h1 className="mt-7 max-w-4xl text-5xl font-black leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
-              Pare de perder cliente no WhatsApp baguncado.
+              Pare de perder cliente no WhatsApp bagunçado.
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-blue-100/85 sm:text-xl">
-              O Or&ccedil;aly transforma pedidos, or&ccedil;amentos, produtos e clientes
-              em um painel claro, bonito e pronto para sua empresa vender melhor todos os dias.
+              O Orçaly transforma pedidos, orçamentos, produtos e clientes em um painel claro,
+              bonito e pronto para sua empresa vender melhor todos os dias.
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -111,14 +111,14 @@ export default function HomePage() {
               <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
                 <p className="text-3xl font-black">24h</p>
                 <p className="mt-2 text-sm font-semibold text-blue-100/75">
-                  Pedidos entrando mesmo fora do horario
+                  Pedidos entrando mesmo fora do horário
                 </p>
               </div>
 
               <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
                 <p className="text-3xl font-black">CRM</p>
                 <p className="mt-2 text-sm font-semibold text-blue-100/75">
-                  Clientes e historico em um so lugar
+                  Clientes e histórico em um só lugar
                 </p>
               </div>
 
@@ -137,7 +137,7 @@ export default function HomePage() {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
-                      Visao do painel
+                      Visão do painel
                     </p>
                     <h2 className="mt-2 text-2xl font-black text-[#071b3a]">
                       Clientes que ainda podem comprar
@@ -152,8 +152,8 @@ export default function HomePage() {
                 <div className="mt-6 grid gap-4">
                   {[
                     ['Maria Oliveira', 'R$ 1.240,00', 'Cliente fiel'],
-                    ['Anderson Silva', 'R$ 680,00', 'Nao fechou'],
-                    ['Loja Central', 'R$ 2.890,00', 'Inativo 30 dias'],
+                    ['Anderson Silva', 'R$ 680,00', 'Não fechou'],
+                    ['Loja Central', 'R$ 2.890,00', 'Inativo há 30 dias'],
                   ].map((item) => (
                     <div key={item[0]} className="rounded-3xl border border-blue-100 bg-blue-50 p-4">
                       <div className="flex items-center justify-between gap-4">
@@ -174,7 +174,7 @@ export default function HomePage() {
 
                 <div className="mt-5 rounded-3xl bg-[#07142f] p-5 text-white">
                   <p className="text-sm font-bold text-blue-100/80">
-                    O prejuizo invisivel
+                    O prejuízo invisível
                   </p>
                   <p className="mt-2 text-3xl font-black">
                     Clientes esquecidos viram vendas perdidas.
@@ -191,7 +191,7 @@ export default function HomePage() {
           <div className="rounded-[2rem] border border-blue-100 bg-white p-7 shadow-xl shadow-blue-950/5">
             <p className="text-4xl">🧠</p>
             <h3 className="mt-5 text-2xl font-black text-[#071b3a]">
-              Venda com memoria comercial
+              Venda com memória comercial
             </h3>
             <p className="mt-3 leading-7 text-slate-600">
               O sistema lembra quem pediu, quem comprou, quem sumiu e quem merece uma abordagem.
@@ -201,7 +201,7 @@ export default function HomePage() {
           <div className="rounded-[2rem] border border-blue-100 bg-white p-7 shadow-xl shadow-blue-950/5">
             <p className="text-4xl">⚡</p>
             <h3 className="mt-5 text-2xl font-black text-[#071b3a]">
-              Menos bagunca operacional
+              Menos bagunça operacional
             </h3>
             <p className="mt-3 leading-7 text-slate-600">
               Produtos, pedidos, pagamentos e clientes saem do improviso e entram em um fluxo profissional.
@@ -211,10 +211,10 @@ export default function HomePage() {
           <div className="rounded-[2rem] border border-blue-100 bg-white p-7 shadow-xl shadow-blue-950/5">
             <p className="text-4xl">📈</p>
             <h3 className="mt-5 text-2xl font-black text-[#071b3a]">
-              Sensacao de empresa grande
+              Sensação de empresa grande
             </h3>
             <p className="mt-3 leading-7 text-slate-600">
-              Seu cliente percebe organizacao antes mesmo de comprar. Percepcao vende, infelizmente ate mais do que bom senso.
+              Seu cliente percebe organização antes mesmo de comprar. Percepção vende, infelizmente até mais do que bom senso.
             </p>
           </div>
         </div>
@@ -226,10 +226,10 @@ export default function HomePage() {
             Escolha seu plano
           </p>
           <h2 className="mt-3 text-4xl font-black text-[#071b3a] sm:text-5xl">
-            Comece antes que outro concorrente pareca mais organizado que voce.
+            Comece antes que outro concorrente pareça mais organizado que você.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-            O plano escolhido aqui sera levado automaticamente para o cadastro.
+            O plano escolhido aqui será levado automaticamente para o cadastro.
           </p>
         </div>
 
@@ -259,7 +259,7 @@ export default function HomePage() {
                 <span className="text-5xl font-black text-[#071b3a]">
                   {plano.preco}
                 </span>
-                <span className="pb-2 font-bold text-slate-500">/mes</span>
+                <span className="pb-2 font-bold text-slate-500">/mês</span>
               </div>
 
               <ul className="mt-6 grid gap-3">

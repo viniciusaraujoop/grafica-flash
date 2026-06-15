@@ -21,17 +21,17 @@ type PlanoId = 'basico' | 'profissional' | 'premium'
 const planos: Record<PlanoId, { nome: string; preco: number; descricao: string }> = {
   basico: {
     nome: 'Essencial',
-    preco: 49,
-    descricao: 'Para comecar com pedidos e produtos organizados.',
+    preco: 49.9,
+    descricao: 'Para comeÃ§ar com pedidos e produtos organizados.',
   },
   profissional: {
     nome: 'Profissional',
-    preco: 89,
-    descricao: 'Mais indicado para vender com CRM e historico comercial.',
+    preco: 99.9,
+    descricao: 'Mais indicado para vender com CRM e histÃ³rico comercial.',
   },
   premium: {
     nome: 'Premium',
-    preco: 149,
+    preco: 149.9,
     descricao: 'Para empresas que querem operar com mais controle.',
   },
 }
@@ -162,7 +162,7 @@ function CadastroPageContent() {
     }
 
     if (!regraSenha.valida) {
-      alert('A senha precisa ter no minimo 8 caracteres, 1 letra maiuscula, letras e 1 caractere especial.')
+      alert('A senha precisa ter no mÃ­nimo 8 caracteres, 1 letra maiÃºscula, letras e 1 caractere especial.')
       return
     }
 
@@ -190,7 +190,7 @@ function CadastroPageContent() {
       const usuario = cadastroData.user
 
       if (!usuario) {
-        setMensagem('Conta criada. Confirme seu email e faca login para continuar.')
+        setMensagem('Conta criada. Confirme seu email e faÃ§a login para continuar.')
         setCarregando(false)
         return
       }
@@ -247,7 +247,7 @@ function CadastroPageContent() {
       const urlCheckout = checkoutData.init_point || checkoutData.sandbox_init_point || checkoutData.checkout_url
 
       if (!urlCheckout) {
-        setMensagem('Checkout criado, mas nao recebi o link de pagamento.')
+        setMensagem('Checkout criado, mas nÃ£o recebi o link de pagamento.')
         setCarregando(false)
         return
       }
@@ -275,7 +275,7 @@ function CadastroPageContent() {
           <Link href="/" className="inline-flex w-fit items-center">
             <img
               src="/logo-orcaly.png"
-              alt="Orcaly"
+              alt="OrÃ§aly"
               className="h-14 w-auto object-contain"
             />
           </Link>
@@ -286,17 +286,17 @@ function CadastroPageContent() {
             </div>
 
             <h1 className="mt-6 text-5xl font-black leading-tight tracking-tight">
-              Sua empresa organizada antes do proximo cliente pedir preco.
+              Sua empresa organizada antes do prÃ³ximo cliente pedir preÃ§o.
             </h1>
 
             <p className="mt-5 text-lg leading-8 text-blue-100/80">
-              Quem responde rapido parece maior. Quem organiza clientes vende mais.
-              O Or&ccedil;aly entrega essa percepcao desde o primeiro contato.
+              Quem responde rÃ¡pido parece maior. Quem organiza clientes vende mais.
+              O OrÃ§aly entrega essa percepÃ§Ã£o desde o primeiro contato.
             </p>
 
             <div className="mt-8 grid gap-4">
               <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-                <p className="font-black">Gatilho de urgencia</p>
+                <p className="font-black">Gatilho de urgÃªncia</p>
                 <p className="mt-2 text-sm leading-6 text-blue-100/75">
                   Cada pedido perdido no WhatsApp pode virar venda para outro concorrente.
                 </p>
@@ -305,7 +305,7 @@ function CadastroPageContent() {
               <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
                 <p className="font-black">Prova de controle</p>
                 <p className="mt-2 text-sm leading-6 text-blue-100/75">
-                  Produtos, or&ccedil;amentos, clientes e pagamentos em um so painel.
+                  Produtos, orÃ§amentos, clientes e pagamentos em um sÃ³ painel.
                 </p>
               </div>
             </div>
@@ -325,7 +325,7 @@ function CadastroPageContent() {
               <Link href="/">
                 <img
                   src="/logo-orcaly.png"
-                  alt="Orcaly"
+                  alt="OrÃ§aly"
                   className="h-12 w-auto object-contain"
                 />
               </Link>
@@ -342,7 +342,7 @@ function CadastroPageContent() {
                 </h2>
 
                 <p className="mt-3 leading-7 text-slate-600">
-                  O plano escolhido na pagina principal ja veio selecionado aqui.
+                  O plano escolhido na pÃ¡gina principal jÃ¡ veio selecionado aqui.
                 </p>
               </div>
 
@@ -354,7 +354,7 @@ function CadastroPageContent() {
                   {planoEscolhido.nome}
                 </p>
                 <p className="mt-1 text-sm font-bold text-slate-600">
-                  {formatarMoeda(planoEscolhido.preco)}/mes
+                  {formatarMoeda(planoEscolhido.preco)}/mÃªs
                 </p>
               </div>
             </div>
@@ -373,7 +373,7 @@ function CadastroPageContent() {
                 >
                   <p className="font-black">{planos[item].nome}</p>
                   <p className={`mt-1 text-sm font-bold ${plano === item ? 'text-blue-100' : 'text-slate-500'}`}>
-                    {formatarMoeda(planos[item].preco)}/mes
+                    {formatarMoeda(planos[item].preco)}/mÃªs
                   </p>
                 </button>
               ))}
@@ -394,7 +394,7 @@ function CadastroPageContent() {
                 <input
                   value={nomeEmpresa}
                   onChange={(evento) => setNomeEmpresa(evento.target.value)}
-                  placeholder="Ex: Grafica Flash"
+                  placeholder="Ex: GrÃ¡fica Flash"
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
                 />
               </label>
@@ -407,7 +407,7 @@ function CadastroPageContent() {
                 <input
                   value={segmento}
                   onChange={(evento) => setSegmento(evento.target.value)}
-                  placeholder="Ex: Grafica, loja, servicos"
+                  placeholder="Ex: GrÃ¡fica, loja, serviÃ§os"
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
                 />
               </label>
@@ -497,31 +497,68 @@ function CadastroPageContent() {
                   value={senha}
                   onChange={(evento) => setSenha(evento.target.value)}
                   type="password"
-                  placeholder="Minimo 8 caracteres"
+                  placeholder="MÃ­nimo 8 caracteres"
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
                 />
               </label>
             </div>
 
             <div className="mt-5 grid gap-2 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-600 sm:grid-cols-2">
-              <p className={regraSenha.tamanho ? 'text-emerald-700' : ''}>âœ“ Minimo 8 caracteres</p>
-              <p className={regraSenha.maiuscula ? 'text-emerald-700' : ''}>âœ“ 1 letra maiuscula</p>
+              <p className={regraSenha.tamanho ? 'text-emerald-700' : ''}>âœ“ MÃ­nimo 8 caracteres</p>
+              <p className={regraSenha.maiuscula ? 'text-emerald-700' : ''}>âœ“ 1 letra maiÃºscula</p>
               <p className={regraSenha.letra ? 'text-emerald-700' : ''}>âœ“ Letras</p>
               <p className={regraSenha.especial ? 'text-emerald-700' : ''}>âœ“ 1 caractere especial</p>
             </div>
+            <div className="mt-5 rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#05245c] text-xl text-white">
+                  ✨
+                </div>
 
-            <div className="mt-5 rounded-3xl border border-blue-100 bg-blue-50 p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#05245c]">
-                Link publico
-              </p>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#05245c]">
+                    Quase pronto
+                  </p>
 
-              <p className="mt-2 break-all text-2xl font-black text-[#071b3a]">
-                {slug || 'sua-empresa'}
-              </p>
+                  <h3 className="mt-2 text-2xl font-black text-[#071b3a]">
+                    Sua estrutura digital está a um passo de entrar no ar.
+                  </h3>
 
-              <p className="mt-2 text-sm font-bold leading-6 text-slate-600">
-                Seu cliente vera um endereco limpo com o nome da empresa, sem mostrar /orcamento na tela de cadastro.
-              </p>
+                  <p className="mt-2 text-sm font-bold leading-6 text-slate-600">
+                    Depois do pagamento, sua empresa ganha acesso ao painel para organizar produtos,
+                    pedidos, clientes e processos em um só lugar.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl bg-white p-4 shadow-sm shadow-blue-950/5">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                    Plano
+                  </p>
+                  <p className="mt-1 font-black text-[#071b3a]">
+                    {planoEscolhido.nome}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-white p-4 shadow-sm shadow-blue-950/5">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                    Empresa
+                  </p>
+                  <p className="mt-1 truncate font-black text-[#071b3a]">
+                    {nomeEmpresa || 'Sua empresa'}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-white p-4 shadow-sm shadow-blue-950/5">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                    Cidade
+                  </p>
+                  <p className="mt-1 truncate font-black text-[#071b3a]">
+                    {cidade || 'A definir'}
+                  </p>
+                </div>
+              </div>
             </div>
 
             <button
@@ -533,7 +570,7 @@ function CadastroPageContent() {
             </button>
 
             <p className="mt-4 text-center text-sm font-medium leading-6 text-slate-400">
-              Ao continuar, voce cria a conta da empresa e segue para o pagamento seguro.
+              Ao continuar, vocÃª cria a conta da empresa e segue para o pagamento seguro.
             </p>
           </form>
         </div>
@@ -541,6 +578,7 @@ function CadastroPageContent() {
     </main>
   )
 }
+
 export default function CadastroPage() {
   return (
     <Suspense
