@@ -2,7 +2,6 @@
 
 import { useEffect, useState, type FormEvent } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 const planos = [
@@ -38,8 +37,6 @@ function criarSlug(texto: string) {
 }
 
 export default function CadastroPage() {
-  const router = useRouter()
-
   const [plano, setPlano] = useState('profissional')
   const [nomeEmpresa, setNomeEmpresa] = useState('')
   const [segmento, setSegmento] = useState('')
@@ -62,32 +59,26 @@ export default function CadastroPage() {
     }
   }, [])
 
-  async function cadastrarEmpresa(evento: FormEvent<HTMLFormElement>) {
+  async function cadastrarEPagar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
 
     if (!nomeEmpresa.trim()) {
-      const texto = 'Informe o nome da empresa.'
-      setMensagem(texto)
-      alert(texto)
+      alert('Informe o nome da empresa.')
       return
     }
 
     if (!email.trim()) {
-      const texto = 'Informe seu e-mail.'
-      setMensagem(texto)
-      alert(texto)
+      alert('Informe seu e-mail.')
       return
     }
 
     if (!senha || senha.length < 6) {
-      const texto = 'A senha precisa ter pelo menos 6 caracteres.'
-      setMensagem(texto)
-      alert(texto)
+      alert('A senha precisa ter pelo menos 6 caracteres.')
       return
     }
 
     setCarregando(true)
-    setMensagem('')
+    setMensagem('Criando conta e preparando pagamento...')
 
     try {
       const slug = criarSlug(nomeEmpresa)
@@ -105,9 +96,8 @@ export default function CadastroPage() {
         })
 
       if (cadastroError) {
-        const texto = `Erro ao criar conta: ${cadastroError.message}`
-        setMensagem(texto)
-        alert(texto)
+        alert(`Erro ao criar conta: ${cadastroError.message}`)
+        setMensagem(`Erro ao criar conta: ${cadastroError.message}`)
         setCarregando(false)
         return
       }
@@ -115,57 +105,75 @@ export default function CadastroPage() {
       const usuarioId = cadastroData.user?.id
 
       if (!usuarioId) {
-        const texto =
-          'Conta criada, mas não consegui identificar o usuário. Faça login e cadastre a empresa pelo painel.'
-        setMensagem(texto)
-        alert(texto)
+        alert('Conta criada, mas não consegui identificar o usuário.')
+        setMensagem('Conta criada, mas não consegui identificar o usuário.')
         setCarregando(false)
         return
       }
 
-      const { error: empresaError } = await supabase.from('companies').insert({
-        nome: nomeEmpresa.trim(),
-        slug,
-        owner_id: usuarioId,
-        email: email.trim(),
-        segmento: segmento.trim(),
-        telefone: telefone.trim(),
-        whatsapp: telefone.trim(),
-        cidade: cidade.trim(),
-        estado: estado.trim(),
-        plano,
-        ativo: true,
-        cor_principal: '#05245c',
-        aceita_pix: false,
-        aceita_cartao: false,
-        cobrar_sinal: false,
-        percentual_sinal: 0,
+      const { data: empresaData, error: empresaError } = await supabase
+        .from('companies')
+        .insert({
+          nome: nomeEmpresa.trim(),
+          slug,
+          owner_id: usuarioId,
+          email: email.trim(),
+          segmento: segmento.trim(),
+          telefone: telefone.trim(),
+          whatsapp: telefone.trim(),
+          cidade: cidade.trim(),
+          estado: estado.trim(),
+          plano,
+          ativo: false,
+          cor_principal: '#05245c',
+          aceita_pix: false,
+          aceita_cartao: false,
+          cobrar_sinal: false,
+          percentual_sinal: 0,
+          assinatura_status: 'pendente',
+          assinatura_plano: plano,
+        })
+        .select('id')
+        .single()
+
+      if (empresaError || !empresaData) {
+        alert(`Erro ao cadastrar empresa: ${empresaError?.message}`)
+        setMensagem(`Erro ao cadastrar empresa: ${empresaError?.message}`)
+        setCarregando(false)
+        return
+      }
+
+      const checkoutResponse = await fetch('/api/checkout/plano', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          companyId: empresaData.id,
+          plano,
+          email: email.trim(),
+          nomeEmpresa: nomeEmpresa.trim(),
+        }),
       })
 
-      if (empresaError) {
-        const texto = `Erro ao cadastrar empresa: ${empresaError.message}`
-        setMensagem(texto)
-        alert(texto)
+      const checkoutData = await checkoutResponse.json()
+
+      if (!checkoutResponse.ok || !checkoutData.checkoutUrl) {
+        alert(checkoutData.error || 'Erro ao gerar pagamento.')
+        setMensagem(checkoutData.error || 'Erro ao gerar pagamento.')
         setCarregando(false)
         return
       }
 
-      const texto =
-        'Cadastro criado com sucesso. Agora faça login para acessar o painel.'
-      setMensagem(texto)
-      alert(texto)
-
-      router.push('/login')
+      window.location.href = checkoutData.checkoutUrl
     } catch (erro) {
       const textoErro =
         erro instanceof Error ? erro.message : 'Erro desconhecido ao cadastrar.'
 
-      const texto = `Erro: ${textoErro}`
-      setMensagem(texto)
-      alert(texto)
+      alert(`Erro: ${textoErro}`)
+      setMensagem(`Erro: ${textoErro}`)
+      setCarregando(false)
     }
-
-    setCarregando(false)
   }
 
   const planoAtual = planos.find((item) => item.id === plano) || planos[1]
@@ -216,11 +224,11 @@ export default function CadastroPage() {
             </p>
 
             <h1 className="mt-3 text-4xl font-black leading-tight text-[#071b3a] sm:text-5xl">
-              Crie a página digital da sua empresa
+              Pague o plano e libere o acesso
             </h1>
 
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Cadastre sua empresa, configure catálogo, receba pedidos e organize solicitações em um painel próprio.
+              A conta é criada como pendente. O painel só é liberado depois que o pagamento do plano for aprovado.
             </p>
 
             <div className="mt-6 rounded-3xl border border-blue-100 bg-blue-50 p-5">
@@ -266,7 +274,7 @@ export default function CadastroPage() {
           </aside>
 
           <form
-            onSubmit={cadastrarEmpresa}
+            onSubmit={cadastrarEPagar}
             className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-2xl shadow-blue-950/10"
           >
             <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">
@@ -347,7 +355,7 @@ export default function CadastroPage() {
                 disabled={carregando}
                 className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white shadow-lg shadow-blue-950/15 transition hover:-translate-y-1 hover:bg-[#031a43] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {carregando ? 'Criando cadastro...' : 'Criar minha conta'}
+                {carregando ? 'Gerando pagamento...' : 'Criar conta e pagar plano'}
               </button>
             </div>
           </form>

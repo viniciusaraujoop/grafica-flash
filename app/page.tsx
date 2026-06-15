@@ -3,7 +3,7 @@ import Link from 'next/link'
 const planos = [
   {
     nome: 'Essencial',
-    preco: 'R$ 97',
+    preco: 'R$ 49,90',
     descricao: 'Para empresas que querem começar com uma estrutura digital simples e profissional.',
     destaque: false,
     recursos: [
@@ -17,7 +17,7 @@ const planos = [
   },
   {
     nome: 'Profissional',
-    preco: 'R$ 197',
+    preco: 'R$ 99,90',
     descricao: 'Para empresas que querem vender, atender e organizar melhor.',
     destaque: true,
     recursos: [
@@ -32,7 +32,7 @@ const planos = [
   },
   {
     nome: 'Premium',
-    preco: 'R$ 397',
+    preco: 'R$ 199,90',
     descricao: 'Para empresas que precisam de automações, equipe e controle avançado.',
     destaque: false,
     recursos: [

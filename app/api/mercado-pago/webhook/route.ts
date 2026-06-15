@@ -1,0 +1,140 @@
+﻿import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('VariÃ¡veis do Supabase nÃ£o configuradas no servidor.')
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  })
+}
+
+function somarDias(data: Date, dias: number) {
+  const novaData = new Date(data)
+  novaData.setDate(novaData.getDate() + dias)
+  return novaData
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const mercadoPagoToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
+
+    if (!mercadoPagoToken) {
+      return NextResponse.json(
+        { error: 'MERCADO_PAGO_ACCESS_TOKEN nÃ£o configurado.' },
+        { status: 500 }
+      )
+    }
+
+    const url = new URL(request.url)
+    const body = await request.json().catch(() => ({}))
+
+    const paymentId =
+      body?.data?.id ||
+      body?.id ||
+      url.searchParams.get('id') ||
+      url.searchParams.get('data.id')
+
+    const topic =
+      body?.type ||
+      body?.topic ||
+      url.searchParams.get('topic') ||
+      url.searchParams.get('type')
+
+    const supabaseAdmin = getSupabaseAdmin()
+
+    if (!paymentId) {
+      return NextResponse.json({
+        received: true,
+        ignored: true,
+        reason: 'Nenhum paymentId recebido.',
+        topic,
+      })
+    }
+
+    const paymentResponse = await fetch(
+      `https://api.mercadopago.com/v1/payments/${paymentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${mercadoPagoToken}`,
+        },
+      }
+    )
+
+    const paymentData = await paymentResponse.json()
+
+    if (!paymentResponse.ok) {
+      return NextResponse.json(
+        {
+          error: paymentData.message || 'Erro ao consultar pagamento.',
+          details: paymentData,
+        },
+        { status: 500 }
+      )
+    }
+
+    const paymentRowId = paymentData.external_reference
+    const status = paymentData.status
+    const companyId = paymentData.metadata?.company_id
+    const plano = paymentData.metadata?.plano
+    const payerEmail = paymentData.payer?.email
+
+    if (!paymentRowId) {
+      return NextResponse.json({
+        received: true,
+        ignored: true,
+        reason: 'Pagamento sem external_reference.',
+        paymentId,
+        status,
+      })
+    }
+
+    await supabaseAdmin
+      .from('plan_payments')
+      .update({
+        status: status || 'desconhecido',
+        mercado_pago_payment_id: String(paymentId),
+        raw_webhook: body,
+        raw_payment: paymentData,
+        paid_at: status === 'approved' ? new Date().toISOString() : null,
+      })
+      .eq('id', paymentRowId)
+
+    if (status === 'approved' && companyId) {
+      const agora = new Date()
+      const expiraEm = somarDias(agora, 30)
+
+      await supabaseAdmin
+        .from('companies')
+        .update({
+          ativo: true,
+          assinatura_status: 'ativa',
+          assinatura_plano: plano || 'profissional',
+          assinatura_inicio: agora.toISOString(),
+          assinatura_expira_em: expiraEm.toISOString(),
+          assinatura_ultimo_pagamento: agora.toISOString(),
+          mercado_pago_customer_email: payerEmail || null,
+        })
+        .eq('id', companyId)
+    }
+
+    return NextResponse.json({
+      received: true,
+      paymentId,
+      status,
+    })
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Erro desconhecido no webhook.'
+
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
