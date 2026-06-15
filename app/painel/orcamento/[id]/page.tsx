@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
@@ -57,6 +57,16 @@ function montarNumeroWhatsapp(telefone: string) {
   }
 
   return apenasNumeros
+}
+
+function converterQuantidade(valor: string) {
+  const numero = Number(String(valor).replace(',', '.'))
+
+  if (Number.isNaN(numero)) {
+    return 0
+  }
+
+  return numero
 }
 
 export default function PaginaPublicaEmpresa() {
@@ -153,22 +163,47 @@ export default function PaginaPublicaEmpresa() {
     return data.publicUrl
   }
 
-  async function enviarSolicitacao(evento: React.FormEvent) {
+  async function enviarSolicitacao(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
 
-    if (!empresa) return
+    if (enviando) return
+
+    if (!empresa) {
+      const texto = 'Empresa não carregada. Atualize a página e tente novamente.'
+      setMensagem(texto)
+      alert(texto)
+      return
+    }
 
     const itemSelecionado = itens.find((item) => item.id === itemSelecionadoId)
 
     if (!itemSelecionado) {
-      setMensagem('Selecione um item do catálogo.')
+      const texto = 'Selecione um item do catálogo antes de enviar.'
+      setMensagem(texto)
+      alert(texto)
       return
     }
 
-    const quantidadeNumero = Number(quantidade)
+    const quantidadeNumero = converterQuantidade(quantidade)
 
-    if (!nome || !telefone || quantidadeNumero <= 0) {
-      setMensagem('Preencha nome, WhatsApp e quantidade corretamente.')
+    if (!nome.trim()) {
+      const texto = 'Preencha seu nome.'
+      setMensagem(texto)
+      alert(texto)
+      return
+    }
+
+    if (!telefone.trim()) {
+      const texto = 'Preencha seu WhatsApp.'
+      setMensagem(texto)
+      alert(texto)
+      return
+    }
+
+    if (!quantidadeNumero || quantidadeNumero <= 0) {
+      const texto = 'Preencha uma quantidade válida.'
+      setMensagem(texto)
+      alert(texto)
       return
     }
 
@@ -187,8 +222,8 @@ export default function PaginaPublicaEmpresa() {
 
       const { error } = await supabase.from('orders').insert({
         company_id: empresa.id,
-        nome,
-        telefone,
+        nome: nome.trim(),
+        telefone: telefone.trim(),
         produto: itemSelecionado.nome,
         quantidade: quantidadeNumero,
         observacoes,
@@ -198,7 +233,9 @@ export default function PaginaPublicaEmpresa() {
       })
 
       if (error) {
-        setMensagem(`Erro ao enviar solicitação: ${error.message}`)
+        const texto = `Erro ao enviar solicitação: ${error.message}`
+        setMensagem(texto)
+        alert(texto)
         setEnviando(false)
         return
       }
@@ -223,7 +260,9 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
         setLinkWhatsapp(link)
       }
 
-      setMensagem('Solicitação enviada com sucesso.')
+      const textoSucesso = 'Solicitação enviada com sucesso.'
+      setMensagem(textoSucesso)
+      alert(textoSucesso)
 
       setNome('')
       setTelefone('')
@@ -236,7 +275,9 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
           ? erro.message
           : 'Erro desconhecido ao enviar solicitação.'
 
-      setMensagem(`Erro: ${mensagemErro}`)
+      const texto = `Erro: ${mensagemErro}`
+      setMensagem(texto)
+      alert(texto)
     }
 
     setEnviando(false)
@@ -247,7 +288,8 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
   }, [slug])
 
   const itemSelecionado = itens.find((item) => item.id === itemSelecionadoId)
-  const quantidadeNumero = Number(quantidade)
+  const quantidadeNumero = converterQuantidade(quantidade)
+
   const totalEstimado =
     itemSelecionado && quantidadeNumero > 0
       ? Number(itemSelecionado.preco || 0) * quantidadeNumero
@@ -610,6 +652,7 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
                 </div>
 
                 <button
+                  type="submit"
                   disabled={enviando || itens.length === 0}
                   className="rounded-2xl px-5 py-4 font-black text-white shadow-lg shadow-blue-950/15 transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-60"
                   style={{ backgroundColor: corPrincipal }}
