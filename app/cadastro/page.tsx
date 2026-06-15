@@ -1,65 +1,154 @@
 'use client'
 
-import { useEffect, useState, type FormEvent } from 'react'
+import { Suspense, useEffect, useMemo, useState, type FormEvent } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
-const planos = [
-  {
-    id: 'basico',
-    nome: 'Básico',
-    preco: 'R$ 49/mês',
-    descricao: 'Para começar com catálogo, pedidos e página pública.',
-  },
-  {
-    id: 'profissional',
-    nome: 'Profissional',
-    preco: 'R$ 99/mês',
-    descricao: 'Para empresas que querem catálogo, pedidos, pagamentos e gestão.',
-  },
-  {
-    id: 'premium',
-    nome: 'Premium',
-    preco: 'R$ 199/mês',
-    descricao: 'Para operações maiores, com mais personalização e automações.',
-  },
-]
-
-function criarSlug(texto: string) {
-  return texto
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+type EstadoIBGE = {
+  id: number
+  sigla: string
+  nome: string
 }
 
-export default function CadastroPage() {
-  const [plano, setPlano] = useState('profissional')
+type CidadeIBGE = {
+  id: number
+  nome: string
+}
+
+type PlanoId = 'basico' | 'profissional' | 'premium'
+
+const planos: Record<PlanoId, { nome: string; preco: number; descricao: string }> = {
+  basico: {
+    nome: 'Essencial',
+    preco: 49,
+    descricao: 'Para comecar com pedidos e produtos organizados.',
+  },
+  profissional: {
+    nome: 'Profissional',
+    preco: 89,
+    descricao: 'Mais indicado para vender com CRM e historico comercial.',
+  },
+  premium: {
+    nome: 'Premium',
+    preco: 149,
+    descricao: 'Para empresas que querem operar com mais controle.',
+  },
+}
+
+function normalizarPlano(valor: string | null): PlanoId {
+  if (valor === 'basico' || valor === 'profissional' || valor === 'premium') {
+    return valor
+  }
+
+  return 'profissional'
+}
+
+function criarSlug(valor: string) {
+  return valor
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48)
+}
+
+function senhaForte(senha: string) {
+  const tamanho = senha.length >= 8
+  const maiuscula = /[A-Z]/.test(senha)
+  const letra = /[A-Za-z]/.test(senha)
+  const especial = /[^A-Za-z0-9]/.test(senha)
+
+  return {
+    tamanho,
+    maiuscula,
+    letra,
+    especial,
+    valida: tamanho && maiuscula && letra && especial,
+  }
+}
+
+function formatarMoeda(valor: number) {
+  return valor.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  })
+}
+
+function CadastroPageContent() {
+  const searchParams = useSearchParams()
+  const planoInicial = normalizarPlano(searchParams.get('plano'))
+
+  const [plano, setPlano] = useState<PlanoId>(planoInicial)
   const [nomeEmpresa, setNomeEmpresa] = useState('')
   const [segmento, setSegmento] = useState('')
   const [telefone, setTelefone] = useState('')
-  const [cidade, setCidade] = useState('')
-  const [estado, setEstado] = useState('')
-  const [nomeResponsavel, setNomeResponsavel] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-
+  const [estado, setEstado] = useState('')
+  const [cidade, setCidade] = useState('')
+  const [estados, setEstados] = useState<EstadoIBGE[]>([])
+  const [cidades, setCidades] = useState<CidadeIBGE[]>([])
+  const [carregandoEstados, setCarregandoEstados] = useState(false)
+  const [carregandoCidades, setCarregandoCidades] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [mensagem, setMensagem] = useState('')
 
-  useEffect(() => {
-    const parametros = new URLSearchParams(window.location.search)
-    const planoUrl = parametros.get('plano')
+  const slug = useMemo(() => criarSlug(nomeEmpresa || 'sua-empresa'), [nomeEmpresa])
+  const regraSenha = useMemo(() => senhaForte(senha), [senha])
+  const planoEscolhido = planos[plano]
 
-    if (planoUrl) {
-      setPlano(planoUrl)
+  useEffect(() => {
+    setPlano(normalizarPlano(searchParams.get('plano')))
+  }, [searchParams])
+
+  useEffect(() => {
+    async function carregarEstados() {
+      setCarregandoEstados(true)
+
+      try {
+        const resposta = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
+        const dados = await resposta.json()
+
+        setEstados(dados || [])
+      } catch {
+        setEstados([])
+      }
+
+      setCarregandoEstados(false)
     }
+
+    carregarEstados()
   }, [])
 
-  async function cadastrarEPagar(evento: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    async function carregarCidades() {
+      if (!estado) {
+        setCidades([])
+        setCidade('')
+        return
+      }
+
+      setCarregandoCidades(true)
+      setCidade('')
+
+      try {
+        const resposta = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios?orderBy=nome`)
+        const dados = await resposta.json()
+
+        setCidades(dados || [])
+      } catch {
+        setCidades([])
+      }
+
+      setCarregandoCidades(false)
+    }
+
+    carregarCidades()
+  }, [estado])
+
+  async function cadastrar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
 
     if (!nomeEmpresa.trim()) {
@@ -68,82 +157,73 @@ export default function CadastroPage() {
     }
 
     if (!email.trim()) {
-      alert('Informe seu e-mail.')
+      alert('Informe o email.')
       return
     }
 
-    if (!senha || senha.length < 6) {
-      alert('A senha precisa ter pelo menos 6 caracteres.')
+    if (!regraSenha.valida) {
+      alert('A senha precisa ter no minimo 8 caracteres, 1 letra maiuscula, letras e 1 caractere especial.')
+      return
+    }
+
+    if (!estado || !cidade) {
+      alert('Selecione estado e cidade.')
       return
     }
 
     setCarregando(true)
-    setMensagem('Criando conta e preparando pagamento...')
+    setMensagem('Criando sua conta e preparando o checkout...')
 
     try {
-      const slug = criarSlug(nomeEmpresa)
-
       const { data: cadastroData, error: cadastroError } =
         await supabase.auth.signUp({
           email: email.trim(),
           password: senha,
-          options: {
-            data: {
-              nome: nomeResponsavel.trim(),
-              empresa: nomeEmpresa.trim(),
-            },
-          },
         })
 
       if (cadastroError) {
-        alert(`Erro ao criar conta: ${cadastroError.message}`)
-        setMensagem(`Erro ao criar conta: ${cadastroError.message}`)
+        setMensagem(`Erro ao criar login: ${cadastroError.message}`)
         setCarregando(false)
         return
       }
 
-      const usuarioId = cadastroData.user?.id
+      const usuario = cadastroData.user
 
-      if (!usuarioId) {
-        alert('Conta criada, mas não consegui identificar o usuário.')
-        setMensagem('Conta criada, mas não consegui identificar o usuário.')
+      if (!usuario) {
+        setMensagem('Conta criada. Confirme seu email e faca login para continuar.')
         setCarregando(false)
         return
       }
+
+      const estadoNome = estados.find((item) => item.sigla === estado)?.nome || estado
 
       const { data: empresaData, error: empresaError } = await supabase
         .from('companies')
         .insert({
           nome: nomeEmpresa.trim(),
           slug,
-          owner_id: usuarioId,
           email: email.trim(),
-          segmento: segmento.trim(),
           telefone: telefone.trim(),
           whatsapp: telefone.trim(),
-          cidade: cidade.trim(),
-          estado: estado.trim(),
+          segmento: segmento.trim(),
+          cidade,
+          estado: estadoNome,
+          owner_id: usuario.id,
           plano,
-          ativo: false,
-          cor_principal: '#05245c',
-          aceita_pix: false,
-          aceita_cartao: false,
-          cobrar_sinal: false,
-          percentual_sinal: 0,
-          assinatura_status: 'pendente',
           assinatura_plano: plano,
+          assinatura_status: 'pendente',
+          ativo: false,
         })
         .select('id')
         .single()
 
-      if (empresaError || !empresaData) {
-        alert(`Erro ao cadastrar empresa: ${empresaError?.message}`)
-        setMensagem(`Erro ao cadastrar empresa: ${empresaError?.message}`)
+      if (empresaError) {
+        setMensagem(`Erro ao criar empresa: ${empresaError.message}`)
         setCarregando(false)
         return
       }
 
-      const checkoutResponse = await fetch('/api/checkout/plano', {
+      const respostaCheckout = await fetch('/api/checkout/plano', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,211 +236,328 @@ export default function CadastroPage() {
         }),
       })
 
-      const checkoutData = await checkoutResponse.json()
+      const checkoutData = await respostaCheckout.json()
 
-      if (!checkoutResponse.ok || !checkoutData.checkoutUrl) {
-        alert(checkoutData.error || 'Erro ao gerar pagamento.')
-        setMensagem(checkoutData.error || 'Erro ao gerar pagamento.')
+      if (!respostaCheckout.ok) {
+        setMensagem(checkoutData.error || 'Erro ao criar checkout.')
         setCarregando(false)
         return
       }
 
-      window.location.href = checkoutData.checkoutUrl
-    } catch (erro) {
-      const textoErro =
-        erro instanceof Error ? erro.message : 'Erro desconhecido ao cadastrar.'
+      const urlCheckout = checkoutData.init_point || checkoutData.sandbox_init_point || checkoutData.checkout_url
 
-      alert(`Erro: ${textoErro}`)
+      if (!urlCheckout) {
+        setMensagem('Checkout criado, mas nao recebi o link de pagamento.')
+        setCarregando(false)
+        return
+      }
+
+      window.location.href = urlCheckout
+    } catch (error) {
+      const textoErro =
+        error instanceof Error ? error.message : 'Erro desconhecido no cadastro.'
+
       setMensagem(`Erro: ${textoErro}`)
       setCarregando(false)
     }
   }
 
-  const planoAtual = planos.find((item) => item.id === plano) || planos[1]
-  const slugPreview = nomeEmpresa ? criarSlug(nomeEmpresa) : 'sua-empresa'
-
   return (
-    <main className="min-h-screen overflow-x-hidden bg-white pb-16 text-slate-950">
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute left-[-180px] top-[-180px] h-[420px] w-[420px] rounded-full bg-blue-100 blur-3xl" />
-        <div className="absolute right-[-180px] top-[20%] h-[360px] w-[360px] rounded-full bg-cyan-100 blur-3xl" />
-        <div className="absolute bottom-[-160px] left-[30%] h-[360px] w-[360px] rounded-full bg-emerald-100 blur-3xl" />
+    <main className="relative min-h-screen overflow-hidden bg-[#07142f] text-white">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-[-180px] top-[-180px] h-[460px] w-[460px] rounded-full bg-blue-500/30 blur-3xl" />
+        <div className="absolute right-[-180px] top-[140px] h-[380px] w-[380px] rounded-full bg-cyan-400/20 blur-3xl" />
+        <div className="absolute bottom-[-200px] left-[35%] h-[460px] w-[460px] rounded-full bg-orange-400/20 blur-3xl" />
       </div>
 
-      <section className="relative mx-auto w-full max-w-7xl px-4 py-5 sm:px-6">
-        <header className="flex flex-col gap-4 rounded-[2rem] border border-blue-50 bg-white/90 p-4 shadow-xl shadow-blue-950/5 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <img
-              src="/icone-orcaly.png"
-              alt="Orçaly"
-              className="h-12 w-12 rounded-2xl bg-blue-50 object-contain p-2"
-            />
-
+      <section className="relative mx-auto grid min-h-screen w-full max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[.92fr_1.08fr] lg:px-8">
+        <aside className="hidden lg:flex lg:flex-col lg:justify-between">
+          <Link href="/" className="inline-flex w-fit items-center">
             <img
               src="/logo-orcaly.png"
-              alt="Orçaly"
-              className="h-10 w-auto object-contain"
+              alt="Orcaly"
+              className="h-14 w-auto object-contain"
             />
           </Link>
 
-          <Link
-            href="/login"
-            className="rounded-2xl border border-blue-100 bg-white px-5 py-3 text-center text-sm font-black text-[#05245c] transition hover:bg-blue-50"
-          >
-            Já tenho conta
-          </Link>
-        </header>
-
-        {mensagem && (
-          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
-            {mensagem}
-          </div>
-        )}
-
-        <section className="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-          <aside className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5">
-            <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">
-              Comece agora
-            </p>
-
-            <h1 className="mt-3 text-4xl font-black leading-tight text-[#071b3a] sm:text-5xl">
-              Pague o plano e libere o acesso
-            </h1>
-
-            <p className="mt-4 text-lg leading-8 text-slate-600">
-              A conta é criada como pendente. O painel só é liberado depois que o pagamento do plano for aprovado.
-            </p>
-
-            <div className="mt-6 rounded-3xl border border-blue-100 bg-blue-50 p-5">
-              <p className="text-sm font-bold text-slate-500">
-                Plano selecionado
-              </p>
-
-              <h2 className="mt-1 text-2xl font-black text-[#071b3a]">
-                {planoAtual.nome}
-              </h2>
-
-              <p className="mt-1 text-3xl font-black text-[#05245c]">
-                {planoAtual.preco}
-              </p>
-
-              <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
-                {planoAtual.descricao}
-              </p>
+          <div className="max-w-xl py-10">
+            <div className="inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-bold text-blue-100 backdrop-blur">
+              Cadastro inteligente
             </div>
 
-            <div className="mt-5 grid gap-3">
-              {planos.map((item) => (
+            <h1 className="mt-6 text-5xl font-black leading-tight tracking-tight">
+              Sua empresa organizada antes do proximo cliente pedir preco.
+            </h1>
+
+            <p className="mt-5 text-lg leading-8 text-blue-100/80">
+              Quem responde rapido parece maior. Quem organiza clientes vende mais.
+              O Or&ccedil;aly entrega essa percepcao desde o primeiro contato.
+            </p>
+
+            <div className="mt-8 grid gap-4">
+              <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
+                <p className="font-black">Gatilho de urgencia</p>
+                <p className="mt-2 text-sm leading-6 text-blue-100/75">
+                  Cada pedido perdido no WhatsApp pode virar venda para outro concorrente.
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
+                <p className="font-black">Prova de controle</p>
+                <p className="mt-2 text-sm leading-6 text-blue-100/75">
+                  Produtos, or&ccedil;amentos, clientes e pagamentos em um so painel.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-sm font-medium text-blue-100/60">
+            Cadastro seguro com plano selecionado automaticamente.
+          </p>
+        </aside>
+
+        <div className="mx-auto flex w-full max-w-3xl items-center">
+          <form
+            onSubmit={cadastrar}
+            className="w-full rounded-[2rem] border border-white/15 bg-white p-5 text-slate-950 shadow-2xl shadow-black/30 sm:p-8"
+          >
+            <div className="mb-6 flex justify-center lg:hidden">
+              <Link href="/">
+                <img
+                  src="/logo-orcaly.png"
+                  alt="Orcaly"
+                  className="h-12 w-auto object-contain"
+                />
+              </Link>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-start">
+              <div>
+                <p className="text-sm font-black uppercase tracking-[0.22em] text-[#05245c]">
+                  Comece agora
+                </p>
+
+                <h2 className="mt-2 text-3xl font-black tracking-tight text-[#071b3a] sm:text-4xl">
+                  Criar conta da empresa
+                </h2>
+
+                <p className="mt-3 leading-7 text-slate-600">
+                  O plano escolhido na pagina principal ja veio selecionado aqui.
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-blue-100 bg-blue-50 p-4 md:min-w-56">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#05245c]">
+                  Plano escolhido
+                </p>
+                <p className="mt-2 text-2xl font-black text-[#071b3a]">
+                  {planoEscolhido.nome}
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-600">
+                  {formatarMoeda(planoEscolhido.preco)}/mes
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              {(Object.keys(planos) as PlanoId[]).map((item) => (
                 <button
-                  key={item.id}
+                  key={item}
                   type="button"
-                  onClick={() => setPlano(item.id)}
-                  className={`rounded-2xl border px-4 py-4 text-left transition ${
-                    plano === item.id
-                      ? 'border-blue-300 bg-blue-50'
-                      : 'border-blue-100 bg-white hover:bg-blue-50'
+                  onClick={() => setPlano(item)}
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    plano === item
+                      ? 'border-[#05245c] bg-[#05245c] text-white shadow-lg shadow-blue-950/20'
+                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-blue-50'
                   }`}
                 >
-                  <p className="font-black text-[#071b3a]">
-                    {item.nome} • {item.preco}
-                  </p>
-
-                  <p className="mt-1 text-sm font-medium text-slate-500">
-                    {item.descricao}
+                  <p className="font-black">{planos[item].nome}</p>
+                  <p className={`mt-1 text-sm font-bold ${plano === item ? 'text-blue-100' : 'text-slate-500'}`}>
+                    {formatarMoeda(planos[item].preco)}/mes
                   </p>
                 </button>
               ))}
             </div>
-          </aside>
 
-          <form
-            onSubmit={cadastrarEPagar}
-            className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-2xl shadow-blue-950/10"
-          >
-            <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">
-              Cadastro
-            </p>
-
-            <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
-              Dados da empresa
-            </h2>
-
-            <div className="mt-6 grid gap-4">
-              <input
-                value={nomeEmpresa}
-                onChange={(e) => setNomeEmpresa(e.target.value)}
-                placeholder="Nome da empresa"
-                className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-              />
-
-              <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4 text-sm font-bold text-[#05245c]">
-                Link público: /orcamento/{slugPreview}
+            {mensagem && (
+              <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
+                {mensagem}
               </div>
+            )}
 
-              <input
-                value={segmento}
-                onChange={(e) => setSegmento(e.target.value)}
-                placeholder="Segmento. Ex: gráfica, locadora, clínica..."
-                className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-              />
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <label className="grid gap-2 md:col-span-2">
+                <span className="text-sm font-black text-slate-700">
+                  Nome da empresa
+                </span>
 
-              <input
-                value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
-                placeholder="WhatsApp da empresa"
-                className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-              />
-
-              <div className="grid gap-4 sm:grid-cols-2">
                 <input
-                  value={cidade}
-                  onChange={(e) => setCidade(e.target.value)}
-                  placeholder="Cidade"
-                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
+                  value={nomeEmpresa}
+                  onChange={(evento) => setNomeEmpresa(evento.target.value)}
+                  placeholder="Ex: Grafica Flash"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
                 />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-black text-slate-700">
+                  Segmento
+                </span>
 
                 <input
+                  value={segmento}
+                  onChange={(evento) => setSegmento(evento.target.value)}
+                  placeholder="Ex: Grafica, loja, servicos"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-black text-slate-700">
+                  WhatsApp
+                </span>
+
+                <input
+                  value={telefone}
+                  onChange={(evento) => setTelefone(evento.target.value)}
+                  placeholder="(82) 99999-9999"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-black text-slate-700">
+                  Estado
+                </span>
+
+                <select
                   value={estado}
-                  onChange={(e) => setEstado(e.target.value)}
-                  placeholder="Estado"
-                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
+                  onChange={(evento) => setEstado(evento.target.value)}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                >
+                  <option value="">
+                    {carregandoEstados ? 'Carregando estados...' : 'Selecione o estado'}
+                  </option>
+
+                  {estados.map((item) => (
+                    <option key={item.id} value={item.sigla}>
+                      {item.nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-black text-slate-700">
+                  Cidade
+                </span>
+
+                <select
+                  value={cidade}
+                  onChange={(evento) => setCidade(evento.target.value)}
+                  disabled={!estado || carregandoCidades}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <option value="">
+                    {!estado
+                      ? 'Escolha o estado primeiro'
+                      : carregandoCidades
+                        ? 'Carregando cidades...'
+                        : 'Selecione a cidade'}
+                  </option>
+
+                  {cidades.map((item) => (
+                    <option key={item.id} value={item.nome}>
+                      {item.nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-black text-slate-700">
+                  Email
+                </span>
+
+                <input
+                  value={email}
+                  onChange={(evento) => setEmail(evento.target.value)}
+                  type="email"
+                  placeholder="voce@empresa.com"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
                 />
-              </div>
+              </label>
 
-              <input
-                value={nomeResponsavel}
-                onChange={(e) => setNomeResponsavel(e.target.value)}
-                placeholder="Nome do responsável"
-                className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-              />
+              <label className="grid gap-2">
+                <span className="text-sm font-black text-slate-700">
+                  Senha forte
+                </span>
 
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="E-mail de acesso"
-                type="email"
-                className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-              />
-
-              <input
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                placeholder="Senha de acesso"
-                type="password"
-                className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-              />
-
-              <button
-                type="submit"
-                disabled={carregando}
-                className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white shadow-lg shadow-blue-950/15 transition hover:-translate-y-1 hover:bg-[#031a43] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {carregando ? 'Gerando pagamento...' : 'Criar conta e pagar plano'}
-              </button>
+                <input
+                  value={senha}
+                  onChange={(evento) => setSenha(evento.target.value)}
+                  type="password"
+                  placeholder="Minimo 8 caracteres"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
             </div>
+
+            <div className="mt-5 grid gap-2 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-600 sm:grid-cols-2">
+              <p className={regraSenha.tamanho ? 'text-emerald-700' : ''}>âœ“ Minimo 8 caracteres</p>
+              <p className={regraSenha.maiuscula ? 'text-emerald-700' : ''}>âœ“ 1 letra maiuscula</p>
+              <p className={regraSenha.letra ? 'text-emerald-700' : ''}>âœ“ Letras</p>
+              <p className={regraSenha.especial ? 'text-emerald-700' : ''}>âœ“ 1 caractere especial</p>
+            </div>
+
+            <div className="mt-5 rounded-3xl border border-blue-100 bg-blue-50 p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#05245c]">
+                Link publico
+              </p>
+
+              <p className="mt-2 break-all text-2xl font-black text-[#071b3a]">
+                {slug || 'sua-empresa'}
+              </p>
+
+              <p className="mt-2 text-sm font-bold leading-6 text-slate-600">
+                Seu cliente vera um endereco limpo com o nome da empresa, sem mostrar /orcamento na tela de cadastro.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={carregando}
+              className="mt-6 w-full rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white shadow-lg shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-[#031a43] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {carregando ? 'Preparando pagamento...' : `Assinar plano ${planoEscolhido.nome}`}
+            </button>
+
+            <p className="mt-4 text-center text-sm font-medium leading-6 text-slate-400">
+              Ao continuar, voce cria a conta da empresa e segue para o pagamento seguro.
+            </p>
           </form>
-        </section>
+        </div>
       </section>
     </main>
+  )
+}
+export default function CadastroPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#07142f] px-4 text-white">
+          <div className="rounded-[2rem] border border-white/10 bg-white/10 p-8 text-center shadow-2xl shadow-black/20 backdrop-blur">
+            <p className="text-sm font-black uppercase tracking-[0.25em] text-blue-100">
+              OrÃ§aly
+            </p>
+            <h1 className="mt-3 text-3xl font-black">
+              Carregando cadastro...
+            </h1>
+          </div>
+        </main>
+      }
+    >
+      <CadastroPageContent />
+    </Suspense>
   )
 }
