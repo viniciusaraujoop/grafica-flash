@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 type Empresa = {
+  assinatura_status: string | null
+  assinatura_expira_em: string | null
+  assinatura_plano: string | null
   id: string
   nome: string
   slug: string
@@ -135,6 +138,14 @@ export default function PainelPage() {
     }
 
     setEmpresa(empresaData as Empresa)
+    const statusAssinatura = empresaData.assinatura_status
+    const expiraEm = empresaData.assinatura_expira_em
+    const assinaturaExpirada = expiraEm ? new Date(expiraEm) <= new Date() : false
+
+    if (statusAssinatura !== 'ativa' || assinaturaExpirada) {
+      router.push('/assinatura')
+      return
+    }
 
     const { data: pedidosData, error: pedidosError } = await supabase
       .from('orders')
