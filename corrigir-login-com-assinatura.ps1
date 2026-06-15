@@ -1,9 +1,23 @@
-﻿'use client'
+$ErrorActionPreference = "Stop"
+
+$project = "C:\Users\arauj\grafica-flash"
+
+if (!(Test-Path $project)) {
+  Write-Host "Projeto não encontrado em $project" -ForegroundColor Red
+  exit 1
+}
+
+Set-Location $project
+
+New-Item -ItemType Directory -Force "app\login" | Out-Null
+
+Set-Content -Path "app\login\page.tsx" -Encoding UTF8 -Value @'
+'use client'
 
 import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabase } from ' @/lib/supabase'
 
 type Empresa = {
   id: string
@@ -71,7 +85,7 @@ export default function LoginPage() {
       const usuario = loginData.user
 
       if (!usuario) {
-        const texto = 'Login feito, mas nÃ£o consegui identificar o usuÃ¡rio.'
+        const texto = 'Login feito, mas não consegui identificar o usuário.'
         setMensagem(texto)
         alert(texto)
         setCarregando(false)
@@ -127,13 +141,13 @@ export default function LoginPage() {
             <Link href="/" className="inline-flex items-center gap-3">
               <img
                 src="/icone-orcaly.png"
-                alt="OrÃ§aly"
+                alt="Orçaly"
                 className="h-12 w-12 rounded-2xl bg-blue-50 object-contain p-2"
               />
 
               <img
                 src="/logo-orcaly.png"
-                alt="OrÃ§aly"
+                alt="Orçaly"
                 className="h-10 w-auto object-contain"
               />
             </Link>
@@ -143,12 +157,12 @@ export default function LoginPage() {
             </p>
 
             <h1 className="mt-3 text-4xl font-black leading-tight text-[#071b3a] sm:text-5xl">
-              Entre para gerenciar pedidos, produtos e orÃ§amentos
+              Entre para gerenciar pedidos, produtos e orçamentos
             </h1>
 
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              O acesso ao painel sÃ³ Ã© liberado para empresas com assinatura ativa.
-              Se o pagamento estiver pendente, vocÃª serÃ¡ enviado para a tela de assinatura.
+              O acesso ao painel só é liberado para empresas com assinatura ativa.
+              Se o pagamento estiver pendente, você será enviado para a tela de assinatura.
             </p>
 
             <div className="mt-8 grid gap-3">
@@ -158,7 +172,7 @@ export default function LoginPage() {
                 </p>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Login sem pagamento aprovado nÃ£o libera o painel. Finalmente uma porta com fechadura.
+                  Login sem pagamento aprovado não libera o painel. Finalmente uma porta com fechadura.
                 </p>
               </div>
 
@@ -224,7 +238,7 @@ export default function LoginPage() {
 
             <div className="mt-6 rounded-3xl border border-blue-100 bg-blue-50 p-5 text-center">
               <p className="text-sm font-bold text-slate-600">
-                Ainda nÃ£o tem conta?
+                Ainda não tem conta?
               </p>
 
               <Link
@@ -241,3 +255,9 @@ export default function LoginPage() {
   )
 }
 
+'@
+
+Remove-Item -Recurse -Force ".next" -ErrorAction SilentlyContinue
+
+Write-Host "Login atualizado com verificação de assinatura." -ForegroundColor Green
+Write-Host "Agora rode: npm run build" -ForegroundColor Yellow
