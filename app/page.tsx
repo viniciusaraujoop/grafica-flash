@@ -488,7 +488,7 @@ export default function HomePage() {
                 </ul>
 
                 <Link
-                  href="/login"
+                  href={`/cadastro?plano=${plano.nome.toLowerCase()}`}
                   className={`relative z-10 mt-8 block rounded-2xl px-5 py-4 text-center font-black transition hover:-translate-y-1 ${
                     plano.destaque
                       ? 'bg-[#05245c] text-white hover:bg-[#031a43]'
@@ -496,7 +496,7 @@ export default function HomePage() {
                   }`}
                 >
                   Escolher plano
-                </Link>
+              </Link>
               </div>
             ))}
           </div>
@@ -520,7 +520,7 @@ export default function HomePage() {
             </p>
 
             <Link
-              href="/login"
+              href="/cadastro?plano=profissional"
               className="mt-8 inline-block rounded-2xl bg-[#05245c] px-7 py-4 font-black text-white transition hover:-translate-y-1 hover:bg-[#031a43]"
             >
               Começar agora

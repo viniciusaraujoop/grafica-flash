@@ -1,19 +1,128 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
-type Produto = {
+type Empresa = {
   id: string
   nome: string
-  preco: number
-  ativo: boolean
-  imagem_url: string | null
+  slug: string
 }
 
+type ItemCatalogo = {
+  id: string
+  nome: string
+  descricao: string | null
+  categoria: string | null
+  tipo: string | null
+  unidade: string | null
+  preco: number
+  ativo: boolean
+  destaque: boolean | null
+  imagem_url: string | null
+  company_id: string | null
+  created_at: string
+  precificacao: string | null
+  unidade_label: string | null
+  permite_largura: boolean | null
+  permite_altura: boolean | null
+  permite_comprimento: boolean | null
+  permite_quantidade: boolean | null
+  valor_minimo: number | null
+  cobrar_sinal_personalizado: boolean | null
+  percentual_sinal_produto: number | null
+}
+
+const tiposPrecificacao = [
+  {
+    id: 'unidade',
+    nome: 'Unidade',
+    descricao: 'Preço x quantidade.',
+    unidade: 'unidade',
+    largura: false,
+    altura: false,
+    comprimento: false,
+    quantidade: true,
+  },
+  {
+    id: 'metro_quadrado',
+    nome: 'Metro quadrado',
+    descricao: 'Largura x altura x preço x quantidade.',
+    unidade: 'm²',
+    largura: true,
+    altura: true,
+    comprimento: false,
+    quantidade: true,
+  },
+  {
+    id: 'metro_linear',
+    nome: 'Metro linear',
+    descricao: 'Comprimento x preço x quantidade.',
+    unidade: 'metro',
+    largura: false,
+    altura: false,
+    comprimento: true,
+    quantidade: true,
+  },
+  {
+    id: 'milheiro',
+    nome: 'Milheiro',
+    descricao: 'Quantidade / 1000 x preço do milheiro.',
+    unidade: 'milheiro',
+    largura: false,
+    altura: false,
+    comprimento: false,
+    quantidade: true,
+  },
+  {
+    id: 'hora',
+    nome: 'Hora',
+    descricao: 'Horas x preço.',
+    unidade: 'hora',
+    largura: false,
+    altura: false,
+    comprimento: false,
+    quantidade: true,
+  },
+  {
+    id: 'diaria',
+    nome: 'Diária',
+    descricao: 'Diárias x preço.',
+    unidade: 'diária',
+    largura: false,
+    altura: false,
+    comprimento: false,
+    quantidade: true,
+  },
+  {
+    id: 'mensalidade',
+    nome: 'Mensalidade',
+    descricao: 'Meses x preço.',
+    unidade: 'mês',
+    largura: false,
+    altura: false,
+    comprimento: false,
+    quantidade: true,
+  },
+  {
+    id: 'sob_consulta',
+    nome: 'Sob consulta',
+    descricao: 'Não calcula automático. O cliente envia o pedido para orçamento.',
+    unidade: 'orçamento',
+    largura: false,
+    altura: false,
+    comprimento: false,
+    quantidade: false,
+  },
+]
+
 function formatarDinheiro(valor: number) {
-  return Number(valor || 0).toFixed(2).replace('.', ',')
+  return valor.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  })
 }
 
 function limparNomeArquivo(nome: string) {
@@ -23,61 +132,102 @@ function limparNomeArquivo(nome: string) {
     .replace(/[^a-z0-9.-]/g, '')
 }
 
-function extrairCaminhoStorage(url: string | null) {
-  if (!url) return null
+function numeroDoCampo(valor: string) {
+  const numero = Number(valor.replace(',', '.'))
 
-  const marcador = '/produtos/'
-  const partes = url.split(marcador)
+  if (Number.isNaN(numero)) return 0
 
-  if (partes.length < 2) return null
+  return numero
+}
 
-  return decodeURIComponent(partes[1])
+function nomePrecificacao(id: string | null) {
+  return (
+    tiposPrecificacao.find((tipo) => tipo.id === id)?.nome ||
+    'Unidade'
+  )
 }
 
 export default function ProdutosPage() {
-  const [produtos, setProdutos] = useState<Produto[]>([])
+  const router = useRouter()
+
+  const [empresa, setEmpresa] = useState<Empresa | null>(null)
+  const [itens, setItens] = useState<ItemCatalogo[]>([])
+
   const [nome, setNome] = useState('')
+  const [descricao, setDescricao] = useState('')
+  const [categoria, setCategoria] = useState('')
+  const [tipo, setTipo] = useState('produto')
+  const [unidade, setUnidade] = useState('unidade')
   const [preco, setPreco] = useState('')
-  const [imagem, setImagem] = useState<File | null>(null)
-  const [previewImagem, setPreviewImagem] = useState('')
-  const [mensagem, setMensagem] = useState('')
+  const [destaque, setDestaque] = useState(false)
+  const [arquivoImagem, setArquivoImagem] = useState<File | null>(null)
+
+  const [precificacao, setPrecificacao] = useState('unidade')
+  const [unidadeLabel, setUnidadeLabel] = useState('unidade')
+  const [permiteLargura, setPermiteLargura] = useState(false)
+  const [permiteAltura, setPermiteAltura] = useState(false)
+  const [permiteComprimento, setPermiteComprimento] = useState(false)
+  const [permiteQuantidade, setPermiteQuantidade] = useState(true)
+  const [valorMinimo, setValorMinimo] = useState('')
+  const [cobrarSinalPersonalizado, setCobrarSinalPersonalizado] = useState(false)
+  const [percentualSinalProduto, setPercentualSinalProduto] = useState('')
+
+  const [editandoId, setEditandoId] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
-  const [produtoEnviandoImagem, setProdutoEnviandoImagem] = useState('')
+  const [mensagem, setMensagem] = useState('')
 
-  async function carregarProdutos() {
+  async function carregarDados() {
     setCarregando(true)
+    setMensagem('')
 
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('nome', { ascending: true })
+    const { data: sessaoData } = await supabase.auth.getSession()
+    const usuario = sessaoData.session?.user
 
-    if (error) {
-      setMensagem(`Erro ao carregar produtos: ${error.message}`)
+    if (!usuario) {
+      router.push('/login')
+      return
+    }
+
+    const { data: empresaData, error: empresaError } = await supabase
+      .from('companies')
+      .select('id, nome, slug')
+      .eq('owner_id', usuario.id)
+      .maybeSingle()
+
+    if (empresaError) {
+      setMensagem(`Erro ao buscar empresa: ${empresaError.message}`)
       setCarregando(false)
       return
     }
 
-    setProdutos(data || [])
-    setCarregando(false)
-  }
-
-  function selecionarImagemNova(arquivo: File | null) {
-    setImagem(arquivo)
-
-    if (!arquivo) {
-      setPreviewImagem('')
+    if (!empresaData) {
+      setMensagem('Nenhuma empresa vinculada a esta conta.')
+      setCarregando(false)
       return
     }
 
-    const urlTemporaria = URL.createObjectURL(arquivo)
-    setPreviewImagem(urlTemporaria)
+    setEmpresa(empresaData)
+
+    const { data: itensData, error: itensError } = await supabase
+      .from('products')
+      .select('*')
+      .eq('company_id', empresaData.id)
+      .order('created_at', { ascending: false })
+
+    if (itensError) {
+      setMensagem(`Erro ao carregar catálogo: ${itensError.message}`)
+      setCarregando(false)
+      return
+    }
+
+    setItens(itensData || [])
+    setCarregando(false)
   }
 
-  async function enviarImagemProduto(produtoId: string, arquivo: File) {
+  async function enviarImagem(companyId: string, arquivo: File) {
     const nomeArquivo = limparNomeArquivo(arquivo.name)
-    const caminho = `${produtoId}/${Date.now()}-${nomeArquivo}`
+    const caminho = `${companyId}/${Date.now()}-${nomeArquivo}`
 
     const { error } = await supabase.storage
       .from('produtos')
@@ -90,560 +240,744 @@ export default function ProdutosPage() {
       throw new Error(error.message)
     }
 
-    const { data } = supabase.storage
-      .from('produtos')
-      .getPublicUrl(caminho)
+    const { data } = supabase.storage.from('produtos').getPublicUrl(caminho)
 
     return data.publicUrl
   }
 
-  async function adicionarProduto(evento: React.FormEvent) {
+  function aplicarTipoPrecificacao(id: string) {
+    const tipoSelecionado = tiposPrecificacao.find((item) => item.id === id)
+
+    setPrecificacao(id)
+
+    if (!tipoSelecionado) return
+
+    setUnidadeLabel(tipoSelecionado.unidade)
+    setUnidade(tipoSelecionado.unidade)
+    setPermiteLargura(tipoSelecionado.largura)
+    setPermiteAltura(tipoSelecionado.altura)
+    setPermiteComprimento(tipoSelecionado.comprimento)
+    setPermiteQuantidade(tipoSelecionado.quantidade)
+  }
+
+  function limparFormulario() {
+    setNome('')
+    setDescricao('')
+    setCategoria('')
+    setTipo('produto')
+    setUnidade('unidade')
+    setPreco('')
+    setDestaque(false)
+    setArquivoImagem(null)
+
+    setPrecificacao('unidade')
+    setUnidadeLabel('unidade')
+    setPermiteLargura(false)
+    setPermiteAltura(false)
+    setPermiteComprimento(false)
+    setPermiteQuantidade(true)
+    setValorMinimo('')
+    setCobrarSinalPersonalizado(false)
+    setPercentualSinalProduto('')
+
+    setEditandoId(null)
+  }
+
+  function preencherEdicao(item: ItemCatalogo) {
+    setEditandoId(item.id)
+    setNome(item.nome || '')
+    setDescricao(item.descricao || '')
+    setCategoria(item.categoria || '')
+    setTipo(item.tipo || 'produto')
+    setUnidade(item.unidade || item.unidade_label || 'unidade')
+    setPreco(String(item.preco || ''))
+    setDestaque(Boolean(item.destaque))
+
+    setPrecificacao(item.precificacao || 'unidade')
+    setUnidadeLabel(item.unidade_label || item.unidade || 'unidade')
+    setPermiteLargura(Boolean(item.permite_largura))
+    setPermiteAltura(Boolean(item.permite_altura))
+    setPermiteComprimento(Boolean(item.permite_comprimento))
+    setPermiteQuantidade(item.permite_quantidade !== false)
+    setValorMinimo(String(item.valor_minimo || ''))
+    setCobrarSinalPersonalizado(Boolean(item.cobrar_sinal_personalizado))
+    setPercentualSinalProduto(String(item.percentual_sinal_produto || ''))
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    })
+  }
+
+  async function salvarItem(evento: React.FormEvent) {
     evento.preventDefault()
 
-    const precoNumero = Number(preco.replace(',', '.'))
+    if (!empresa) return
 
-    if (!nome || precoNumero <= 0) {
-      setMensagem('Preencha nome e preço corretamente.')
+    const precoNumero = numeroDoCampo(preco)
+    const valorMinimoNumero = numeroDoCampo(valorMinimo)
+    const percentualSinalNumero = numeroDoCampo(percentualSinalProduto)
+
+    if (!nome || !tipo || Number.isNaN(precoNumero)) {
+      setMensagem('Preencha nome, tipo e preço corretamente.')
+      return
+    }
+
+    if (cobrarSinalPersonalizado && (percentualSinalNumero <= 0 || percentualSinalNumero > 100)) {
+      setMensagem('O sinal do produto precisa ficar entre 1% e 100%.')
       return
     }
 
     setSalvando(true)
     setMensagem('')
 
-    const { data, error } = await supabase
-      .from('products')
-      .insert({
+    try {
+      let imagemUrl = ''
+
+      if (arquivoImagem) {
+        imagemUrl = await enviarImagem(empresa.id, arquivoImagem)
+      }
+
+      const dadosProduto = {
         nome,
+        descricao,
+        categoria,
+        tipo,
+        unidade: unidadeLabel || unidade,
+        unidade_label: unidadeLabel || unidade,
         preco: precoNumero,
-        ativo: true,
-        imagem_url: null,
-      })
-      .select()
-      .single()
+        destaque,
+        imagem_url: imagemUrl || undefined,
+        precificacao,
+        permite_largura: permiteLargura,
+        permite_altura: permiteAltura,
+        permite_comprimento: permiteComprimento,
+        permite_quantidade: permiteQuantidade,
+        valor_minimo: valorMinimoNumero,
+        cobrar_sinal_personalizado: cobrarSinalPersonalizado,
+        percentual_sinal_produto: cobrarSinalPersonalizado
+          ? percentualSinalNumero
+          : null,
+      }
 
-    if (error) {
-      setMensagem(`Erro ao cadastrar: ${error.message}`)
-      setSalvando(false)
-      return
-    }
+      if (editandoId) {
+        const itemAtual = itens.find((item) => item.id === editandoId)
 
-    if (imagem && data) {
-      try {
-        const imagemUrl = await enviarImagemProduto(data.id, imagem)
-
-        const { error: erroImagem } = await supabase
+        const { error } = await supabase
           .from('products')
-          .update({ imagem_url: imagemUrl })
-          .eq('id', data.id)
+          .update({
+            ...dadosProduto,
+            imagem_url: imagemUrl || itemAtual?.imagem_url || null,
+          })
+          .eq('id', editandoId)
+          .eq('company_id', empresa.id)
 
-        if (erroImagem) {
-          setMensagem(`Produto criado, mas erro na imagem: ${erroImagem.message}`)
+        if (error) {
+          setMensagem(`Erro ao atualizar item: ${error.message}`)
           setSalvando(false)
           return
         }
-      } catch (erro) {
-        const mensagemErro =
-          erro instanceof Error ? erro.message : 'Erro desconhecido ao enviar imagem.'
 
-        setMensagem(`Produto criado, mas erro na imagem: ${mensagemErro}`)
-        setSalvando(false)
-        carregarProdutos()
-        return
-      }
-    }
+        setMensagem('Item atualizado com sucesso.')
+      } else {
+        const { error } = await supabase.from('products').insert({
+          company_id: empresa.id,
+          ...dadosProduto,
+          imagem_url: imagemUrl || null,
+          ativo: true,
+        })
 
-    setNome('')
-    setPreco('')
-    setImagem(null)
-    setPreviewImagem('')
-    setMensagem('Produto cadastrado com sucesso.')
-    setSalvando(false)
-    carregarProdutos()
-  }
+        if (error) {
+          setMensagem(`Erro ao cadastrar item: ${error.message}`)
+          setSalvando(false)
+          return
+        }
 
-  async function editarProduto(produto: Produto) {
-    const novoNome = prompt('Novo nome do produto:', produto.nome)
-
-    if (!novoNome) return
-
-    const novoPreco = prompt('Novo preço por m²:', String(produto.preco))
-
-    if (!novoPreco) return
-
-    const precoNumero = Number(novoPreco.replace(',', '.'))
-
-    if (precoNumero <= 0) {
-      alert('Preço inválido.')
-      return
-    }
-
-    const { error } = await supabase
-      .from('products')
-      .update({
-        nome: novoNome,
-        preco: precoNumero,
-      })
-      .eq('id', produto.id)
-
-    if (error) {
-      setMensagem(`Erro ao editar: ${error.message}`)
-      return
-    }
-
-    setMensagem('Produto atualizado com sucesso.')
-    carregarProdutos()
-  }
-
-  async function trocarImagemProduto(produto: Produto, arquivo: File | null) {
-    if (!arquivo) return
-
-    setProdutoEnviandoImagem(produto.id)
-    setMensagem('')
-
-    try {
-      const imagemAntiga = extrairCaminhoStorage(produto.imagem_url)
-
-      if (imagemAntiga) {
-        await supabase.storage.from('produtos').remove([imagemAntiga])
+        setMensagem('Item cadastrado com sucesso.')
       }
 
-      const imagemUrl = await enviarImagemProduto(produto.id, arquivo)
-
-      const { error } = await supabase
-        .from('products')
-        .update({ imagem_url: imagemUrl })
-        .eq('id', produto.id)
-
-      if (error) {
-        setMensagem(`Erro ao salvar imagem: ${error.message}`)
-        setProdutoEnviandoImagem('')
-        return
-      }
-
-      setMensagem('Imagem atualizada com sucesso.')
-      setProdutoEnviandoImagem('')
-      carregarProdutos()
+      limparFormulario()
+      await carregarDados()
     } catch (erro) {
-      const mensagemErro =
-        erro instanceof Error ? erro.message : 'Erro desconhecido ao trocar imagem.'
+      const textoErro =
+        erro instanceof Error ? erro.message : 'Erro desconhecido.'
 
-      setMensagem(`Erro ao trocar imagem: ${mensagemErro}`)
-      setProdutoEnviandoImagem('')
+      setMensagem(`Erro: ${textoErro}`)
     }
+
+    setSalvando(false)
   }
 
-  async function removerImagemProduto(produto: Produto) {
-    const confirmar = confirm('Remover a imagem deste produto?')
-
-    if (!confirmar) return
-
-    const caminhoImagem = extrairCaminhoStorage(produto.imagem_url)
-
-    if (caminhoImagem) {
-      await supabase.storage.from('produtos').remove([caminhoImagem])
-    }
+  async function alternarAtivo(item: ItemCatalogo) {
+    if (!empresa) return
 
     const { error } = await supabase
       .from('products')
-      .update({ imagem_url: null })
-      .eq('id', produto.id)
-
-    if (error) {
-      setMensagem(`Erro ao remover imagem: ${error.message}`)
-      return
-    }
-
-    setMensagem('Imagem removida com sucesso.')
-    carregarProdutos()
-  }
-
-  async function alternarAtivo(id: string, ativoAtual: boolean) {
-    const { error } = await supabase
-      .from('products')
-      .update({ ativo: !ativoAtual })
-      .eq('id', id)
+      .update({ ativo: !item.ativo })
+      .eq('id', item.id)
+      .eq('company_id', empresa.id)
 
     if (error) {
       setMensagem(`Erro ao alterar status: ${error.message}`)
       return
     }
 
-    carregarProdutos()
+    setItens((listaAtual) =>
+      listaAtual.map((produto) =>
+        produto.id === item.id ? { ...produto, ativo: !produto.ativo } : produto
+      )
+    )
   }
 
-  async function excluirProduto(produto: Produto) {
-    const confirmar = confirm('Tem certeza que deseja excluir este produto?')
+  async function excluirItem(itemId: string) {
+    if (!empresa) return
+
+    const confirmar = confirm('Deseja excluir este item do catálogo?')
 
     if (!confirmar) return
-
-    const caminhoImagem = extrairCaminhoStorage(produto.imagem_url)
-
-    if (caminhoImagem) {
-      await supabase.storage.from('produtos').remove([caminhoImagem])
-    }
 
     const { error } = await supabase
       .from('products')
       .delete()
-      .eq('id', produto.id)
+      .eq('id', itemId)
+      .eq('company_id', empresa.id)
 
     if (error) {
-      setMensagem(`Erro ao excluir: ${error.message}`)
+      setMensagem(`Erro ao excluir item: ${error.message}`)
       return
     }
 
-    setMensagem('Produto excluído com sucesso.')
-    carregarProdutos()
+    setItens((listaAtual) => listaAtual.filter((item) => item.id !== itemId))
+    setMensagem('Item excluído com sucesso.')
   }
 
   useEffect(() => {
-    carregarProdutos()
+    carregarDados()
   }, [])
 
+  const itensAtivos = itens.filter((item) => item.ativo).length
+  const servicos = itens.filter((item) => item.tipo === 'servico').length
+  const itensMetragem = itens.filter((item) =>
+    ['metro_quadrado', 'metro_linear'].includes(item.precificacao || '')
+  ).length
+
+  if (carregando) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-white px-4">
+        <div className="rounded-[2rem] border border-blue-50 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
+          <img
+            src="/logo-orcaly.png"
+            alt="Orçaly"
+            className="mx-auto mb-6 h-14 w-auto object-contain"
+          />
+
+          <p className="font-bold text-slate-500">
+            Carregando catálogo...
+          </p>
+        </div>
+      </main>
+    )
+  }
+
   return (
-    <main className="min-h-screen overflow-hidden bg-neutral-950 px-4 py-8 text-white">
-      <style>
-        {`
-          @keyframes fadeUp {
-            from {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-
-          @keyframes floatSoft {
-            0%, 100% {
-              transform: translateY(0);
-            }
-            50% {
-              transform: translateY(-8px);
-            }
-          }
-
-          @keyframes shine {
-            0% {
-              transform: translateX(-120%);
-            }
-            100% {
-              transform: translateX(120%);
-            }
-          }
-
-          .fade-up {
-            animation: fadeUp .6s ease-out both;
-          }
-
-          .fade-up-delay {
-            animation: fadeUp .8s ease-out .12s both;
-          }
-
-          .float-soft {
-            animation: floatSoft 4s ease-in-out infinite;
-          }
-
-          .card-shine {
-            position: relative;
-            overflow: hidden;
-          }
-
-          .card-shine::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            width: 45%;
-            background: linear-gradient(
-              90deg,
-              transparent,
-              rgba(255,255,255,.10),
-              transparent
-            );
-            transform: translateX(-120%);
-            animation: shine 5s ease-in-out infinite;
-          }
-
-          .touch-button {
-            transition:
-              transform .2s ease,
-              background-color .2s ease,
-              border-color .2s ease,
-              box-shadow .2s ease;
-          }
-
-          .touch-button:hover {
-            transform: translateY(-3px);
-          }
-
-          .touch-button:active {
-            transform: scale(.97);
-          }
-
-          @media (prefers-reduced-motion: reduce) {
-            .fade-up,
-            .fade-up-delay,
-            .float-soft,
-            .card-shine::after {
-              animation: none !important;
-            }
-
-            .touch-button {
-              transition: none !important;
-            }
-          }
-        `}
-      </style>
-
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute left-[-120px] top-[-120px] h-96 w-96 rounded-full bg-orange-500/20 blur-3xl" />
-        <div className="absolute bottom-[-140px] right-[-120px] h-96 w-96 rounded-full bg-green-500/10 blur-3xl" />
-        <div className="absolute left-[45%] top-[25%] h-72 w-72 rounded-full bg-white/5 blur-3xl" />
+    <main className="min-h-screen overflow-x-hidden bg-white pb-24 text-slate-950">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute left-[-180px] top-[-180px] h-[420px] w-[420px] rounded-full bg-blue-100 blur-3xl" />
+        <div className="absolute right-[-180px] top-[20%] h-[360px] w-[360px] rounded-full bg-cyan-100 blur-3xl" />
+        <div className="absolute bottom-[-160px] left-[30%] h-[360px] w-[360px] rounded-full bg-emerald-100 blur-3xl" />
       </div>
 
-      <section className="relative mx-auto max-w-7xl">
-        <div className="fade-up mb-8 rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 shadow-2xl backdrop-blur-xl md:p-7">
-          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-orange-400/30 bg-orange-400/10 px-4 py-2">
-                <span className="h-2 w-2 rounded-full bg-green-400" />
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-300">
-                  Catálogo da gráfica
-                </p>
-              </div>
+      <section className="relative mx-auto w-full max-w-7xl px-4 py-5 sm:px-6">
+        <header className="sticky top-4 z-30 flex flex-col gap-4 rounded-[2rem] border border-blue-50 bg-white/90 p-4 shadow-xl shadow-blue-950/5 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-4">
+            <img
+              src="/icone-orcaly.png"
+              alt="Orçaly"
+              className="h-14 w-14 rounded-2xl bg-blue-50 object-contain p-2"
+            />
 
-              <h1 className="mt-4 text-3xl font-black tracking-tight md:text-5xl">
-                Produtos e preços
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-[#05245c]">
+                Catálogo
+              </p>
+
+              <h1 className="mt-1 text-2xl font-black text-[#071b3a]">
+                Produtos e serviços
               </h1>
 
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-neutral-300 md:text-base">
-                Cadastre produtos, defina preços por metro quadrado e gerencie
-                imagens como um catálogo profissional para seus clientes.
+              <p className="mt-1 text-sm font-medium text-slate-500">
+                {empresa?.nome || 'Empresa'} • Preço por unidade, metragem, milheiro, hora ou diária.
               </p>
             </div>
+          </div>
 
+          <nav className="grid gap-2 sm:grid-cols-3 lg:flex">
             <Link
               href="/painel"
-              className="touch-button rounded-2xl border border-white/10 px-5 py-3 text-center font-bold text-neutral-200 hover:bg-white/10"
+              className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center text-sm font-black text-[#05245c] transition hover:bg-blue-50"
             >
-              Voltar ao painel
+              Painel
             </Link>
-          </div>
-        </div>
 
-        <form
-          onSubmit={adicionarProduto}
-          className="fade-up-delay mb-8 grid gap-5 rounded-[2rem] border border-white/10 bg-neutral-900/80 p-5 shadow-2xl backdrop-blur-xl lg:grid-cols-[1fr_180px_260px_160px]"
-        >
-          <div>
-            <label className="mb-2 block text-sm font-bold text-neutral-300">
-              Nome do produto
-            </label>
+            <Link
+              href="/painel/configuracoes"
+              className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center text-sm font-black text-[#05245c] transition hover:bg-blue-50"
+            >
+              Configurações
+            </Link>
 
-            <input
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex: Banner em lona"
-              className="w-full rounded-2xl border border-white/10 bg-neutral-800 px-4 py-4 outline-none transition focus:border-orange-400"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-bold text-neutral-300">
-              Preço por m²
-            </label>
-
-            <input
-              value={preco}
-              onChange={(e) => setPreco(e.target.value)}
-              placeholder="Ex: 60"
-              className="w-full rounded-2xl border border-white/10 bg-neutral-800 px-4 py-4 outline-none transition focus:border-orange-400"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-bold text-neutral-300">
-              Imagem do produto
-            </label>
-
-            <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-dashed border-white/20 bg-neutral-800 px-4 py-4 text-sm text-neutral-300 transition hover:border-orange-400 hover:bg-neutral-800/70">
-              <span className="truncate">
-                {imagem ? imagem.name : 'Selecionar imagem'}
-              </span>
-
-              <span className="rounded-xl bg-white/10 px-3 py-1 text-xs font-bold">
-                Upload
-              </span>
-
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => selecionarImagemNova(e.target.files?.[0] || null)}
-                className="hidden"
-              />
-            </label>
-          </div>
-
-          <button
-            disabled={salvando}
-            className="touch-button self-end rounded-2xl bg-orange-400 px-5 py-4 font-black text-neutral-950 shadow-lg shadow-orange-500/20 hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {salvando ? 'Salvando...' : 'Adicionar'}
-          </button>
-
-          {previewImagem && (
-            <div className="lg:col-span-4">
-              <div className="overflow-hidden rounded-3xl border border-white/10 bg-neutral-950 p-3">
-                <p className="mb-3 text-sm font-bold text-neutral-300">
-                  Prévia da imagem
-                </p>
-
-                <img
-                  src={previewImagem}
-                  alt="Prévia do produto"
-                  className="h-48 w-full rounded-2xl object-cover"
-                />
-              </div>
-            </div>
-          )}
-        </form>
+            <a
+              href={empresa ? `/orcamento/${empresa.slug}` : '#'}
+              target="_blank"
+              className="rounded-2xl bg-[#05245c] px-4 py-3 text-center text-sm font-black text-white transition hover:bg-[#031a43]"
+            >
+              Ver página
+            </a>
+          </nav>
+        </header>
 
         {mensagem && (
-          <div className="fade-up mb-6 rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-sm font-bold text-neutral-200 backdrop-blur">
+          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
             {mensagem}
           </div>
         )}
 
-        {carregando ? (
-          <div className="rounded-[2rem] border border-white/10 bg-neutral-900 p-8 text-center text-neutral-400">
-            Carregando produtos...
+        <section className="mt-6 grid gap-4 sm:grid-cols-4">
+          <div className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5">
+            <p className="text-sm font-bold text-slate-500">
+              Itens cadastrados
+            </p>
+
+            <p className="mt-3 text-4xl font-black text-[#071b3a]">
+              {itens.length}
+            </p>
           </div>
-        ) : produtos.length === 0 ? (
-          <div className="rounded-[2rem] border border-white/10 bg-neutral-900 p-8 text-center text-neutral-400">
-            Nenhum produto cadastrado ainda.
+
+          <div className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5">
+            <p className="text-sm font-bold text-slate-500">
+              Ativos
+            </p>
+
+            <p className="mt-3 text-4xl font-black text-emerald-700">
+              {itensAtivos}
+            </p>
           </div>
-        ) : (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {produtos.map((produto, index) => (
-              <div
-                key={produto.id}
-                className="fade-up card-shine group overflow-hidden rounded-[2rem] border border-white/10 bg-neutral-900 shadow-2xl transition hover:-translate-y-2 hover:border-orange-400/50 hover:shadow-orange-500/10"
-                style={{ animationDelay: `${index * 60}ms` }}
+
+          <div className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5">
+            <p className="text-sm font-bold text-slate-500">
+              Serviços
+            </p>
+
+            <p className="mt-3 text-4xl font-black text-[#05245c]">
+              {servicos}
+            </p>
+          </div>
+
+          <div className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5">
+            <p className="text-sm font-bold text-slate-500">
+              Por metragem
+            </p>
+
+            <p className="mt-3 text-4xl font-black text-[#05245c]">
+              {itensMetragem}
+            </p>
+          </div>
+        </section>
+
+        <section className="mt-6 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+          <form
+            onSubmit={salvarItem}
+            className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5"
+          >
+            <div className="mb-6">
+              <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">
+                {editandoId ? 'Editar item' : 'Novo item'}
+              </p>
+
+              <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
+                Configurar cobrança
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-500">
+                Aqui você decide se o cliente compra por unidade, metragem, milheiro, hora, diária ou orçamento.
+              </p>
+            </div>
+
+            <div className="grid gap-4">
+              <input
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                placeholder="Nome do produto ou serviço"
+                className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
+              />
+
+              <textarea
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                placeholder="Descrição curta para o cliente entender o que está contratando"
+                rows={4}
+                className="resize-none rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
+              />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <input
+                  value={categoria}
+                  onChange={(e) => setCategoria(e.target.value)}
+                  placeholder="Categoria. Ex: impressão, manutenção, aluguel"
+                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
+                />
+
+                <select
+                  value={tipo}
+                  onChange={(e) => setTipo(e.target.value)}
+                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-bold text-[#071b3a] outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
+                >
+                  <option value="produto">Produto</option>
+                  <option value="servico">Serviço</option>
+                  <option value="locacao">Locação</option>
+                  <option value="assinatura">Assinatura</option>
+                </select>
+              </div>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-black text-[#071b3a]">
+                  Tipo de precificação
+                </span>
+
+                <select
+                  value={precificacao}
+                  onChange={(e) => aplicarTipoPrecificacao(e.target.value)}
+                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-bold text-[#071b3a] outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
+                >
+                  {tiposPrecificacao.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.nome}
+                    </option>
+                  ))}
+                </select>
+
+                <span className="rounded-2xl bg-blue-50 px-4 py-3 text-sm font-bold text-[#05245c]">
+                  {tiposPrecificacao.find((item) => item.id === precificacao)?.descricao}
+                </span>
+              </label>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <input
+                  value={preco}
+                  onChange={(e) => setPreco(e.target.value)}
+                  placeholder="Preço base. Ex: 197"
+                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
+                />
+
+                <input
+                  value={unidadeLabel}
+                  onChange={(e) => {
+                    setUnidadeLabel(e.target.value)
+                    setUnidade(e.target.value)
+                  }}
+                  placeholder="Nome da unidade. Ex: m², milheiro, hora"
+                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
+                />
+              </div>
+
+              <input
+                value={valorMinimo}
+                onChange={(e) => setValorMinimo(e.target.value)}
+                placeholder="Valor mínimo. Ex: 50"
+                className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
+              />
+
+              <div className="grid gap-3 rounded-3xl border border-blue-100 bg-blue-50 p-4">
+                <p className="font-black text-[#071b3a]">
+                  Campos que o cliente deverá preencher
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => setPermiteQuantidade(!permiteQuantidade)}
+                  className={`rounded-2xl px-4 py-3 text-left font-black ${
+                    permiteQuantidade
+                      ? 'bg-white text-[#05245c]'
+                      : 'bg-blue-100 text-slate-500'
+                  }`}
+                >
+                  Quantidade
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPermiteLargura(!permiteLargura)}
+                  className={`rounded-2xl px-4 py-3 text-left font-black ${
+                    permiteLargura
+                      ? 'bg-white text-[#05245c]'
+                      : 'bg-blue-100 text-slate-500'
+                  }`}
+                >
+                  Largura
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPermiteAltura(!permiteAltura)}
+                  className={`rounded-2xl px-4 py-3 text-left font-black ${
+                    permiteAltura
+                      ? 'bg-white text-[#05245c]'
+                      : 'bg-blue-100 text-slate-500'
+                  }`}
+                >
+                  Altura
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPermiteComprimento(!permiteComprimento)}
+                  className={`rounded-2xl px-4 py-3 text-left font-black ${
+                    permiteComprimento
+                      ? 'bg-white text-[#05245c]'
+                      : 'bg-blue-100 text-slate-500'
+                  }`}
+                >
+                  Comprimento
+                </button>
+              </div>
+
+              <div className="grid gap-3 rounded-3xl border border-emerald-100 bg-emerald-50 p-4">
+                <button
+                  type="button"
+                  onClick={() => setCobrarSinalPersonalizado(!cobrarSinalPersonalizado)}
+                  className={`rounded-2xl px-4 py-4 text-left font-black ${
+                    cobrarSinalPersonalizado
+                      ? 'bg-white text-emerald-700'
+                      : 'bg-emerald-100 text-emerald-700'
+                  }`}
+                >
+                  {cobrarSinalPersonalizado
+                    ? 'Este item tem sinal próprio'
+                    : 'Usar sinal padrão da empresa'}
+                </button>
+
+                {cobrarSinalPersonalizado && (
+                  <input
+                    value={percentualSinalProduto}
+                    onChange={(e) => setPercentualSinalProduto(e.target.value)}
+                    placeholder="Percentual do sinal. Ex: 50"
+                    className="rounded-2xl border border-emerald-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                  />
+                )}
+              </div>
+
+              <label className="grid cursor-pointer gap-2">
+                <span className="text-sm font-black text-[#071b3a]">
+                  Imagem
+                </span>
+
+                <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50 px-4 py-5 text-sm font-bold text-[#05245c] transition hover:bg-blue-100">
+                  {arquivoImagem
+                    ? arquivoImagem.name
+                    : 'Clique para enviar imagem do item'}
+                </div>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setArquivoImagem(e.target.files?.[0] || null)}
+                  className="hidden"
+                />
+              </label>
+
+              <button
+                type="button"
+                onClick={() => setDestaque(!destaque)}
+                className={`rounded-2xl px-4 py-4 text-left font-black transition ${
+                  destaque
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-slate-100 text-slate-600'
+                }`}
               >
-                <div className="relative h-56 overflow-hidden bg-neutral-800">
-                  {produto.imagem_url ? (
-                    <img
-                      src={produto.imagem_url}
-                      alt={produto.nome}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-neutral-800 to-neutral-950 p-6 text-center">
-                      <div className="float-soft mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-orange-400/15 text-3xl">
-                        🖼️
+                {destaque ? 'Item em destaque' : 'Marcar como destaque'}
+              </button>
+
+              <button
+                disabled={salvando}
+                className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white shadow-lg shadow-blue-950/15 transition hover:-translate-y-1 hover:bg-[#031a43] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {salvando
+                  ? 'Salvando...'
+                  : editandoId
+                    ? 'Salvar alterações'
+                    : 'Cadastrar item'}
+              </button>
+
+              {editandoId && (
+                <button
+                  type="button"
+                  onClick={limparFormulario}
+                  className="rounded-2xl border border-blue-100 bg-white px-5 py-4 font-black text-[#05245c] transition hover:bg-blue-50"
+                >
+                  Cancelar edição
+                </button>
+              )}
+            </div>
+          </form>
+
+          <section className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5">
+            <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">
+                  Catálogo
+                </p>
+
+                <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
+                  Itens cadastrados
+                </h2>
+              </div>
+
+              <button
+                onClick={carregarDados}
+                className="rounded-2xl border border-blue-100 bg-white px-5 py-3 font-black text-[#05245c] transition hover:bg-blue-50"
+              >
+                Atualizar
+              </button>
+            </div>
+
+            {itens.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-blue-100 bg-[#f7fbff] p-8 text-center">
+                <h3 className="text-2xl font-black text-[#071b3a]">
+                  Nenhum item cadastrado
+                </h3>
+
+                <p className="mt-2 text-slate-600">
+                  Cadastre produtos, serviços, locações ou assinaturas para exibir na página da empresa.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {itens.map((item) => (
+                  <article
+                    key={item.id}
+                    className="rounded-3xl border border-blue-50 bg-[#f7fbff] p-4"
+                  >
+                    <div className="grid gap-4 md:grid-cols-[120px_1fr]">
+                      <div className="h-32 overflow-hidden rounded-2xl bg-white">
+                        {item.imagem_url ? (
+                          <img
+                            src={item.imagem_url}
+                            alt={item.nome}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="grid h-full place-items-center text-4xl">
+                            🧩
+                          </div>
+                        )}
                       </div>
 
-                      <p className="font-black text-neutral-200">
-                        Sem imagem
-                      </p>
+                      <div>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#05245c]">
+                                {item.tipo || 'produto'}
+                              </span>
 
-                      <p className="mt-2 text-sm text-neutral-500">
-                        Adicione uma imagem para deixar o catálogo mais atrativo.
-                      </p>
+                              <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-700">
+                                {nomePrecificacao(item.precificacao)}
+                              </span>
+
+                              {item.destaque && (
+                                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
+                                  Destaque
+                                </span>
+                              )}
+
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-black ${
+                                  item.ativo
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-red-100 text-red-700'
+                                }`}
+                              >
+                                {item.ativo ? 'Ativo' : 'Inativo'}
+                              </span>
+                            </div>
+
+                            <h3 className="mt-3 text-xl font-black text-[#071b3a]">
+                              {item.nome}
+                            </h3>
+
+                            <p className="mt-1 text-sm font-bold text-slate-500">
+                              {item.categoria || 'Sem categoria'}
+                            </p>
+                          </div>
+
+                          <p className="text-2xl font-black text-[#05245c]">
+                            {item.precificacao === 'sob_consulta'
+                              ? 'Sob consulta'
+                              : formatarDinheiro(Number(item.preco || 0))}
+                          </p>
+                        </div>
+
+                        {item.descricao && (
+                          <p className="mt-3 text-sm leading-6 text-slate-600">
+                            {item.descricao}
+                          </p>
+                        )}
+
+                        <div className="mt-3 grid gap-2 rounded-2xl bg-white p-4 text-sm font-bold text-slate-600 sm:grid-cols-2">
+                          <p>
+                            Unidade: {item.unidade_label || item.unidade || 'unidade'}
+                          </p>
+
+                          <p>
+                            Valor mínimo: {formatarDinheiro(Number(item.valor_minimo || 0))}
+                          </p>
+
+                          <p>
+                            Campos: {[
+                              item.permite_quantidade !== false ? 'quantidade' : '',
+                              item.permite_largura ? 'largura' : '',
+                              item.permite_altura ? 'altura' : '',
+                              item.permite_comprimento ? 'comprimento' : '',
+                            ].filter(Boolean).join(', ') || 'sem campos'}
+                          </p>
+
+                          <p>
+                            Sinal: {item.cobrar_sinal_personalizado
+                              ? `${item.percentual_sinal_produto || 0}%`
+                              : 'padrão da empresa'}
+                          </p>
+                        </div>
+
+                        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                          <button
+                            onClick={() => preencherEdicao(item)}
+                            className="rounded-2xl border border-blue-100 bg-white px-4 py-3 font-black text-[#05245c] transition hover:bg-blue-50"
+                          >
+                            Editar
+                          </button>
+
+                          <button
+                            onClick={() => alternarAtivo(item)}
+                            className="rounded-2xl border border-blue-100 bg-white px-4 py-3 font-black text-[#05245c] transition hover:bg-blue-50"
+                          >
+                            {item.ativo ? 'Desativar' : 'Ativar'}
+                          </button>
+
+                          <button
+                            onClick={() => excluirItem(item.id)}
+                            className="rounded-2xl bg-red-50 px-4 py-3 font-black text-red-700 transition hover:bg-red-100"
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  )}
-
-                  <div className="absolute left-4 top-4">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-black ${
-                        produto.ativo
-                          ? 'bg-green-500 text-white'
-                          : 'bg-neutral-700 text-neutral-300'
-                      }`}
-                    >
-                      {produto.ativo ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </div>
-
-                  <div className="absolute bottom-4 right-4 rounded-2xl bg-neutral-950/90 px-4 py-2 backdrop-blur">
-                    <p className="text-sm font-black text-orange-300">
-                      R$ {formatarDinheiro(produto.preco)}/m²
-                    </p>
-                  </div>
-                </div>
-
-                <div className="relative p-5">
-                  <h2 className="text-2xl font-black tracking-tight">
-                    {produto.nome}
-                  </h2>
-
-                  <p className="mt-2 text-sm leading-6 text-neutral-400">
-                    Produto disponível no catálogo da gráfica para orçamento rápido.
-                  </p>
-
-                  <div className="mt-5 grid gap-3">
-                    <label className="touch-button cursor-pointer rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-black text-white hover:bg-white/10">
-                      {produtoEnviandoImagem === produto.id
-                        ? 'Enviando imagem...'
-                        : produto.imagem_url
-                          ? 'Trocar imagem'
-                          : 'Adicionar imagem'}
-
-                      <input
-                        type="file"
-                        accept="image/*"
-                        disabled={produtoEnviandoImagem === produto.id}
-                        onChange={(e) =>
-                          trocarImagemProduto(
-                            produto,
-                            e.target.files?.[0] || null
-                          )
-                        }
-                        className="hidden"
-                      />
-                    </label>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={() => editarProduto(produto)}
-                        className="touch-button rounded-2xl bg-neutral-800 px-4 py-3 text-sm font-bold hover:bg-neutral-700"
-                      >
-                        Editar
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          alternarAtivo(produto.id, produto.ativo)
-                        }
-                        className="touch-button rounded-2xl border border-white/10 px-4 py-3 text-sm font-bold hover:bg-white/10"
-                      >
-                        {produto.ativo ? 'Desativar' : 'Ativar'}
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={() => removerImagemProduto(produto)}
-                        disabled={!produto.imagem_url}
-                        className="touch-button rounded-2xl border border-white/10 px-4 py-3 text-sm font-bold text-neutral-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        Remover imagem
-                      </button>
-
-                      <button
-                        onClick={() => excluirProduto(produto)}
-                        className="touch-button rounded-2xl bg-red-500 px-4 py-3 text-sm font-bold text-white hover:bg-red-600"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  </article>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
+          </section>
+        </section>
       </section>
     </main>
   )

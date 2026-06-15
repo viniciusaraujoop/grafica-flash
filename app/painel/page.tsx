@@ -1,49 +1,147 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+
+type Empresa = {
+  id: string
+  nome: string
+  slug: string
+  logo_url: string | null
+  whatsapp: string | null
+  cor_principal: string | null
+  plano: string | null
+  ativo: boolean
+  segmento: string | null
+  cidade: string | null
+  estado: string | null
+}
 
 type Pedido = {
   id: string
   nome: string
   telefone: string
   produto: string
-  largura: number
-  altura: number
-  quantidade: number
+  largura: number | null
+  altura: number | null
+  quantidade: number | null
   observacoes: string | null
-  status: string
-  preco_estimado: number
+  status: string | null
+  preco_estimado: number | null
   arquivo_url: string | null
+  created_at: string
 }
 
-const statusOptions = [
+type Produto = {
+  id: string
+  nome: string
+  preco: number
+  ativo: boolean
+}
+
+const statusDisponiveis = [
   'Recebido',
-  'Pendente',
   'Em análise',
   'Em produção',
   'Pronto',
-  'Entregue',
+  'Concluído',
+  'Cancelado',
 ]
+
+function formatarDinheiro(valor: number) {
+  return valor.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  })
+}
+
+function formatarData(data: string) {
+  return new Date(data).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+function corStatus(status: string | null) {
+  if (status === 'Concluído') return 'bg-emerald-100 text-emerald-700'
+  if (status === 'Pronto') return 'bg-blue-100 text-blue-700'
+  if (status === 'Em produção') return 'bg-orange-100 text-orange-700'
+  if (status === 'Cancelado') return 'bg-red-100 text-red-700'
+
+  return 'bg-slate-100 text-slate-700'
+}
 
 export default function PainelPage() {
   const router = useRouter()
-  const [autenticado, setAutenticado] = useState(false)
+
+  const [empresa, setEmpresa] = useState<Empresa | null>(null)
   const [pedidos, setPedidos] = useState<Pedido[]>([])
+  const [produtos, setProdutos] = useState<Produto[]>([])
   const [carregando, setCarregando] = useState(true)
+  const [mensagem, setMensagem] = useState('')
 
-  async function carregarPedidos() {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
+  async function carregarPainel() {
+    setCarregando(true)
+    setMensagem('')
 
-    if (!error && data) {
-      setPedidos(data)
+    const { data: sessaoData } = await supabase.auth.getSession()
+    const usuario = sessaoData.session?.user
+
+    if (!usuario) {
+      router.push('/login')
+      return
     }
 
+    const { data: empresaData, error: empresaError } = await supabase
+      .from('companies')
+      .select('*')
+      .eq('owner_id', usuario.id)
+      .maybeSingle()
+
+    if (empresaError) {
+      setMensagem(`Erro ao buscar empresa: ${empresaError.message}`)
+      setCarregando(false)
+      return
+    }
+
+    if (!empresaData) {
+      setEmpresa(null)
+      setMensagem('Nenhuma empresa vinculada a esta conta.')
+      setCarregando(false)
+      return
+    }
+
+    setEmpresa(empresaData)
+
+    const { data: pedidosData, error: pedidosError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('company_id', empresaData.id)
+      .order('created_at', { ascending: false })
+
+    if (pedidosError) {
+      setMensagem(`Erro ao carregar pedidos: ${pedidosError.message}`)
+      setCarregando(false)
+      return
+    }
+
+    const { data: produtosData, error: produtosError } = await supabase
+      .from('products')
+      .select('id, nome, preco, ativo')
+      .eq('company_id', empresaData.id)
+      .order('nome', { ascending: true })
+
+    if (produtosError) {
+      setMensagem(`Erro ao carregar produtos: ${produtosError.message}`)
+      setCarregando(false)
+      return
+    }
+
+    setPedidos(pedidosData || [])
+    setProdutos(produtosData || [])
     setCarregando(false)
   }
 
@@ -52,226 +150,420 @@ export default function PainelPage() {
     router.push('/login')
   }
 
-  async function atualizarStatus(id: string, status: string) {
+  async function atualizarStatus(pedidoId: string, novoStatus: string) {
+    if (!empresa) return
+
     const { error } = await supabase
       .from('orders')
-      .update({ status })
-      .eq('id', id)
+      .update({ status: novoStatus })
+      .eq('id', pedidoId)
+      .eq('company_id', empresa.id)
 
-    if (!error) {
-      setPedidos((listaAtual) =>
-        listaAtual.map((pedido) =>
-          pedido.id === id ? { ...pedido, status } : pedido
-        )
-      )
+    if (error) {
+      setMensagem(`Erro ao atualizar status: ${error.message}`)
+      return
     }
+
+    setPedidos((listaAtual) =>
+      listaAtual.map((pedido) =>
+        pedido.id === pedidoId ? { ...pedido, status: novoStatus } : pedido
+      )
+    )
+  }
+
+  async function copiarLink() {
+    if (!empresa) return
+
+    const link = `${window.location.origin}/orcamento/${empresa.slug}`
+
+    await navigator.clipboard.writeText(link)
+
+    setMensagem('Link copiado com sucesso.')
   }
 
   useEffect(() => {
-    async function verificarLogin() {
-      const { data } = await supabase.auth.getSession()
+    carregarPainel()
+  }, [])
 
-      if (!data.session) {
-        router.push('/login')
-        return
-      }
+  const faturamentoEstimado = pedidos.reduce((total, pedido) => {
+    return total + Number(pedido.preco_estimado || 0)
+  }, 0)
 
-      setAutenticado(true)
-      carregarPedidos()
-    }
+  const pedidosAbertos = pedidos.filter((pedido) => {
+    return !['Concluído', 'Cancelado'].includes(pedido.status || '')
+  }).length
 
-    verificarLogin()
-  }, [router])
+  const produtosAtivos = produtos.filter((produto) => produto.ativo).length
 
-  const totalPedidos = pedidos.length
-
-  const faturamentoEstimado = pedidos.reduce(
-    (total, pedido) => total + Number(pedido.preco_estimado || 0),
-    0
-  )
-
-  const pedidosEmProducao = pedidos.filter(
-    (pedido) => pedido.status === 'Em produção'
-  ).length
-
-  const pedidosProntos = pedidos.filter(
-    (pedido) => pedido.status === 'Pronto'
-  ).length
-
-  if (!autenticado) {
+  if (carregando) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-neutral-950 text-white">
-        <p className="text-neutral-400">Verificando acesso...</p>
+      <main className="flex min-h-screen items-center justify-center bg-white px-4 text-slate-950">
+        <div className="rounded-[2rem] border border-blue-50 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
+          <img
+            src="/logo-orcaly.png"
+            alt="Orçaly"
+            className="mx-auto mb-6 h-14 w-auto object-contain"
+          />
+
+          <p className="font-bold text-slate-500">
+            Carregando painel...
+          </p>
+        </div>
+      </main>
+    )
+  }
+
+  if (!empresa) {
+    return (
+      <main className="min-h-screen bg-white px-4 py-8 text-slate-950">
+        <section className="mx-auto flex min-h-[80vh] max-w-3xl items-center justify-center">
+          <div className="rounded-[2rem] border border-blue-50 bg-white p-8 text-center shadow-2xl shadow-blue-950/10">
+            <img
+              src="/logo-orcaly.png"
+              alt="Orçaly"
+              className="mx-auto mb-6 h-14 w-auto object-contain"
+            />
+
+            <h1 className="text-3xl font-black text-[#071b3a]">
+              Empresa não encontrada
+            </h1>
+
+            <p className="mt-3 text-slate-600">
+              {mensagem ||
+                'Essa conta ainda não possui uma empresa cadastrada.'}
+            </p>
+
+            <Link
+              href="/cadastro?plano=profissional"
+              className="mt-6 inline-block rounded-2xl bg-[#05245c] px-6 py-4 font-black text-white transition hover:bg-[#031a43]"
+            >
+              Cadastrar empresa
+            </Link>
+          </div>
+        </section>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-neutral-950 px-6 py-10 text-white">
-      <section className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-center">
-          <div>
-            <p className="text-sm font-bold text-orange-400">
-              Gráfica Flash
-            </p>
+    <main className="min-h-screen overflow-x-hidden bg-white pb-24 text-slate-950">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute left-[-180px] top-[-180px] h-[420px] w-[420px] rounded-full bg-blue-100 blur-3xl" />
+        <div className="absolute right-[-180px] top-[20%] h-[360px] w-[360px] rounded-full bg-cyan-100 blur-3xl" />
+        <div className="absolute bottom-[-160px] left-[30%] h-[360px] w-[360px] rounded-full bg-emerald-100 blur-3xl" />
+      </div>
 
-            <h1 className="mt-2 text-3xl font-black">
-              Painel de pedidos
-            </h1>
+      <section className="relative mx-auto w-full max-w-7xl px-4 py-5 sm:px-6">
+        <header className="sticky top-4 z-30 flex flex-col gap-4 rounded-[2rem] border border-blue-50 bg-white/90 p-4 shadow-xl shadow-blue-950/5 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-4">
+            {empresa.logo_url ? (
+              <img
+                src={empresa.logo_url}
+                alt={empresa.nome}
+                className="h-14 w-14 rounded-2xl object-cover"
+              />
+            ) : (
+              <img
+                src="/icone-orcaly.png"
+                alt="Orçaly"
+                className="h-14 w-14 rounded-2xl bg-blue-50 object-contain p-2"
+              />
+            )}
 
-            <p className="mt-2 text-neutral-400">
-              Acompanhe os orçamentos recebidos e o andamento da produção.
-            </p>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-[#05245c]">
+                Painel da empresa
+              </p>
+
+              <h1 className="mt-1 text-2xl font-black text-[#071b3a]">
+                {empresa.nome}
+              </h1>
+
+              <p className="mt-1 text-sm font-medium text-slate-500">
+                {empresa.segmento || 'Operação digital'}{' '}
+                {empresa.cidade ? `• ${empresa.cidade}` : ''}
+                {empresa.estado ? `/${empresa.estado}` : ''}
+              </p>
+            </div>
           </div>
 
-          <nav className="flex flex-wrap gap-3">
-            <Link
-              href="/painel"
-              className="rounded-xl bg-orange-400 px-5 py-3 font-black text-neutral-950 hover:bg-orange-500"
-            >
-              Pedidos
-            </Link>
-
+          <nav className="grid gap-2 sm:grid-cols-4 lg:flex">
             <Link
               href="/painel/produtos"
-              className="rounded-xl border border-neutral-700 px-5 py-3 font-bold text-white hover:bg-neutral-800"
+              className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center text-sm font-black text-[#05245c] transition hover:bg-blue-50"
             >
               Produtos
             </Link>
 
+            <Link
+              href="/painel/configuracoes"
+              className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center text-sm font-black text-[#05245c] transition hover:bg-blue-50"
+            >
+              Configurações
+            </Link>
+
+            <button
+              onClick={copiarLink}
+              className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-black text-[#05245c] transition hover:bg-blue-50"
+            >
+              Copiar link
+            </button>
+
             <button
               onClick={sair}
-              className="rounded-xl border border-neutral-700 px-5 py-3 font-bold text-white hover:bg-neutral-800"
+              className="rounded-2xl bg-[#05245c] px-4 py-3 text-sm font-black text-white transition hover:bg-[#031a43]"
             >
               Sair
             </button>
           </nav>
-        </div>
+        </header>
 
-        <div className="mb-8 grid gap-4 md:grid-cols-4">
-          <div className="rounded-2xl bg-neutral-900 p-5">
-            <p className="text-sm text-neutral-400">Total de pedidos</p>
-            <p className="mt-2 text-3xl font-black">{totalPedidos}</p>
+        {mensagem && (
+          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
+            {mensagem}
           </div>
+        )}
 
-          <div className="rounded-2xl bg-neutral-900 p-5">
-            <p className="text-sm text-neutral-400">Faturamento estimado</p>
-            <p className="mt-2 text-3xl font-black text-orange-400">
-              R$ {faturamentoEstimado.toFixed(2).replace('.', ',')}
+        <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5">
+            <p className="text-sm font-bold text-slate-500">
+              Pedidos
+            </p>
+
+            <p className="mt-3 text-4xl font-black text-[#071b3a]">
+              {pedidos.length}
             </p>
           </div>
 
-          <div className="rounded-2xl bg-neutral-900 p-5">
-            <p className="text-sm text-neutral-400">Em produção</p>
-            <p className="mt-2 text-3xl font-black">{pedidosEmProducao}</p>
+          <div className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5">
+            <p className="text-sm font-bold text-slate-500">
+              Em andamento
+            </p>
+
+            <p className="mt-3 text-4xl font-black text-[#071b3a]">
+              {pedidosAbertos}
+            </p>
           </div>
 
-          <div className="rounded-2xl bg-neutral-900 p-5">
-            <p className="text-sm text-neutral-400">Prontos</p>
-            <p className="mt-2 text-3xl font-black">{pedidosProntos}</p>
+          <div className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5">
+            <p className="text-sm font-bold text-slate-500">
+              Produtos ativos
+            </p>
+
+            <p className="mt-3 text-4xl font-black text-[#071b3a]">
+              {produtosAtivos}
+            </p>
           </div>
-        </div>
 
-        {carregando ? (
-          <p className="text-neutral-400">Carregando pedidos...</p>
-        ) : (
-          <div className="space-y-4">
-            {pedidos.length === 0 && (
-              <div className="rounded-2xl bg-neutral-900 p-6 text-neutral-400">
-                Nenhum pedido encontrado.
-              </div>
-            )}
+          <div className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5">
+            <p className="text-sm font-bold text-slate-500">
+              Valor estimado
+            </p>
 
-            {pedidos.map((pedido) => (
-              <div
-                key={pedido.id}
-                className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6"
-              >
-                <div className="flex flex-col justify-between gap-5 md:flex-row">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-xl font-black">
-                        {pedido.produto}
-                      </h2>
+            <p className="mt-3 text-3xl font-black text-[#05245c]">
+              {formatarDinheiro(faturamentoEstimado)}
+            </p>
+          </div>
+        </section>
 
-                      <span className="rounded-full bg-neutral-800 px-3 py-1 text-xs font-bold text-orange-400">
-                        {pedido.status}
-                      </span>
+        <section className="mt-6 rounded-[2rem] border border-blue-50 bg-white p-5 shadow-xl shadow-blue-950/5 sm:p-6">
+          <div className="flex flex-col justify-between gap-4 border-b border-blue-50 pb-5 md:flex-row md:items-center">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">
+                Link público
+              </p>
+
+              <h2 className="mt-2 break-all text-xl font-black text-[#071b3a]">
+                /orcamento/{empresa.slug}
+              </h2>
+            </div>
+
+            <a
+              href={`/orcamento/${empresa.slug}`}
+              target="_blank"
+              className="rounded-2xl bg-[#05245c] px-5 py-4 text-center font-black text-white transition hover:bg-[#031a43]"
+            >
+              Abrir página
+            </a>
+          </div>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <div className="rounded-3xl bg-[#f7fbff] p-5">
+              <p className="text-sm font-bold text-slate-500">
+                Plano
+              </p>
+
+              <p className="mt-2 text-xl font-black capitalize text-[#071b3a]">
+                {empresa.plano || 'Profissional'}
+              </p>
+            </div>
+
+            <div className="rounded-3xl bg-[#f7fbff] p-5">
+              <p className="text-sm font-bold text-slate-500">
+                WhatsApp
+              </p>
+
+              <p className="mt-2 text-xl font-black text-[#071b3a]">
+                {empresa.whatsapp || 'Não informado'}
+              </p>
+            </div>
+
+            <div className="rounded-3xl bg-[#f7fbff] p-5">
+              <p className="text-sm font-bold text-slate-500">
+                Status
+              </p>
+
+              <p className="mt-2 text-xl font-black text-emerald-700">
+                {empresa.ativo ? 'Ativa' : 'Inativa'}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[2rem] border border-blue-50 bg-white p-5 shadow-xl shadow-blue-950/5 sm:p-6">
+          <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">
+                Solicitações
+              </p>
+
+              <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
+                Pedidos recebidos
+              </h2>
+            </div>
+
+            <button
+              onClick={carregarPainel}
+              className="rounded-2xl border border-blue-100 bg-white px-5 py-3 font-black text-[#05245c] transition hover:bg-blue-50"
+            >
+              Atualizar
+            </button>
+          </div>
+
+          {pedidos.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-blue-100 bg-[#f7fbff] p-8 text-center">
+              <h3 className="text-2xl font-black text-[#071b3a]">
+                Nenhum pedido ainda
+              </h3>
+
+              <p className="mt-2 text-slate-600">
+                Quando clientes enviarem solicitações, elas aparecerão aqui.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {pedidos.map((pedido) => (
+                <article
+                  key={pedido.id}
+                  className="rounded-3xl border border-blue-50 bg-[#f7fbff] p-5"
+                >
+                  <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-start">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h3 className="text-xl font-black text-[#071b3a]">
+                          {pedido.nome}
+                        </h3>
+
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-black ${corStatus(
+                            pedido.status
+                          )}`}
+                        >
+                          {pedido.status || 'Recebido'}
+                        </span>
+                      </div>
+
+                      <p className="mt-2 text-sm font-bold text-slate-500">
+                        {pedido.telefone} • {formatarData(pedido.created_at)}
+                      </p>
+
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="rounded-2xl bg-white p-4">
+                          <p className="text-xs font-bold text-slate-500">
+                            Produto/serviço
+                          </p>
+
+                          <p className="mt-1 font-black text-[#071b3a]">
+                            {pedido.produto}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-white p-4">
+                          <p className="text-xs font-bold text-slate-500">
+                            Quantidade
+                          </p>
+
+                          <p className="mt-1 font-black text-[#071b3a]">
+                            {pedido.quantidade || 1}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-white p-4">
+                          <p className="text-xs font-bold text-slate-500">
+                            Medidas
+                          </p>
+
+                          <p className="mt-1 font-black text-[#071b3a]">
+                            {pedido.largura || 0} x {pedido.altura || 0}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-white p-4">
+                          <p className="text-xs font-bold text-slate-500">
+                            Valor
+                          </p>
+
+                          <p className="mt-1 font-black text-[#05245c]">
+                            {formatarDinheiro(Number(pedido.preco_estimado || 0))}
+                          </p>
+                        </div>
+                      </div>
+
+                      {pedido.observacoes && (
+                        <p className="mt-4 rounded-2xl bg-white p-4 text-sm leading-6 text-slate-600">
+                          {pedido.observacoes}
+                        </p>
+                      )}
                     </div>
 
-                    <p className="mt-3 text-neutral-300">
-                      Cliente: {pedido.nome}
-                    </p>
+                    <div className="grid gap-3 lg:w-56">
+                      <select
+                        value={pedido.status || 'Recebido'}
+                        onChange={(e) =>
+                          atualizarStatus(pedido.id, e.target.value)
+                        }
+                        className="rounded-2xl border border-blue-100 bg-white px-4 py-3 font-bold text-[#071b3a] outline-none"
+                      >
+                        {statusDisponiveis.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </select>
 
-                    <p className="text-neutral-300">
-                      WhatsApp: {pedido.telefone}
-                    </p>
+                      <Link
+                        href={`/painel/orcamento/${pedido.id}`}
+                        className="rounded-2xl bg-[#05245c] px-4 py-3 text-center font-black text-white transition hover:bg-[#031a43]"
+                      >
+                        Gerar orçamento
+                      </Link>
 
-                    <p className="mt-2 text-neutral-400">
-                      Medida: {pedido.largura}m x {pedido.altura}m
-                    </p>
-
-                    <p className="text-neutral-400">
-                      Quantidade: {pedido.quantidade}
-                    </p>
-
-                    <p className="mt-2 font-bold text-orange-400">
-                      Valor estimado: R$ {Number(pedido.preco_estimado)
-                        .toFixed(2)
-                        .replace('.', ',')}
-                    </p>
-
-                    {pedido.observacoes && (
-                      <p className="mt-3 text-sm text-neutral-300">
-                        Observações: {pedido.observacoes}
-                      </p>
-                    )}
-
-                    <div className="mt-4 flex flex-wrap gap-3">
                       {pedido.arquivo_url && (
                         <a
                           href={pedido.arquivo_url}
                           target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block rounded-xl bg-orange-400 px-5 py-3 font-black text-neutral-950 hover:bg-orange-500"
+                          className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center font-black text-[#05245c] transition hover:bg-blue-50"
                         >
-                          Ver arte enviada
+                          Ver arquivo
                         </a>
                       )}
-
-                      <Link
-                        href={`/painel/orcamento/${pedido.id}`}
-                        className="inline-block rounded-xl border border-neutral-700 px-5 py-3 font-black text-white hover:bg-neutral-800"
-                      >
-                        Gerar orçamento
-                      </Link>
                     </div>
                   </div>
-
-                  <div className="min-w-48">
-                    <label className="mb-2 block text-sm text-neutral-400">
-                      Alterar status
-                    </label>
-
-                    <select
-                      value={pedido.status}
-                      onChange={(e) =>
-                        atualizarStatus(pedido.id, e.target.value)
-                      }
-                      className="w-full rounded-xl bg-neutral-800 px-4 py-3 outline-none"
-                    >
-                      {statusOptions.map((status) => (
-                        <option key={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       </section>
     </main>
   )

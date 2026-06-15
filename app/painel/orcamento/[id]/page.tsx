@@ -12,19 +12,37 @@ type Empresa = {
   whatsapp: string | null
   cor_principal: string | null
   ativo: boolean
+  segmento: string | null
+  cidade: string | null
+  estado: string | null
 }
 
-type Produto = {
+type ItemCatalogo = {
   id: string
   nome: string
+  descricao: string | null
+  categoria: string | null
+  tipo: string | null
+  unidade: string | null
   preco: number
   ativo: boolean
+  destaque: boolean | null
   imagem_url: string | null
   company_id: string | null
 }
 
 function formatarDinheiro(valor: number) {
-  return Number(valor || 0).toFixed(2).replace('.', ',')
+  return Number(valor || 0).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  })
+}
+
+function limparNomeArquivo(nome: string) {
+  return nome
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9.-]/g, '')
 }
 
 function montarNumeroWhatsapp(telefone: string) {
@@ -41,20 +59,19 @@ function montarNumeroWhatsapp(telefone: string) {
   return apenasNumeros
 }
 
-export default function OrcamentoPorEmpresaPage() {
+export default function PaginaPublicaEmpresa() {
   const params = useParams()
   const slug = String(params.slug || '')
 
   const [empresa, setEmpresa] = useState<Empresa | null>(null)
-  const [produtos, setProdutos] = useState<Produto[]>([])
-  const [produtoId, setProdutoId] = useState('')
+  const [itens, setItens] = useState<ItemCatalogo[]>([])
+  const [itemSelecionadoId, setItemSelecionadoId] = useState('')
 
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
-  const [largura, setLargura] = useState('')
-  const [altura, setAltura] = useState('')
   const [quantidade, setQuantidade] = useState('1')
   const [observacoes, setObservacoes] = useState('')
+  const [arquivo, setArquivo] = useState<File | null>(null)
 
   const [carregando, setCarregando] = useState(true)
   const [enviando, setEnviando] = useState(false)
@@ -74,22 +91,13 @@ export default function OrcamentoPorEmpresaPage() {
       .maybeSingle()
 
     if (empresaError) {
-      console.log('ERRO EMPRESA:', empresaError)
-      console.log('SLUG USADO:', slug)
-
-      setMensagem(
-        `Erro ao buscar empresa. Slug usado: ${slug}. Erro: ${empresaError.message}`
-      )
-
+      setMensagem(`Erro ao buscar empresa: ${empresaError.message}`)
       setCarregando(false)
       return
     }
 
     if (!empresaData) {
-      console.log('EMPRESA NÃO ENCONTRADA')
-      console.log('SLUG USADO:', slug)
-
-      setMensagem(`Empresa não encontrada. Slug usado: ${slug}`)
+      setMensagem('Empresa não encontrada. Verifique se o link está correto.')
       setCarregando(false)
       return
     }
@@ -97,63 +105,70 @@ export default function OrcamentoPorEmpresaPage() {
     setEmpresa(empresaData)
 
     if (!empresaData.ativo) {
-      setMensagem('Esta empresa está temporariamente inativa.')
+      setMensagem('Esta empresa está temporariamente indisponível.')
       setCarregando(false)
       return
     }
 
-    const { data: produtosData, error: produtosError } = await supabase
+    const { data: itensData, error: itensError } = await supabase
       .from('products')
       .select('*')
       .eq('company_id', empresaData.id)
       .eq('ativo', true)
-      .order('nome', { ascending: true })
+      .order('destaque', { ascending: false })
+      .order('created_at', { ascending: false })
 
-    if (produtosError) {
-      console.log('ERRO PRODUTOS:', produtosError)
-
-      setMensagem(`Erro ao carregar produtos: ${produtosError.message}`)
+    if (itensError) {
+      setMensagem(`Erro ao carregar catálogo: ${itensError.message}`)
       setCarregando(false)
       return
     }
 
-    setProdutos(produtosData || [])
+    setItens(itensData || [])
 
-    if (produtosData && produtosData.length > 0) {
-      setProdutoId(produtosData[0].id)
+    if (itensData && itensData.length > 0) {
+      setItemSelecionadoId(itensData[0].id)
     }
 
     setCarregando(false)
   }
 
-  async function enviarPedido(evento: React.FormEvent) {
+  async function enviarArquivoPedido(companyId: string, arquivoSelecionado: File) {
+    const nomeArquivo = limparNomeArquivo(arquivoSelecionado.name)
+    const caminho = `${companyId}/${Date.now()}-${nomeArquivo}`
+
+    const { error } = await supabase.storage
+      .from('artes')
+      .upload(caminho, arquivoSelecionado, {
+        cacheControl: '3600',
+        upsert: true,
+      })
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    const { data } = supabase.storage.from('artes').getPublicUrl(caminho)
+
+    return data.publicUrl
+  }
+
+  async function enviarSolicitacao(evento: React.FormEvent) {
     evento.preventDefault()
 
     if (!empresa) return
 
-    const produtoSelecionado = produtos.find(
-      (produto) => produto.id === produtoId
-    )
+    const itemSelecionado = itens.find((item) => item.id === itemSelecionadoId)
 
-    if (!produtoSelecionado) {
-      setMensagem('Selecione um produto.')
+    if (!itemSelecionado) {
+      setMensagem('Selecione um item do catálogo.')
       return
     }
 
-    const larguraNumero = Number(largura.replace(',', '.'))
-    const alturaNumero = Number(altura.replace(',', '.'))
     const quantidadeNumero = Number(quantidade)
 
-    if (
-      !nome ||
-      !telefone ||
-      larguraNumero <= 0 ||
-      alturaNumero <= 0 ||
-      quantidadeNumero <= 0
-    ) {
-      setMensagem(
-        'Preencha nome, telefone, largura, altura e quantidade corretamente.'
-      )
+    if (!nome || !telefone || quantidadeNumero <= 0) {
+      setMensagem('Preencha nome, WhatsApp e quantidade corretamente.')
       return
     }
 
@@ -161,58 +176,68 @@ export default function OrcamentoPorEmpresaPage() {
     setMensagem('')
     setLinkWhatsapp('')
 
-    const precoEstimado =
-      larguraNumero *
-      alturaNumero *
-      Number(produtoSelecionado.preco) *
-      quantidadeNumero
+    let arquivoUrl = ''
 
-    const { error } = await supabase.from('orders').insert({
-      company_id: empresa.id,
-      nome,
-      telefone,
-      produto: produtoSelecionado.nome,
-      largura: larguraNumero,
-      altura: alturaNumero,
-      quantidade: quantidadeNumero,
-      observacoes,
-      preco_estimado: precoEstimado,
-      status: 'Recebido',
-    })
+    try {
+      if (arquivo) {
+        arquivoUrl = await enviarArquivoPedido(empresa.id, arquivo)
+      }
 
-    if (error) {
-      console.log('ERRO AO ENVIAR PEDIDO:', error)
+      const precoEstimado = Number(itemSelecionado.preco || 0) * quantidadeNumero
 
-      setMensagem(`Erro ao enviar pedido: ${error.message}`)
-      setEnviando(false)
-      return
-    }
+      const { error } = await supabase.from('orders').insert({
+        company_id: empresa.id,
+        nome,
+        telefone,
+        produto: itemSelecionado.nome,
+        quantidade: quantidadeNumero,
+        observacoes,
+        preco_estimado: precoEstimado,
+        arquivo_url: arquivoUrl || null,
+        status: 'Recebido',
+      })
 
-    const numeroEmpresa = montarNumeroWhatsapp(empresa.whatsapp || '')
+      if (error) {
+        setMensagem(`Erro ao enviar solicitação: ${error.message}`)
+        setEnviando(false)
+        return
+      }
 
-    const textoWhatsapp = `Olá! Acabei de solicitar um orçamento pelo site.
+      const numeroEmpresa = montarNumeroWhatsapp(empresa.whatsapp || '')
+
+      if (numeroEmpresa) {
+        const textoWhatsapp = `Olá! Acabei de enviar uma solicitação pelo site.
 
 Nome: ${nome}
-Produto: ${produtoSelecionado.nome}
-Medidas: ${larguraNumero}m x ${alturaNumero}m
+Item: ${itemSelecionado.nome}
+Tipo: ${itemSelecionado.tipo || 'Item'}
 Quantidade: ${quantidadeNumero}
-Valor estimado: R$ ${formatarDinheiro(precoEstimado)}
+Valor estimado: ${formatarDinheiro(precoEstimado)}
 
 ${observacoes ? `Observações: ${observacoes}` : ''}`
 
-    const link = `https://wa.me/${numeroEmpresa}?text=${encodeURIComponent(
-      textoWhatsapp
-    )}`
+        const link = `https://wa.me/${numeroEmpresa}?text=${encodeURIComponent(
+          textoWhatsapp
+        )}`
 
-    setLinkWhatsapp(link)
-    setMensagem('Pedido enviado com sucesso.')
+        setLinkWhatsapp(link)
+      }
 
-    setNome('')
-    setTelefone('')
-    setLargura('')
-    setAltura('')
-    setQuantidade('1')
-    setObservacoes('')
+      setMensagem('Solicitação enviada com sucesso.')
+
+      setNome('')
+      setTelefone('')
+      setQuantidade('1')
+      setObservacoes('')
+      setArquivo(null)
+    } catch (erro) {
+      const mensagemErro =
+        erro instanceof Error
+          ? erro.message
+          : 'Erro desconhecido ao enviar solicitação.'
+
+      setMensagem(`Erro: ${mensagemErro}`)
+    }
 
     setEnviando(false)
   }
@@ -221,32 +246,28 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
     carregarDados()
   }, [slug])
 
-  const produtoSelecionado = produtos.find(
-    (produto) => produto.id === produtoId
-  )
-
-  const larguraNumero = Number(largura.replace(',', '.'))
-  const alturaNumero = Number(altura.replace(',', '.'))
+  const itemSelecionado = itens.find((item) => item.id === itemSelecionadoId)
   const quantidadeNumero = Number(quantidade)
-
-  const precoEstimado =
-    produtoSelecionado &&
-    larguraNumero > 0 &&
-    alturaNumero > 0 &&
-    quantidadeNumero > 0
-      ? larguraNumero *
-        alturaNumero *
-        Number(produtoSelecionado.preco) *
-        quantidadeNumero
+  const totalEstimado =
+    itemSelecionado && quantidadeNumero > 0
+      ? Number(itemSelecionado.preco || 0) * quantidadeNumero
       : 0
 
-  const corPrincipal = empresa?.cor_principal || '#fb923c'
+  const corPrincipal = empresa?.cor_principal || '#05245c'
 
   if (carregando) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-neutral-950 px-6 text-white">
-        <div className="rounded-3xl border border-neutral-800 bg-neutral-900 p-8 text-center">
-          <p className="text-neutral-400">Carregando orçamento...</p>
+      <main className="flex min-h-screen items-center justify-center bg-white px-4">
+        <div className="rounded-[2rem] border border-blue-50 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
+          <img
+            src="/logo-orcaly.png"
+            alt="Orçaly"
+            className="mx-auto mb-6 h-14 w-auto object-contain"
+          />
+
+          <p className="font-bold text-slate-500">
+            Carregando página...
+          </p>
         </div>
       </main>
     )
@@ -254,13 +275,13 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
 
   if (!empresa) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-neutral-950 px-6 text-white">
-        <div className="max-w-md rounded-3xl border border-neutral-800 bg-neutral-900 p-8 text-center">
-          <h1 className="text-2xl font-black text-red-400">
+      <main className="flex min-h-screen items-center justify-center bg-white px-4">
+        <div className="max-w-md rounded-[2rem] border border-blue-50 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
+          <h1 className="text-3xl font-black text-[#071b3a]">
             Empresa não encontrada
           </h1>
 
-          <p className="mt-3 text-neutral-400">
+          <p className="mt-3 text-slate-600">
             {mensagem || 'Verifique se o link está correto.'}
           </p>
         </div>
@@ -268,135 +289,217 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
     )
   }
 
-  if (!empresa.ativo) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-neutral-950 px-6 text-white">
-        <div className="max-w-md rounded-3xl border border-neutral-800 bg-neutral-900 p-8 text-center">
-          <h1 className="text-2xl font-black text-orange-400">
-            Orçamento indisponível
-          </h1>
-
-          <p className="mt-3 text-neutral-400">
-            Esta empresa está temporariamente inativa.
-          </p>
-        </div>
-      </main>
-    )
-  }
-
   return (
-    <main className="min-h-screen bg-neutral-950 px-4 py-8 text-white">
-      <section className="mx-auto max-w-6xl">
-        <header className="mb-8 rounded-3xl border border-neutral-800 bg-neutral-900 p-6">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+    <main className="min-h-screen overflow-x-hidden bg-white pb-8 text-slate-950">
+      <style>
+        {`
+          @keyframes fadeUp {
+            from {
+              opacity: 0;
+              transform: translateY(22px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          @keyframes floatSoft {
+            0%, 100% {
+              transform: translateY(0);
+            }
+            50% {
+              transform: translateY(-10px);
+            }
+          }
+
+          .fade-up {
+            animation: fadeUp .75s cubic-bezier(.2,.8,.2,1) both;
+          }
+
+          .float-soft {
+            animation: floatSoft 5s ease-in-out infinite;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .fade-up,
+            .float-soft {
+              animation: none !important;
+            }
+          }
+        `}
+      </style>
+
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute left-[-180px] top-[-180px] h-[420px] w-[420px] rounded-full bg-blue-100 blur-3xl" />
+        <div className="absolute right-[-180px] top-[20%] h-[360px] w-[360px] rounded-full bg-cyan-100 blur-3xl" />
+        <div className="absolute bottom-[-160px] left-[30%] h-[360px] w-[360px] rounded-full bg-emerald-100 blur-3xl" />
+      </div>
+
+      <section className="relative mx-auto w-full max-w-7xl px-4 py-5 sm:px-6">
+        <header className="fade-up rounded-[2rem] border border-blue-50 bg-white/90 p-5 shadow-xl shadow-blue-950/5 backdrop-blur-xl">
+          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
             <div className="flex items-center gap-4">
               {empresa.logo_url ? (
                 <img
                   src={empresa.logo_url}
                   alt={empresa.nome}
-                  className="h-16 w-16 rounded-2xl object-cover"
+                  className="h-16 w-16 rounded-2xl object-cover shadow-lg shadow-blue-950/10"
                 />
               ) : (
-                <div
-                  className="grid h-16 w-16 place-items-center rounded-2xl text-2xl font-black text-neutral-950"
-                  style={{ backgroundColor: corPrincipal }}
-                >
-                  {empresa.nome.slice(0, 1).toUpperCase()}
-                </div>
+                <img
+                  src="/icone-orcaly.png"
+                  alt="Orçaly"
+                  className="h-16 w-16 rounded-2xl bg-blue-50 object-contain p-2"
+                />
               )}
 
               <div>
                 <p
-                  className="text-sm font-black uppercase tracking-widest"
+                  className="text-xs font-black uppercase tracking-[0.25em]"
                   style={{ color: corPrincipal }}
                 >
-                  Orçamento online
+                  Catálogo digital
                 </p>
 
-                <h1 className="mt-1 text-3xl font-black">
+                <h1 className="mt-1 text-3xl font-black text-[#071b3a]">
                   {empresa.nome}
                 </h1>
+
+                <p className="mt-1 text-sm font-medium text-slate-500">
+                  {empresa.segmento || 'Produtos, serviços e solicitações'}
+                  {empresa.cidade ? ` • ${empresa.cidade}` : ''}
+                  {empresa.estado ? `/${empresa.estado}` : ''}
+                </p>
               </div>
             </div>
 
-            <div className="rounded-2xl bg-neutral-950 p-5">
-              <p className="text-sm text-neutral-400">Valor estimado</p>
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
+              <p className="text-sm font-bold text-slate-500">
+                Total estimado
+              </p>
 
               <p
                 className="mt-1 text-3xl font-black"
                 style={{ color: corPrincipal }}
               >
-                R$ {formatarDinheiro(precoEstimado)}
+                {formatarDinheiro(totalEstimado)}
               </p>
             </div>
           </div>
         </header>
 
-        <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
-          <section>
-            <h2 className="mb-4 text-2xl font-black">
-              Escolha o produto
-            </h2>
+        {mensagem && (
+          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
+            {mensagem}
+          </div>
+        )}
 
-            {produtos.length === 0 ? (
-              <div className="rounded-2xl bg-neutral-900 p-6 text-neutral-400">
-                Nenhum produto disponível no momento.
+        <section className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
+          <section>
+            <div className="mb-5">
+              <p
+                className="text-sm font-black uppercase tracking-[0.25em]"
+                style={{ color: corPrincipal }}
+              >
+                Escolha uma opção
+              </p>
+
+              <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
+                Produtos e serviços disponíveis
+              </h2>
+            </div>
+
+            {itens.length === 0 ? (
+              <div className="rounded-[2rem] border border-dashed border-blue-100 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
+                <h3 className="text-2xl font-black text-[#071b3a]">
+                  Nenhum item disponível
+                </h3>
+
+                <p className="mt-2 text-slate-600">
+                  Esta empresa ainda não cadastrou produtos ou serviços ativos.
+                </p>
               </div>
             ) : (
-              <div className="grid gap-5 sm:grid-cols-2">
-                {produtos.map((produto) => {
-                  const selecionado = produto.id === produtoId
+              <div className="grid gap-4 sm:grid-cols-2">
+                {itens.map((item) => {
+                  const selecionado = item.id === itemSelecionadoId
 
                   return (
                     <button
-                      key={produto.id}
+                      key={item.id}
                       type="button"
-                      onClick={() => setProdutoId(produto.id)}
-                      className={`overflow-hidden rounded-3xl border bg-neutral-900 text-left transition hover:-translate-y-1 ${
-                        selecionado
-                          ? 'border-orange-400'
-                          : 'border-neutral-800 hover:border-neutral-600'
+                      onClick={() => setItemSelecionadoId(item.id)}
+                      className={`group overflow-hidden rounded-[2rem] border bg-white text-left shadow-xl shadow-blue-950/5 transition hover:-translate-y-1 hover:shadow-2xl ${
+                        selecionado ? 'border-blue-300' : 'border-blue-50'
                       }`}
-                      style={{
-                        borderColor: selecionado ? corPrincipal : undefined,
-                      }}
                     >
-                      <div className="h-44 bg-neutral-800">
-                        {produto.imagem_url ? (
+                      <div className="h-44 bg-blue-50">
+                        {item.imagem_url ? (
                           <img
-                            src={produto.imagem_url}
-                            alt={produto.nome}
-                            className="h-full w-full object-cover"
+                            src={item.imagem_url}
+                            alt={item.nome}
+                            className="h-full w-full object-cover transition group-hover:scale-105"
                           />
                         ) : (
-                          <div className="flex h-full items-center justify-center text-5xl">
-                            🖼️
+                          <div className="grid h-full place-items-center text-5xl">
+                            🧩
                           </div>
                         )}
                       </div>
 
                       <div className="p-5">
-                        <h3 className="text-xl font-black">
-                          {produto.nome}
+                        <div className="flex flex-wrap gap-2">
+                          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">
+                            {item.tipo || 'item'}
+                          </span>
+
+                          {item.destaque && (
+                            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
+                              Destaque
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="mt-3 text-xl font-black text-[#071b3a]">
+                          {item.nome}
                         </h3>
 
-                        <p
-                          className="mt-2 font-bold"
-                          style={{ color: corPrincipal }}
-                        >
-                          R$ {formatarDinheiro(produto.preco)}/m²
-                        </p>
+                        {item.descricao && (
+                          <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+                            {item.descricao}
+                          </p>
+                        )}
 
-                        <div
-                          className="mt-4 rounded-xl px-4 py-3 text-center text-sm font-black"
-                          style={{
-                            backgroundColor: selecionado
-                              ? corPrincipal
-                              : '#262626',
-                            color: selecionado ? '#171717' : '#e5e5e5',
-                          }}
-                        >
-                          {selecionado ? 'Selecionado' : 'Selecionar'}
+                        <div className="mt-4 flex items-end justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-bold text-slate-500">
+                              A partir de
+                            </p>
+
+                            <p
+                              className="text-2xl font-black"
+                              style={{ color: corPrincipal }}
+                            >
+                              {formatarDinheiro(Number(item.preco || 0))}
+                            </p>
+
+                            <p className="text-xs font-bold text-slate-400">
+                              por {item.unidade || 'unidade'}
+                            </p>
+                          </div>
+
+                          <span
+                            className="rounded-2xl px-4 py-3 text-sm font-black"
+                            style={{
+                              backgroundColor: selecionado
+                                ? corPrincipal
+                                : '#eff6ff',
+                              color: selecionado ? '#ffffff' : corPrincipal,
+                            }}
+                          >
+                            {selecionado ? 'Selecionado' : 'Selecionar'}
+                          </span>
                         </div>
                       </div>
                     </button>
@@ -406,100 +509,128 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
             )}
           </section>
 
-          <section>
+          <aside className="lg:sticky lg:top-6 lg:self-start">
             <form
-              onSubmit={enviarPedido}
-              className="rounded-3xl border border-neutral-800 bg-neutral-900 p-6"
+              onSubmit={enviarSolicitacao}
+              className="rounded-[2rem] border border-blue-50 bg-white p-5 shadow-2xl shadow-blue-950/10 sm:p-6"
             >
-              <h2 className="text-2xl font-black">
-                Solicitar orçamento
+              <p
+                className="text-sm font-black uppercase tracking-[0.25em]"
+                style={{ color: corPrincipal }}
+              >
+                Solicitação
+              </p>
+
+              <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
+                Enviar pedido
               </h2>
 
-              <div className="mt-6 grid gap-4">
+              {itemSelecionado && (
+                <div className="mt-5 rounded-3xl border border-blue-100 bg-blue-50 p-4">
+                  <p className="text-sm font-bold text-slate-500">
+                    Item selecionado
+                  </p>
+
+                  <p className="mt-1 text-xl font-black text-[#071b3a]">
+                    {itemSelecionado.nome}
+                  </p>
+
+                  <p
+                    className="mt-1 text-lg font-black"
+                    style={{ color: corPrincipal }}
+                  >
+                    {formatarDinheiro(Number(itemSelecionado.preco || 0))}
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-5 grid gap-4">
                 <input
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   placeholder="Seu nome"
-                  className="rounded-xl bg-neutral-800 px-4 py-3 outline-none"
+                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
                 />
 
                 <input
                   value={telefone}
                   onChange={(e) => setTelefone(e.target.value)}
                   placeholder="Seu WhatsApp"
-                  className="rounded-xl bg-neutral-800 px-4 py-3 outline-none"
+                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
                 />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    value={largura}
-                    onChange={(e) => setLargura(e.target.value)}
-                    placeholder="Largura em m"
-                    className="rounded-xl bg-neutral-800 px-4 py-3 outline-none"
-                  />
-
-                  <input
-                    value={altura}
-                    onChange={(e) => setAltura(e.target.value)}
-                    placeholder="Altura em m"
-                    className="rounded-xl bg-neutral-800 px-4 py-3 outline-none"
-                  />
-                </div>
 
                 <input
                   value={quantidade}
                   onChange={(e) => setQuantidade(e.target.value)}
                   placeholder="Quantidade"
-                  className="rounded-xl bg-neutral-800 px-4 py-3 outline-none"
+                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
                 />
 
                 <textarea
                   value={observacoes}
                   onChange={(e) => setObservacoes(e.target.value)}
-                  placeholder="Observações"
+                  placeholder="Descreva o que precisa, prazo, detalhes ou dúvidas..."
                   rows={4}
-                  className="resize-none rounded-xl bg-neutral-800 px-4 py-3 outline-none"
+                  className="resize-none rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
                 />
 
-                <div className="rounded-2xl bg-neutral-950 p-5">
-                  <p className="text-sm text-neutral-400">Total estimado</p>
+                <label className="grid cursor-pointer gap-2">
+                  <span className="text-sm font-black text-[#071b3a]">
+                    Arquivo de referência
+                  </span>
+
+                  <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50 px-4 py-5 text-sm font-bold text-[#05245c] transition hover:bg-blue-100">
+                    {arquivo
+                      ? arquivo.name
+                      : 'Clique para enviar imagem, PDF ou referência'}
+                  </div>
+
+                  <input
+                    type="file"
+                    onChange={(e) => setArquivo(e.target.files?.[0] || null)}
+                    className="hidden"
+                  />
+                </label>
+
+                <div className="rounded-3xl bg-blue-50 p-5">
+                  <p className="text-sm font-bold text-slate-500">
+                    Total estimado
+                  </p>
 
                   <p
-                    className="mt-1 text-3xl font-black"
+                    className="mt-1 text-4xl font-black"
                     style={{ color: corPrincipal }}
                   >
-                    R$ {formatarDinheiro(precoEstimado)}
+                    {formatarDinheiro(totalEstimado)}
+                  </p>
+
+                  <p className="mt-2 text-xs font-bold text-slate-500">
+                    O valor pode mudar conforme detalhes, disponibilidade ou personalização.
                   </p>
                 </div>
 
                 <button
-                  disabled={enviando || produtos.length === 0}
-                  className="rounded-xl px-5 py-4 font-black text-neutral-950 disabled:opacity-60"
+                  disabled={enviando || itens.length === 0}
+                  className="rounded-2xl px-5 py-4 font-black text-white shadow-lg shadow-blue-950/15 transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-60"
                   style={{ backgroundColor: corPrincipal }}
                 >
-                  {enviando ? 'Enviando...' : 'Enviar orçamento'}
+                  {enviando ? 'Enviando...' : 'Enviar solicitação'}
                 </button>
+
+                {linkWhatsapp && (
+                  <a
+                    href={linkWhatsapp}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-2xl bg-emerald-500 px-5 py-4 text-center font-black text-white transition hover:-translate-y-1 hover:bg-emerald-600"
+                  >
+                    Continuar no WhatsApp
+                  </a>
+                )}
               </div>
-
-              {mensagem && (
-                <p className="mt-5 rounded-xl bg-neutral-800 p-4 text-sm text-neutral-300">
-                  {mensagem}
-                </p>
-              )}
-
-              {linkWhatsapp && (
-                <a
-                  href={linkWhatsapp}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 block rounded-xl bg-green-500 px-5 py-4 text-center font-black text-white"
-                >
-                  Enviar mensagem no WhatsApp
-                </a>
-              )}
             </form>
-          </section>
-        </div>
+          </aside>
+        </section>
       </section>
     </main>
   )
