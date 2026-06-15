@@ -1,5 +1,19 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+$ErrorActionPreference = "Stop"
+
+$project = "C:\Users\arauj\grafica-flash"
+
+if (!(Test-Path $project)) {
+  Write-Host "Projeto não encontrado em $project" -ForegroundColor Red
+  exit 1
+}
+
+Set-Location $project
+
+New-Item -ItemType Directory -Force "app\api\mercado-pago\webhook" | Out-Null
+
+Set-Content -Path "app\api\mercado-pago\webhook\route.ts" -Encoding UTF8 -Value @'
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from ' @supabase/supabase-js'
 
 type EmpresaAssinatura = {
   id: string
@@ -11,7 +25,7 @@ function getSupabaseAdmin() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('VariÃ¡veis do Supabase nÃ£o configuradas no servidor.')
+    throw new Error('Variáveis do Supabase não configuradas no servidor.')
   }
 
   return createClient(supabaseUrl, serviceRoleKey, {
@@ -54,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     if (!mercadoPagoToken) {
       return NextResponse.json(
-        { error: 'MERCADO_PAGO_ACCESS_TOKEN nÃ£o configurado.' },
+        { error: 'MERCADO_PAGO_ACCESS_TOKEN não configurado.' },
         { status: 500 }
       )
     }
@@ -172,3 +186,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
+'@
+
+Remove-Item -Recurse -Force ".next" -ErrorAction SilentlyContinue
+
+Write-Host "Webhook atualizado para renovar plano sem perder dias restantes." -ForegroundColor Green
+Write-Host "Agora rode: npm run build" -ForegroundColor Yellow
