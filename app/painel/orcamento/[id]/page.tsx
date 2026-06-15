@@ -1,35 +1,64 @@
 'use client'
 
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 type Empresa = {
   id: string
   nome: string
-  slug: string
-  logo_url: string | null
+  slug: string | null
   whatsapp: string | null
   cor_principal: string | null
-  ativo: boolean
-  segmento: string | null
-  cidade: string | null
-  estado: string | null
+  logo_url: string | null
 }
 
-type ItemCatalogo = {
+type Pedido = {
+  id: string
+  company_id: string | null
+  nome: string
+  telefone: string
+  produto: string
+  quantidade: number | null
+  observacoes: string | null
+  status: string | null
+  preco_estimado: number | null
+  valor_total: number | null
+  valor_sinal: number | null
+  percentual_sinal: number | null
+  forma_pagamento: string | null
+  parcelas: number | null
+  itens_resumo: string | null
+  arquivo_url: string | null
+  created_at: string
+}
+
+type ItemPedido = {
   id: string
   nome: string
-  descricao: string | null
-  categoria: string | null
   tipo: string | null
   unidade: string | null
-  preco: number
-  ativo: boolean
-  destaque: boolean | null
-  imagem_url: string | null
-  company_id: string | null
+  quantidade: number | null
+  preco_unitario: number | null
+  subtotal: number | null
+  largura: number | null
+  altura: number | null
+  comprimento: number | null
+  area_m2: number | null
+  precificacao: string | null
+  detalhes_calculo: string | null
 }
+
+const statusOpcoes = [
+  'Recebido',
+  'Em análise',
+  'Orçamento enviado',
+  'Aguardando pagamento',
+  'Em produção',
+  'Finalizado',
+  'Cancelado',
+]
 
 function formatarDinheiro(valor: number) {
   return Number(valor || 0).toLocaleString('pt-BR', {
@@ -38,264 +67,179 @@ function formatarDinheiro(valor: number) {
   })
 }
 
-function limparNomeArquivo(nome: string) {
-  return nome
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9.-]/g, '')
+function formatarData(data: string) {
+  if (!data) return 'Data não informada'
+
+  return new Date(data).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
-function montarNumeroWhatsapp(telefone: string) {
-  const apenasNumeros = telefone.replace(/\D/g, '')
+function montarWhatsapp(telefone: string) {
+  const numeros = String(telefone || '').replace(/\D/g, '')
 
-  if (apenasNumeros.startsWith('55')) {
-    return apenasNumeros
-  }
+  if (!numeros) return ''
+  if (numeros.startsWith('55')) return numeros
+  if (numeros.length >= 10) return `55${numeros}`
 
-  if (apenasNumeros.length >= 10) {
-    return `55${apenasNumeros}`
-  }
-
-  return apenasNumeros
+  return numeros
 }
 
-function converterQuantidade(valor: string) {
-  const numero = Number(String(valor).replace(',', '.'))
+function getValorPedido(pedido: Pedido | null) {
+  if (!pedido) return 0
 
-  if (Number.isNaN(numero)) {
-    return 0
-  }
-
-  return numero
+  return Number(pedido.valor_total || pedido.preco_estimado || 0)
 }
 
-export default function PaginaPublicaEmpresa() {
+export default function OrcamentoPedidoPage() {
   const params = useParams()
-  const slug = String(params.slug || '')
+  const pedidoId = String(params?.id || '')
 
   const [empresa, setEmpresa] = useState<Empresa | null>(null)
-  const [itens, setItens] = useState<ItemCatalogo[]>([])
-  const [itemSelecionadoId, setItemSelecionadoId] = useState('')
-
-  const [nome, setNome] = useState('')
-  const [telefone, setTelefone] = useState('')
-  const [quantidade, setQuantidade] = useState('1')
-  const [observacoes, setObservacoes] = useState('')
-  const [arquivo, setArquivo] = useState<File | null>(null)
-
+  const [pedido, setPedido] = useState<Pedido | null>(null)
+  const [itens, setItens] = useState<ItemPedido[]>([])
   const [carregando, setCarregando] = useState(true)
-  const [enviando, setEnviando] = useState(false)
   const [mensagem, setMensagem] = useState('')
-  const [linkWhatsapp, setLinkWhatsapp] = useState('')
 
-  async function carregarDados() {
-    if (!slug) return
-
+  async function carregarOrcamento() {
     setCarregando(true)
     setMensagem('')
 
-    const { data: empresaData, error: empresaError } = await supabase
-      .from('companies')
-      .select('*')
-      .eq('slug', slug)
-      .maybeSingle()
-
-    if (empresaError) {
-      setMensagem(`Erro ao buscar empresa: ${empresaError.message}`)
-      setCarregando(false)
-      return
-    }
-
-    if (!empresaData) {
-      setMensagem('Empresa não encontrada. Verifique se o link está correto.')
-      setCarregando(false)
-      return
-    }
-
-    setEmpresa(empresaData)
-
-    if (!empresaData.ativo) {
-      setMensagem('Esta empresa está temporariamente indisponível.')
-      setCarregando(false)
-      return
-    }
-
-    const { data: itensData, error: itensError } = await supabase
-      .from('products')
-      .select('*')
-      .eq('company_id', empresaData.id)
-      .eq('ativo', true)
-      .order('destaque', { ascending: false })
-      .order('created_at', { ascending: false })
-
-    if (itensError) {
-      setMensagem(`Erro ao carregar catálogo: ${itensError.message}`)
-      setCarregando(false)
-      return
-    }
-
-    setItens(itensData || [])
-
-    if (itensData && itensData.length > 0) {
-      setItemSelecionadoId(itensData[0].id)
-    }
-
-    setCarregando(false)
-  }
-
-  async function enviarArquivoPedido(companyId: string, arquivoSelecionado: File) {
-    const nomeArquivo = limparNomeArquivo(arquivoSelecionado.name)
-    const caminho = `${companyId}/${Date.now()}-${nomeArquivo}`
-
-    const { error } = await supabase.storage
-      .from('artes')
-      .upload(caminho, arquivoSelecionado, {
-        cacheControl: '3600',
-        upsert: true,
-      })
-
-    if (error) {
-      throw new Error(error.message)
-    }
-
-    const { data } = supabase.storage.from('artes').getPublicUrl(caminho)
-
-    return data.publicUrl
-  }
-
-  async function enviarSolicitacao(evento: FormEvent<HTMLFormElement>) {
-    evento.preventDefault()
-
-    if (enviando) return
-
-    if (!empresa) {
-      const texto = 'Empresa não carregada. Atualize a página e tente novamente.'
-      setMensagem(texto)
-      alert(texto)
-      return
-    }
-
-    const itemSelecionado = itens.find((item) => item.id === itemSelecionadoId)
-
-    if (!itemSelecionado) {
-      const texto = 'Selecione um item do catálogo antes de enviar.'
-      setMensagem(texto)
-      alert(texto)
-      return
-    }
-
-    const quantidadeNumero = converterQuantidade(quantidade)
-
-    if (!nome.trim()) {
-      const texto = 'Preencha seu nome.'
-      setMensagem(texto)
-      alert(texto)
-      return
-    }
-
-    if (!telefone.trim()) {
-      const texto = 'Preencha seu WhatsApp.'
-      setMensagem(texto)
-      alert(texto)
-      return
-    }
-
-    if (!quantidadeNumero || quantidadeNumero <= 0) {
-      const texto = 'Preencha uma quantidade válida.'
-      setMensagem(texto)
-      alert(texto)
-      return
-    }
-
-    setEnviando(true)
-    setMensagem('')
-    setLinkWhatsapp('')
-
-    let arquivoUrl = ''
-
     try {
-      if (arquivo) {
-        arquivoUrl = await enviarArquivoPedido(empresa.id, arquivo)
-      }
-
-      const precoEstimado = Number(itemSelecionado.preco || 0) * quantidadeNumero
-
-      const { error } = await supabase.from('orders').insert({
-        company_id: empresa.id,
-        nome: nome.trim(),
-        telefone: telefone.trim(),
-        produto: itemSelecionado.nome,
-        quantidade: quantidadeNumero,
-        observacoes,
-        preco_estimado: precoEstimado,
-        arquivo_url: arquivoUrl || null,
-        status: 'Recebido',
-      })
-
-      if (error) {
-        const texto = `Erro ao enviar solicitação: ${error.message}`
-        setMensagem(texto)
-        alert(texto)
-        setEnviando(false)
+      if (!pedidoId || pedidoId === 'undefined' || pedidoId === 'null') {
+        setMensagem('Pedido não informado na URL.')
         return
       }
 
-      const numeroEmpresa = montarNumeroWhatsapp(empresa.whatsapp || '')
+      const { data: pedidoData, error: pedidoError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', pedidoId)
+        .maybeSingle()
 
-      if (numeroEmpresa) {
-        const textoWhatsapp = `Olá! Acabei de enviar uma solicitação pelo site.
-
-Nome: ${nome}
-Item: ${itemSelecionado.nome}
-Tipo: ${itemSelecionado.tipo || 'Item'}
-Quantidade: ${quantidadeNumero}
-Valor estimado: ${formatarDinheiro(precoEstimado)}
-
-${observacoes ? `Observações: ${observacoes}` : ''}`
-
-        const link = `https://wa.me/${numeroEmpresa}?text=${encodeURIComponent(
-          textoWhatsapp
-        )}`
-
-        setLinkWhatsapp(link)
+      if (pedidoError) {
+        setMensagem(`Erro ao buscar pedido: ${pedidoError.message}`)
+        return
       }
 
-      const textoSucesso = 'Solicitação enviada com sucesso.'
-      setMensagem(textoSucesso)
-      alert(textoSucesso)
+      if (!pedidoData) {
+        setMensagem('Pedido não encontrado. Volte ao painel e tente abrir novamente.')
+        return
+      }
 
-      setNome('')
-      setTelefone('')
-      setQuantidade('1')
-      setObservacoes('')
-      setArquivo(null)
+      const pedidoEncontrado = pedidoData as Pedido
+      setPedido(pedidoEncontrado)
+
+      if (pedidoEncontrado.company_id) {
+        const { data: empresaData, error: empresaError } = await supabase
+          .from('companies')
+          .select('id, nome, slug, whatsapp, cor_principal, logo_url')
+          .eq('id', pedidoEncontrado.company_id)
+          .maybeSingle()
+
+        if (empresaError) {
+          setMensagem(`Pedido carregado, mas não consegui buscar a empresa: ${empresaError.message}`)
+        } else if (empresaData) {
+          setEmpresa(empresaData as Empresa)
+        }
+      }
+
+      const { data: itensData, error: itensError } = await supabase
+        .from('order_items')
+        .select('*')
+        .eq('order_id', pedidoId)
+
+      if (itensError) {
+        setMensagem(
+          `Pedido carregado, mas os itens detalhados não foram encontrados: ${itensError.message}`
+        )
+        setItens([])
+        return
+      }
+
+      setItens((itensData || []) as ItemPedido[])
     } catch (erro) {
-      const mensagemErro =
+      const textoErro =
         erro instanceof Error
           ? erro.message
-          : 'Erro desconhecido ao enviar solicitação.'
+          : 'Erro desconhecido ao carregar orçamento.'
 
-      const texto = `Erro: ${mensagemErro}`
-      setMensagem(texto)
-      alert(texto)
+      setMensagem(`Erro: ${textoErro}`)
+    } finally {
+      setCarregando(false)
+    }
+  }
+
+  async function atualizarStatus(novoStatus: string) {
+    if (!pedido) return
+
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: novoStatus })
+      .eq('id', pedido.id)
+
+    if (error) {
+      setMensagem(`Erro ao atualizar status: ${error.message}`)
+      return
     }
 
-    setEnviando(false)
+    setPedido({ ...pedido, status: novoStatus })
+    setMensagem('Status atualizado.')
+  }
+
+  async function copiarResumo() {
+    if (!pedido) return
+
+    const nomeEmpresa = empresa?.nome || 'Empresa'
+    const valorTotal = getValorPedido(pedido)
+
+    const resumoItens =
+      itens.length > 0
+        ? itens
+            .map((item) => {
+              return `- ${item.nome}: ${item.quantidade || 1} ${item.unidade || ''} | ${formatarDinheiro(Number(item.subtotal || 0))}`
+            })
+            .join('\n')
+        : `- ${pedido.produto}: ${pedido.quantidade || 1} | ${formatarDinheiro(valorTotal)}`
+
+    const texto = `ORÇAMENTO - ${nomeEmpresa}
+
+Cliente: ${pedido.nome}
+WhatsApp: ${pedido.telefone}
+Data: ${formatarData(pedido.created_at)}
+
+Itens:
+${resumoItens}
+
+Total: ${formatarDinheiro(valorTotal)}
+${pedido.valor_sinal ? `Sinal: ${formatarDinheiro(Number(pedido.valor_sinal))}` : ''}
+Status: ${pedido.status || 'Recebido'}
+
+${pedido.observacoes ? `Observações: ${pedido.observacoes}` : ''}`
+
+    await navigator.clipboard.writeText(texto)
+    setMensagem('Resumo copiado.')
   }
 
   useEffect(() => {
-    carregarDados()
-  }, [slug])
+    carregarOrcamento()
+  }, [pedidoId])
 
-  const itemSelecionado = itens.find((item) => item.id === itemSelecionadoId)
-  const quantidadeNumero = converterQuantidade(quantidade)
-
-  const totalEstimado =
-    itemSelecionado && quantidadeNumero > 0
-      ? Number(itemSelecionado.preco || 0) * quantidadeNumero
-      : 0
-
+  const nomeEmpresa = empresa?.nome || 'Orçaly'
   const corPrincipal = empresa?.cor_principal || '#05245c'
+  const valorTotal = getValorPedido(pedido)
+  const numeroCliente = pedido ? montarWhatsapp(pedido.telefone || '') : ''
+  const textoWhatsapp =
+    pedido
+      ? `Olá, ${pedido.nome}! Segue o resumo do seu orçamento na ${nomeEmpresa}. Total: ${formatarDinheiro(valorTotal)}.`
+      : ''
+  const linkWhatsapp = numeroCliente
+    ? `https://wa.me/${numeroCliente}?text=${encodeURIComponent(textoWhatsapp)}`
+    : ''
 
   if (carregando) {
     return (
@@ -307,86 +251,66 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
             className="mx-auto mb-6 h-14 w-auto object-contain"
           />
 
-          <p className="font-bold text-slate-500">
-            Carregando página...
+          <p className="font-bold text-slate-500">Carregando orçamento...</p>
+
+          <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">
+            Se isso ficar preso, normalmente é rota errada, pedido inexistente ou arquivo antigo rodando.
           </p>
         </div>
       </main>
     )
   }
 
-  if (!empresa) {
+  if (!pedido) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-white px-4">
-        <div className="max-w-md rounded-[2rem] border border-blue-50 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
+        <div className="max-w-lg rounded-[2rem] border border-blue-50 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
           <h1 className="text-3xl font-black text-[#071b3a]">
-            Empresa não encontrada
+            Orçamento não encontrado
           </h1>
 
           <p className="mt-3 text-slate-600">
-            {mensagem || 'Verifique se o link está correto.'}
+            {mensagem || 'Volte ao painel e tente abrir o pedido novamente.'}
           </p>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <Link
+              href="/painel"
+              className="rounded-2xl bg-[#05245c] px-6 py-4 font-black text-white"
+            >
+              Voltar ao painel
+            </Link>
+
+            <button
+              type="button"
+              onClick={carregarOrcamento}
+              className="rounded-2xl border border-blue-100 bg-white px-6 py-4 font-black text-[#05245c]"
+            >
+              Tentar novamente
+            </button>
+          </div>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-white pb-8 text-slate-950">
-      <style>
-        {`
-          @keyframes fadeUp {
-            from {
-              opacity: 0;
-              transform: translateY(22px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-
-          @keyframes floatSoft {
-            0%, 100% {
-              transform: translateY(0);
-            }
-            50% {
-              transform: translateY(-10px);
-            }
-          }
-
-          .fade-up {
-            animation: fadeUp .75s cubic-bezier(.2,.8,.2,1) both;
-          }
-
-          .float-soft {
-            animation: floatSoft 5s ease-in-out infinite;
-          }
-
-          @media (prefers-reduced-motion: reduce) {
-            .fade-up,
-            .float-soft {
-              animation: none !important;
-            }
-          }
-        `}
-      </style>
-
+    <main className="min-h-screen overflow-x-hidden bg-white pb-24 text-slate-950">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute left-[-180px] top-[-180px] h-[420px] w-[420px] rounded-full bg-blue-100 blur-3xl" />
         <div className="absolute right-[-180px] top-[20%] h-[360px] w-[360px] rounded-full bg-cyan-100 blur-3xl" />
         <div className="absolute bottom-[-160px] left-[30%] h-[360px] w-[360px] rounded-full bg-emerald-100 blur-3xl" />
       </div>
 
-      <section className="relative mx-auto w-full max-w-7xl px-4 py-5 sm:px-6">
-        <header className="fade-up rounded-[2rem] border border-blue-50 bg-white/90 p-5 shadow-xl shadow-blue-950/5 backdrop-blur-xl">
-          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
+      <section className="relative mx-auto w-full max-w-6xl px-4 py-5 sm:px-6">
+        <header className="rounded-[2rem] border border-blue-50 bg-white/90 p-5 shadow-xl shadow-blue-950/5 backdrop-blur-xl">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div className="flex items-center gap-4">
-              {empresa.logo_url ? (
+              {empresa?.logo_url ? (
                 <img
                   src={empresa.logo_url}
-                  alt={empresa.nome}
-                  className="h-16 w-16 rounded-2xl object-cover shadow-lg shadow-blue-950/10"
+                  alt={nomeEmpresa}
+                  className="h-16 w-16 rounded-2xl object-cover"
                 />
               ) : (
                 <img
@@ -401,33 +325,25 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
                   className="text-xs font-black uppercase tracking-[0.25em]"
                   style={{ color: corPrincipal }}
                 >
-                  Catálogo digital
+                  Orçamento
                 </p>
 
                 <h1 className="mt-1 text-3xl font-black text-[#071b3a]">
-                  {empresa.nome}
+                  Pedido de {pedido.nome}
                 </h1>
 
-                <p className="mt-1 text-sm font-medium text-slate-500">
-                  {empresa.segmento || 'Produtos, serviços e solicitações'}
-                  {empresa.cidade ? ` • ${empresa.cidade}` : ''}
-                  {empresa.estado ? `/${empresa.estado}` : ''}
+                <p className="mt-1 text-sm font-bold text-slate-500">
+                  Criado em {formatarData(pedido.created_at)}
                 </p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
-              <p className="text-sm font-bold text-slate-500">
-                Total estimado
-              </p>
-
-              <p
-                className="mt-1 text-3xl font-black"
-                style={{ color: corPrincipal }}
-              >
-                {formatarDinheiro(totalEstimado)}
-              </p>
-            </div>
+            <Link
+              href="/painel"
+              className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-center font-black text-[#05245c] transition hover:bg-blue-50"
+            >
+              Voltar ao painel
+            </Link>
           </div>
         </header>
 
@@ -437,241 +353,169 @@ ${observacoes ? `Observações: ${observacoes}` : ''}`
           </div>
         )}
 
-        <section className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
-          <section>
-            <div className="mb-5">
-              <p
-                className="text-sm font-black uppercase tracking-[0.25em]"
-                style={{ color: corPrincipal }}
-              >
-                Escolha uma opção
-              </p>
+        <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_.42fr]">
+          <div className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5">
+            <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">
+              Dados do pedido
+            </p>
 
-              <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
-                Produtos e serviços disponíveis
-              </h2>
-            </div>
+            <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
+              Resumo para orçamento
+            </h2>
 
-            {itens.length === 0 ? (
-              <div className="rounded-[2rem] border border-dashed border-blue-100 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
-                <h3 className="text-2xl font-black text-[#071b3a]">
-                  Nenhum item disponível
-                </h3>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-3xl bg-blue-50 p-5">
+                <p className="text-sm font-bold text-slate-500">Cliente</p>
 
-                <p className="mt-2 text-slate-600">
-                  Esta empresa ainda não cadastrou produtos ou serviços ativos.
+                <p className="mt-1 text-xl font-black text-[#071b3a]">
+                  {pedido.nome}
+                </p>
+
+                <p className="mt-1 text-sm font-bold text-slate-500">
+                  {pedido.telefone}
                 </p>
               </div>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {itens.map((item) => {
-                  const selecionado = item.id === itemSelecionadoId
 
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setItemSelecionadoId(item.id)}
-                      className={`group overflow-hidden rounded-[2rem] border bg-white text-left shadow-xl shadow-blue-950/5 transition hover:-translate-y-1 hover:shadow-2xl ${
-                        selecionado ? 'border-blue-300' : 'border-blue-50'
-                      }`}
-                    >
-                      <div className="h-44 bg-blue-50">
-                        {item.imagem_url ? (
-                          <img
-                            src={item.imagem_url}
-                            alt={item.nome}
-                            className="h-full w-full object-cover transition group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="grid h-full place-items-center text-5xl">
-                            🧩
-                          </div>
-                        )}
-                      </div>
+              <div className="rounded-3xl bg-blue-50 p-5">
+                <p className="text-sm font-bold text-slate-500">Status</p>
 
-                      <div className="p-5">
-                        <div className="flex flex-wrap gap-2">
-                          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">
-                            {item.tipo || 'item'}
-                          </span>
-
-                          {item.destaque && (
-                            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
-                              Destaque
-                            </span>
-                          )}
-                        </div>
-
-                        <h3 className="mt-3 text-xl font-black text-[#071b3a]">
-                          {item.nome}
-                        </h3>
-
-                        {item.descricao && (
-                          <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
-                            {item.descricao}
-                          </p>
-                        )}
-
-                        <div className="mt-4 flex items-end justify-between gap-3">
-                          <div>
-                            <p className="text-xs font-bold text-slate-500">
-                              A partir de
-                            </p>
-
-                            <p
-                              className="text-2xl font-black"
-                              style={{ color: corPrincipal }}
-                            >
-                              {formatarDinheiro(Number(item.preco || 0))}
-                            </p>
-
-                            <p className="text-xs font-bold text-slate-400">
-                              por {item.unidade || 'unidade'}
-                            </p>
-                          </div>
-
-                          <span
-                            className="rounded-2xl px-4 py-3 text-sm font-black"
-                            style={{
-                              backgroundColor: selecionado
-                                ? corPrincipal
-                                : '#eff6ff',
-                              color: selecionado ? '#ffffff' : corPrincipal,
-                            }}
-                          >
-                            {selecionado ? 'Selecionado' : 'Selecionar'}
-                          </span>
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })}
+                <select
+                  value={pedido.status || 'Recebido'}
+                  onChange={(e) => atualizarStatus(e.target.value)}
+                  className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 font-black text-[#071b3a] outline-none"
+                >
+                  {statusOpcoes.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
               </div>
-            )}
-          </section>
+            </div>
 
-          <aside className="lg:sticky lg:top-6 lg:self-start">
-            <form
-              onSubmit={enviarSolicitacao}
-              className="rounded-[2rem] border border-blue-50 bg-white p-5 shadow-2xl shadow-blue-950/10 sm:p-6"
-            >
-              <p
-                className="text-sm font-black uppercase tracking-[0.25em]"
-                style={{ color: corPrincipal }}
-              >
-                Solicitação
+            <div className="mt-6 rounded-3xl border border-blue-100 bg-[#f7fbff] p-5">
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
+                Itens
               </p>
 
-              <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
-                Enviar pedido
-              </h2>
+              {itens.length > 0 ? (
+                <div className="mt-4 grid gap-3">
+                  {itens.map((item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-2xl bg-white p-4 shadow-sm shadow-blue-950/5"
+                    >
+                      <div className="flex flex-col justify-between gap-3 sm:flex-row">
+                        <div>
+                          <p className="font-black text-[#071b3a]">
+                            {item.nome}
+                          </p>
 
-              {itemSelecionado && (
-                <div className="mt-5 rounded-3xl border border-blue-100 bg-blue-50 p-4">
-                  <p className="text-sm font-bold text-slate-500">
-                    Item selecionado
-                  </p>
+                          <p className="mt-1 text-sm font-bold text-slate-500">
+                            {item.detalhes_calculo ||
+                              `${item.quantidade || 1} ${item.unidade || ''}`}
+                          </p>
+                        </div>
 
-                  <p className="mt-1 text-xl font-black text-[#071b3a]">
-                    {itemSelecionado.nome}
-                  </p>
+                        <p className="text-xl font-black text-[#05245c]">
+                          {formatarDinheiro(Number(item.subtotal || 0))}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-2xl bg-white p-4">
+                  <p className="font-black text-[#071b3a]">{pedido.produto}</p>
 
-                  <p
-                    className="mt-1 text-lg font-black"
-                    style={{ color: corPrincipal }}
-                  >
-                    {formatarDinheiro(Number(itemSelecionado.preco || 0))}
+                  <p className="mt-1 text-sm font-bold text-slate-500">
+                    Quantidade: {pedido.quantidade || 1}
                   </p>
                 </div>
               )}
+            </div>
 
-              <div className="mt-5 grid gap-4">
-                <input
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder="Seu nome"
-                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-                />
+            {pedido.observacoes && (
+              <div className="mt-6 rounded-3xl border border-blue-100 bg-white p-5">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
+                  Observações
+                </p>
 
-                <input
-                  value={telefone}
-                  onChange={(e) => setTelefone(e.target.value)}
-                  placeholder="Seu WhatsApp"
-                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-                />
+                <p className="mt-3 leading-7 text-slate-600">
+                  {pedido.observacoes}
+                </p>
+              </div>
+            )}
 
-                <input
-                  value={quantidade}
-                  onChange={(e) => setQuantidade(e.target.value)}
-                  placeholder="Quantidade"
-                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-                />
+            {pedido.arquivo_url && (
+              <a
+                href={pedido.arquivo_url}
+                target="_blank"
+                className="mt-6 block rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-center font-black text-[#05245c] transition hover:bg-blue-100"
+              >
+                Abrir arquivo enviado pelo cliente
+              </a>
+            )}
+          </div>
 
-                <textarea
-                  value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
-                  placeholder="Descreva o que precisa, prazo, detalhes ou dúvidas..."
-                  rows={4}
-                  className="resize-none rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-                />
+          <aside className="grid gap-6 lg:self-start">
+            <div className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-2xl shadow-blue-950/10">
+              <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">
+                Total
+              </p>
 
-                <label className="grid cursor-pointer gap-2">
-                  <span className="text-sm font-black text-[#071b3a]">
-                    Arquivo de referência
-                  </span>
+              <p className="mt-3 text-4xl font-black text-[#071b3a]">
+                {formatarDinheiro(valorTotal)}
+              </p>
 
-                  <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50 px-4 py-5 text-sm font-bold text-[#05245c] transition hover:bg-blue-100">
-                    {arquivo
-                      ? arquivo.name
-                      : 'Clique para enviar imagem, PDF ou referência'}
-                  </div>
-
-                  <input
-                    type="file"
-                    onChange={(e) => setArquivo(e.target.files?.[0] || null)}
-                    className="hidden"
-                  />
-                </label>
-
-                <div className="rounded-3xl bg-blue-50 p-5">
-                  <p className="text-sm font-bold text-slate-500">
-                    Total estimado
+              {pedido.valor_sinal ? (
+                <div className="mt-4 rounded-2xl bg-emerald-50 p-4">
+                  <p className="text-sm font-bold text-emerald-700">
+                    Sinal inicial
                   </p>
 
-                  <p
-                    className="mt-1 text-4xl font-black"
-                    style={{ color: corPrincipal }}
-                  >
-                    {formatarDinheiro(totalEstimado)}
-                  </p>
-
-                  <p className="mt-2 text-xs font-bold text-slate-500">
-                    O valor pode mudar conforme detalhes, disponibilidade ou personalização.
+                  <p className="mt-1 text-2xl font-black text-emerald-700">
+                    {formatarDinheiro(Number(pedido.valor_sinal))}
                   </p>
                 </div>
+              ) : null}
 
+              <div className="mt-5 grid gap-3">
                 <button
-                  type="submit"
-                  disabled={enviando || itens.length === 0}
-                  className="rounded-2xl px-5 py-4 font-black text-white shadow-lg shadow-blue-950/15 transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-60"
-                  style={{ backgroundColor: corPrincipal }}
+                  type="button"
+                  onClick={copiarResumo}
+                  className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white transition hover:bg-[#031a43]"
                 >
-                  {enviando ? 'Enviando...' : 'Enviar solicitação'}
+                  Copiar resumo
                 </button>
 
                 {linkWhatsapp && (
                   <a
                     href={linkWhatsapp}
                     target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-2xl bg-emerald-500 px-5 py-4 text-center font-black text-white transition hover:-translate-y-1 hover:bg-emerald-600"
+                    className="rounded-2xl bg-emerald-500 px-5 py-4 text-center font-black text-white transition hover:bg-emerald-600"
                   >
-                    Continuar no WhatsApp
+                    Enviar no WhatsApp
                   </a>
                 )}
               </div>
-            </form>
+            </div>
+
+            <div className="rounded-[2rem] border border-blue-50 bg-white p-6 shadow-xl shadow-blue-950/5">
+              <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">
+                Pagamento
+              </p>
+
+              <div className="mt-4 grid gap-3 text-sm font-bold text-slate-600">
+                <p className="rounded-2xl bg-blue-50 p-4">
+                  Forma: {pedido.forma_pagamento || 'não definida'}
+                </p>
+
+                <p className="rounded-2xl bg-blue-50 p-4">
+                  Parcelas: {pedido.parcelas || 'não definido'}
+                </p>
+              </div>
+            </div>
           </aside>
         </section>
       </section>
