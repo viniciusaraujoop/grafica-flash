@@ -1,11 +1,19 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+$ErrorActionPreference = "Stop"
+
+$project = "C:\Users\arauj\grafica-flash"
+Set-Location $project
+
+New-Item -ItemType Directory -Force "app\api\checkout\plano" | Out-Null
+
+Set-Content -Path "app\api\checkout\plano\route.ts" -Encoding UTF8 -Value @'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 type PlanoId = 'basico' | 'profissional' | 'premium'
 
 const planos: Record<PlanoId, { nome: string; valor: number }> = {
   basico: {
-    nome: 'BÃ¡sico',
+    nome: 'Básico',
     valor: 49,
   },
   profissional: {
@@ -23,7 +31,7 @@ function getSupabaseAdmin() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('VariÃ¡veis do Supabase nÃ£o configuradas no servidor.')
+    throw new Error('Variáveis do Supabase não configuradas no servidor.')
   }
 
   return createClient(supabaseUrl, serviceRoleKey, {
@@ -56,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     if (!mercadoPagoToken) {
       return NextResponse.json(
-        { error: 'MERCADO_PAGO_ACCESS_TOKEN nÃ£o configurado.' },
+        { error: 'MERCADO_PAGO_ACCESS_TOKEN não configurado.' },
         { status: 500 }
       )
     }
@@ -70,14 +78,14 @@ export async function POST(request: NextRequest) {
 
     if (!companyId) {
       return NextResponse.json(
-        { error: 'companyId nÃ£o informado.' },
+        { error: 'companyId não informado.' },
         { status: 400 }
       )
     }
 
     if (!email) {
       return NextResponse.json(
-        { error: 'E-mail nÃ£o informado.' },
+        { error: 'E-mail não informado.' },
         { status: 400 }
       )
     }
@@ -86,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     if (!plano) {
       return NextResponse.json(
-        { error: 'Plano invÃ¡lido.' },
+        { error: 'Plano inválido.' },
         { status: 400 }
       )
     }
@@ -111,7 +119,7 @@ export async function POST(request: NextRequest) {
         {
           error:
             pagamentoError?.message ||
-            'NÃ£o foi possÃ­vel registrar o pagamento.',
+            'Não foi possível registrar o pagamento.',
         },
         { status: 500 }
       )
@@ -123,7 +131,7 @@ export async function POST(request: NextRequest) {
       items: [
         {
           id: planoRecebido,
-          title: `Plano ${plano.nome} - OrÃ§aly`,
+          title: `Plano ${plano.nome} - Orçaly`,
           description: `Assinatura mensal do plano ${plano.nome}`,
           quantity: 1,
           currency_id: 'BRL',
@@ -205,3 +213,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
+'@
+
+Remove-Item -Recurse -Force ".next" -ErrorAction SilentlyContinue
+
+Write-Host ""
+Write-Host "Rota app/api/checkout/plano/route.ts corrigida sem auto_return." -ForegroundColor Green
+Write-Host "Agora pare o servidor com Ctrl+C e rode: npm run dev" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "Checagem: se aparecer algo abaixo, auto_return ainda existe em outro arquivo:" -ForegroundColor Cyan
+Select-String -Path "app\**\*.ts","app\**\*.tsx" -Pattern "auto_return" -ErrorAction SilentlyContinue
