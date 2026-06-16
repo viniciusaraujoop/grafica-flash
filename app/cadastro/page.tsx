@@ -162,7 +162,7 @@ function CadastroPageContent() {
     }
 
     if (!regraSenha.valida) {
-      alert('A senha precisa ter no minimo 8 caracteres, 1 letra maiuscula, letras e 1 caractere especial.')
+      alert('A senha precisa ter no mínimo 8 caracteres, 1 letra maiúscula, letras e 1 caractere especial.')
       return
     }
 
@@ -190,7 +190,7 @@ function CadastroPageContent() {
       const usuario = cadastroData.user
 
       if (!usuario) {
-        setMensagem('Conta criada. Confirme seu email e faca login para continuar.')
+        setMensagem('Conta criada. Confirme seu email e faça login para continuar.')
         setCarregando(false)
         return
       }
@@ -247,7 +247,7 @@ function CadastroPageContent() {
       const urlCheckout = checkoutData.init_point || checkoutData.sandbox_init_point || checkoutData.checkout_url
 
       if (!urlCheckout) {
-        setMensagem('Checkout criado, mas nao recebi o link de pagamento.')
+        setMensagem('Checkout criado, mas não recebi o link de pagamento.')
         setCarregando(false)
         return
       }
@@ -263,55 +263,58 @@ function CadastroPageContent() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#07142f] text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#f7fbff] text-slate-950">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[-180px] top-[-180px] h-[460px] w-[460px] rounded-full bg-blue-500/30 blur-3xl" />
-        <div className="absolute right-[-180px] top-[140px] h-[380px] w-[380px] rounded-full bg-cyan-400/20 blur-3xl" />
-        <div className="absolute bottom-[-200px] left-[35%] h-[460px] w-[460px] rounded-full bg-orange-400/20 blur-3xl" />
+        <div className="absolute left-[-180px] top-[-180px] h-[460px] w-[460px] rounded-full bg-blue-200/60 blur-3xl" />
+        <div className="absolute right-[-180px] top-[140px] h-[380px] w-[380px] rounded-full bg-cyan-200/50 blur-3xl" />
+        <div className="absolute bottom-[-200px] left-[35%] h-[460px] w-[460px] rounded-full bg-orange-100/70 blur-3xl" />
       </div>
 
       <section className="relative mx-auto grid min-h-screen w-full max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[.92fr_1.08fr] lg:px-8">
         <aside className="hidden lg:flex lg:flex-col lg:justify-between">
-          <Link href="/" className="inline-flex w-fit items-center">
+          <Link
+            href="/"
+            className="inline-flex w-fit items-center rounded-3xl border border-blue-100 bg-white px-4 py-3 shadow-lg shadow-blue-950/5"
+          >
             <img
               src="/logo-orcaly.png"
               alt="Orçaly"
-              className="h-14 w-auto object-contain"
+              className="h-12 w-auto object-contain"
             />
           </Link>
 
           <div className="max-w-xl py-10">
-            <div className="inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-bold text-blue-100 backdrop-blur">
+            <div className="inline-flex rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-black text-[#05245c] shadow-sm shadow-blue-950/5">
               Cadastro inteligente
             </div>
 
-            <h1 className="mt-6 text-5xl font-black leading-tight tracking-tight">
-              Sua empresa organizada antes do pr&oacute;ximo cliente pedir pre&ccedil;o.
+            <h1 className="mt-6 text-5xl font-black leading-tight tracking-tight text-[#071b3a]">
+              Sua empresa organizada antes do próximo cliente pedir preço.
             </h1>
 
-            <p className="mt-5 text-lg leading-8 text-blue-100/80">
-              Quem responde r&aacute;pido parece maior. Quem organiza clientes vende mais.
-              O Or&ccedil;aly entrega essa percep&ccedil;&atilde;o desde o primeiro contato.
+            <p className="mt-5 text-lg leading-8 text-slate-600">
+              Quem responde rápido parece maior. Quem organiza clientes vende mais.
+              O Orçaly entrega essa percepção desde o primeiro contato.
             </p>
 
             <div className="mt-8 grid gap-4">
-              <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-                <p className="font-black">Venda antes de ser esquecido</p>
-                <p className="mt-2 text-sm leading-6 text-blue-100/75">
+              <div className="rounded-3xl border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+                <p className="font-black text-[#071b3a]">Venda antes de ser esquecido</p>
+                <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
                   Cada pedido perdido no WhatsApp pode virar oportunidade para outro concorrente.
                 </p>
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-                <p className="font-black">Controle que passa confian&ccedil;a</p>
-                <p className="mt-2 text-sm leading-6 text-blue-100/75">
-                  Produtos, or&ccedil;amentos, clientes e pagamentos em um s&oacute; painel.
+              <div className="rounded-3xl border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+                <p className="font-black text-[#071b3a]">Controle que passa confiança</p>
+                <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
+                  Produtos, orçamentos, clientes e pagamentos em um só painel.
                 </p>
               </div>
             </div>
           </div>
 
-          <p className="text-sm font-medium text-blue-100/60">
+          <p className="text-sm font-bold text-slate-500">
             Cadastro seguro com plano selecionado automaticamente.
           </p>
         </aside>
@@ -319,10 +322,13 @@ function CadastroPageContent() {
         <div className="mx-auto flex w-full max-w-3xl items-center">
           <form
             onSubmit={cadastrar}
-            className="w-full rounded-[2rem] border border-white/15 bg-white p-5 text-slate-950 shadow-2xl shadow-black/30 sm:p-8"
+            className="w-full rounded-[2rem] border border-blue-100 bg-white p-5 text-slate-950 shadow-2xl shadow-blue-950/10 sm:p-8"
           >
             <div className="mb-6 flex justify-center lg:hidden">
-              <Link href="/">
+              <Link
+                href="/"
+                className="rounded-3xl border border-blue-100 bg-white px-4 py-3 shadow-lg shadow-blue-950/5"
+              >
                 <img
                   src="/logo-orcaly.png"
                   alt="Orçaly"
@@ -342,7 +348,7 @@ function CadastroPageContent() {
                 </h2>
 
                 <p className="mt-3 leading-7 text-slate-600">
-                  O plano escolhido na p&aacute;gina principal j&aacute; veio selecionado aqui.
+                  O plano escolhido na página principal já veio selecionado aqui.
                 </p>
               </div>
 
@@ -354,7 +360,7 @@ function CadastroPageContent() {
                   {planoEscolhido.nome}
                 </p>
                 <p className="mt-1 text-sm font-bold text-slate-600">
-                  {formatarMoeda(planoEscolhido.preco)}/m&ecirc;s
+                  {formatarMoeda(planoEscolhido.preco)}/mês
                 </p>
               </div>
             </div>
@@ -373,7 +379,7 @@ function CadastroPageContent() {
                 >
                   <p className="font-black">{planos[item].nome}</p>
                   <p className={`mt-1 text-sm font-bold ${plano === item ? 'text-blue-100' : 'text-slate-500'}`}>
-                    {formatarMoeda(planos[item].preco)}/m&ecirc;s
+                    {formatarMoeda(planos[item].preco)}/mês
                   </p>
                 </button>
               ))}
@@ -394,7 +400,7 @@ function CadastroPageContent() {
                 <input
                   value={nomeEmpresa}
                   onChange={(evento) => setNomeEmpresa(evento.target.value)}
-                  placeholder="Ex: Grafica Flash"
+                  placeholder="Ex: Gráfica Flash"
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
                 />
               </label>
@@ -407,7 +413,7 @@ function CadastroPageContent() {
                 <input
                   value={segmento}
                   onChange={(evento) => setSegmento(evento.target.value)}
-                  placeholder="Ex: grafica, loja, servicos"
+                  placeholder="Ex: gráfica, loja, serviços"
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
                 />
               </label>
@@ -497,15 +503,15 @@ function CadastroPageContent() {
                   value={senha}
                   onChange={(evento) => setSenha(evento.target.value)}
                   type="password"
-                  placeholder="Minimo 8 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
                 />
               </label>
             </div>
 
             <div className="mt-5 grid gap-2 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-600 sm:grid-cols-2">
-              <p className={regraSenha.tamanho ? 'text-emerald-700' : ''}>✓ M&iacute;nimo 8 caracteres</p>
-              <p className={regraSenha.maiuscula ? 'text-emerald-700' : ''}>✓ 1 letra mai&uacute;scula</p>
+              <p className={regraSenha.tamanho ? 'text-emerald-700' : ''}>✓ Mínimo 8 caracteres</p>
+              <p className={regraSenha.maiuscula ? 'text-emerald-700' : ''}>✓ 1 letra maiúscula</p>
               <p className={regraSenha.letra ? 'text-emerald-700' : ''}>✓ Letras</p>
               <p className={regraSenha.especial ? 'text-emerald-700' : ''}>✓ 1 caractere especial</p>
             </div>
@@ -522,12 +528,12 @@ function CadastroPageContent() {
                   </p>
 
                   <h3 className="mt-2 text-2xl font-black text-[#071b3a]">
-                    Sua estrutura digital est&aacute; a um passo de entrar no ar.
+                    Sua estrutura digital está a um passo de entrar no ar.
                   </h3>
 
                   <p className="mt-2 text-sm font-bold leading-6 text-slate-600">
                     Depois do pagamento, sua empresa ganha acesso ao painel para organizar produtos,
-                    pedidos, clientes e processos em um s&oacute; lugar.
+                    pedidos, clientes e processos em um só lugar.
                   </p>
                 </div>
               </div>
@@ -571,7 +577,7 @@ function CadastroPageContent() {
             </button>
 
             <p className="mt-4 text-center text-sm font-medium leading-6 text-slate-400">
-              Ao continuar, voc&ecirc; cria a conta da empresa e segue para o pagamento seguro.
+              Ao continuar, você cria a conta da empresa e segue para o pagamento seguro.
             </p>
           </form>
         </div>
@@ -584,12 +590,12 @@ export default function CadastroPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-[#07142f] px-4 text-white">
-          <div className="rounded-[2rem] border border-white/10 bg-white/10 p-8 text-center shadow-2xl shadow-black/20 backdrop-blur">
-            <p className="text-sm font-black uppercase tracking-[0.25em] text-blue-100">
-              Or&ccedil;aly
+        <main className="flex min-h-screen items-center justify-center bg-[#f7fbff] px-4 text-slate-950">
+          <div className="rounded-[2rem] border border-blue-100 bg-white p-8 text-center shadow-2xl shadow-blue-950/10">
+            <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">
+              Orçaly
             </p>
-            <h1 className="mt-3 text-3xl font-black">
+            <h1 className="mt-3 text-3xl font-black text-[#071b3a]">
               Carregando cadastro...
             </h1>
           </div>
