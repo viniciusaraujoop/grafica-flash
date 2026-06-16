@@ -78,7 +78,7 @@ export default function LoginPage() {
       const { data: empresaData, error: empresaError } = await supabase
         .from('companies')
         .select('id, nome, assinatura_status, assinatura_expira_em')
-        .eq('owner_id', usuario.id)
+        .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
         .maybeSingle()
 
       if (empresaError) {

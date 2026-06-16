@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
@@ -55,7 +55,7 @@ export default function PainelLayout({ children }: { children: ReactNode }) {
         const { data: empresaData, error: empresaError } = await supabase
           .from('companies')
           .select('id, assinatura_status, assinatura_expira_em')
-          .eq('owner_id', usuario.id)
+          .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
           .maybeSingle()
 
         if (empresaError) {

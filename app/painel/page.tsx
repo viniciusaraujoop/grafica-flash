@@ -209,7 +209,7 @@ export default function PainelPage() {
       const { data: empresaData, error: empresaError } = await supabase
         .from('companies')
         .select('id, nome, slug, logo_url, whatsapp')
-        .eq('owner_id', usuario.id)
+        .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
         .maybeSingle()
 
       if (empresaError) {

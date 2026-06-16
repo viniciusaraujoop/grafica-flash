@@ -84,7 +84,7 @@ export default function OrcamentoInteligentePage() {
       const { data: empresaData, error: empresaError } = await supabase
         .from('companies')
         .select('id, nome')
-        .eq('owner_id', usuario.id)
+        .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
         .maybeSingle()
 
       if (empresaError) throw empresaError

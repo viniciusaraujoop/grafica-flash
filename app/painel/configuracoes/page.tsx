@@ -93,7 +93,7 @@ export default function ConfiguracoesPage() {
     const { data, error } = await supabase
       .from('companies')
       .select('*')
-      .eq('owner_id', usuario.id)
+      .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
       .maybeSingle()
 
     if (error) {

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -95,7 +95,7 @@ export default function AssinaturaPage() {
       .select(
         'id, nome, email, plano, assinatura_plano, assinatura_status, assinatura_expira_em, ativo'
       )
-      .eq('owner_id', usuario.id)
+      .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
       .maybeSingle()
 
     if (error) {
