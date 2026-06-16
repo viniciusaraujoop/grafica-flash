@@ -2,20 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 type RouteContext = {
-  params: Promise<{
-    token: string
-  }>
+  params: Promise<{ token: string }>
 }
 
 function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Variáveis do Supabase não configuradas no servidor.')
+  if (!url || !key) {
+    throw new Error('Variaveis do Supabase nao configuradas no servidor.')
   }
 
-  return createClient(supabaseUrl, serviceRoleKey, {
+  return createClient(url, key, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
@@ -34,13 +32,8 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       .eq('token', token)
       .maybeSingle()
 
-    if (propostaError) {
-      return NextResponse.json({ error: propostaError.message }, { status: 500 })
-    }
-
-    if (!proposta) {
-      return NextResponse.json({ error: 'Proposta não encontrada.' }, { status: 404 })
-    }
+    if (propostaError) return NextResponse.json({ error: propostaError.message }, { status: 500 })
+    if (!proposta) return NextResponse.json({ error: 'Proposta nao encontrada.' }, { status: 404 })
 
     const { data: empresa, error: empresaError } = await supabaseAdmin
       .from('companies')
@@ -48,19 +41,13 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       .eq('id', proposta.company_id)
       .maybeSingle()
 
-    if (empresaError) {
-      return NextResponse.json({ error: empresaError.message }, { status: 500 })
+    if (empresaError) return NextResponse.json({ error: empresaError.message }, { status: 500 })
+
+    if (proposta.status === 'enviado') {
+      await supabaseAdmin.from('proposals').update({ status: 'visto' }).eq('id', proposta.id)
     }
 
-    await supabaseAdmin
-      .from('proposals')
-      .update({ status: proposta.status === 'enviado' ? 'visto' : proposta.status })
-      .eq('id', proposta.id)
-
-    return NextResponse.json({
-      proposta,
-      empresa,
-    })
+    return NextResponse.json({ proposta, empresa })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro desconhecido.'
     return NextResponse.json({ error: message }, { status: 500 })
@@ -71,11 +58,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const { token } = await context.params
     const body = await request.json()
-    const supabaseAdmin = getSupabaseAdmin()
 
     if (body.acao !== 'aprovar') {
-      return NextResponse.json({ error: 'Ação inválida.' }, { status: 400 })
+      return NextResponse.json({ error: 'Acao invalida.' }, { status: 400 })
     }
+
+    const supabaseAdmin = getSupabaseAdmin()
 
     const { data, error } = await supabaseAdmin
       .from('proposals')
@@ -87,18 +75,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
       .select('id')
       .maybeSingle()
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (!data) return NextResponse.json({ error: 'Proposta nao encontrada.' }, { status: 404 })
 
-    if (!data) {
-      return NextResponse.json({ error: 'Proposta não encontrada.' }, { status: 404 })
-    }
-
-    return NextResponse.json({
-      ok: true,
-      status: 'aprovado',
-    })
+    return NextResponse.json({ ok: true, status: 'aprovado' })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro desconhecido.'
     return NextResponse.json({ error: message }, { status: 500 })

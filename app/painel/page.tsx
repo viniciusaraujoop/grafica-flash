@@ -558,8 +558,8 @@ export default function PainelPage() {
                             </div>
 
                             <div className="flex flex-wrap gap-2">
-                              <Link href={`/painel/orcamento/${pedido.id}`} className="rounded-2xl bg-[#05245c] px-4 py-3 text-sm font-black text-white transition hover:bg-[#031a43]">
-                                Gerar orcamento
+                              <Link href={`/painel/proposta/${pedido.id}`} className="rounded-2xl bg-[#05245c] px-4 py-3 text-sm font-black text-white transition hover:bg-[#031a43]">
+                                Gerar proposta
                               </Link>
 
                               {whats && (

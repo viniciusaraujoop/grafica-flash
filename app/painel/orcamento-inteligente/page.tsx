@@ -1,69 +1,24 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { modelosNegocio } from '@/lib/modelos-negocio'
 
 type Empresa = {
   id: string
   nome: string
+  segmento: string | null
+  modelo_negocio: string | null
+  modelo_nome: string | null
+  modelo_perguntas: string[] | null
 }
-
-type Modelo = {
-  id: string
-  nome: string
-  tipo: string
-  perguntas: string[]
-  ativo: boolean
-}
-
-const modelosBase = [
-  {
-    nome: 'Gr&aacute;fica',
-    tipo: 'produto',
-    descricao: 'Ideal para banners, cart&otilde;es, adesivos, impressos e materiais personalizados.',
-    perguntas: [
-      'Produto',
-      'Quantidade',
-      'Material',
-      'Tamanho',
-      'Acabamento',
-      'Prazo desejado',
-      'Arte pronta?',
-    ],
-  },
-  {
-    nome: 'Servi&ccedil;os',
-    tipo: 'servico',
-    descricao: 'Ideal para profissionais que trabalham com agenda, atendimento e execu&ccedil;&atilde;o.',
-    perguntas: [
-      'Servi&ccedil;o desejado',
-      'Profissional',
-      'Data',
-      'Hor&aacute;rio',
-      'Endere&ccedil;o ou local',
-      'Observa&ccedil;&atilde;o',
-    ],
-  },
-  {
-    nome: 'Assist&ecirc;ncia t&eacute;cnica',
-    tipo: 'assistencia',
-    descricao: 'Ideal para celulares, computadores, eletros, manuten&ccedil;&atilde;o e reparos.',
-    perguntas: [
-      'Tipo de aparelho',
-      'Marca e modelo',
-      'Defeito apresentado',
-      'Fotos do problema',
-      'Urg&ecirc;ncia',
-      'Observa&ccedil;&atilde;o',
-    ],
-  },
-]
 
 export default function OrcamentoInteligentePage() {
   const [empresa, setEmpresa] = useState<Empresa | null>(null)
-  const [modelos, setModelos] = useState<Modelo[]>([])
+  const [perguntasTexto, setPerguntasTexto] = useState('')
   const [carregando, setCarregando] = useState(true)
+  const [salvando, setSalvando] = useState(false)
   const [mensagem, setMensagem] = useState('')
   const [erro, setErro] = useState('')
 
@@ -72,44 +27,35 @@ export default function OrcamentoInteligentePage() {
     setErro('')
 
     try {
-      const { data: sessaoData } = await supabase.auth.getSession()
-      const usuario = sessaoData.session?.user
+      const { data: sessao } = await supabase.auth.getSession()
+      const usuario = sessao.session?.user
 
       if (!usuario) {
-        setErro('Voc&ecirc; precisa estar logado.')
+        setErro('Você precisa estar logado.')
         setCarregando(false)
         return
       }
 
-      const { data: empresaData, error: empresaError } = await supabase
+      const { data, error } = await supabase
         .from('companies')
-        .select('id, nome')
+        .select('id, nome, segmento, modelo_negocio, modelo_nome, modelo_perguntas')
         .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
         .maybeSingle()
 
-      if (empresaError) throw empresaError
+      if (error) throw error
+      if (!data) throw new Error('Empresa não encontrada.')
 
-      if (!empresaData) {
-        setErro('Empresa n&atilde;o encontrada.')
-        setCarregando(false)
-        return
-      }
-
-      const empresaAtual = empresaData as Empresa
+      const empresaAtual = data as Empresa
       setEmpresa(empresaAtual)
 
-      const { data: modelosData, error: modelosError } = await supabase
-        .from('quote_templates')
-        .select('id, nome, tipo, perguntas, ativo')
-        .eq('company_id', empresaAtual.id)
-        .order('created_at', { ascending: false })
+      const modeloPadrao = modelosNegocio.find((modelo) => modelo.id === empresaAtual.modelo_negocio)
+      const perguntas = empresaAtual.modelo_perguntas?.length
+        ? empresaAtual.modelo_perguntas
+        : modeloPadrao?.perguntas || modelosNegocio[modelosNegocio.length - 1].perguntas
 
-      if (modelosError) throw modelosError
-
-      setModelos((modelosData || []) as Modelo[])
+      setPerguntasTexto(perguntas.join('\n'))
     } catch (error) {
-      const texto = error instanceof Error ? error.message : 'Erro ao carregar modelos.'
-      setErro(texto)
+      setErro(error instanceof Error ? error.message : 'Erro ao carregar orçamento inteligente.')
     }
 
     setCarregando(false)
@@ -119,60 +65,84 @@ export default function OrcamentoInteligentePage() {
     carregar()
   }, [])
 
-  async function ativarModelo(modelo: (typeof modelosBase)[number]) {
+  async function salvar(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault()
+
     if (!empresa) return
 
-    setMensagem(`Salvando modelo ${modelo.nome.replace(/<[^>]+>/g, '')}...`)
+    const perguntas = perguntasTexto
+      .split('\n')
+      .map((linha) => linha.trim())
+      .filter(Boolean)
 
-    const { error } = await supabase.from('quote_templates').upsert(
-      {
-        company_id: empresa.id,
-        nome: modelo.nome,
-        tipo: modelo.tipo,
-        perguntas: modelo.perguntas,
-        ativo: true,
-      },
-      {
-        onConflict: 'company_id,nome',
-      }
-    )
-
-    if (error) {
-      setMensagem(`Erro: ${error.message}`)
+    if (perguntas.length === 0) {
+      alert('Informe pelo menos uma pergunta.')
       return
     }
 
-    setMensagem('Modelo salvo com sucesso.')
+    setSalvando(true)
+    setMensagem('Salvando perguntas...')
+
+    const nomeModelo = empresa.modelo_nome || empresa.segmento || 'Modelo personalizado'
+    const tipoModelo = empresa.modelo_negocio || 'personalizado'
+
+    const { error: empresaError } = await supabase
+      .from('companies')
+      .update({
+        modelo_perguntas: perguntas,
+      })
+      .eq('id', empresa.id)
+
+    if (empresaError) {
+      setMensagem(`Erro: ${empresaError.message}`)
+      setSalvando(false)
+      return
+    }
+
+    const { error: modeloError } = await supabase.from('quote_templates').upsert(
+      {
+        company_id: empresa.id,
+        nome: nomeModelo,
+        tipo: tipoModelo,
+        perguntas,
+        ativo: true,
+      },
+      { onConflict: 'company_id,tipo' }
+    )
+
+    if (modeloError) {
+      setMensagem(`Erro: ${modeloError.message}`)
+      setSalvando(false)
+      return
+    }
+
+    setMensagem('Perguntas atualizadas com sucesso.')
+    setSalvando(false)
     carregar()
   }
 
+  const modeloAtual = modelosNegocio.find((modelo) => modelo.id === empresa?.modelo_negocio)
+
   return (
-    <main className="min-h-screen bg-[#f5f8ff] text-slate-950">
-      <section className="mx-auto max-w-7xl px-4 py-6">
+    <main className="min-h-screen bg-[#f5f8ff] px-4 py-6 text-slate-950">
+      <section className="mx-auto max-w-7xl">
         <Link href="/painel" className="text-sm font-black text-[#05245c]">
           ← Voltar ao painel
         </Link>
 
         <header className="mt-5 overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
           <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
-            Or&ccedil;amento inteligente
+            Orçamento inteligente
           </p>
 
           <h1 className="mt-3 text-4xl font-black text-[#071b3a] sm:text-5xl">
-            Perguntas certas para cada tipo de neg&oacute;cio
+            O fluxo já vem do tipo de negócio escolhido no cadastro.
           </h1>
 
           <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
-            Cada categoria pode ter perguntas pr&oacute;prias. Assim o cliente envia informa&ccedil;&otilde;es melhores
-            e a empresa ganha tempo para montar uma proposta profissional.
+            Aqui você ajusta as perguntas do modelo atual. A escolha do tipo de empresa fica no cadastro, para o sistema nascer adaptado desde o primeiro acesso.
           </p>
         </header>
-
-        {mensagem && (
-          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
-            {mensagem}
-          </div>
-        )}
 
         {erro && (
           <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-700">
@@ -180,93 +150,110 @@ export default function OrcamentoInteligentePage() {
           </div>
         )}
 
-        <section className="mt-6 grid gap-5 lg:grid-cols-3">
-          {modelosBase.map((modelo) => (
-            <article key={modelo.tipo} className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-950/10">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-[#05245c]">
-                    Modelo
-                  </p>
-                  <h2
-                    className="mt-2 text-3xl font-black text-[#071b3a]"
-                    dangerouslySetInnerHTML={{ __html: modelo.nome }}
-                  />
-                </div>
+        {mensagem && (
+          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
+            {mensagem}
+          </div>
+        )}
 
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-2xl">
-                  🧠
-                </div>
+        {carregando && (
+          <div className="mt-6 rounded-[2rem] bg-white p-8 text-center font-black shadow-xl shadow-blue-950/5">
+            Carregando...
+          </div>
+        )}
+
+        {!carregando && empresa && (
+          <div className="mt-6 grid gap-6 lg:grid-cols-[420px_1fr]">
+            <aside className="grid h-fit gap-5">
+              <div className="rounded-[2rem] border border-blue-100 bg-[#05245c] p-6 text-white shadow-2xl shadow-blue-950/20">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-100">
+                  Modelo ativo
+                </p>
+
+                <h2 className="mt-3 text-4xl font-black">
+                  {empresa.modelo_nome || empresa.segmento || 'Modelo personalizado'}
+                </h2>
+
+                <p className="mt-3 leading-7 text-blue-100">
+                  {modeloAtual?.descricao || 'Modelo ajustável para o fluxo de pedidos da sua empresa.'}
+                </p>
               </div>
 
-              <p
-                className="mt-3 leading-7 text-slate-600"
-                dangerouslySetInnerHTML={{ __html: modelo.descricao }}
+              <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
+                <h3 className="text-2xl font-black text-[#071b3a]">
+                  Como funciona
+                </h3>
+
+                <div className="mt-4 grid gap-3">
+                  <div className="rounded-3xl bg-blue-50 p-4">
+                    <p className="font-black text-[#071b3a]">1. Cliente escolhe o produto</p>
+                    <p className="mt-1 text-sm font-bold text-slate-500">A loja abre as perguntas certas.</p>
+                  </div>
+
+                  <div className="rounded-3xl bg-blue-50 p-4">
+                    <p className="font-black text-[#071b3a]">2. Pedido chega organizado</p>
+                    <p className="mt-1 text-sm font-bold text-slate-500">Menos conversa perdida no WhatsApp.</p>
+                  </div>
+
+                  <div className="rounded-3xl bg-blue-50 p-4">
+                    <p className="font-black text-[#071b3a]">3. Empresa gera proposta</p>
+                    <p className="mt-1 text-sm font-bold text-slate-500">Com valor, prazo e link de aprovação.</p>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            <form onSubmit={salvar} className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
+                    Perguntas do pedido
+                  </p>
+                  <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
+                    Ajuste o que o cliente precisa responder
+                  </h2>
+                </div>
+
+                <button
+                  disabled={salvando}
+                  className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white transition hover:bg-[#031a43] disabled:opacity-60"
+                >
+                  {salvando ? 'Salvando...' : 'Salvar perguntas'}
+                </button>
+              </div>
+
+              <p className="mt-4 leading-7 text-slate-600">
+                Coloque uma pergunta por linha. Essas perguntas aparecem quando o cliente configura um produto na página pública.
+              </p>
+
+              <textarea
+                value={perguntasTexto}
+                onChange={(evento) => setPerguntasTexto(evento.target.value)}
+                rows={14}
+                className="mt-5 w-full resize-none rounded-3xl border border-slate-200 bg-slate-50 px-5 py-5 font-semibold leading-8 outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
               />
 
-              <div className="mt-5 grid gap-2">
-                {modelo.perguntas.map((pergunta) => (
-                  <div key={pergunta} className="rounded-2xl border border-blue-50 bg-blue-50 px-4 py-3 text-sm font-black text-[#05245c]">
-                    <span dangerouslySetInnerHTML={{ __html: pergunta }} />
-                  </div>
-                ))}
-              </div>
+              <div className="mt-5 rounded-3xl border border-blue-100 bg-blue-50 p-5">
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-[#05245c]">
+                  Prévia
+                </p>
 
-              <button
-                type="button"
-                onClick={() => ativarModelo(modelo)}
-                className="mt-6 w-full rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white transition hover:bg-[#031a43]"
-              >
-                Ativar este modelo
-              </button>
-            </article>
-          ))}
-        </section>
-
-        <section className="mt-6 rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-          <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
-            Modelos ativos
-          </p>
-
-          {carregando && (
-            <p className="mt-4 font-bold text-slate-500">
-              Carregando...
-            </p>
-          )}
-
-          {!carregando && modelos.length === 0 && (
-            <p className="mt-4 font-bold text-slate-500">
-              Nenhum modelo ativo ainda. Ative um dos modelos acima.
-            </p>
-          )}
-
-          {!carregando && modelos.length > 0 && (
-            <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {modelos.map((modelo) => (
-                <div key={modelo.id} className="rounded-3xl border border-blue-100 bg-blue-50 p-5">
-                  <p className="text-2xl font-black text-[#071b3a]" dangerouslySetInnerHTML={{ __html: modelo.nome }} />
-                  <p className="mt-2 text-sm font-bold text-slate-600">
-                    {modelo.perguntas.length} perguntas configuradas
-                  </p>
+                <div className="mt-4 grid gap-2 md:grid-cols-2">
+                  {perguntasTexto
+                    .split('\n')
+                    .map((linha) => linha.trim())
+                    .filter(Boolean)
+                    .slice(0, 10)
+                    .map((pergunta) => (
+                      <div key={pergunta} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-600">
+                        {pergunta}
+                      </div>
+                    ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="mt-6 rounded-[2rem] border border-emerald-100 bg-emerald-50 p-6">
-          <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-700">
-            Pr&oacute;xima etapa
-          </p>
-          <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
-            Link de aprova&ccedil;&atilde;o da proposta
-          </h2>
-          <p className="mt-3 max-w-4xl leading-7 text-slate-600">
-            A proposta pode ser enviada ao cliente pelo WhatsApp com um link como
-            <strong> /proposta/abc123</strong>. Nessa p&aacute;gina ele v&ecirc; itens, valor,
-            prazo, condi&ccedil;&otilde;es e pode aprovar, pagar sinal ou negociar.
-          </p>
-        </section>
+              </div>
+            </form>
+          </div>
+        )}
       </section>
     </main>
   )
