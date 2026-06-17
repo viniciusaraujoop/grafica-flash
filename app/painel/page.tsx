@@ -421,6 +421,13 @@ export default function PainelPage() {
               </div>
             </div>
         <AdminMasterButton />
+
+      <a
+        href="/painel/site"
+        className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-black text-[#05245c] transition hover:bg-blue-100"
+      >
+        Editor do site
+      </a>
 </header>
 
           <div className="grid gap-3 lg:hidden">
