@@ -1,369 +1,503 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { modelosNegocio } from '@/lib/modelos-negocio'
-import { criarSlugSeguro, validarNomeEmpresa, validarSenhaForte, validarSlugEmpresa, validarTextoCurto } from '@/lib/security'
+import { FormEvent, Suspense, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 
-type Estado = {
-  id: number
+type CadastroForm = {
+  nome_responsavel: string
+  email: string
+  whatsapp: string
+  empresa_nome: string
+  modelo_negocio: string
+  cidade: string
+  estado: string
+  plano: string
+}
+
+type ModeloNegocio = {
+  id: string
+  nome: string
+  chamada: string
+  exemplo: string
+  perguntas: string[]
+}
+
+type Uf = {
   sigla: string
   nome: string
 }
 
-type Cidade = {
+type CidadeIbge = {
   id: number
   nome: string
 }
 
-const planos = {
-  basico: { nome: 'Essencial', valor: 49.9 },
-  profissional: { nome: 'Profissional', valor: 99.9 },
-  premium: { nome: 'Premium', valor: 149.9 },
-}
+const ufs: Uf[] = [
+  { sigla: 'AC', nome: 'Acre' },
+  { sigla: 'AL', nome: 'Alagoas' },
+  { sigla: 'AP', nome: 'Amapá' },
+  { sigla: 'AM', nome: 'Amazonas' },
+  { sigla: 'BA', nome: 'Bahia' },
+  { sigla: 'CE', nome: 'Ceará' },
+  { sigla: 'DF', nome: 'Distrito Federal' },
+  { sigla: 'ES', nome: 'Espírito Santo' },
+  { sigla: 'GO', nome: 'Goiás' },
+  { sigla: 'MA', nome: 'Maranhão' },
+  { sigla: 'MT', nome: 'Mato Grosso' },
+  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+  { sigla: 'MG', nome: 'Minas Gerais' },
+  { sigla: 'PA', nome: 'Pará' },
+  { sigla: 'PB', nome: 'Paraíba' },
+  { sigla: 'PR', nome: 'Paraná' },
+  { sigla: 'PE', nome: 'Pernambuco' },
+  { sigla: 'PI', nome: 'Piauí' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro' },
+  { sigla: 'RN', nome: 'Rio Grande do Norte' },
+  { sigla: 'RS', nome: 'Rio Grande do Sul' },
+  { sigla: 'RO', nome: 'Rondônia' },
+  { sigla: 'RR', nome: 'Roraima' },
+  { sigla: 'SC', nome: 'Santa Catarina' },
+  { sigla: 'SP', nome: 'São Paulo' },
+  { sigla: 'SE', nome: 'Sergipe' },
+  { sigla: 'TO', nome: 'Tocantins' },
+]
+
+const modelos: ModeloNegocio[] = [
+  {
+    id: 'grafica',
+    nome: 'Gráfica e personalizados',
+    chamada: 'Medidas, quantidades, acabamento e envio de arte.',
+    exemplo: 'Banner, cartão, adesivo, camisa, caneca e fachada.',
+    perguntas: ['Produto', 'Medidas', 'Quantidade', 'Prazo'],
+  },
+  {
+    id: 'assistencia_tecnica',
+    nome: 'Assistência técnica',
+    chamada: 'Diagnóstico, defeito, urgência e aprovação de orçamento.',
+    exemplo: 'Celular, notebook, videogame, eletrodoméstico e eletrônicos.',
+    perguntas: ['Aparelho', 'Defeito', 'Urgência', 'Modelo'],
+  },
+  {
+    id: 'beleza_estetica',
+    nome: 'Beleza e estética',
+    chamada: 'Serviços, horários, atendimento e apresentação visual.',
+    exemplo: 'Salão, barbearia, unha, sobrancelha, estética e maquiagem.',
+    perguntas: ['Serviço', 'Data', 'Horário', 'Objetivo'],
+  },
+  {
+    id: 'alimenticio',
+    nome: 'Alimentício e encomendas',
+    chamada: 'Cardápio, sabores, tamanhos, datas e retirada ou entrega.',
+    exemplo: 'Bolos, doces, salgados, marmitas, lanches e kits festa.',
+    perguntas: ['Produto', 'Quantidade', 'Data', 'Entrega'],
+  },
+  {
+    id: 'automotivo',
+    nome: 'Automotivo',
+    chamada: 'Veículo, serviço desejado, fotos e detalhes do orçamento.',
+    exemplo: 'Oficina, estética automotiva, som, elétrica, peças e lavagem.',
+    perguntas: ['Veículo', 'Serviço', 'Ano', 'Detalhes'],
+  },
+  {
+    id: 'construcao_reformas',
+    nome: 'Construção e reformas',
+    chamada: 'Medidas, fotos, local do serviço e escopo do orçamento.',
+    exemplo: 'Pintura, reforma, marcenaria, elétrica, hidráulica e gesso.',
+    perguntas: ['Serviço', 'Medidas', 'Local', 'Prazo'],
+  },
+  {
+    id: 'eventos',
+    nome: 'Eventos e festas',
+    chamada: 'Data, local, quantidade de pessoas e pacote desejado.',
+    exemplo: 'Buffet, decoração, fotografia, cerimonial, som e locação.',
+    perguntas: ['Evento', 'Data', 'Pessoas', 'Local'],
+  },
+  {
+    id: 'moda_varejo',
+    nome: 'Moda e varejo',
+    chamada: 'Vitrine de produtos, variações, tamanhos e pedidos.',
+    exemplo: 'Roupas, acessórios, calçados, bolsas, perfumaria e loja local.',
+    perguntas: ['Produto', 'Tamanho', 'Variação', 'Entrega'],
+  },
+  {
+    id: 'pet_shop',
+    nome: 'Pet shop e banho/tosa',
+    chamada: 'Dados do pet, serviço desejado e melhor horário.',
+    exemplo: 'Banho, tosa, acessórios, ração e estética pet.',
+    perguntas: ['Pet', 'Porte', 'Serviço', 'Data'],
+  },
+  {
+    id: 'educacao_cursos',
+    nome: 'Cursos e aulas',
+    chamada: 'Cursos, turmas, horários e interessados em matrícula.',
+    exemplo: 'Reforço escolar, idiomas, cursos livres e aulas particulares.',
+    perguntas: ['Curso', 'Nível', 'Horário', 'Objetivo'],
+  },
+  {
+    id: 'consultoria',
+    nome: 'Consultoria e serviços profissionais',
+    chamada: 'Briefing, objetivo, prazo e proposta consultiva.',
+    exemplo: 'Contabilidade, marketing, RH, arquitetura, jurídico e negócios.',
+    perguntas: ['Serviço', 'Objetivo', 'Prazo', 'Empresa'],
+  },
+  {
+    id: 'fotografia_video',
+    nome: 'Fotografia e vídeo',
+    chamada: 'Data, local, estilo, pacote e detalhes da produção.',
+    exemplo: 'Ensaios, eventos, produtos, vídeos comerciais e edição.',
+    perguntas: ['Serviço', 'Data', 'Local', 'Estilo'],
+  },
+  {
+    id: 'saude_bem_estar',
+    nome: 'Saúde e bem-estar',
+    chamada: 'Serviços, horários e solicitações gerais de atendimento.',
+    exemplo: 'Clínicas, terapias, nutrição, pilates, fisioterapia e bem-estar.',
+    perguntas: ['Serviço', 'Horário', 'Local', 'Observações'],
+  },
+  {
+    id: 'tecnologia',
+    nome: 'Tecnologia e digital',
+    chamada: 'Briefing, escopo, objetivo e prazo do projeto.',
+    exemplo: 'Sites, sistemas, automações, suporte, social media e design.',
+    perguntas: ['Serviço', 'Objetivo', 'Prazo', 'Referências'],
+  },
+  {
+    id: 'servicos_gerais',
+    nome: 'Serviços gerais',
+    chamada: 'Local, prazo, fotos e detalhes para orçamento.',
+    exemplo: 'Limpeza, instalação, manutenção, frete, montagem e assistência.',
+    perguntas: ['Serviço', 'Local', 'Prazo', 'Detalhes'],
+  },
+  {
+    id: 'outros',
+    nome: 'Outro tipo de negócio',
+    chamada: 'Modelo flexível para adaptar depois no painel.',
+    exemplo: 'Qualquer empresa que precise de site, pedidos e propostas.',
+    perguntas: ['Produto', 'Atendimento', 'Prazo', 'Detalhes'],
+  },
+]
+
+const planos = [
+  {
+    id: 'essencial',
+    nome: 'Essencial',
+    preco: 'R$ 49,90',
+    descricao: 'Site, catálogo e pedidos.',
+  },
+  {
+    id: 'profissional',
+    nome: 'Profissional',
+    preco: 'R$ 99,90',
+    descricao: 'Site, pedidos, propostas e oportunidades.',
+    destaque: true,
+  },
+  {
+    id: 'premium',
+    nome: 'Premium',
+    preco: 'R$ 149,90',
+    descricao: 'Mais recursos para operação comercial.',
+  },
+]
 
 function CadastroContent() {
-  const searchParams = useSearchParams()
-  const planoInicial = searchParams.get('plano') || 'profissional'
+  const [form, setForm] = useState<CadastroForm>({
+    nome_responsavel: '',
+    email: '',
+    whatsapp: '',
+    empresa_nome: '',
+    modelo_negocio: 'grafica',
+    cidade: '',
+    estado: 'AL',
+    plano: 'profissional',
+  })
 
-  const [plano, setPlano] = useState(planoInicial in planos ? planoInicial : 'profissional')
-  const [modeloId, setModeloId] = useState('grafica')
-  const [buscaModelo, setBuscaModelo] = useState('')
-  const [nomeEmpresa, setNomeEmpresa] = useState('')
-  const [email, setEmail] = useState('')
-  const [senha, setSenha] = useState('')
-  const [telefone, setTelefone] = useState('')
-  const [estados, setEstados] = useState<Estado[]>([])
-  const [cidades, setCidades] = useState<Cidade[]>([])
-  const [estado, setEstado] = useState('')
-  const [cidade, setCidade] = useState('')
+  const [cidades, setCidades] = useState<string[]>([])
+  const [buscaCidade, setBuscaCidade] = useState('')
   const [carregandoCidades, setCarregandoCidades] = useState(false)
-  const [enviando, setEnviando] = useState(false)
-  const [mensagem, setMensagem] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [erro, setErro] = useState('')
 
-  const modeloSelecionado = modelosNegocio.find((item) => item.id === modeloId) || modelosNegocio[0]
-  const planoSelecionado = planos[plano as keyof typeof planos]
-  const slugPreview = criarSlugSeguro(nomeEmpresa || 'sua-empresa')
+  const modeloSelecionado = useMemo(() => {
+    return modelos.find((modelo) => modelo.id === form.modelo_negocio) || modelos[0]
+  }, [form.modelo_negocio])
 
-  const modelosFiltrados = useMemo(() => {
-    const termo = buscaModelo.trim().toLowerCase()
+  const planoSelecionado = useMemo(() => {
+    return planos.find((plano) => plano.id === form.plano) || planos[1]
+  }, [form.plano])
 
-    if (!termo) return modelosNegocio
+  const cidadesFiltradas = useMemo(() => {
+    const busca = buscaCidade.trim().toLowerCase()
 
-    return modelosNegocio.filter((modelo) => {
-      const texto = `${modelo.nome} ${modelo.subtitulo} ${modelo.descricao} ${modelo.exemplos.join(' ')}`.toLowerCase()
-      return texto.includes(termo)
-    })
-  }, [buscaModelo])
+    if (!busca) return cidades
 
-  useEffect(() => {
-    async function carregarEstados() {
-      const resposta = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
-      const dados = await resposta.json()
-      setEstados(dados)
-    }
+    return cidades.filter((cidade) => cidade.toLowerCase().includes(busca))
+  }, [buscaCidade, cidades])
 
-    carregarEstados()
-  }, [])
+  function update(campo: keyof CadastroForm, valor: string) {
+    setForm((atual) => ({ ...atual, [campo]: valor }))
+  }
 
   useEffect(() => {
     async function carregarCidades() {
-      if (!estado) {
+      setCarregandoCidades(true)
+      setCidades([])
+      setBuscaCidade('')
+      update('cidade', '')
+
+      try {
+        const resposta = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${form.estado}/municipios?orderBy=nome`)
+        const dados = (await resposta.json()) as CidadeIbge[]
+        const nomes = dados.map((cidade: CidadeIbge) => cidade.nome).filter(Boolean)
+
+        setCidades(nomes)
+      } catch {
         setCidades([])
-        setCidade('')
-        return
       }
 
-      setCarregandoCidades(true)
-      setCidade('')
-
-      const resposta = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios?orderBy=nome`)
-      const dados = await resposta.json()
-
-      setCidades(dados)
       setCarregandoCidades(false)
     }
 
-    carregarCidades()
-  }, [estado])
+    if (form.estado) carregarCidades()
+  }, [form.estado])
 
-  async function cadastrar(evento: FormEvent<HTMLFormElement>) {
-    evento.preventDefault()
-
-    const nomeValidado = validarNomeEmpresa(nomeEmpresa)
-    if (!nomeValidado.valido) {
-      alert(nomeValidado.erros.join('\n'))
-      return
-    }
-
-    const slugValidado = validarSlugEmpresa(nomeEmpresa)
-    if (!slugValidado.valido) {
-      alert(slugValidado.erros.join('\n'))
-      return
-    }
-
-    const telefoneValidado = validarTextoCurto(telefone, 'WhatsApp', 40)
-    if (!telefoneValidado.valido) {
-      alert(telefoneValidado.erros.join('\n'))
-      return
-    }
-
-    if (!email.trim() || !email.includes('@')) {
-      alert('Informe um e-mail válido.')
-      return
-    }
-
-    if (!validarSenhaForte(senha)) {
-      alert('A senha precisa ter pelo menos 8 caracteres, uma letra maiúscula e um caractere especial.')
-      return
-    }
-
-    if (!estado || !cidade) {
-      alert('Escolha o estado e a cidade.')
-      return
-    }
-
-    setEnviando(true)
-    setMensagem('Criando sua empresa com validações de segurança...')
-
-    const estadoNome = estados.find((item) => item.sigla === estado)?.nome || estado
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setLoading(true)
+    setErro('')
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim().toLowerCase(),
-        password: senha,
-        options: {
-          data: {
-            nome_empresa: nomeEmpresa.trim(),
-            modelo_negocio: modeloSelecionado.id,
-          },
-        },
-      })
-
-      if (authError) throw authError
-
-      const userId = authData.user?.id
-
-      if (!userId) {
-        throw new Error('Usuário criado, mas o ID não foi retornado. Verifique a confirmação de e-mail no Supabase.')
+      if (!form.cidade) {
+        throw new Error('Escolha a cidade da empresa.')
       }
 
-      const { data: companyData, error: companyError } = await supabase
-        .from('companies')
-        .insert({
-          nome: nomeEmpresa.trim(),
-          slug: slugValidado.slug,
-          email: email.trim().toLowerCase(),
-          whatsapp: telefoneValidado.texto,
-          telefone: telefoneValidado.texto,
-          cidade,
-          estado: estadoNome,
-          segmento: modeloSelecionado.nome,
-          modelo_negocio: modeloSelecionado.id,
-          modelo_nome: modeloSelecionado.nome,
-          modelo_perguntas: modeloSelecionado.perguntas,
-          plano,
-          assinatura_plano: plano,
-          assinatura_status: 'pendente',
-          ativo: false,
-          owner_id: userId,
-          cor_principal: '#05245c',
-        })
-        .select('id')
-        .single()
-
-      if (companyError) throw companyError
-
-      await supabase.from('quote_templates').upsert(
-        {
-          company_id: companyData.id,
-          nome: modeloSelecionado.nome,
-          tipo: modeloSelecionado.id,
-          perguntas: modeloSelecionado.perguntas,
-          ativo: true,
-        },
-        { onConflict: 'company_id,tipo' }
-      )
-
-      setMensagem('Empresa criada. Abrindo pagamento...')
-
-      const checkout = await fetch('/api/checkout/plano', {
+      const response = await fetch('/api/checkout/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          companyId: companyData.id,
-          plano,
-          email: email.trim().toLowerCase(),
-          nomeEmpresa: nomeEmpresa.trim(),
+          ...form,
+          segmento: modeloSelecionado.nome,
+          modelo_categoria: modeloSelecionado.chamada,
+          marketing_opt_in: true,
         }),
       })
 
-      const checkoutData = await checkout.json()
+      const data = await response.json()
 
-      if (!checkout.ok) {
-        throw new Error(checkoutData.error || 'Erro ao criar checkout.')
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao iniciar checkout.')
       }
 
-      const url = checkoutData.init_point || checkoutData.checkout_url || checkoutData.url
-
-      if (url) {
-        window.location.href = url
-        return
-      }
-
-      window.location.href = '/assinatura'
+      window.location.href = data.checkout_url
     } catch (error) {
-      const texto = error instanceof Error ? error.message : 'Erro desconhecido no cadastro.'
-      setMensagem(`Erro: ${texto}`)
+      setErro(error instanceof Error ? error.message : 'Erro ao continuar.')
+      setLoading(false)
     }
-
-    setEnviando(false)
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f8ff] px-4 py-6 text-slate-950">
-      <section className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_420px]">
-        <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-          <img src="/logo-orcaly.png" alt="Orçaly" className="h-12 w-auto object-contain" />
-
-          <p className="mt-8 text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
-            Cadastro seguro
-          </p>
-
-          <h1 className="mt-3 text-4xl font-black text-[#071b3a] sm:text-5xl">
-            Escolha o tipo de negócio e proteja sua identidade pública.
-          </h1>
-
-          <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
-            Bloqueamos nomes reservados, endereços indevidos e entradas suspeitas para evitar confusão com áreas internas do sistema.
-          </p>
-
-          <form onSubmit={cadastrar} className="mt-8 grid gap-5">
-            <div>
-              <label className="text-sm font-black text-slate-700">Tipo de empresa</label>
-
-              <input
-                value={buscaModelo}
-                onChange={(evento) => setBuscaModelo(evento.target.value)}
-                placeholder="Procure por gráfica, alimentação, assistência, eventos..."
-                className="mt-3 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
-              />
-
-              <div className="mt-4 grid max-h-[420px] gap-3 overflow-y-auto pr-1 md:grid-cols-2">
-                {modelosFiltrados.map((modelo) => {
-                  const ativo = modelo.id === modeloId
-
-                  return (
-                    <button
-                      key={modelo.id}
-                      type="button"
-                      onClick={() => setModeloId(modelo.id)}
-                      className={`rounded-3xl border p-4 text-left transition hover:-translate-y-1 ${
-                        ativo
-                          ? 'border-[#05245c] bg-[#05245c] text-white shadow-xl shadow-blue-950/20'
-                          : 'border-blue-100 bg-blue-50 text-slate-800 hover:bg-white'
-                      }`}
-                    >
-                      <p className={`text-lg font-black ${ativo ? 'text-white' : 'text-[#071b3a]'}`}>
-                        {modelo.nome}
-                      </p>
-                      <p className={`mt-1 text-sm font-bold ${ativo ? 'text-blue-100' : 'text-slate-500'}`}>
-                        {modelo.subtitulo}
-                      </p>
-                      <p className={`mt-3 text-xs font-bold leading-5 ${ativo ? 'text-blue-50' : 'text-slate-500'}`}>
-                        {modelo.exemplos.join(' • ')}
-                      </p>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <input value={nomeEmpresa} onChange={(e) => setNomeEmpresa(e.target.value)} placeholder="Nome da empresa" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100" />
-              <input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="WhatsApp da empresa" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100" />
-              <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail de acesso" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100" />
-              <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Senha forte" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100" />
-              <select value={estado} onChange={(e) => setEstado(e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100">
-                <option value="">Estado</option>
-                {estados.map((item) => (
-                  <option key={item.id} value={item.sigla}>{item.nome}</option>
-                ))}
-              </select>
-              <select value={cidade} onChange={(e) => setCidade(e.target.value)} disabled={!estado || carregandoCidades} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:opacity-60">
-                <option value="">{carregandoCidades ? 'Carregando cidades...' : 'Cidade'}</option>
-                {cidades.map((item) => (
-                  <option key={item.id} value={item.nome}>{item.nome}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="rounded-3xl border border-blue-100 bg-blue-50 p-4">
-              <p className="text-sm font-black text-[#05245c]">Endereço público previsto</p>
-              <p className="mt-1 break-all text-lg font-black text-[#071b3a]">{slugPreview}</p>
-              <p className="mt-2 text-xs font-bold text-slate-500">
-                Nomes como admin, orcaly, api, login, checkout e painel são bloqueados.
-              </p>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-3">
-              {Object.entries(planos).map(([id, item]) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setPlano(id)}
-                  className={`rounded-3xl border p-4 text-left transition ${
-                    plano === id ? 'border-[#05245c] bg-[#05245c] text-white' : 'border-blue-100 bg-blue-50 text-slate-800'
-                  }`}
-                >
-                  <p className="font-black">{item.nome}</p>
-                  <p className="mt-1 text-sm font-bold">R$ {item.valor.toFixed(2).replace('.', ',')}/mês</p>
-                </button>
-              ))}
-            </div>
-
-            {mensagem && (
-              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
-                {mensagem}
-              </div>
-            )}
-
-            <button disabled={enviando} className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white shadow-lg shadow-blue-950/15 transition hover:bg-[#031a43] disabled:opacity-60">
-              {enviando ? 'Criando cadastro...' : `Continuar com o plano ${planoSelecionado.nome}`}
-            </button>
-          </form>
+    <main className="min-h-screen bg-white text-[#061a36]" style={{ colorScheme: 'light' as const }}>
+      <section className="relative overflow-hidden bg-white">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-[-360px] h-[720px] w-[720px] -translate-x-1/2 rounded-full bg-[#e7f1ff] blur-3xl" />
+          <div className="absolute right-[-260px] top-[380px] h-[520px] w-[520px] rounded-full bg-[#e1faee] blur-3xl" />
+          <div className="absolute bottom-[-260px] left-[-240px] h-[560px] w-[560px] rounded-full bg-[#f0f6ff] blur-3xl" />
         </div>
 
-        <aside className="grid h-fit gap-5">
-          <div className="rounded-[2rem] border border-blue-100 bg-[#05245c] p-6 text-white shadow-2xl shadow-blue-950/20">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-100">
-              Modelo escolhido
-            </p>
-            <h2 className="mt-3 text-4xl font-black">{modeloSelecionado.nome}</h2>
-            <p className="mt-3 leading-7 text-blue-100">{modeloSelecionado.descricao}</p>
+        <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-6 sm:px-6 lg:px-8">
+          <header className="flex items-center justify-between gap-4">
+            <Link href="/" className="inline-flex">
+              <img src="/logo-orcaly.png" alt="Orçaly" className="h-11 w-auto object-contain" />
+            </Link>
 
-            <div className="mt-6 grid gap-2">
-              {modeloSelecionado.perguntas.slice(0, 7).map((pergunta) => (
-                <div key={pergunta} className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold text-white">
-                  {pergunta}
+            <Link href="/login" className="rounded-2xl border border-[#d7e3f3] bg-white px-4 py-3 text-sm font-black text-[#05245c] shadow-sm">
+              Entrar
+            </Link>
+          </header>
+
+          <div className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-[0.88fr_1.12fr] lg:py-10">
+            <aside className="mx-auto max-w-xl text-center lg:mx-0 lg:text-left">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#d7e3f3] bg-white px-4 py-2 shadow-sm">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e]" />
+                <span className="text-xs font-black uppercase tracking-[0.18em] text-[#05245c]">
+                  Site profissional por segmento
+                </span>
+              </div>
+
+              <h1 className="mt-6 text-5xl font-black leading-[0.98] tracking-[-0.06em] text-[#061a36] sm:text-6xl">
+                Comece com um site feito para o seu negócio.
+              </h1>
+
+              <p className="mt-5 text-lg font-semibold leading-8 text-[#607895]">
+                Escolha o tipo de empresa, o plano e siga para ativar. O Orçaly prepara a base do site, catálogo, pedidos e propostas.
+              </p>
+
+              <div className="mt-8 rounded-[2rem] border border-[#d7e3f3] bg-white p-5 text-left shadow-xl shadow-[#05245c]/8">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Prévia do modelo</p>
+                <h2 className="mt-3 text-3xl font-black text-[#061a36]">{modeloSelecionado.nome}</h2>
+                <p className="mt-3 font-semibold leading-7 text-[#607895]">{modeloSelecionado.chamada}</p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {modeloSelecionado.perguntas.map((pergunta: string) => (
+                    <span key={pergunta} className="rounded-full bg-[#f4f8ff] px-3 py-2 text-xs font-black text-[#05245c]">
+                      {pergunta}
+                    </span>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            </aside>
 
-          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-            <h3 className="text-2xl font-black text-[#071b3a]">
-              Proteções aplicadas
-            </h3>
-            <div className="mt-4 grid gap-3">
-              <p className="rounded-2xl bg-blue-50 p-4 text-sm font-bold text-slate-600">Bloqueio de nomes reservados.</p>
-              <p className="rounded-2xl bg-blue-50 p-4 text-sm font-bold text-slate-600">Validação de senha forte.</p>
-              <p className="rounded-2xl bg-blue-50 p-4 text-sm font-bold text-slate-600">Slug público seguro.</p>
-              <p className="rounded-2xl bg-blue-50 p-4 text-sm font-bold text-slate-600">Modelo de negócio salvo no cadastro.</p>
-            </div>
+            <form onSubmit={submit} className="mx-auto w-full max-w-2xl rounded-[2.4rem] border border-[#d7e3f3] bg-white p-5 shadow-2xl shadow-[#05245c]/12 sm:p-7">
+              <div className="text-center">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Cadastro</p>
+                <h2 className="mt-3 text-4xl font-black tracking-[-0.04em] text-[#061a36]">Monte sua estrutura</h2>
+                <p className="mx-auto mt-3 max-w-lg font-semibold leading-7 text-[#607895]">
+                  Informe os dados principais da empresa e avance para o pagamento.
+                </p>
+              </div>
+
+              {erro && <div className="mt-5 rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-700">{erro}</div>}
+
+              <div className="mt-6 grid gap-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black text-[#344d6b]">Seu nome</span>
+                    <input
+                      value={form.nome_responsavel}
+                      onChange={(e) => update('nome_responsavel', e.target.value)}
+                      placeholder="Ex.: Vinicius"
+                      className="h-14 rounded-2xl border border-[#d7e3f3] bg-[#f8fbff] px-4 font-bold text-[#061a36] outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-[#dbeafe]"
+                    />
+                  </label>
+
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black text-[#344d6b]">WhatsApp</span>
+                    <input
+                      value={form.whatsapp}
+                      onChange={(e) => update('whatsapp', e.target.value)}
+                      placeholder="(82) 99999-9999"
+                      className="h-14 rounded-2xl border border-[#d7e3f3] bg-[#f8fbff] px-4 font-bold text-[#061a36] outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-[#dbeafe]"
+                    />
+                  </label>
+                </div>
+
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-[#344d6b]">E-mail</span>
+                  <input
+                    value={form.email}
+                    onChange={(e) => update('email', e.target.value)}
+                    placeholder="voce@email.com"
+                    type="email"
+                    className="h-14 rounded-2xl border border-[#d7e3f3] bg-[#f8fbff] px-4 font-bold text-[#061a36] outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-[#dbeafe]"
+                  />
+                </label>
+
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-[#344d6b]">Nome da empresa</span>
+                  <input
+                    value={form.empresa_nome}
+                    onChange={(e) => update('empresa_nome', e.target.value)}
+                    placeholder="Ex.: Gráfica Flash"
+                    className="h-14 rounded-2xl border border-[#d7e3f3] bg-[#f8fbff] px-4 font-bold text-[#061a36] outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-[#dbeafe]"
+                  />
+                </label>
+
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-[#344d6b]">Tipo de empresa</span>
+                  <select
+                    value={form.modelo_negocio}
+                    onChange={(e) => update('modelo_negocio', e.target.value)}
+                    className="h-14 rounded-2xl border border-[#d7e3f3] bg-[#f8fbff] px-4 font-black text-[#061a36] outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-[#dbeafe]"
+                  >
+                    {modelos.map((modelo: ModeloNegocio) => (
+                      <option key={modelo.id} value={modelo.id}>
+                        {modelo.nome}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black text-[#344d6b]">Estado</span>
+                    <select
+                      value={form.estado}
+                      onChange={(e) => update('estado', e.target.value)}
+                      className="h-14 rounded-2xl border border-[#d7e3f3] bg-[#f8fbff] px-4 font-black text-[#061a36] outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-[#dbeafe]"
+                    >
+                      {ufs.map((uf: Uf) => (
+                        <option key={uf.sigla} value={uf.sigla}>
+                          {uf.nome} - {uf.sigla}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black text-[#344d6b]">Cidade</span>
+                    <select
+                      value={form.cidade}
+                      onChange={(e) => update('cidade', e.target.value)}
+                      disabled={carregandoCidades || cidades.length === 0}
+                      className="h-14 rounded-2xl border border-[#d7e3f3] bg-[#f8fbff] px-4 font-black text-[#061a36] outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-[#dbeafe] disabled:opacity-60"
+                    >
+                      <option value="">{carregandoCidades ? 'Carregando cidades...' : 'Escolha a cidade'}</option>
+                      {cidadesFiltradas.map((cidade: string) => (
+                        <option key={cidade} value={cidade}>
+                          {cidade}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <input
+                  value={buscaCidade}
+                  onChange={(e) => setBuscaCidade(e.target.value)}
+                  placeholder="Buscar cidade dentro do estado escolhido"
+                  className="h-13 rounded-2xl border border-[#d7e3f3] bg-white px-4 py-3 text-sm font-bold text-[#061a36] outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-[#dbeafe]"
+                />
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  {planos.map((plano) => (
+                    <button
+                      type="button"
+                      key={plano.id}
+                      onClick={() => update('plano', plano.id)}
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        form.plano === plano.id
+                          ? 'border-[#05245c] bg-[#f4f8ff] shadow-lg shadow-[#05245c]/10'
+                          : 'border-[#d7e3f3] bg-white hover:bg-[#f8fbff]'
+                      }`}
+                    >
+                      {plano.destaque && <p className="mb-2 inline-flex rounded-full bg-[#05245c] px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white">Mais escolhido</p>}
+                      <p className="font-black text-[#061a36]">{plano.nome}</p>
+                      <p className="mt-1 text-xl font-black text-[#05245c]">{plano.preco}</p>
+                      <p className="mt-2 text-xs font-bold leading-5 text-[#607895]">{plano.descricao}</p>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="rounded-2xl border border-[#d7e3f3] bg-[#f8fbff] p-4">
+                  <p className="text-sm font-black text-[#05245c]">Resumo</p>
+                  <p className="mt-2 font-bold leading-6 text-[#607895]">
+                    {form.empresa_nome || 'Sua empresa'} • {modeloSelecionado.nome} • {form.cidade || 'Cidade'} / {form.estado} • Plano {planoSelecionado.nome}
+                  </p>
+                </div>
+
+                <button
+                  disabled={loading}
+                  className="rounded-2xl bg-[#05245c] px-6 py-5 text-base font-black text-white shadow-xl shadow-[#05245c]/25 transition hover:bg-[#031a43] disabled:opacity-60"
+                >
+                  {loading ? 'Abrindo checkout...' : 'Ir para o pagamento'}
+                </button>
+
+                <Link href="/login" className="text-center text-sm font-black text-[#05245c]">
+                  Já tenho conta
+                </Link>
+              </div>
+            </form>
           </div>
-        </aside>
+        </div>
       </section>
     </main>
   )
@@ -371,7 +505,7 @@ function CadastroContent() {
 
 export default function CadastroPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-[#f5f8ff] p-8 text-center font-black">Carregando cadastro...</main>}>
+    <Suspense fallback={<main className="flex min-h-screen items-center justify-center bg-white font-black text-[#05245c]">Carregando...</main>}>
       <CadastroContent />
     </Suspense>
   )
