@@ -1,292 +1,287 @@
 import Link from 'next/link'
 
+const segmentos = [
+  'Gráficas',
+  'Assistências técnicas',
+  'Salões e estética',
+  'Oficinas',
+  'Docerias e encomendas',
+  'Serviços e reformas',
+]
+
+const dores = [
+  {
+    titulo: 'Pedidos perdidos no WhatsApp',
+    texto: 'O cliente manda mensagem incompleta, a conversa se perde e a venda esfria.',
+  },
+  {
+    titulo: 'Orçamento com cara de improviso',
+    texto: 'Preço enviado solto no chat passa pouca confiança e abre espaço para negociação ruim.',
+  },
+  {
+    titulo: 'Empresa pequena parecendo menor ainda',
+    texto: 'Sem site, catálogo e proposta profissional, a empresa boa parece amadora.',
+  },
+]
+
+const solucoes = [
+  'Site profissional criado automaticamente para cada empresa',
+  'Link próprio com nome da empresa no domínio',
+  'Catálogo de produtos e serviços editável',
+  'Pedido inteligente com perguntas por tipo de negócio',
+  'Propostas profissionais com aprovação do cliente',
+  'Painel para organizar pedidos, clientes e oportunidades',
+]
+
+const passos = [
+  {
+    numero: '01',
+    titulo: 'A empresa se cadastra',
+    texto: 'Ela escolhe o tipo de negócio e o Orçaly prepara a estrutura inicial automaticamente.',
+  },
+  {
+    numero: '02',
+    titulo: 'Ganha um site profissional',
+    texto: 'O site já nasce com textos, seções, cores e fluxo de pedido adaptados ao segmento.',
+  },
+  {
+    numero: '03',
+    titulo: 'Recebe pedidos organizados',
+    texto: 'O cliente envia as informações certas e a empresa transforma isso em proposta.',
+  },
+]
+
+const recursos = [
+  'Editor de site sem código',
+  'Subdomínio por empresa',
+  'Loja e catálogo profissional',
+  'Pedido inteligente',
+  'Geração de proposta',
+  'Central de oportunidades',
+  'Mini-CRM de clientes',
+  'Admin master e segurança',
+]
+
 export default function HomePage() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f7fbff] text-slate-950">
-      <section className="relative overflow-hidden bg-gradient-to-br from-white via-[#f7fbff] to-blue-50">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-[-180px] top-[-180px] h-[460px] w-[460px] rounded-full bg-blue-200/60 blur-3xl" />
-          <div className="absolute right-[-180px] top-[120px] h-[420px] w-[420px] rounded-full bg-cyan-200/50 blur-3xl" />
-          <div className="absolute bottom-[-200px] left-[35%] h-[480px] w-[480px] rounded-full bg-orange-100/70 blur-3xl" />
-        </div>
-
-        <header className="relative mx-auto flex max-w-7xl items-center justify-between px-4 py-6 sm:px-6 lg:px-8">
-          <Link
-            href="/"
-            className="inline-flex items-center rounded-3xl border border-blue-100 bg-white px-4 py-3 shadow-lg shadow-blue-950/5"
-          >
-            <img
-              src="/logo-orcaly.png"
-              alt="Orcaly"
-              className="h-11 w-auto object-contain"
-            />
+    <main className="min-h-screen bg-white text-[#071b3a]" style={{ colorScheme: 'light' }}>
+      <header className="sticky top-0 z-50 border-b border-[#e6edf8] bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
+            <img src="/logo-orcaly.png" alt="Orçaly" className="h-10 w-auto object-contain sm:h-12" />
           </Link>
 
-          <nav className="hidden items-center gap-6 text-sm font-black text-slate-600 md:flex">
-            <a href="#beneficios" className="transition hover:text-[#05245c]">
-              Benef&iacute;cios
-            </a>
-            <a href="#planos" className="transition hover:text-[#05245c]">
-              Planos
-            </a>
-            <Link href="/login" className="transition hover:text-[#05245c]">
-              Entrar
-            </Link>
+          <nav className="hidden items-center gap-7 text-sm font-black text-[#36516f] lg:flex">
+            <a href="#proposta" className="transition hover:text-[#05245c]">Proposta</a>
+            <a href="#solucao" className="transition hover:text-[#05245c]">Solução</a>
+            <a href="#segmentos" className="transition hover:text-[#05245c]">Segmentos</a>
+            <a href="#como-funciona" className="transition hover:text-[#05245c]">Como funciona</a>
           </nav>
 
-          <Link
-            href="/cadastro?plano=profissional"
-            className="rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-950/15 transition hover:-translate-y-0.5 hover:bg-[#031a43]"
-          >
-            Come&ccedil;ar agora
-          </Link>
-        </header>
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <Link
+              href="/login"
+              className="rounded-2xl border border-[#d8e4f4] bg-white px-4 py-3 text-sm font-black text-[#05245c] shadow-sm transition hover:border-[#05245c] hover:bg-[#f5f8ff]"
+            >
+              Entrar
+            </Link>
 
-        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 pb-20 pt-10 sm:px-6 lg:grid-cols-[1.08fr_.92fr] lg:px-8 lg:pb-28 lg:pt-16">
-          <div>
-            <div className="inline-flex rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-black text-[#05245c] shadow-sm shadow-blue-950/5">
-              Sistema completo para empresas que querem vender com mais organiza&ccedil;&atilde;o
-            </div>
-
-            <h1 className="mt-7 max-w-4xl text-5xl font-black leading-[1.02] tracking-tight text-[#071b3a] sm:text-6xl lg:text-7xl">
-              Pare de perder cliente no WhatsApp bagun&ccedil;ado.
-            </h1>
-
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
-              O Or&ccedil;aly transforma pedidos, or&ccedil;amentos, produtos e clientes em um painel claro,
-              bonito e pronto para sua empresa vender melhor todos os dias.
-            </p>
-
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/cadastro?plano=profissional"
-                className="rounded-2xl bg-[#05245c] px-7 py-4 text-center font-black text-white shadow-xl shadow-blue-950/15 transition hover:-translate-y-1 hover:bg-[#031a43]"
-              >
-                Quero organizar minha empresa
-              </Link>
-
-              <a
-                href="#planos"
-                className="rounded-2xl border border-blue-100 bg-white px-7 py-4 text-center font-black text-[#05245c] shadow-sm shadow-blue-950/5 transition hover:bg-blue-50"
-              >
-                Ver planos
-              </a>
-            </div>
-
-            <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
-                <p className="text-3xl font-black text-[#071b3a]">24h</p>
-                <p className="mt-2 text-sm font-bold text-slate-500">
-                  Pedidos entrando mesmo fora do hor&aacute;rio
-                </p>
-              </div>
-
-              <div className="rounded-3xl border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
-                <p className="text-3xl font-black text-[#071b3a]">CRM</p>
-                <p className="mt-2 text-sm font-bold text-slate-500">
-                  Clientes e hist&oacute;rico em um s&oacute; lugar
-                </p>
-              </div>
-
-              <div className="rounded-3xl border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
-                <p className="text-3xl font-black text-[#071b3a]">Pix</p>
-                <p className="mt-2 text-sm font-bold text-slate-500">
-                  Pagamentos e planos integrados
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="rounded-[2.25rem] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/10">
-              <div className="rounded-[1.75rem] bg-gradient-to-br from-blue-50 to-white p-5 text-slate-950">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
-                      Vis&atilde;o do painel
-                    </p>
-                    <h2 className="mt-2 text-2xl font-black text-[#071b3a]">
-                      Clientes que ainda podem comprar
-                    </h2>
-                  </div>
-
-                  <div className="rounded-2xl bg-emerald-100 px-4 py-2 text-sm font-black text-emerald-700">
-                    Ao vivo
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-4">
-                  <div className="rounded-3xl border border-blue-100 bg-white p-4 shadow-sm shadow-blue-950/5">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="font-black text-[#071b3a]">Maria Oliveira</p>
-                        <p className="mt-1 text-sm font-bold text-slate-500">
-                          Total em pedidos: R$ 1.240,00
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-black text-[#05245c]">
-                        Cliente fiel
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl border border-blue-100 bg-white p-4 shadow-sm shadow-blue-950/5">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="font-black text-[#071b3a]">Anderson Silva</p>
-                        <p className="mt-1 text-sm font-bold text-slate-500">
-                          Total em pedidos: R$ 680,00
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-orange-50 px-3 py-2 text-xs font-black text-orange-700">
-                        N&atilde;o fechou
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl border border-blue-100 bg-white p-4 shadow-sm shadow-blue-950/5">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="font-black text-[#071b3a]">Loja Central</p>
-                        <p className="mt-1 text-sm font-bold text-slate-500">
-                          Total em pedidos: R$ 2.890,00
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-red-50 px-3 py-2 text-xs font-black text-red-700">
-                        Inativo h&aacute; 30 dias
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 rounded-3xl bg-[#05245c] p-5 text-white shadow-xl shadow-blue-950/15">
-                  <p className="text-sm font-bold text-blue-100">
-                    O preju&iacute;zo invis&iacute;vel
-                  </p>
-                  <p className="mt-2 text-3xl font-black">
-                    Clientes esquecidos viram vendas perdidas.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <Link
+              href="/cadastro"
+              className="hidden rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#05245c]/15 transition hover:bg-[#031a43] sm:inline-flex"
+            >
+              Começar
+            </Link>
           </div>
         </div>
-      </section>
+      </header>
 
-      <section id="beneficios" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-5 md:grid-cols-3">
-          <div className="rounded-[2rem] border border-blue-100 bg-white p-7 shadow-xl shadow-blue-950/5">
-            <p className="text-4xl">🧠</p>
-            <h3 className="mt-5 text-2xl font-black text-[#071b3a]">
-              Venda com mem&oacute;ria comercial
-            </h3>
-            <p className="mt-3 leading-7 text-slate-600">
-              O sistema lembra quem pediu, quem comprou, quem sumiu e quem merece uma abordagem.
-            </p>
-          </div>
-
-          <div className="rounded-[2rem] border border-blue-100 bg-white p-7 shadow-xl shadow-blue-950/5">
-            <p className="text-4xl">⚡</p>
-            <h3 className="mt-5 text-2xl font-black text-[#071b3a]">
-              Menos bagun&ccedil;a operacional
-            </h3>
-            <p className="mt-3 leading-7 text-slate-600">
-              Produtos, pedidos, pagamentos e clientes saem do improviso e entram em um fluxo profissional.
-            </p>
-          </div>
-
-          <div className="rounded-[2rem] border border-blue-100 bg-white p-7 shadow-xl shadow-blue-950/5">
-            <p className="text-4xl">📈</p>
-            <h3 className="mt-5 text-2xl font-black text-[#071b3a]">
-              Atendimento com mais confian&ccedil;a
-            </h3>
-            <p className="mt-3 leading-7 text-slate-600">
-              Organiza&ccedil;&atilde;o transmite profissionalismo desde o primeiro contato.
-              O cliente entende melhor, confia mais e decide com menos atrito.
-            </p>
-          </div>
+      <section id="proposta" className="relative overflow-hidden bg-white">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-[-260px] h-[620px] w-[620px] -translate-x-1/2 rounded-full bg-[#e8f1ff] blur-3xl" />
+          <div className="absolute right-[-180px] top-[220px] h-[420px] w-[420px] rounded-full bg-[#dffbed] blur-3xl" />
+          <div className="absolute bottom-[-260px] left-[-180px] h-[520px] w-[520px] rounded-full bg-[#edf4ff] blur-3xl" />
         </div>
-      </section>
 
-      <section id="planos" className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="mb-8 text-center">
-          <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">
-            Escolha seu plano
+        <div className="relative mx-auto flex min-h-[calc(100vh-82px)] max-w-7xl flex-col items-center justify-center px-4 py-16 text-center sm:px-6 lg:px-8 lg:py-24">
+          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#d8e4f4] bg-white px-4 py-2 shadow-sm">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e]" />
+            <span className="text-xs font-black uppercase tracking-[0.22em] text-[#05245c]">
+              Site, pedidos e propostas para empresas
+            </span>
+          </div>
+
+          <h1 className="mx-auto max-w-5xl text-5xl font-black leading-[0.98] tracking-[-0.06em] text-[#061a36] sm:text-6xl lg:text-8xl">
+            Sua empresa com presença digital de gente grande.
+          </h1>
+
+          <p className="mx-auto mt-7 max-w-3xl text-lg font-semibold leading-8 text-[#4d6683] sm:text-xl">
+            O Orçaly cria um site profissional para cada negócio, organiza pedidos do WhatsApp, monta propostas bonitas e ajuda pequenas empresas a venderem com mais confiança.
           </p>
-          <h2 className="mt-3 text-4xl font-black text-[#071b3a] sm:text-5xl">
-            Comece antes que outro concorrente pare&ccedil;a mais organizado que voc&ecirc;.
+
+          <div className="mt-9 flex w-full max-w-xl flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              href="/cadastro"
+              className="rounded-[1.4rem] bg-[#05245c] px-8 py-5 text-base font-black text-white shadow-2xl shadow-[#05245c]/20 transition hover:-translate-y-0.5 hover:bg-[#031a43]"
+            >
+              Criar meu site agora
+            </Link>
+
+            <Link
+              href="/login"
+              className="rounded-[1.4rem] border border-[#d8e4f4] bg-white px-8 py-5 text-base font-black text-[#05245c] shadow-xl shadow-[#05245c]/5 transition hover:-translate-y-0.5 hover:border-[#05245c]"
+            >
+              Já tenho conta
+            </Link>
+          </div>
+
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3 text-sm font-black text-[#607895]">
+            <span className="rounded-full bg-[#f2f7ff] px-4 py-2">Sem código</span>
+            <span className="rounded-full bg-[#f2f7ff] px-4 py-2">Com domínio por empresa</span>
+            <span className="rounded-full bg-[#f2f7ff] px-4 py-2">Feito para vender</span>
+          </div>
+
+          <div className="mt-14 w-full max-w-5xl rounded-[2rem] border border-[#d8e4f4] bg-white p-3 shadow-2xl shadow-[#05245c]/10">
+            <div className="rounded-[1.5rem] bg-[#f5f8ff] p-4 sm:p-6">
+              <div className="grid gap-4 md:grid-cols-3">
+                {[
+                  ['graficaflash.orcaly.com.br', 'Site profissional da empresa'],
+                  ['Pedido inteligente', 'Cliente envia tudo organizado'],
+                  ['Proposta aprovada', 'Venda acompanhada no painel'],
+                ].map(([titulo, texto]) => (
+                  <div key={titulo} className="rounded-[1.25rem] border border-white bg-white p-5 text-left shadow-sm">
+                    <p className="text-lg font-black text-[#071b3a]">{titulo}</p>
+                    <p className="mt-2 text-sm font-bold leading-6 text-[#607895]">{texto}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-[#e6edf8] bg-[#f8fbff] px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-6xl gap-5 text-center md:grid-cols-3">
+          {dores.map((dor) => (
+            <article key={dor.titulo} className="rounded-[2rem] border border-[#e6edf8] bg-white p-7 shadow-xl shadow-[#05245c]/5">
+              <h2 className="text-2xl font-black text-[#071b3a]">{dor.titulo}</h2>
+              <p className="mt-3 font-semibold leading-7 text-[#607895]">{dor.texto}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="solucao" className="bg-white px-4 py-20 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">A solução</p>
+          <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
+            Um sistema que transforma conversa bagunçada em venda organizada.
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-            O plano escolhido aqui ser&aacute; levado automaticamente para o cadastro.
-          </p>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {solucoes.map((item) => (
+              <div key={item} className="rounded-[1.5rem] border border-[#e6edf8] bg-white p-6 text-center shadow-lg shadow-[#05245c]/5">
+                <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#05245c] text-lg font-black text-white">
+                  ✓
+                </div>
+                <p className="font-black leading-6 text-[#071b3a]">{item}</p>
+              </div>
+            ))}
+          </div>
         </div>
+      </section>
 
-        <div className="grid gap-5 lg:grid-cols-3">
-          <div className="relative rounded-[2rem] border border-blue-100 bg-white p-7 shadow-xl shadow-blue-950/5 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-950/10">
-            <h3 className="text-3xl font-black text-[#071b3a]">Essencial</h3>
-            <p className="mt-2 leading-7 text-slate-600">
-              Para come&ccedil;ar com uma estrutura profissional.
-            </p>
-            <div className="mt-6 flex items-end gap-1">
-              <span className="text-5xl font-black text-[#071b3a]">R$ 49,90</span>
-              <span className="pb-2 font-bold text-slate-500">/m&ecirc;s</span>
-            </div>
-            <ul className="mt-6 grid gap-3">
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>P&aacute;gina p&uacute;blica da empresa</li>
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>Or&ccedil;amentos online</li>
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>Cadastro de produtos</li>
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>Painel de pedidos</li>
-            </ul>
-            <Link href="/cadastro?plano=basico" className="mt-7 block rounded-2xl bg-blue-50 px-5 py-4 text-center font-black text-[#05245c] transition hover:bg-blue-100">
-              Assinar Essencial
-            </Link>
+      <section id="segmentos" className="bg-[#05245c] px-4 py-20 text-center text-white sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-[#b9d6ff]">Para vários tipos de negócio</p>
+          <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-black leading-tight tracking-[-0.04em] sm:text-6xl">
+            Cada empresa recebe uma estrutura pensada para o que ela vende.
+          </h2>
+
+          <div className="mt-10 flex flex-wrap justify-center gap-3">
+            {segmentos.map((segmento) => (
+              <span key={segmento} className="rounded-full border border-white/15 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur">
+                {segmento}
+              </span>
+            ))}
           </div>
+        </div>
+      </section>
 
-          <div className="relative rounded-[2rem] border border-[#05245c] bg-white p-7 shadow-xl shadow-blue-950/5 ring-4 ring-blue-100 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-950/10">
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-[#05245c] px-5 py-2 text-sm font-black text-white shadow-lg shadow-blue-950/20">
-              Mais escolhido
-            </div>
-            <h3 className="text-3xl font-black text-[#071b3a]">Profissional</h3>
-            <p className="mt-2 leading-7 text-slate-600">
-              O plano mais indicado para vender com mais organiza&ccedil;&atilde;o.
-            </p>
-            <div className="mt-6 flex items-end gap-1">
-              <span className="text-5xl font-black text-[#071b3a]">R$ 99,90</span>
-              <span className="pb-2 font-bold text-slate-500">/m&ecirc;s</span>
-            </div>
-            <ul className="mt-6 grid gap-3">
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>Tudo do Essencial</li>
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>Mini-CRM de clientes</li>
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>Hist&oacute;rico de pedidos</li>
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>Filtros comerciais</li>
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>Prioridade nas melhorias</li>
-            </ul>
-            <Link href="/cadastro?plano=profissional" className="mt-7 block rounded-2xl bg-[#05245c] px-5 py-4 text-center font-black text-white transition hover:bg-[#031a43]">
-              Assinar Profissional
-            </Link>
+      <section id="como-funciona" className="bg-white px-4 py-20 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Como funciona</p>
+          <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
+            Do cadastro ao pedido, tudo com cara profissional.
+          </h2>
+
+          <div className="mt-10 grid gap-5 lg:grid-cols-3">
+            {passos.map((passo) => (
+              <article key={passo.numero} className="rounded-[2rem] border border-[#e6edf8] bg-[#f8fbff] p-8 text-center">
+                <p className="text-5xl font-black text-[#05245c]">{passo.numero}</p>
+                <h3 className="mt-5 text-2xl font-black text-[#071b3a]">{passo.titulo}</h3>
+                <p className="mt-3 font-semibold leading-7 text-[#607895]">{passo.texto}</p>
+              </article>
+            ))}
           </div>
+        </div>
+      </section>
 
-          <div className="relative rounded-[2rem] border border-blue-100 bg-white p-7 shadow-xl shadow-blue-950/5 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-950/10">
-            <h3 className="text-3xl font-black text-[#071b3a]">Premium</h3>
-            <p className="mt-2 leading-7 text-slate-600">
-              Para empresas que querem operar com mais controle.
-            </p>
-            <div className="mt-6 flex items-end gap-1">
-              <span className="text-5xl font-black text-[#071b3a]">R$ 149,90</span>
-              <span className="pb-2 font-bold text-slate-500">/m&ecirc;s</span>
-            </div>
-            <ul className="mt-6 grid gap-3">
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>Tudo do Profissional</li>
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>Mais personaliza&ccedil;&atilde;o</li>
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>Acompanhamento avan&ccedil;ado</li>
-              <li className="flex gap-3 text-sm font-bold leading-6 text-slate-600"><span className="text-emerald-600">✓</span>Recursos premium</li>
-            </ul>
-            <Link href="/cadastro?plano=premium" className="mt-7 block rounded-2xl bg-blue-50 px-5 py-4 text-center font-black text-[#05245c] transition hover:bg-blue-100">
-              Assinar Premium
+      <section className="bg-[#f8fbff] px-4 py-20 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl rounded-[2.5rem] border border-[#d8e4f4] bg-white p-8 shadow-2xl shadow-[#05245c]/10 sm:p-12">
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">O que vem incluso</p>
+          <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
+            Mais que um link. Uma estrutura comercial.
+          </h2>
+
+          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {recursos.map((recurso) => (
+              <div key={recurso} className="rounded-2xl bg-[#f2f7ff] px-4 py-4 text-sm font-black text-[#05245c]">
+                {recurso}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white px-4 py-20 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl">
+          <img src="/icone-orcaly.png" alt="Ícone Orçaly" className="mx-auto h-16 w-16 object-contain" />
+          <h2 className="mt-6 text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
+            Dê à sua empresa uma presença digital que vende confiança.
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-lg font-semibold leading-8 text-[#607895]">
+            Comece com um site profissional, organize pedidos e envie propostas melhores. Sem depender de código, designer ou planilha remendada.
+          </p>
+
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href="/cadastro" className="rounded-[1.4rem] bg-[#05245c] px-8 py-5 font-black text-white shadow-xl shadow-[#05245c]/20">
+              Começar agora
+            </Link>
+            <Link href="/login" className="rounded-[1.4rem] border border-[#d8e4f4] bg-white px-8 py-5 font-black text-[#05245c]">
+              Entrar na minha conta
             </Link>
           </div>
         </div>
       </section>
+
+      <footer className="border-t border-[#e6edf8] bg-white px-4 py-8 text-center">
+        <img src="/logo-orcaly.png" alt="Orçaly" className="mx-auto h-10 w-auto object-contain" />
+        <p className="mt-4 text-sm font-bold text-[#607895]">
+          Orçaly, presença digital, pedidos e propostas para empresas que querem vender melhor.
+        </p>
+      </footer>
+
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[#d8e4f4] bg-white/95 p-3 shadow-2xl shadow-[#05245c]/15 backdrop-blur sm:hidden">
+        <div className="grid grid-cols-2 gap-2">
+          <Link href="/login" className="rounded-2xl border border-[#d8e4f4] bg-white px-4 py-3 text-center text-sm font-black text-[#05245c]">
+            Entrar
+          </Link>
+          <Link href="/cadastro" className="rounded-2xl bg-[#05245c] px-4 py-3 text-center text-sm font-black text-white">
+            Começar
+          </Link>
+        </div>
+      </div>
     </main>
   )
 }
