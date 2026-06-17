@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import AdminMasterButton from '@/components/AdminMasterButton'
 
 type Empresa = {
   id: string
@@ -348,7 +349,7 @@ export default function PainelPage() {
           <nav className="grid gap-2 p-4">
             <SidebarLink href="/painel" label="D" title="Dashboard" description="Visao geral" />
             <SidebarLink href="/painel/catalogo" label="CA" title="Catalogo" description="Produtos e imagens" />
-            <SidebarLink href="/painel/orcamento-inteligente" label="OI" title="Orcamento inteligente" description="Perguntas por categoria" />
+            <SidebarLink href="/painel/oportunidades" label="OI" title="Central de oportunidades" description="Perguntas por categoria" />
             <SidebarLink href="/painel/clientes" label="CRM" title="Clientes" description="Relacionamento e vendas" />
             <SidebarLink href="/painel/configuracoes" label="CFG" title="Configuracoes" description="Empresa e pagamentos" />
           </nav>
@@ -419,15 +420,16 @@ export default function PainelPage() {
                 </div>
               </div>
             </div>
-          </header>
+        <AdminMasterButton />
+</header>
 
           <div className="grid gap-3 lg:hidden">
             <div className="grid grid-cols-2 gap-3">
               <Link href="/painel/catalogo" className="rounded-2xl border border-blue-100 bg-white px-4 py-4 text-center text-sm font-black text-[#05245c] shadow-sm shadow-blue-950/5">
                 Catalogo
               </Link>
-              <Link href="/painel/orcamento-inteligente" className="rounded-2xl border border-blue-100 bg-white px-4 py-4 text-center text-sm font-black text-[#05245c] shadow-sm shadow-blue-950/5">
-                Orcamento inteligente
+              <Link href="/painel/oportunidades" className="rounded-2xl border border-blue-100 bg-white px-4 py-4 text-center text-sm font-black text-[#05245c] shadow-sm shadow-blue-950/5">
+                Central de oportunidades
               </Link>
               <Link href="/painel/clientes" className="rounded-2xl border border-blue-100 bg-white px-4 py-4 text-center text-sm font-black text-[#05245c] shadow-sm shadow-blue-950/5">
                 Clientes

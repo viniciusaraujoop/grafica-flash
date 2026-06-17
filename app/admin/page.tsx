@@ -179,6 +179,59 @@ export default function AdminPage() {
     carregarTudo()
   }
 
+  async function acaoEmpresa(id: string, action: 'liberar' | 'bloquear') {
+    if (!token) return
+
+    const confirmar = window.confirm(action === 'liberar' ? 'Liberar empresa por 30 dias?' : 'Bloquear empresa agora?')
+    if (!confirmar) return
+
+    setMensagem(action === 'liberar' ? 'Liberando empresa...' : 'Bloqueando empresa...')
+
+    const resposta = await fetch(`/api/admin/company/${id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action, dias: 30 }),
+    })
+
+    const dados = await resposta.json()
+
+    if (!resposta.ok) {
+      setMensagem(dados.error || 'Erro ao atualizar empresa.')
+      return
+    }
+
+    setMensagem(action === 'liberar' ? 'Empresa liberada.' : 'Empresa bloqueada.')
+    carregarTudo()
+  }
+
+  async function resolverBug(id: string) {
+    if (!token) return
+
+    setMensagem('Marcando bug como resolvido...')
+
+    const resposta = await fetch(`/api/admin/bugs/${id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'resolver', note: 'Resolvido pelo painel admin.' }),
+    })
+
+    const dados = await resposta.json()
+
+    if (!resposta.ok) {
+      setMensagem(dados.error || 'Erro ao resolver bug.')
+      return
+    }
+
+    setMensagem('Bug marcado como resolvido.')
+    carregarTudo()
+  }
+
   const bugsOrdenados = useMemo(() => {
     const peso = {
       vermelho: 3,
@@ -192,9 +245,7 @@ export default function AdminPage() {
   if (carregando) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff]">
-        <div className="rounded-[2rem] bg-white p-8 font-black shadow-xl">
-          Carregando painel admin...
-        </div>
+        <div className="rounded-[2rem] bg-white p-8 font-black shadow-xl">Carregando painel admin...</div>
       </main>
     )
   }
@@ -242,11 +293,7 @@ export default function AdminPage() {
             ))}
           </nav>
 
-          <button
-            type="button"
-            onClick={rodarScanner}
-            className="mt-5 w-full rounded-2xl bg-emerald-600 px-5 py-4 font-black text-white transition hover:bg-emerald-700"
-          >
+          <button type="button" onClick={rodarScanner} className="mt-5 w-full rounded-2xl bg-emerald-600 px-5 py-4 font-black text-white transition hover:bg-emerald-700">
             Rodar scanner agora
           </button>
         </aside>
@@ -254,18 +301,12 @@ export default function AdminPage() {
         <section className="grid gap-5">
           <header className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
             <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Painel master</p>
-            <h1 className="mt-3 text-4xl font-black text-[#071b3a] sm:text-5xl">
-              Controle total do Orçaly.
-            </h1>
+            <h1 className="mt-3 text-4xl font-black text-[#071b3a] sm:text-5xl">Controle total do Orçaly.</h1>
             <p className="mt-3 max-w-3xl leading-7 text-slate-600">
-              Empresas, inadimplência, bugs prováveis, segurança e sinais de falha. Porque esperar o cliente reclamar é uma metodologia, mas uma metodologia horrorosa.
+              Empresas, inadimplência, bugs prováveis, segurança e ações administrativas. O tipo de coisa que evita você descobrir problema por áudio irritado no WhatsApp.
             </p>
 
-            {mensagem && (
-              <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
-                {mensagem}
-              </div>
-            )}
+            {mensagem && <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">{mensagem}</div>}
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:hidden">
               <button onClick={() => setAba('geral')} className="rounded-2xl bg-blue-50 px-4 py-3 font-black text-[#05245c]">Geral</button>
@@ -282,40 +323,17 @@ export default function AdminPage() {
                   <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">Empresas</p>
                   <p className="mt-3 text-5xl font-black text-[#071b3a]">{data.metrics.companiesTotal}</p>
                 </div>
-
                 <div className="rounded-[2rem] border border-emerald-100 bg-white p-6 shadow-xl shadow-blue-950/5">
                   <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">Ativas</p>
                   <p className="mt-3 text-5xl font-black text-emerald-700">{data.metrics.companiesActive}</p>
                 </div>
-
                 <div className="rounded-[2rem] border border-red-100 bg-white p-6 shadow-xl shadow-blue-950/5">
                   <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">Inadimplentes</p>
                   <p className="mt-3 text-5xl font-black text-red-700">{data.metrics.companiesOverdue}</p>
                 </div>
-
                 <div className="rounded-[2rem] border border-yellow-100 bg-white p-6 shadow-xl shadow-blue-950/5">
                   <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">Bugs críticos</p>
                   <p className="mt-3 text-5xl font-black text-red-700">{data.metrics.bugsRed}</p>
-                </div>
-              </section>
-
-              <section className="grid gap-5 lg:grid-cols-3">
-                <div className="rounded-[2rem] border border-red-100 bg-red-50 p-6">
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-red-700">Vermelho</p>
-                  <p className="mt-2 text-4xl font-black text-red-700">{data.metrics.bugsRed}</p>
-                  <p className="mt-2 font-bold text-red-700">Resolver logo.</p>
-                </div>
-
-                <div className="rounded-[2rem] border border-yellow-100 bg-yellow-50 p-6">
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-yellow-800">Amarelo</p>
-                  <p className="mt-2 text-4xl font-black text-yellow-900">{data.metrics.bugsYellow}</p>
-                  <p className="mt-2 font-bold text-yellow-800">Precisa olhar.</p>
-                </div>
-
-                <div className="rounded-[2rem] border border-emerald-100 bg-emerald-50 p-6">
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-emerald-700">Verde</p>
-                  <p className="mt-2 text-4xl font-black text-emerald-700">{data.metrics.bugsGreen}</p>
-                  <p className="mt-2 font-bold text-emerald-700">Baixa relevância.</p>
                 </div>
               </section>
             </>
@@ -323,48 +341,38 @@ export default function AdminPage() {
 
           {aba === 'usuarios' && (
             <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Usuários ativos e inadimplentes</p>
-                  <h2 className="mt-2 text-3xl font-black text-[#071b3a]">Empresas cadastradas</h2>
-                </div>
-              </div>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Usuários ativos e inadimplentes</p>
+              <h2 className="mt-2 text-3xl font-black text-[#071b3a]">Empresas cadastradas</h2>
 
-              <div className="mt-5 overflow-x-auto">
-                <table className="w-full min-w-[900px] border-separate border-spacing-y-3 text-left">
-                  <thead>
-                    <tr className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                      <th>Empresa</th>
-                      <th>Plano</th>
-                      <th>Status</th>
-                      <th>Expira</th>
-                      <th>Modelo</th>
-                      <th>Contato</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.companies.map((company) => (
-                      <tr key={company.id} className="rounded-3xl bg-blue-50">
-                        <td className="rounded-l-3xl p-4">
-                          <p className="font-black text-[#071b3a]">{company.nome}</p>
-                          <p className="text-sm font-bold text-slate-500">/{company.slug}</p>
-                        </td>
-                        <td className="p-4 font-bold text-slate-600">{company.assinatura_plano || company.plano || 'Sem plano'}</td>
-                        <td className="p-4">
-                          <span className={`rounded-full px-3 py-2 text-xs font-black ${company.inadimplente ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                            {company.inadimplente ? 'Inadimplente' : 'Ativa'}
-                          </span>
-                        </td>
-                        <td className="p-4 font-bold text-slate-600">{formatarData(company.assinatura_expira_em)}</td>
-                        <td className="p-4 font-bold text-slate-600">{company.modelo_nome || 'Sem modelo'}</td>
-                        <td className="rounded-r-3xl p-4">
-                          <p className="text-sm font-bold text-slate-600">{company.email || 'Sem e-mail'}</p>
-                          <p className="text-sm font-bold text-slate-500">{company.whatsapp || 'Sem WhatsApp'}</p>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="mt-5 grid gap-3">
+                {data.companies.map((company) => (
+                  <article key={company.id} className="rounded-[2rem] border border-blue-100 bg-blue-50 p-5">
+                    <div className="grid gap-4 xl:grid-cols-[1fr_220px_260px] xl:items-center">
+                      <div>
+                        <p className="text-2xl font-black text-[#071b3a]">{company.nome}</p>
+                        <p className="mt-1 text-sm font-bold text-slate-500">/{company.slug} • {company.email || 'Sem e-mail'} • {company.whatsapp || 'Sem WhatsApp'}</p>
+                        <p className="mt-1 text-sm font-bold text-slate-500">Modelo: {company.modelo_nome || 'Sem modelo'}</p>
+                      </div>
+
+                      <div>
+                        <span className={`rounded-full px-3 py-2 text-xs font-black ${company.inadimplente ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                          {company.inadimplente ? 'Inadimplente' : 'Ativa'}
+                        </span>
+                        <p className="mt-2 text-sm font-bold text-slate-500">{company.assinatura_plano || company.plano || 'Sem plano'}</p>
+                        <p className="mt-1 text-xs font-bold text-slate-500">Expira: {formatarData(company.assinatura_expira_em)}</p>
+                      </div>
+
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <button onClick={() => acaoEmpresa(company.id, 'liberar')} className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-black text-white">
+                          Liberar 30 dias
+                        </button>
+                        <button onClick={() => acaoEmpresa(company.id, 'bloquear')} className="rounded-2xl bg-red-600 px-4 py-3 text-sm font-black text-white">
+                          Bloquear
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
               </div>
             </section>
           )}
@@ -378,9 +386,7 @@ export default function AdminPage() {
                     <h2 className="mt-2 text-3xl font-black text-[#071b3a]">Falhas prováveis classificadas</h2>
                   </div>
 
-                  <button onClick={rodarScanner} className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white">
-                    Rodar scanner
-                  </button>
+                  <button onClick={rodarScanner} className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white">Rodar scanner</button>
                 </div>
               </div>
 
@@ -389,20 +395,19 @@ export default function AdminPage() {
 
                 return (
                   <article key={bug.id} className={`rounded-[2rem] border p-5 shadow-sm ${colors.card}`}>
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                       <div>
-                        <span className={`inline-flex rounded-full px-3 py-2 text-xs font-black ${colors.badge}`}>
-                          {colors.label}
-                        </span>
+                        <span className={`inline-flex rounded-full px-3 py-2 text-xs font-black ${colors.badge}`}>{colors.label}</span>
                         <h3 className={`mt-3 text-2xl font-black ${colors.text}`}>{bug.title}</h3>
                         <p className="mt-2 max-w-3xl font-bold leading-7 text-slate-600">{bug.description}</p>
+                        <p className="mt-2 text-xs font-bold text-slate-500">
+                          {bug.category} • {bug.table_name || 'system'} • {formatarData(bug.last_seen_at)}
+                        </p>
                       </div>
 
-                      <div className="rounded-2xl bg-white/70 p-4 text-sm font-bold text-slate-600">
-                        <p>{bug.category}</p>
-                        <p>{bug.table_name || 'system'}</p>
-                        <p>{formatarData(bug.last_seen_at)}</p>
-                      </div>
+                      <button onClick={() => resolverBug(bug.id)} className="rounded-2xl bg-white px-5 py-4 font-black text-slate-700 shadow-sm">
+                        Marcar como resolvido
+                      </button>
                     </div>
                   </article>
                 )
@@ -411,7 +416,7 @@ export default function AdminPage() {
               {bugsOrdenados.length === 0 && (
                 <div className="rounded-[2rem] border border-emerald-100 bg-emerald-50 p-8 text-center">
                   <p className="text-3xl font-black text-emerald-700">Nenhum bug aberto encontrado</p>
-                  <p className="mt-3 font-bold text-emerald-700">Aproveite este raro momento em que o software finge estar em paz.</p>
+                  <p className="mt-3 font-bold text-emerald-700">Raro momento em que o software finge estar em paz.</p>
                 </div>
               )}
             </section>
@@ -423,21 +428,10 @@ export default function AdminPage() {
                 <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Proteções ativas</p>
                 <div className="mt-5 grid gap-3">
                   <p className="rounded-2xl bg-blue-50 p-4 font-bold text-slate-600">Admin via tabela admin_users.</p>
-                  <p className="rounded-2xl bg-blue-50 p-4 font-bold text-slate-600">API admin com service role somente no servidor.</p>
+                  <p className="rounded-2xl bg-blue-50 p-4 font-bold text-slate-600">Liberação e bloqueio manual de empresas.</p>
                   <p className="rounded-2xl bg-blue-50 p-4 font-bold text-slate-600">Scanner automático via cron.</p>
-                  <p className="rounded-2xl bg-blue-50 p-4 font-bold text-slate-600">Classificação de bugs por severidade.</p>
-                  <p className="rounded-2xl bg-blue-50 p-4 font-bold text-slate-600">Auditoria de abertura do dashboard e scanners.</p>
+                  <p className="rounded-2xl bg-blue-50 p-4 font-bold text-slate-600">Bugs podem ser marcados como resolvidos.</p>
                 </div>
-              </div>
-
-              <div className="rounded-[2rem] border border-yellow-100 bg-yellow-50 p-6 shadow-xl shadow-blue-950/5">
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-800">Para rodar 24/7</p>
-                <p className="mt-4 leading-7 font-bold text-yellow-900">
-                  Configure ADMIN_SCAN_SECRET ou CRON_SECRET na Vercel. O vercel.json agenda o scanner de hora em hora.
-                </p>
-                <p className="mt-4 leading-7 font-bold text-yellow-900">
-                  Isso é um scanner automático de diagnóstico. Para usar IA generativa real analisando logs, o próximo passo é integrar OpenAI API ou outro provedor, com custo controlado.
-                </p>
               </div>
             </section>
           )}
