@@ -527,7 +527,7 @@ export default function ProdutosPage() {
             </Link>
 
             <a
-              href={empresa ? `/site/${empresa.slug}` : '#'}
+              href={empresa ? `/loja/${empresa.slug}` : '#'}
               target="_blank"
               className="rounded-2xl bg-[#05245c] px-4 py-3 text-center text-sm font-black text-white transition hover:bg-[#031a43]"
             >

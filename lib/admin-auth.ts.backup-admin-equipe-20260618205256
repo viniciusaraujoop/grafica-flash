@@ -45,12 +45,16 @@ export async function getCurrentAdmin(request: NextRequest): Promise<AdminSessio
 }
 
 export function can(admin: AdminSession, permission: string) {
-  if (admin.email === 'araujovinicius249@gmail.com') return true
   if (admin.role === 'super_admin') return true
   if (admin.permissions?.all) return true
   return Boolean(admin.permissions?.[permission])
 }
 
+/**
+ * Compatibilidade com rotas antigas do Admin Master.
+ * Algumas rotas ainda importam requireAdmin de '@/lib/admin-auth'.
+ * Mantemos esse export para o build não quebrar enquanto o admin novo usa getCurrentAdmin.
+ */
 export async function requireAdmin(request: NextRequest, permission?: string): Promise<any> {
   const admin = await getCurrentAdmin(request)
 

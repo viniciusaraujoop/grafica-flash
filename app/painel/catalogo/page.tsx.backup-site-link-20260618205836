@@ -541,7 +541,7 @@ export default function CatalogoPage() {
     setSaving(false)
   }
 
-  const lojaUrl = company ? `/site/${company.slug}` : '#'
+  const lojaUrl = company ? `/loja/${company.slug}` : '#'
 
   if (loading) {
     return (

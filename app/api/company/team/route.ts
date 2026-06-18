@@ -2,125 +2,176 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
   { auth: { persistSession: false } }
 )
 
-const rolePermissions: Record<string, any> = {
+const cargoPermissions: Record<string, Record<string, boolean>> = {
   gerente: {
-    label: 'Gerente',
-    pedidos: true,
-    produtos: true,
-    propostas: true,
-    clientes: true,
-    oportunidades: true,
-    configuracoes: false,
-    assinatura: false,
+    orders: true,
+    products: true,
+    proposals: true,
+    customers: true,
+    opportunities: true,
+    finance: true,
+    production: true,
+    settings: false,
+    team: false,
     admin: false,
   },
   atendente: {
-    label: 'Atendente',
-    pedidos: true,
-    produtos: false,
-    propostas: true,
-    clientes: true,
-    oportunidades: true,
-    configuracoes: false,
-    assinatura: false,
+    orders: true,
+    products: false,
+    proposals: true,
+    customers: true,
+    opportunities: true,
+    finance: false,
+    production: false,
+    settings: false,
+    team: false,
     admin: false,
   },
   producao: {
-    label: 'Produção',
-    pedidos: true,
-    produtos: true,
-    propostas: false,
-    clientes: false,
-    oportunidades: false,
-    configuracoes: false,
-    assinatura: false,
+    orders: true,
+    products: true,
+    proposals: false,
+    customers: false,
+    opportunities: false,
+    finance: false,
+    production: true,
+    settings: false,
+    team: false,
     admin: false,
   },
 }
 
-function fail(error: string, status = 400) {
-  return NextResponse.json({ error }, { status })
+function cleanEmail(value: string) {
+  return String(value || '').trim().toLowerCase()
 }
 
-async function currentUser(request: NextRequest) {
+function cleanCargo(value: string) {
+  return ['gerente', 'atendente', 'producao'].includes(value) ? value : 'atendente'
+}
+
+async function getRequester(request: NextRequest) {
   const token = (request.headers.get('authorization') || '').replace('Bearer ', '').trim()
+
   if (!token) return null
 
-  const { data } = await supabaseAdmin.auth.getUser(token)
-  return data.user || null
+  const { data, error } = await supabaseAdmin.auth.getUser(token)
+  if (error || !data.user) return null
+
+  return data.user
 }
 
-async function ownerCompany(userId: string) {
-  const { data, error } = await supabaseAdmin
+async function getCompanyForUser(userId: string, email?: string) {
+  const { data: ownCompany } = await supabaseAdmin
     .from('companies')
-    .select(`
-      id,
-      nome,
-      slug,
-      subdomain_slug,
-      whatsapp,
-      cidade,
-      estado,
-      email,
-      segmento,
-      logo_url,
-      cor_principal,
-      site_status,
-      assinatura_status,
-      assinatura_expira_em,
-      pix_key,
-      pix_tipo,
-      pix_nome,
-      pix_cidade,
-      aceita_pix,
-      aceita_cartao,
-      cobrar_sinal,
-      percentual_sinal,
-      atendimento_horario,
-      atendimento_observacao,
-      instagram,
-      owner_id,
-      tester_id
-    `)
+    .select('*')
     .or(`owner_id.eq.${userId},tester_id.eq.${userId}`)
     .maybeSingle()
 
+  if (ownCompany) {
+    return { company: ownCompany, requesterRole: 'dono' }
+  }
+
+  const { data: member } = await supabaseAdmin
+    .from('company_members')
+    .select('company_id,cargo,status')
+    .eq('user_id', userId)
+    .eq('status', 'ativo')
+    .maybeSingle()
+
+  if (member?.company_id) {
+    const { data: company } = await supabaseAdmin
+      .from('companies')
+      .select('*')
+      .eq('id', member.company_id)
+      .maybeSingle()
+
+    return { company, requesterRole: member.cargo || 'funcionario' }
+  }
+
+  if (email?.toLowerCase() === 'araujovinicius249@gmail.com') {
+    const { data: firstCompany } = await supabaseAdmin
+      .from('companies')
+      .select('*')
+      .eq('slug', 'grafica-flash')
+      .maybeSingle()
+
+    if (firstCompany) {
+      return { company: firstCompany, requesterRole: 'dono' }
+    }
+  }
+
+  return { company: null, requesterRole: null }
+}
+
+async function findUserByEmail(email: string) {
+  const perPage = 1000
+  const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage })
+
   if (error) throw error
-  return data
+
+  return (data.users || []).find((user) => user.email?.toLowerCase() === email.toLowerCase()) || null
+}
+
+async function ensureAuthUser(email: string, nome: string, senha?: string) {
+  const existing = await findUserByEmail(email)
+
+  if (existing) return existing
+
+  const password = senha && senha.length >= 6 ? senha : Math.random().toString(36).slice(2, 10) + 'Aa1!'
+
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      nome,
+      criado_pelo_orcaly: true,
+      tipo: 'funcionario',
+    },
+  })
+
+  if (error) throw error
+  if (!data.user) throw new Error('Não foi possível criar o usuário.')
+
+  return data.user
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await currentUser(request)
+    const requester = await getRequester(request)
 
-    if (!user) return fail('Sessão inválida.', 401)
+    if (!requester) {
+      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+    }
 
-    const company = await ownerCompany(user.id)
+    const { company } = await getCompanyForUser(requester.id, requester.email || '')
 
-    if (!company) return fail('Apenas o dono pode acessar estas configurações.', 403)
+    if (!company?.id) {
+      return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
+    }
 
     const { data: members, error } = await supabaseAdmin
-      .from('company_members_public')
-      .select('*')
+      .from('company_members')
+      .select('id,company_id,user_id,nome,email,cargo,status,permissions,created_at,updated_at')
       .eq('company_id', company.id)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
 
     if (error) throw error
 
     return NextResponse.json({
-      company,
+      company_id: company.id,
       members: members || [],
       limit: 2,
-      roles: rolePermissions,
+      active_count: (members || []).filter((member) => member.status === 'ativo').length,
     })
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao carregar configurações.' },
+      { error: error instanceof Error ? error.message : 'Erro ao carregar equipe.' },
       { status: 500 }
     )
   }
@@ -128,66 +179,113 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await currentUser(request)
-    if (!user) return fail('Sessão inválida.', 401)
+    const requester = await getRequester(request)
 
-    const company = await ownerCompany(user.id)
-    if (!company) return fail('Apenas o dono pode adicionar funcionários.', 403)
+    if (!requester) {
+      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+    }
 
     const body = await request.json()
     const nome = String(body.nome || '').trim()
-    const email = String(body.email || '').trim().toLowerCase()
-    const cargo = String(body.cargo || 'atendente').trim()
-    const password = String(body.password || '').trim()
+    const email = cleanEmail(body.email || '')
+    const cargo = cleanCargo(body.cargo || 'atendente')
+    const senha = String(body.senha || '').trim()
 
-    if (!nome) return fail('Informe o nome.')
-    if (!email.includes('@')) return fail('Informe um e-mail válido.')
-    if (!rolePermissions[cargo]) return fail('Cargo inválido.')
-    if (password.length < 8) return fail('A senha precisa ter pelo menos 8 caracteres.')
+    if (!nome) {
+      return NextResponse.json({ error: 'Informe o nome do funcionário.' }, { status: 400 })
+    }
 
-    const { count } = await supabaseAdmin
+    if (!email || !email.includes('@')) {
+      return NextResponse.json({ error: 'Informe um e-mail válido.' }, { status: 400 })
+    }
+
+    if (email === 'araujovinicius249@gmail.com') {
+      return NextResponse.json({ error: 'Este e-mail é do Admin Master e não pode ser cadastrado como funcionário.' }, { status: 400 })
+    }
+
+    if (senha && senha.length < 6) {
+      return NextResponse.json({ error: 'A senha inicial precisa ter pelo menos 6 caracteres.' }, { status: 400 })
+    }
+
+    const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
+
+    if (!company?.id) {
+      return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
+    }
+
+    if (requesterRole !== 'dono' && requester.email?.toLowerCase() !== 'araujovinicius249@gmail.com') {
+      return NextResponse.json({ error: 'Somente o dono da empresa pode cadastrar funcionários.' }, { status: 403 })
+    }
+
+    const { data: activeMembers, error: countError } = await supabaseAdmin
       .from('company_members')
-      .select('id', { count: 'exact', head: true })
+      .select('id,email,status')
       .eq('company_id', company.id)
       .eq('status', 'ativo')
 
-    if ((count || 0) >= 2) return fail('Limite de 2 funcionários ativos atingido.')
+    if (countError) throw countError
 
-    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
+    const alreadyActiveByEmail = (activeMembers || []).find((member) => member.email?.toLowerCase() === email)
+
+    if (!alreadyActiveByEmail && (activeMembers || []).length >= 2) {
+      return NextResponse.json({ error: 'Limite de 2 funcionários ativos atingido.' }, { status: 400 })
+    }
+
+    const user = await ensureAuthUser(email, nome, senha)
+
+    const payload = {
+      company_id: company.id,
+      user_id: user.id,
+      nome,
       email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        nome,
-        cargo,
-        company_id: company.id,
-        origem: 'funcionario_orcaly',
-      },
-    })
+      cargo,
+      status: 'ativo',
+      permissions: cargoPermissions[cargo] || cargoPermissions.atendente,
+      created_by: requester.id,
+      updated_at: new Date().toISOString(),
+    }
 
-    if (createError) return fail(createError.message)
-
-    const { data: member, error } = await supabaseAdmin
+    const { data: existingMember, error: existingError } = await supabaseAdmin
       .from('company_members')
-      .insert({
-        company_id: company.id,
-        user_id: created.user.id,
-        nome,
-        email,
-        cargo,
-        status: 'ativo',
-        permissions: rolePermissions[cargo],
-        created_by: user.id,
-      })
-      .select('*')
-      .single()
+      .select('id')
+      .eq('company_id', company.id)
+      .or(`user_id.eq.${user.id},email.eq.${email}`)
+      .maybeSingle()
 
-    if (error) throw error
+    if (existingError) throw existingError
 
-    return NextResponse.json({ ok: true, member })
+    let savedMember: any = null
+
+    if (existingMember?.id) {
+      const { data, error } = await supabaseAdmin
+        .from('company_members')
+        .update(payload)
+        .eq('id', existingMember.id)
+        .select('id,company_id,user_id,nome,email,cargo,status,permissions,created_at,updated_at')
+        .single()
+
+      if (error) throw error
+      savedMember = data
+    } else {
+      const { data, error } = await supabaseAdmin
+        .from('company_members')
+        .insert(payload)
+        .select('id,company_id,user_id,nome,email,cargo,status,permissions,created_at,updated_at')
+        .single()
+
+      if (error) throw error
+      savedMember = data
+    }
+
+    return NextResponse.json({
+      ok: true,
+      member: savedMember,
+      temporary_password: senha || null,
+      message: existingMember?.id ? 'Funcionário atualizado.' : 'Funcionário criado.',
+    })
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao adicionar funcionário.' },
+      { error: error instanceof Error ? error.message : 'Erro ao salvar funcionário.' },
       { status: 500 }
     )
   }
@@ -195,38 +293,46 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const user = await currentUser(request)
-    if (!user) return fail('Sessão inválida.', 401)
+    const requester = await getRequester(request)
 
-    const company = await ownerCompany(user.id)
-    if (!company) return fail('Apenas o dono pode editar funcionários.', 403)
+    if (!requester) {
+      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+    }
 
     const body = await request.json()
     const id = String(body.id || '')
-    const cargo = String(body.cargo || '')
-    const status = String(body.status || '')
+    const cargo = body.cargo ? cleanCargo(body.cargo) : null
+    const status = ['ativo', 'bloqueado', 'removido'].includes(body.status) ? body.status : null
+    const nome = body.nome ? String(body.nome).trim() : null
 
-    if (!id) return fail('Funcionário não informado.')
+    const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
 
-    const updatePayload: Record<string, any> = {}
+    if (!company?.id) {
+      return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
+    }
+
+    if (requesterRole !== 'dono' && requester.email?.toLowerCase() !== 'araujovinicius249@gmail.com') {
+      return NextResponse.json({ error: 'Somente o dono da empresa pode alterar funcionários.' }, { status: 403 })
+    }
+
+    const update: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    }
 
     if (cargo) {
-      if (!rolePermissions[cargo]) return fail('Cargo inválido.')
-      updatePayload.cargo = cargo
-      updatePayload.permissions = rolePermissions[cargo]
+      update.cargo = cargo
+      update.permissions = cargoPermissions[cargo] || cargoPermissions.atendente
     }
 
-    if (status) {
-      if (!['ativo', 'bloqueado', 'removido'].includes(status)) return fail('Status inválido.')
-      updatePayload.status = status
-    }
+    if (status) update.status = status
+    if (nome) update.nome = nome
 
     const { data, error } = await supabaseAdmin
       .from('company_members')
-      .update(updatePayload)
+      .update(update)
       .eq('id', id)
       .eq('company_id', company.id)
-      .select('*')
+      .select('id,company_id,user_id,nome,email,cargo,status,permissions,created_at,updated_at')
       .single()
 
     if (error) throw error
@@ -234,7 +340,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ ok: true, member: data })
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao atualizar funcionário.' },
+      { error: error instanceof Error ? error.message : 'Erro ao alterar funcionário.' },
       { status: 500 }
     )
   }
@@ -242,18 +348,31 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const user = await currentUser(request)
-    if (!user) return fail('Sessão inválida.', 401)
+    const requester = await getRequester(request)
 
-    const company = await ownerCompany(user.id)
-    if (!company) return fail('Apenas o dono pode remover funcionários.', 403)
+    if (!requester) {
+      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+    }
 
-    const id = new URL(request.url).searchParams.get('id')
-    if (!id) return fail('Funcionário não informado.')
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id') || ''
+
+    const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
+
+    if (!company?.id) {
+      return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
+    }
+
+    if (requesterRole !== 'dono' && requester.email?.toLowerCase() !== 'araujovinicius249@gmail.com') {
+      return NextResponse.json({ error: 'Somente o dono da empresa pode remover funcionários.' }, { status: 403 })
+    }
 
     const { error } = await supabaseAdmin
       .from('company_members')
-      .update({ status: 'removido' })
+      .update({
+        status: 'removido',
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', id)
       .eq('company_id', company.id)
 

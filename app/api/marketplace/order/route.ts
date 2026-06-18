@@ -1,0 +1,308 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { generatePixPayload, sanitizeTxid } from '@/lib/pix'
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  { auth: { persistSession: false } }
+)
+
+type CartItemInput = {
+  product_id: string
+  quantidade: number
+  largura?: number
+  altura?: number
+  comprimento?: number
+  respostas?: Record<string, any>
+  opcoes_selecionadas?: Record<string, string>
+  observacoes?: string
+}
+
+function cleanPhone(value: string) {
+  return String(value || '').replace(/\D/g, '')
+}
+
+function money(value: any) {
+  return Math.max(0, Number(value || 0))
+}
+
+function selectedOptions(product: any, selections: Record<string, string> = {}) {
+  const groups = Array.isArray(product.configuracoes?.opcoes) ? product.configuracoes.opcoes : []
+  const selected: any[] = []
+
+  groups.forEach((group: any) => {
+    const selectedId = selections[group.id]
+    const value = Array.isArray(group.valores)
+      ? group.valores.find((option: any) => option.id === selectedId)
+      : null
+
+    if (value) {
+      selected.push({
+        group_id: group.id,
+        group_nome: group.nome,
+        value_id: value.id,
+        value_nome: value.nome,
+        ajuste_tipo: value.ajuste_tipo || 'fixo',
+        ajuste_valor: Number(value.ajuste_valor || 0),
+      })
+    }
+  })
+
+  return selected
+}
+
+function calculateItem(product: any, item: CartItemInput) {
+  const quantidade = Math.max(1, Number(item.quantidade || 1))
+  const preco = money(product.preco)
+  const largura = Number(item.largura || 0)
+  const altura = Number(item.altura || 0)
+  const comprimento = Number(item.comprimento || 0)
+  const precificacao = product.precificacao || 'unidade'
+  const valorMinimo = money(product.valor_minimo)
+
+  let subtotalBase = preco * quantidade
+  let areaM2 = 0
+  let detalhes = `${quantidade} x ${preco.toFixed(2)}`
+
+  if (precificacao === 'm2' || precificacao === 'metro_quadrado') {
+    areaM2 = Math.max(0, largura) * Math.max(0, altura)
+    subtotalBase = areaM2 * preco * quantidade
+    detalhes = `${largura}m x ${altura}m = ${areaM2.toFixed(2)}m² x ${quantidade}`
+  }
+
+  if (precificacao === 'metro_linear') {
+    const medida = Math.max(largura, altura, comprimento, 0)
+    subtotalBase = medida * preco * quantidade
+    detalhes = `${medida}m x ${quantidade}`
+  }
+
+  const opcoes = selectedOptions(product, item.opcoes_selecionadas)
+  let ajustes = 0
+
+  opcoes.forEach((opcao) => {
+    if (opcao.ajuste_tipo === 'percentual') {
+      ajustes += subtotalBase * (Number(opcao.ajuste_valor || 0) / 100)
+    } else {
+      ajustes += Number(opcao.ajuste_valor || 0) * quantidade
+    }
+  })
+
+  let subtotal = subtotalBase + ajustes
+
+  if (valorMinimo > 0 && subtotal < valorMinimo) {
+    subtotal = valorMinimo
+    detalhes += ` • mínimo aplicado`
+  }
+
+  if (opcoes.length > 0) {
+    detalhes += ` • opções: ${opcoes.map((o) => `${o.group_nome}: ${o.value_nome}`).join(', ')}`
+  }
+
+  return {
+    quantidade,
+    preco,
+    subtotalBase,
+    ajustes,
+    subtotal,
+    largura,
+    altura,
+    comprimento,
+    areaM2,
+    detalhes,
+    opcoes,
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+
+    const companyId = String(body.company_id || '')
+    const cliente = body.cliente || {}
+    const items = Array.isArray(body.items) ? itemsSanitize(body.items) : []
+
+    if (!companyId) {
+      return NextResponse.json({ error: 'Empresa não informada.' }, { status: 400 })
+    }
+
+    if (!cliente.nome || cleanPhone(cliente.telefone).length < 10) {
+      return NextResponse.json({ error: 'Informe nome e WhatsApp válido.' }, { status: 400 })
+    }
+
+    if (items.length === 0) {
+      return NextResponse.json({ error: 'Carrinho vazio.' }, { status: 400 })
+    }
+
+    const { data: company, error: companyError } = await supabaseAdmin
+      .from('companies')
+      .select(`
+        id,
+        nome,
+        slug,
+        whatsapp,
+        pix_key,
+        pix_nome,
+        pix_cidade,
+        aceita_pix,
+        cobrar_sinal,
+        percentual_sinal,
+        modelo_negocio,
+        modelo_perguntas
+      `)
+      .eq('id', companyId)
+      .maybeSingle()
+
+    if (companyError) throw companyError
+
+    if (!company) {
+      return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
+    }
+
+    const ids = items.map((item: CartItemInput) => item.product_id)
+
+    const { data: products, error: productsError } = await supabaseAdmin
+      .from('products')
+      .select('*')
+      .eq('company_id', companyId)
+      .in('id', ids)
+      .eq('ativo', true)
+
+    if (productsError) throw productsError
+
+    const productMap = new Map((products || []).map((product: any) => [product.id, product]))
+    const orderItems: any[] = []
+
+    for (const item of items) {
+      const product = productMap.get(item.product_id)
+      if (!product) continue
+
+      const calc = calculateItem(product, item)
+
+      orderItems.push({
+        product,
+        input: item,
+        calc,
+      })
+    }
+
+    if (orderItems.length === 0) {
+      return NextResponse.json({ error: 'Nenhum produto válido no carrinho.' }, { status: 400 })
+    }
+
+    const total = orderItems.reduce((acc, item) => acc + item.calc.subtotal, 0)
+    const percentualSinal = company.cobrar_sinal ? Math.max(0, Number(company.percentual_sinal || 0)) : 0
+    const valorSinal = percentualSinal > 0 ? Number((total * percentualSinal / 100).toFixed(2)) : 0
+    const valorPix = valorSinal > 0 ? valorSinal : total
+    const telefone = cleanPhone(cliente.telefone)
+    const resumo = orderItems.map((item) => `${item.calc.quantidade}x ${item.product.nome}`).join(', ')
+    const txid = sanitizeTxid(`ORC${Date.now().toString().slice(-10)}`)
+
+    const pixPayload = company.aceita_pix !== false && company.pix_key
+      ? generatePixPayload({
+          key: company.pix_key,
+          merchantName: company.pix_nome || company.nome || 'ORCALY',
+          merchantCity: company.pix_cidade || 'MACEIO',
+          amount: valorPix,
+          txid,
+          description: `Pedido ${company.nome}`.slice(0, 60),
+        })
+      : ''
+
+    const { data: order, error: orderError } = await supabaseAdmin
+      .from('orders')
+      .insert({
+        company_id: companyId,
+        nome: String(cliente.nome).trim(),
+        telefone,
+        produto: resumo,
+        quantidade: orderItems.reduce((acc, item) => acc + item.calc.quantidade, 0),
+        observacoes: body.observacoes || cliente.observacoes || null,
+        status: 'Recebido',
+        preco_estimado: total,
+        valor_total: total,
+        valor_sinal: valorSinal,
+        percentual_sinal: percentualSinal,
+        forma_pagamento: pixPayload ? 'PIX' : 'A combinar',
+        itens_resumo: resumo,
+        cliente_empresa: cliente.empresa || null,
+        marketplace_origem: 'marketplace',
+        dados_inteligentes: {
+          origem: 'marketplace_v4',
+          cliente,
+          pix: pixPayload ? {
+            txid,
+            valor_pix: valorPix,
+            copia_cola: pixPayload,
+          } : null,
+          perguntas_gerais: body.respostas_gerais || {},
+          endereco: cliente.endereco || null,
+        },
+      })
+      .select('id')
+      .single()
+
+    if (orderError) throw orderError
+
+    const itemsToInsert = orderItems.map((item) => ({
+      order_id: order.id,
+      company_id: companyId,
+      product_id: item.product.id,
+      nome: item.product.nome,
+      tipo: item.product.tipo || 'produto',
+      unidade: item.product.unidade || 'unidade',
+      quantidade: item.calc.quantidade,
+      preco_unitario: item.calc.preco,
+      subtotal: item.calc.subtotal,
+      largura: item.calc.largura || null,
+      altura: item.calc.altura || null,
+      comprimento: item.calc.comprimento || null,
+      area_m2: item.calc.areaM2 || null,
+      precificacao: item.product.precificacao || 'unidade',
+      detalhes_calculo: item.calc.detalhes,
+      respostas: {
+        ...(item.input.respostas || {}),
+        observacoes: item.input.observacoes || null,
+        opcoes: item.calc.opcoes,
+        ajustes: item.calc.ajustes,
+      },
+    }))
+
+    const { error: itemsError } = await supabaseAdmin
+      .from('order_items')
+      .insert(itemsToInsert)
+
+    if (itemsError) throw itemsError
+
+    return NextResponse.json({
+      ok: true,
+      order_id: order.id,
+      total,
+      valor_sinal: valorSinal,
+      valor_pix: valorPix,
+      forma_pagamento: pixPayload ? 'PIX' : 'A combinar',
+      pix_payload: pixPayload,
+      txid,
+      resumo,
+      whatsapp: company.whatsapp || null,
+    })
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Erro ao criar pedido.' },
+      { status: 500 }
+    )
+  }
+}
+
+function itemsSanitize(items: any[]): CartItemInput[] {
+  return items.map((item) => ({
+    product_id: String(item.product_id || ''),
+    quantidade: Number(item.quantidade || 1),
+    largura: item.largura ? Number(item.largura) : undefined,
+    altura: item.altura ? Number(item.altura) : undefined,
+    comprimento: item.comprimento ? Number(item.comprimento) : undefined,
+    respostas: item.respostas || {},
+    opcoes_selecionadas: item.opcoes_selecionadas || {},
+    observacoes: item.observacoes || '',
+  })).filter((item) => item.product_id)
+}
