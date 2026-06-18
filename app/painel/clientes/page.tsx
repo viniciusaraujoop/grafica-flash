@@ -1,670 +1,694 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
-type Empresa = {
-  id: string
+type Cliente = {
   nome: string
-  slug: string | null
+  telefone: string
+  pedidos: any[]
+  propostas: any[]
+  notas: any[]
+  followups: any[]
+  total: number
+  ticketMedio: number
+  ultimoPedido: string | null
+  statusComercial: string
+  risco: string
+  origem: string
 }
 
-type Pedido = {
-  id: string
-  nome: string | null
-  telefone: string | null
-  cliente_empresa: string | null
-  status: string | null
-  valor_total: number | null
-  preco_estimado: number | null
-  created_at: string | null
+const statusOptions = ['Todos', 'Quente', 'Morno', 'Frio', 'Novo', 'Recorrente', 'Inativo', 'Sem proposta', 'Com follow-up']
+const ordenacoes = [
+  { id: 'recente', nome: 'Mais recentes' },
+  { id: 'valor', nome: 'Maior valor' },
+  { id: 'pedidos', nome: 'Mais pedidos' },
+  { id: 'followup', nome: 'Follow-up pendente' },
+]
+
+function limparTelefone(valor: string | null | undefined) {
+  return String(valor || '').replace(/\D/g, '')
 }
 
-type ClienteCRM = {
-  chave: string
-  nome: string
-  whatsapp: string
-  empresa: string
-  pedidos: Pedido[]
-  totalPedidos: number
-  valorTotal: number
-  ultimaInteracao: string | null
-  ultimoStatus: string
-  pedidosFechados: number
-  pedidosAbertos: number
-  diasSemInteracao: number
-  statusCliente: 'Cliente fiel' | 'Comprador' | 'Nao fechou' | 'Inativo 30 dias' | 'Lead novo'
-}
+function telefoneLabel(valor: string) {
+  const limpo = limparTelefone(valor)
 
-type Filtro = 'todos' | 'top' | 'nao-fecharam' | 'inativos'
-
-function normalizarTelefone(valor: string | null) {
-  return (valor || '').replace(/\D/g, '')
-}
-
-function formatarMoeda(valor: number) {
-  return valor.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-}
-
-function formatarData(data: string | null) {
-  if (!data) return 'Sem data'
-
-  return new Date(data).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
-}
-
-function calcularDiasSemInteracao(data: string | null) {
-  if (!data) return 999
-
-  const agora = new Date().getTime()
-  const ultima = new Date(data).getTime()
-
-  if (Number.isNaN(ultima)) return 999
-
-  return Math.floor((agora - ultima) / (1000 * 60 * 60 * 24))
-}
-
-function statusFechado(status: string | null) {
-  const texto = (status || '').toLowerCase()
-
-  return (
-    texto.includes('fechado') ||
-    texto.includes('aprovado') ||
-    texto.includes('concluido') ||
-    texto.includes('concluído') ||
-    texto.includes('pago') ||
-    texto.includes('finalizado')
-  )
-}
-
-function criarLinkWhatsapp(telefone: string) {
-  const numeros = normalizarTelefone(telefone)
-
-  if (!numeros) return ''
-
-  if (numeros.startsWith('55')) return `https://wa.me/${numeros}`
-
-  return `https://wa.me/55${numeros}`
-}
-
-function agruparClientes(pedidos: Pedido[]) {
-  const mapa = new Map<string, Pedido[]>()
-
-  pedidos.forEach((pedido) => {
-    const telefone = normalizarTelefone(pedido.telefone)
-    const nome = (pedido.nome || 'Cliente sem nome').trim()
-    const chave = telefone || nome.toLowerCase()
-
-    if (!mapa.has(chave)) {
-      mapa.set(chave, [])
-    }
-
-    mapa.get(chave)?.push(pedido)
-  })
-
-  const clientes: ClienteCRM[] = Array.from(mapa.entries()).map(([chave, lista]) => {
-    const pedidosOrdenados = [...lista].sort((a, b) => {
-      const dataA = a.created_at ? new Date(a.created_at).getTime() : 0
-      const dataB = b.created_at ? new Date(b.created_at).getTime() : 0
-
-      return dataB - dataA
-    })
-
-    const ultimoPedido = pedidosOrdenados[0]
-    const valorTotal = pedidosOrdenados.reduce((total, pedido) => {
-      return total + Number(pedido.valor_total ?? pedido.preco_estimado ?? 0)
-    }, 0)
-
-    const pedidosFechados = pedidosOrdenados.filter((pedido) =>
-      statusFechado(pedido.status)
-    ).length
-
-    const totalPedidos = pedidosOrdenados.length
-    const pedidosAbertos = totalPedidos - pedidosFechados
-    const diasSemInteracao = calcularDiasSemInteracao(ultimoPedido?.created_at || null)
-
-    let statusCliente: ClienteCRM['statusCliente'] = 'Lead novo'
-
-    if (diasSemInteracao >= 30) {
-      statusCliente = 'Inativo 30 dias'
-    } else if (totalPedidos >= 3 || valorTotal >= 1000) {
-      statusCliente = 'Cliente fiel'
-    } else if (pedidosAbertos > 0 && pedidosFechados === 0) {
-      statusCliente = 'Nao fechou'
-    } else if (pedidosFechados > 0) {
-      statusCliente = 'Comprador'
-    }
-
-    return {
-      chave,
-      nome: ultimoPedido?.nome || 'Cliente sem nome',
-      whatsapp: ultimoPedido?.telefone || '',
-      empresa: ultimoPedido?.cliente_empresa || 'Nao informado',
-      pedidos: pedidosOrdenados,
-      totalPedidos,
-      valorTotal,
-      ultimaInteracao: ultimoPedido?.created_at || null,
-      ultimoStatus: ultimoPedido?.status || 'Recebido',
-      pedidosFechados,
-      pedidosAbertos,
-      diasSemInteracao,
-      statusCliente,
-    }
-  })
-
-  return clientes.sort((a, b) => b.valorTotal - a.valorTotal)
-}
-
-function badgeDoStatus(status: ClienteCRM['statusCliente']) {
-  if (status === 'Cliente fiel') {
-    return 'bg-emerald-100 text-emerald-700 border-emerald-200'
+  if (limpo.length === 11) {
+    return `(${limpo.slice(0, 2)}) ${limpo.slice(2, 7)}-${limpo.slice(7)}`
   }
 
-  if (status === 'Comprador') {
-    return 'bg-blue-100 text-blue-700 border-blue-200'
+  if (limpo.length === 10) {
+    return `(${limpo.slice(0, 2)}) ${limpo.slice(2, 6)}-${limpo.slice(6)}`
   }
 
-  if (status === 'Nao fechou') {
-    return 'bg-orange-100 text-orange-700 border-orange-200'
-  }
+  return valor || 'Sem telefone'
+}
 
-  if (status === 'Inativo 30 dias') {
-    return 'bg-red-100 text-red-700 border-red-200'
-  }
+function moeda(valor: number) {
+  return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
 
-  return 'bg-slate-100 text-slate-700 border-slate-200'
+function dataBR(valor: string | null | undefined) {
+  if (!valor) return 'Sem data'
+  return new Date(valor).toLocaleDateString('pt-BR')
+}
+
+function diasDesde(valor: string | null | undefined) {
+  if (!valor) return 9999
+  const data = new Date(valor).getTime()
+  return Math.floor((Date.now() - data) / (1000 * 60 * 60 * 24))
+}
+
+function whatsappLink(telefone: string, mensagem: string) {
+  const limpo = limparTelefone(telefone)
+  const final = limpo.startsWith('55') ? limpo : `55${limpo}`
+  return `https://wa.me/${final}?text=${encodeURIComponent(mensagem)}`
+}
+
+function valorPedido(pedido: any) {
+  return Number(pedido.valor_total || pedido.preco_estimado || pedido.preco || 0)
+}
+
+function inferirStatus(cliente: Cliente) {
+  const dias = diasDesde(cliente.ultimoPedido)
+  const pedidos = cliente.pedidos.length
+  const propostasPendentes = cliente.propostas.filter((p) => !['aprovada', 'aprovado', 'approved'].includes(String(p.status || '').toLowerCase()))
+  const followPendente = cliente.followups.some((f) => f.status === 'pendente')
+
+  if (followPendente) return 'Com follow-up'
+  if (pedidos === 1 && dias <= 7) return 'Novo'
+  if (pedidos >= 3) return 'Recorrente'
+  if (propostasPendentes.length > 0 && pedidos <= 1) return 'Sem proposta'
+  if (dias <= 7) return 'Quente'
+  if (dias <= 30) return 'Morno'
+  if (dias <= 60) return 'Frio'
+  return 'Inativo'
+}
+
+function riscoCliente(cliente: Cliente) {
+  const dias = diasDesde(cliente.ultimoPedido)
+
+  if (cliente.followups.some((f) => f.status === 'pendente' && f.prioridade === 'alta')) return 'Alto'
+  if (dias > 60) return 'Alto'
+  if (dias > 30) return 'Médio'
+  return 'Baixo'
 }
 
 export default function ClientesPage() {
-  const [empresa, setEmpresa] = useState<Empresa | null>(null)
-  const [pedidos, setPedidos] = useState<Pedido[]>([])
-  const [carregando, setCarregando] = useState(true)
+  const [company, setCompany] = useState<any>(null)
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState('')
+  const [mensagem, setMensagem] = useState('')
   const [busca, setBusca] = useState('')
-  const [filtro, setFiltro] = useState<Filtro>('todos')
-  const [clienteSelecionado, setClienteSelecionado] = useState<ClienteCRM | null>(null)
+  const [status, setStatus] = useState('Todos')
+  const [ordenacao, setOrdenacao] = useState('recente')
+  const [selecionado, setSelecionado] = useState<Cliente | null>(null)
 
-  useEffect(() => {
-    async function carregarDados() {
-      setCarregando(true)
-      setErro('')
+  const [nota, setNota] = useState({ tipo: 'nota', conteudo: '' })
+  const [followup, setFollowup] = useState({ titulo: '', descricao: '', prioridade: 'media', due_at: '' })
 
-      try {
-        const { data: sessaoData, error: sessaoError } =
-          await supabase.auth.getSession()
+  async function carregarEmpresa(userId: string) {
+    const { data: ownCompany, error: ownError } = await supabase
+      .from('companies')
+      .select('id, nome, slug, subdomain_slug, whatsapp')
+      .or(`owner_id.eq.${userId},tester_id.eq.${userId}`)
+      .maybeSingle()
 
-        if (sessaoError) {
-          setErro(`Erro ao verificar login: ${sessaoError.message}`)
-          setCarregando(false)
-          return
-        }
+    if (ownError) throw ownError
+    if (ownCompany) return ownCompany
 
-        const usuario = sessaoData.session?.user
+    const { data: member, error: memberError } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', userId)
+      .eq('status', 'ativo')
+      .maybeSingle()
 
-        if (!usuario) {
-          setErro('Voce precisa estar logado para acessar o CRM.')
-          setCarregando(false)
-          return
-        }
+    if (memberError) throw memberError
+    if (!member?.company_id) return null
 
-        const { data: empresaData, error: empresaError } = await supabase
-          .from('companies')
-          .select('id, nome, slug')
-          .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
-          .maybeSingle()
+    const { data: memberCompany, error: companyError } = await supabase
+      .from('companies')
+      .select('id, nome, slug, subdomain_slug, whatsapp')
+      .eq('id', member.company_id)
+      .maybeSingle()
 
-        if (empresaError) {
-          setErro(`Erro ao buscar empresa: ${empresaError.message}`)
-          setCarregando(false)
-          return
-        }
+    if (companyError) throw companyError
 
-        if (!empresaData) {
-          setErro('Nao encontrei empresa vinculada a esta conta.')
-          setCarregando(false)
-          return
-        }
+    return memberCompany
+  }
 
-        setEmpresa(empresaData as Empresa)
+  async function carregar() {
+    setLoading(true)
+    setErro('')
+    setMensagem('')
 
-        const { data: pedidosData, error: pedidosError } = await supabase
-          .from('orders')
-          .select('id, nome, telefone, cliente_empresa, status, valor_total, preco_estimado, created_at')
-          .eq('company_id', empresaData.id)
-          .order('created_at', { ascending: false })
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const user = sessionData.session?.user
 
-        if (pedidosError) {
-          setErro(`Erro ao buscar clientes: ${pedidosError.message}`)
-          setCarregando(false)
-          return
-        }
-
-        setPedidos((pedidosData || []) as Pedido[])
-      } catch (error) {
-        const textoErro =
-          error instanceof Error ? error.message : 'Erro desconhecido ao carregar CRM.'
-
-        setErro(textoErro)
+      if (!user) {
+        setErro('Você precisa estar logado.')
+        setLoading(false)
+        return
       }
 
-      setCarregando(false)
+      const empresa = await carregarEmpresa(user.id)
+
+      if (!empresa) {
+        setErro('Empresa não encontrada.')
+        setLoading(false)
+        return
+      }
+
+      setCompany(empresa)
+
+      const [ordersRes, proposalsRes, notesRes, followupsRes] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('id,nome,telefone,produto,status,preco_estimado,valor_total,observacoes,created_at,dados_inteligentes')
+          .eq('company_id', empresa.id)
+          .order('created_at', { ascending: false })
+          .limit(500),
+        supabase
+          .from('proposals')
+          .select('id,cliente_nome,cliente_whatsapp,status,valor_total,valor_sinal,created_at,approved_at,token')
+          .eq('company_id', empresa.id)
+          .order('created_at', { ascending: false })
+          .limit(500),
+        supabase
+          .from('customer_notes')
+          .select('*')
+          .eq('company_id', empresa.id)
+          .order('created_at', { ascending: false })
+          .limit(500),
+        supabase
+          .from('customer_followups')
+          .select('*')
+          .eq('company_id', empresa.id)
+          .order('created_at', { ascending: false })
+          .limit(500),
+      ])
+
+      if (ordersRes.error) throw ordersRes.error
+      if (proposalsRes.error) throw proposalsRes.error
+      if (notesRes.error) throw notesRes.error
+      if (followupsRes.error) throw followupsRes.error
+
+      const map = new Map<string, Cliente>()
+
+      function ensureCliente(nome: string, telefone: string, origem = 'Pedido') {
+        const phone = limparTelefone(telefone)
+        if (!phone) return null
+
+        if (!map.has(phone)) {
+          map.set(phone, {
+            nome: nome || 'Cliente sem nome',
+            telefone: phone,
+            pedidos: [],
+            propostas: [],
+            notas: [],
+            followups: [],
+            total: 0,
+            ticketMedio: 0,
+            ultimoPedido: null,
+            statusComercial: 'Novo',
+            risco: 'Baixo',
+            origem,
+          })
+        }
+
+        const cliente = map.get(phone)!
+        if ((!cliente.nome || cliente.nome === 'Cliente sem nome') && nome) cliente.nome = nome
+        return cliente
+      }
+
+      ;(ordersRes.data || []).forEach((pedido: any) => {
+        const cliente = ensureCliente(pedido.nome, pedido.telefone, 'Pedido')
+        if (!cliente) return
+
+        cliente.pedidos.push(pedido)
+      })
+
+      ;(proposalsRes.data || []).forEach((proposta: any) => {
+        const cliente = ensureCliente(proposta.cliente_nome, proposta.cliente_whatsapp, 'Proposta')
+        if (!cliente) return
+
+        cliente.propostas.push(proposta)
+      })
+
+      ;(notesRes.data || []).forEach((note: any) => {
+        const cliente = ensureCliente(note.cliente_nome, note.cliente_telefone, 'Nota')
+        if (!cliente) return
+
+        cliente.notas.push(note)
+      })
+
+      ;(followupsRes.data || []).forEach((task: any) => {
+        const cliente = ensureCliente(task.cliente_nome, task.cliente_telefone, 'Follow-up')
+        if (!cliente) return
+
+        cliente.followups.push(task)
+      })
+
+      const lista = Array.from(map.values()).map((cliente) => {
+        const pedidosOrdenados = [...cliente.pedidos].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        const total = cliente.pedidos.reduce((acc, pedido) => acc + valorPedido(pedido), 0)
+
+        const completo = {
+          ...cliente,
+          pedidos: pedidosOrdenados,
+          total,
+          ticketMedio: cliente.pedidos.length ? total / cliente.pedidos.length : 0,
+          ultimoPedido: pedidosOrdenados[0]?.created_at || cliente.propostas[0]?.created_at || cliente.notas[0]?.created_at || null,
+        }
+
+        completo.statusComercial = inferirStatus(completo)
+        completo.risco = riscoCliente(completo)
+
+        return completo
+      })
+
+      setClientes(lista)
+
+      if (selecionado) {
+        const atualizado = lista.find((c) => c.telefone === selecionado.telefone)
+        setSelecionado(atualizado || null)
+      }
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Erro ao carregar clientes.')
     }
 
-    carregarDados()
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    carregar()
   }, [])
 
-  const clientes = useMemo(() => agruparClientes(pedidos), [pedidos])
+  const filtrados = useMemo(() => {
+    let lista = [...clientes]
+    const q = busca.trim().toLowerCase()
 
-  const clientesFiltrados = useMemo(() => {
-    const termo = busca.trim().toLowerCase()
-
-    let lista = clientes
-
-    if (filtro === 'top') {
-      lista = lista.filter((cliente) => cliente.valorTotal > 0)
-      lista = [...lista].sort((a, b) => b.valorTotal - a.valorTotal)
-    }
-
-    if (filtro === 'nao-fecharam') {
-      lista = lista.filter(
-        (cliente) => cliente.pedidosAbertos > 0 && cliente.pedidosFechados === 0
+    if (q) {
+      lista = lista.filter((cliente) =>
+        cliente.nome.toLowerCase().includes(q) ||
+        cliente.telefone.includes(q) ||
+        cliente.pedidos.some((p) => String(p.produto || '').toLowerCase().includes(q))
       )
     }
 
-    if (filtro === 'inativos') {
-      lista = lista.filter((cliente) => cliente.diasSemInteracao >= 30)
+    if (status !== 'Todos') {
+      lista = lista.filter((cliente) => cliente.statusComercial === status)
     }
 
-    if (!termo) return lista
+    lista.sort((a, b) => {
+      if (ordenacao === 'valor') return b.total - a.total
+      if (ordenacao === 'pedidos') return b.pedidos.length - a.pedidos.length
+      if (ordenacao === 'followup') {
+        const aDue = a.followups.some((f) => f.status === 'pendente') ? 1 : 0
+        const bDue = b.followups.some((f) => f.status === 'pendente') ? 1 : 0
+        return bDue - aDue
+      }
 
-    return lista.filter((cliente) => {
-      return (
-        cliente.nome.toLowerCase().includes(termo) ||
-        cliente.whatsapp.toLowerCase().includes(termo) ||
-        cliente.empresa.toLowerCase().includes(termo) ||
-        cliente.statusCliente.toLowerCase().includes(termo)
-      )
+      return new Date(b.ultimoPedido || 0).getTime() - new Date(a.ultimoPedido || 0).getTime()
     })
-  }, [busca, clientes, filtro])
 
-  const totalClientes = clientes.length
-  const valorTotal = clientes.reduce((total, cliente) => total + cliente.valorTotal, 0)
-  const clientesNaoFecharam = clientes.filter(
-    (cliente) => cliente.pedidosAbertos > 0 && cliente.pedidosFechados === 0
-  ).length
-  const clientesInativos = clientes.filter(
-    (cliente) => cliente.diasSemInteracao >= 30
-  ).length
+    return lista
+  }, [clientes, busca, status, ordenacao])
 
-  const maiorValor = Math.max(...clientes.map((cliente) => cliente.valorTotal), 1)
+  const resumo = useMemo(() => {
+    const totalClientes = clientes.length
+    const valorTotal = clientes.reduce((acc, cliente) => acc + cliente.total, 0)
+    const followupsPendentes = clientes.reduce((acc, cliente) => acc + cliente.followups.filter((f) => f.status === 'pendente').length, 0)
+    const inativos = clientes.filter((cliente) => cliente.statusComercial === 'Inativo').length
+
+    return { totalClientes, valorTotal, followupsPendentes, inativos }
+  }, [clientes])
+
+  const oportunidades = useMemo(() => {
+    return clientes
+      .filter((cliente) => ['Quente', 'Morno', 'Sem proposta', 'Com follow-up', 'Recorrente'].includes(cliente.statusComercial))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 6)
+  }, [clientes])
+
+  async function salvarNota(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!company || !selecionado || !nota.conteudo.trim()) return
+
+    const { error } = await supabase.from('customer_notes').insert({
+      company_id: company.id,
+      cliente_nome: selecionado.nome,
+      cliente_telefone: selecionado.telefone,
+      tipo: nota.tipo,
+      conteudo: nota.conteudo.trim(),
+    })
+
+    if (error) {
+      setErro(error.message)
+      return
+    }
+
+    setNota({ tipo: 'nota', conteudo: '' })
+    setMensagem('Nota adicionada.')
+    await carregar()
+  }
+
+  async function salvarFollowup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!company || !selecionado || !followup.titulo.trim()) return
+
+    const { error } = await supabase.from('customer_followups').insert({
+      company_id: company.id,
+      cliente_nome: selecionado.nome,
+      cliente_telefone: selecionado.telefone,
+      titulo: followup.titulo.trim(),
+      descricao: followup.descricao.trim() || null,
+      prioridade: followup.prioridade,
+      due_at: followup.due_at ? new Date(followup.due_at).toISOString() : null,
+    })
+
+    if (error) {
+      setErro(error.message)
+      return
+    }
+
+    setFollowup({ titulo: '', descricao: '', prioridade: 'media', due_at: '' })
+    setMensagem('Follow-up criado.')
+    await carregar()
+  }
+
+  async function concluirFollowup(id: string) {
+    const { error } = await supabase
+      .from('customer_followups')
+      .update({
+        status: 'concluido',
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+
+    if (error) {
+      setErro(error.message)
+      return
+    }
+
+    setMensagem('Follow-up concluído.')
+    await carregar()
+  }
+
+  function mensagemCliente(cliente: Cliente) {
+    if (cliente.statusComercial === 'Inativo') {
+      return `Olá, ${cliente.nome}! Passando para lembrar que seguimos à disposição. Posso te ajudar com um novo pedido ou orçamento?`
+    }
+
+    if (cliente.statusComercial === 'Sem proposta') {
+      return `Olá, ${cliente.nome}! Vi sua solicitação e posso te ajudar a fechar uma proposta organizada. Pode me confirmar alguns detalhes?`
+    }
+
+    return `Olá, ${cliente.nome}! Tudo bem? Estou entrando em contato para acompanhar seu pedido/orçamento.`
+  }
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff]">
+        <div className="rounded-[2rem] bg-white p-8 font-black shadow-xl">Carregando Mini-CRM...</div>
+      </main>
+    )
+  }
+
+  if (erro && !company) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4">
+        <div className="rounded-[2rem] bg-white p-8 text-center shadow-xl">
+          <p className="text-3xl font-black text-[#071b3a]">Mini-CRM indisponível</p>
+          <p className="mt-3 font-bold text-red-600">{erro}</p>
+          <Link href="/painel" className="mt-6 inline-flex rounded-2xl bg-[#05245c] px-5 py-3 font-black text-white">Voltar ao painel</Link>
+        </div>
+      </main>
+    )
+  }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#f5f8ff] text-slate-950">
-      <style jsx global>{`
-        @keyframes crmFloat {
-          0%, 100% {
-            transform: translateY(0px);
-          }
+    <main className="min-h-screen bg-[#f5f8ff] px-4 py-6 text-slate-950">
+      <section className="mx-auto max-w-7xl">
+        <div className="mb-6 overflow-hidden rounded-[2.5rem] border border-blue-100 bg-white shadow-2xl shadow-blue-950/8">
+          <div className="relative p-6 sm:p-8">
+            <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-blue-100 blur-3xl" />
+            <div className="absolute bottom-0 right-36 h-44 w-44 rounded-full bg-emerald-100 blur-3xl" />
 
-          50% {
-            transform: translateY(-12px);
-          }
-        }
-
-        @keyframes crmFadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(18px);
-          }
-
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .crm-float {
-          animation: crmFloat 5s ease-in-out infinite;
-        }
-
-        .crm-card {
-          animation: crmFadeUp .55s ease both;
-        }
-      `}</style>
-
-      <section className="relative overflow-hidden bg-[#07142f] px-4 py-8 text-white sm:px-6 lg:px-8">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-[-120px] top-[-140px] h-[340px] w-[340px] rounded-full bg-blue-500/30 blur-3xl" />
-          <div className="absolute right-[-120px] top-[20px] h-[320px] w-[320px] rounded-full bg-cyan-400/20 blur-3xl" />
-          <div className="absolute bottom-[-160px] left-[40%] h-[340px] w-[340px] rounded-full bg-orange-400/20 blur-3xl" />
-        </div>
-
-        <div className="relative mx-auto max-w-7xl">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <div className="inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-bold text-blue-100 backdrop-blur">
-                Mini-CRM de clientes
+            <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <Link href="/painel" className="text-sm font-black text-[#05245c]">← Voltar ao painel</Link>
+                <h1 className="mt-3 text-4xl font-black tracking-[-0.04em] text-[#071b3a] sm:text-5xl">Mini-CRM</h1>
+                <p className="mt-2 max-w-2xl font-bold leading-7 text-slate-500">
+                  Clientes, histórico, oportunidades e follow-ups em um só lugar.
+                </p>
               </div>
 
-              <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-5xl">
-                Veja quem compra, quem sumiu e quem ainda pode fechar.
-              </h1>
-
-              <p className="mt-4 max-w-2xl text-lg leading-8 text-blue-100/80">
-                Cada or&ccedil;amento alimenta automaticamente sua base de clientes,
-                com hist&oacute;rico, valor total e status comercial.
-              </p>
-            </div>
-
-            <div className="crm-float rounded-[2rem] border border-white/10 bg-white/10 p-5 shadow-2xl shadow-black/20 backdrop-blur">
-              <p className="text-sm font-bold text-blue-100/80">
-                Empresa
-              </p>
-
-              <p className="mt-1 text-2xl font-black">
-                {empresa?.nome || 'Carregando...'}
-              </p>
-
-              <p className="mt-2 text-sm font-semibold text-blue-100/70">
-                Intelig&ecirc;ncia comercial baseada nos pedidos recebidos.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="crm-card rounded-[1.75rem] border border-white/10 bg-white/10 p-5 backdrop-blur">
-              <p className="text-sm font-bold text-blue-100/70">Clientes</p>
-              <p className="mt-2 text-4xl font-black">{totalClientes}</p>
-            </div>
-
-            <div className="crm-card rounded-[1.75rem] border border-white/10 bg-white/10 p-5 backdrop-blur" style={{ animationDelay: '.06s' }}>
-              <p className="text-sm font-bold text-blue-100/70">Valor total</p>
-              <p className="mt-2 text-3xl font-black">{formatarMoeda(valorTotal)}</p>
-            </div>
-
-            <div className="crm-card rounded-[1.75rem] border border-white/10 bg-white/10 p-5 backdrop-blur" style={{ animationDelay: '.12s' }}>
-              <p className="text-sm font-bold text-blue-100/70">Pediram e n&atilde;o fecharam</p>
-              <p className="mt-2 text-4xl font-black">{clientesNaoFecharam}</p>
-            </div>
-
-            <div className="crm-card rounded-[1.75rem] border border-white/10 bg-white/10 p-5 backdrop-blur" style={{ animationDelay: '.18s' }}>
-              <p className="text-sm font-bold text-blue-100/70">Inativos 30 dias</p>
-              <p className="mt-2 text-4xl font-black">{clientesInativos}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-xl shadow-blue-950/5 sm:p-5">
-          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-            <input
-              value={busca}
-              onChange={(evento) => setBusca(evento.target.value)}
-              placeholder="Buscar por nome, WhatsApp, empresa ou status"
-              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
-            />
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setFiltro('todos')}
-                className={`rounded-2xl px-4 py-3 text-sm font-black transition ${
-                  filtro === 'todos'
-                    ? 'bg-[#05245c] text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Todos
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFiltro('top')}
-                className={`rounded-2xl px-4 py-3 text-sm font-black transition ${
-                  filtro === 'top'
-                    ? 'bg-[#05245c] text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Mais compraram
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFiltro('nao-fecharam')}
-                className={`rounded-2xl px-4 py-3 text-sm font-black transition ${
-                  filtro === 'nao-fecharam'
-                    ? 'bg-[#05245c] text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                N&atilde;o fecharam
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFiltro('inativos')}
-                className={`rounded-2xl px-4 py-3 text-sm font-black transition ${
-                  filtro === 'inativos'
-                    ? 'bg-[#05245c] text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Inativos
-              </button>
+              <div className="grid gap-3 sm:grid-cols-4 lg:min-w-[620px]">
+                <div className="rounded-2xl bg-[#f5f8ff] p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Clientes</p>
+                  <p className="mt-1 text-2xl font-black">{resumo.totalClientes}</p>
+                </div>
+                <div className="rounded-2xl bg-[#f5f8ff] p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Vendas</p>
+                  <p className="mt-1 text-xl font-black">{moeda(resumo.valorTotal)}</p>
+                </div>
+                <div className="rounded-2xl bg-[#f5f8ff] p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Follow-ups</p>
+                  <p className="mt-1 text-2xl font-black text-yellow-700">{resumo.followupsPendentes}</p>
+                </div>
+                <div className="rounded-2xl bg-[#f5f8ff] p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Inativos</p>
+                  <p className="mt-1 text-2xl font-black text-red-700">{resumo.inativos}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {erro && (
-          <div className="mt-6 rounded-3xl border border-red-100 bg-red-50 p-5 font-bold leading-7 text-red-700">
-            {erro}
-          </div>
-        )}
+        {mensagem && <div className="mb-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 font-bold text-emerald-700">{mensagem}</div>}
+        {erro && <div className="mb-5 rounded-2xl border border-red-100 bg-red-50 p-4 font-bold text-red-700">{erro}</div>}
 
-        {carregando && (
-          <div className="mt-8 grid gap-4 lg:grid-cols-3">
-            {[1, 2, 3].map((item) => (
-              <div key={item} className="h-72 animate-pulse rounded-[2rem] bg-white shadow-xl shadow-blue-950/5" />
-            ))}
-          </div>
-        )}
+        <div className="mb-5 grid gap-4 lg:grid-cols-[1fr_260px_220px]">
+          <input
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por nome, telefone ou produto"
+            className="rounded-2xl border border-blue-100 bg-white px-5 py-4 font-bold outline-none shadow-lg shadow-blue-950/5 focus:border-[#05245c]"
+          />
 
-        {!carregando && !erro && clientesFiltrados.length === 0 && (
-          <div className="mt-8 rounded-[2rem] border border-blue-100 bg-white p-10 text-center shadow-xl shadow-blue-950/5">
-            <p className="text-5xl">🗂️</p>
+          <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-2xl border border-blue-100 bg-white px-5 py-4 font-bold outline-none shadow-lg shadow-blue-950/5">
+            {statusOptions.map((item) => <option key={item}>{item}</option>)}
+          </select>
 
-            <h2 className="mt-4 text-3xl font-black text-[#071b3a]">
-              Nenhum cliente encontrado
-            </h2>
+          <select value={ordenacao} onChange={(e) => setOrdenacao(e.target.value)} className="rounded-2xl border border-blue-100 bg-white px-5 py-4 font-bold outline-none shadow-lg shadow-blue-950/5">
+            {ordenacoes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+          </select>
+        </div>
 
-            <p className="mx-auto mt-3 max-w-xl leading-7 text-slate-600">
-              Quando os or&ccedil;amentos entrarem, o CRM monta automaticamente
-              a lista de clientes. Menos planilha, menos caos, menos humanidade
-              sofrendo com coluna torta.
-            </p>
-          </div>
-        )}
+        <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
+          <section className="grid gap-4">
+            <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Clientes</p>
+                  <h2 className="mt-1 text-2xl font-black text-[#071b3a]">{filtrados.length} encontrados</h2>
+                </div>
+                <button onClick={carregar} className="rounded-2xl bg-[#05245c] px-4 py-3 text-sm font-black text-white">Atualizar</button>
+              </div>
 
-        {!carregando && !erro && clientesFiltrados.length > 0 && (
-          <div className="mt-8 grid gap-5 lg:grid-cols-[1fr_380px]">
-            <div className="grid gap-5">
-              {clientesFiltrados.map((cliente, index) => {
-                const percentual = Math.min((cliente.valorTotal / maiorValor) * 100, 100)
-                const whatsappLink = criarLinkWhatsapp(cliente.whatsapp)
-
-                return (
-                  <article
-                    key={cliente.chave}
-                    className="crm-card rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-950/10"
-                    style={{ animationDelay: `${Math.min(index * 0.04, 0.4)}s` }}
+              <div className="grid gap-3">
+                {filtrados.map((cliente) => (
+                  <button
+                    key={cliente.telefone}
+                    onClick={() => setSelecionado(cliente)}
+                    className={`rounded-[1.5rem] border p-4 text-left transition hover:-translate-y-0.5 ${
+                      selecionado?.telefone === cliente.telefone ? 'border-[#05245c] bg-blue-50 shadow-lg shadow-blue-950/8' : 'border-slate-200 bg-white hover:bg-[#f8fbff]'
+                    }`}
                   >
-                    <div className="grid gap-5 xl:grid-cols-[1fr_auto] xl:items-start">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#05245c] text-xl font-black text-white">
-                            {cliente.nome.slice(0, 1).toUpperCase()}
-                          </div>
-
-                          <div>
-                            <h2 className="text-2xl font-black text-[#071b3a]">
-                              {cliente.nome}
-                            </h2>
-
-                            <p className="mt-1 text-sm font-bold text-slate-500">
-                              {cliente.whatsapp || 'WhatsApp nao informado'} • {cliente.empresa}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                          <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                              Pedidos
-                            </p>
-                            <p className="mt-1 text-2xl font-black text-[#071b3a]">
-                              {cliente.totalPedidos}
-                            </p>
-                          </div>
-
-                          <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                              Total
-                            </p>
-                            <p className="mt-1 text-2xl font-black text-[#071b3a]">
-                              {formatarMoeda(cliente.valorTotal)}
-                            </p>
-                          </div>
-
-                          <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                              &Uacute;ltima intera&ccedil;&atilde;o
-                            </p>
-                            <p className="mt-1 text-lg font-black text-[#071b3a]">
-                              {formatarData(cliente.ultimaInteracao)}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-5">
-                          <div className="mb-2 flex items-center justify-between text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                            <span>Potencial comercial</span>
-                            <span>{Math.round(percentual)}%</span>
-                          </div>
-
-                          <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              className="h-full rounded-full bg-gradient-to-r from-blue-700 to-cyan-400 transition-all duration-700"
-                              style={{ width: `${percentual}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid gap-3 xl:min-w-52">
-                        <span className={`rounded-full border px-4 py-2 text-center text-sm font-black ${badgeDoStatus(cliente.statusCliente)}`}>
-                          {cliente.statusCliente}
-                        </span>
-
-                        {whatsappLink && (
-                          <a
-                            href={whatsappLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="rounded-2xl bg-emerald-600 px-4 py-3 text-center text-sm font-black text-white transition hover:bg-emerald-700"
-                          >
-                            Chamar no WhatsApp
-                          </a>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={() => setClienteSelecionado(cliente)}
-                          className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-black text-[#05245c] transition hover:bg-blue-100"
-                        >
-                          Ver hist&oacute;rico
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
-
-            <aside className="sticky top-6 h-fit rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
-              {clienteSelecionado ? (
-                <>
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
-                        Hist&oacute;rico
-                      </p>
-
-                      <h2 className="mt-2 text-2xl font-black text-[#071b3a]">
-                        {clienteSelecionado.nome}
-                      </h2>
-
-                      <p className="mt-1 text-sm font-bold text-slate-500">
-                        {clienteSelecionado.totalPedidos} pedidos registrados
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setClienteSelecionado(null)}
-                      className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-black text-slate-600"
-                    >
-                      X
-                    </button>
-                  </div>
-
-                  <div className="mt-5 grid gap-3">
-                    {clienteSelecionado.pedidos.map((pedido) => (
-                      <div
-                        key={pedido.id}
-                        className="rounded-2xl border border-slate-100 bg-slate-50 p-4"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="font-black text-[#071b3a]">
-                            {formatarMoeda(Number(pedido.valor_total ?? pedido.preco_estimado ?? 0))}
-                          </p>
-
-                          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600">
-                            {pedido.status || 'Recebido'}
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-xl font-black text-[#071b3a]">{cliente.nome}</p>
+                          <span className="rounded-full bg-[#05245c] px-3 py-1 text-xs font-black text-white">{cliente.statusComercial}</span>
+                          <span className={`rounded-full px-3 py-1 text-xs font-black ${cliente.risco === 'Alto' ? 'bg-red-100 text-red-700' : cliente.risco === 'Médio' ? 'bg-yellow-100 text-yellow-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            Risco {cliente.risco}
                           </span>
                         </div>
 
                         <p className="mt-2 text-sm font-bold text-slate-500">
-                          {formatarData(pedido.created_at)}
+                          {telefoneLabel(cliente.telefone)} • Último contato: {dataBR(cliente.ultimoPedido)}
                         </p>
                       </div>
-                    ))}
+
+                      <div className="grid gap-2 text-left sm:grid-cols-3 lg:min-w-[360px]">
+                        <div className="rounded-2xl bg-[#f5f8ff] p-3">
+                          <p className="text-xs font-black uppercase text-slate-400">Pedidos</p>
+                          <p className="font-black">{cliente.pedidos.length}</p>
+                        </div>
+                        <div className="rounded-2xl bg-[#f5f8ff] p-3">
+                          <p className="text-xs font-black uppercase text-slate-400">Total</p>
+                          <p className="font-black">{moeda(cliente.total)}</p>
+                        </div>
+                        <div className="rounded-2xl bg-[#f5f8ff] p-3">
+                          <p className="text-xs font-black uppercase text-slate-400">Ticket</p>
+                          <p className="font-black">{moeda(cliente.ticketMedio)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+
+                {filtrados.length === 0 && (
+                  <div className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-10 text-center">
+                    <p className="text-2xl font-black text-[#071b3a]">Nenhum cliente encontrado</p>
+                    <p className="mt-2 font-bold text-slate-500">Ajuste os filtros ou aguarde novos pedidos.</p>
                   </div>
-                </>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <aside className="grid gap-5">
+            <section className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Oportunidades</p>
+              <h2 className="mt-1 text-2xl font-black text-[#071b3a]">Quem chamar agora</h2>
+
+              <div className="mt-5 grid gap-3">
+                {oportunidades.map((cliente) => (
+                  <a
+                    key={cliente.telefone}
+                    href={whatsappLink(cliente.telefone, mensagemCliente(cliente))}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-2xl bg-[#f5f8ff] p-4 transition hover:bg-blue-50"
+                  >
+                    <p className="font-black text-[#071b3a]">{cliente.nome}</p>
+                    <p className="mt-1 text-sm font-bold text-slate-500">{cliente.statusComercial} • {moeda(cliente.total)}</p>
+                  </a>
+                ))}
+
+                {oportunidades.length === 0 && <p className="rounded-2xl bg-[#f5f8ff] p-4 text-sm font-bold text-slate-500">Nenhuma oportunidade forte agora.</p>}
+              </div>
+            </section>
+
+            <section className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Detalhes</p>
+
+              {!selecionado ? (
+                <div className="mt-5 rounded-2xl bg-[#f5f8ff] p-6 text-center">
+                  <p className="font-black text-[#071b3a]">Selecione um cliente</p>
+                  <p className="mt-2 text-sm font-bold text-slate-500">Histórico, notas e tarefas aparecem aqui.</p>
+                </div>
               ) : (
-                <div className="text-center">
-                  <p className="text-5xl">👥</p>
+                <div className="mt-5 grid gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-[#071b3a]">{selecionado.nome}</h2>
+                    <p className="mt-1 font-bold text-slate-500">{telefoneLabel(selecionado.telefone)}</p>
+                  </div>
 
-                  <h2 className="mt-4 text-2xl font-black text-[#071b3a]">
-                    Selecione um cliente
-                  </h2>
+                  <a
+                    href={whatsappLink(selecionado.telefone, mensagemCliente(selecionado))}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-2xl bg-emerald-600 px-5 py-4 text-center font-black text-white"
+                  >
+                    Chamar no WhatsApp
+                  </a>
 
-                  <p className="mt-3 leading-7 text-slate-600">
-                    Veja pedidos anteriores, valores e status de cada pessoa.
-                    O CRM trabalha enquanto voc&ecirc; tenta convencer o mundo a n&atilde;o usar caderno.
-                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-[#f5f8ff] p-4">
+                      <p className="text-xs font-black uppercase text-slate-400">Pedidos</p>
+                      <p className="text-xl font-black">{selecionado.pedidos.length}</p>
+                    </div>
+                    <div className="rounded-2xl bg-[#f5f8ff] p-4">
+                      <p className="text-xs font-black uppercase text-slate-400">Total</p>
+                      <p className="text-xl font-black">{moeda(selecionado.total)}</p>
+                    </div>
+                  </div>
+
+                  <form onSubmit={salvarNota} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="font-black text-[#071b3a]">Nova nota</p>
+                    <div className="mt-3 grid gap-3">
+                      <select value={nota.tipo} onChange={(e) => setNota((v) => ({ ...v, tipo: e.target.value }))} className="rounded-xl border border-slate-200 bg-white px-3 py-3 font-bold">
+                        <option value="nota">Nota</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="ligacao">Ligação</option>
+                        <option value="feedback">Feedback</option>
+                        <option value="financeiro">Financeiro</option>
+                        <option value="proposta">Proposta</option>
+                      </select>
+                      <textarea value={nota.conteudo} onChange={(e) => setNota((v) => ({ ...v, conteudo: e.target.value }))} placeholder="Escreva uma observação sobre o cliente" rows={3} className="resize-none rounded-xl border border-slate-200 bg-white px-3 py-3 font-bold outline-none" />
+                      <button className="rounded-xl bg-[#05245c] px-4 py-3 font-black text-white">Salvar nota</button>
+                    </div>
+                  </form>
+
+                  <form onSubmit={salvarFollowup} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="font-black text-[#071b3a]">Novo follow-up</p>
+                    <div className="mt-3 grid gap-3">
+                      <input value={followup.titulo} onChange={(e) => setFollowup((v) => ({ ...v, titulo: e.target.value }))} placeholder="Ex.: Chamar sobre proposta" className="rounded-xl border border-slate-200 bg-white px-3 py-3 font-bold outline-none" />
+                      <input type="datetime-local" value={followup.due_at} onChange={(e) => setFollowup((v) => ({ ...v, due_at: e.target.value }))} className="rounded-xl border border-slate-200 bg-white px-3 py-3 font-bold outline-none" />
+                      <select value={followup.prioridade} onChange={(e) => setFollowup((v) => ({ ...v, prioridade: e.target.value }))} className="rounded-xl border border-slate-200 bg-white px-3 py-3 font-bold">
+                        <option value="baixa">Baixa</option>
+                        <option value="media">Média</option>
+                        <option value="alta">Alta</option>
+                      </select>
+                      <textarea value={followup.descricao} onChange={(e) => setFollowup((v) => ({ ...v, descricao: e.target.value }))} placeholder="Detalhes" rows={2} className="resize-none rounded-xl border border-slate-200 bg-white px-3 py-3 font-bold outline-none" />
+                      <button className="rounded-xl bg-[#05245c] px-4 py-3 font-black text-white">Criar follow-up</button>
+                    </div>
+                  </form>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p className="font-black text-[#071b3a]">Follow-ups</p>
+                    <div className="mt-3 grid gap-2">
+                      {selecionado.followups.length === 0 && <p className="text-sm font-bold text-slate-500">Nenhum follow-up.</p>}
+                      {selecionado.followups.map((f: any) => (
+                        <div key={f.id} className="rounded-xl bg-[#f5f8ff] p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-black">{f.titulo}</p>
+                              <p className="text-xs font-bold text-slate-500">{f.status} • {f.prioridade} • {dataBR(f.due_at)}</p>
+                            </div>
+                            {f.status === 'pendente' && <button onClick={() => concluirFollowup(f.id)} className="rounded-lg bg-emerald-100 px-2 py-1 text-xs font-black text-emerald-700">OK</button>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p className="font-black text-[#071b3a]">Notas</p>
+                    <div className="mt-3 grid gap-2">
+                      {selecionado.notas.length === 0 && <p className="text-sm font-bold text-slate-500">Nenhuma nota.</p>}
+                      {selecionado.notas.map((n: any) => (
+                        <div key={n.id} className="rounded-xl bg-[#f5f8ff] p-3">
+                          <p className="text-xs font-black uppercase text-[#05245c]">{n.tipo} • {dataBR(n.created_at)}</p>
+                          <p className="mt-1 text-sm font-bold text-slate-700">{n.conteudo}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p className="font-black text-[#071b3a]">Últimos pedidos</p>
+                    <div className="mt-3 grid gap-2">
+                      {selecionado.pedidos.slice(0, 5).map((p: any) => (
+                        <div key={p.id} className="rounded-xl bg-[#f5f8ff] p-3">
+                          <p className="font-black">{p.produto || 'Pedido'}</p>
+                          <p className="text-xs font-bold text-slate-500">{p.status} • {dataBR(p.created_at)} • {moeda(valorPedido(p))}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
-            </aside>
-          </div>
-        )}
+            </section>
+          </aside>
+        </div>
       </section>
     </main>
   )

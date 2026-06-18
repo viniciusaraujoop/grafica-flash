@@ -3,640 +3,517 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import AdminMasterButton from '@/components/AdminMasterButton'
 
-type Empresa = {
-  id: string
-  nome: string
-  slug: string | null
-  logo_url: string | null
-  whatsapp: string | null
+type DashboardData = {
+  user: any
+  company: any
+  role: 'dono' | 'gerente' | 'atendente' | 'producao'
+  orders: any[]
+  products: any[]
+  proposals: any[]
+  finance: any[]
+  followups: any[]
+  members: any[]
 }
 
-type Pedido = {
-  id: string
-  nome: string | null
-  telefone: string | null
-  produto: string | null
-  status: string | null
-  valor_total: number | null
-  preco_estimado: number | null
-  created_at: string | null
+const ADMIN_EMAIL = 'araujovinicius249@gmail.com'
+
+const statusStyle: Record<string, string> = {
+  Recebido: 'bg-blue-50 text-blue-700 border-blue-100',
+  Pendente: 'bg-yellow-50 text-yellow-700 border-yellow-100',
+  'Em análise': 'bg-purple-50 text-purple-700 border-purple-100',
+  'Em produção': 'bg-orange-50 text-orange-700 border-orange-100',
+  Pronto: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+  Entregue: 'bg-slate-100 text-slate-700 border-slate-200',
 }
 
-type Produto = {
-  id: string
-  nome: string
-  categoria: string | null
-  preco: number | null
+function moeda(valor: number) {
+  return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-type ItemPedido = {
-  id: string
-  product_id: string | null
-  nome: string | null
-  quantidade: number | null
+function dataBR(valor: string | null | undefined) {
+  if (!valor) return 'Sem data'
+  return new Date(valor).toLocaleDateString('pt-BR')
 }
 
-type Proposta = {
-  id: string
-  status: string | null
-  valor_total: number | null
-  created_at: string | null
+function limparTelefone(valor: string | null | undefined) {
+  return String(valor || '').replace(/\D/g, '')
 }
 
-function formatarMoeda(valor: number) {
-  return valor.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
+function whatsappLink(telefone: string, texto: string) {
+  const limpo = limparTelefone(telefone)
+  const final = limpo.startsWith('55') ? limpo : `55${limpo}`
+  return `https://wa.me/${final}?text=${encodeURIComponent(texto)}`
 }
 
-function formatarData(data: string | null) {
-  if (!data) return 'Sem data'
-
-  return new Date(data).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+function valorPedido(pedido: any) {
+  return Number(pedido.valor_total || pedido.preco_estimado || pedido.preco || 0)
 }
 
-function statusAprovado(status: string | null) {
-  const texto = (status || '').toLowerCase()
-
+function CardMetrica({ titulo, valor, detalhe, destaque }: { titulo: string; valor: string; detalhe: string; destaque?: string }) {
   return (
-    texto.includes('aprovado') ||
-    texto.includes('fechado') ||
-    texto.includes('concluido') ||
-    texto.includes('concluído') ||
-    texto.includes('pago') ||
-    texto.includes('finalizado')
-  )
-}
-
-function valorPedido(pedido: Pedido) {
-  return Number(pedido.valor_total ?? pedido.preco_estimado ?? 0)
-}
-
-function mesAtual(data: string | null) {
-  if (!data) return false
-
-  const agora = new Date()
-  const item = new Date(data)
-
-  return agora.getMonth() === item.getMonth() && agora.getFullYear() === item.getFullYear()
-}
-
-function telefoneLimpo(valor: string | null | undefined) {
-  return (valor || '').replace(/\D/g, '')
-}
-
-function linkWhatsapp(valor: string | null | undefined) {
-  const numero = telefoneLimpo(valor)
-
-  if (!numero) return ''
-
-  if (numero.startsWith('55')) return `https://wa.me/${numero}`
-
-  return `https://wa.me/55${numero}`
-}
-
-function produtoMaisPedido(itens: ItemPedido[], produtos: Produto[]) {
-  const mapa = new Map<string, { nome: string; quantidade: number }>()
-
-  itens.forEach((item) => {
-    const produto = produtos.find((produtoItem) => produtoItem.id === item.product_id)
-    const nome = item.nome || produto?.nome || 'Produto sem nome'
-    const quantidade = Number(item.quantidade ?? 1)
-
-    const atual = mapa.get(nome) || { nome, quantidade: 0 }
-    atual.quantidade += quantidade
-    mapa.set(nome, atual)
-  })
-
-  return Array.from(mapa.values()).sort((a, b) => b.quantidade - a.quantidade)[0] || null
-}
-
-function categoriaMaisPedida(itens: ItemPedido[], produtos: Produto[]) {
-  const mapa = new Map<string, number>()
-
-  itens.forEach((item) => {
-    const produto = produtos.find((produtoItem) => produtoItem.id === item.product_id)
-    const categoria = produto?.categoria || 'Sem categoria'
-    mapa.set(categoria, (mapa.get(categoria) || 0) + Number(item.quantidade ?? 1))
-  })
-
-  if (mapa.size === 0) {
-    produtos.forEach((produto) => {
-      const categoria = produto.categoria || 'Sem categoria'
-      mapa.set(categoria, (mapa.get(categoria) || 0) + 1)
-    })
-  }
-
-  return Array.from(mapa.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Sem dados'
-}
-
-function MenuIcon({ label }: { label: string }) {
-  return (
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-sm font-black text-[#05245c] ring-1 ring-blue-100 transition group-hover:bg-[#05245c] group-hover:text-white">
-      {label}
+    <div className="rounded-[1.75rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">{titulo}</p>
+      <p className={`mt-3 text-3xl font-black tracking-[-0.04em] ${destaque || 'text-[#071b3a]'}`}>{valor}</p>
+      <p className="mt-2 text-sm font-bold text-slate-500">{detalhe}</p>
     </div>
   )
 }
 
-function SidebarLink({
+function ModuleCard({
   href,
-  label,
-  title,
-  description,
+  titulo,
+  descricao,
+  etiqueta,
+  destaque,
 }: {
   href: string
-  label: string
-  title: React.ReactNode
-  description: React.ReactNode
+  titulo: string
+  descricao: string
+  etiqueta: string
+  destaque?: boolean
 }) {
   return (
     <Link
       href={href}
-      className="group rounded-3xl border border-transparent bg-white p-4 transition hover:border-blue-100 hover:bg-blue-50"
+      className={`group rounded-[1.75rem] border p-5 shadow-xl shadow-blue-950/5 transition hover:-translate-y-1 hover:shadow-2xl ${
+        destaque ? 'border-[#05245c] bg-[#05245c] text-white' : 'border-blue-100 bg-white text-[#071b3a]'
+      }`}
     >
-      <div className="flex items-center gap-3">
-        <MenuIcon label={label} />
-
-        <div className="min-w-0">
-          <p className="truncate font-black text-[#071b3a]">
-            {title}
-          </p>
-          <p className="truncate text-xs font-bold text-slate-500">
-            {description}
-          </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <span className={`rounded-full px-3 py-1 text-xs font-black ${destaque ? 'bg-white/15 text-white' : 'bg-blue-50 text-[#05245c]'}`}>
+            {etiqueta}
+          </span>
+          <h3 className="mt-4 text-xl font-black">{titulo}</h3>
+          <p className={`mt-2 text-sm font-bold leading-6 ${destaque ? 'text-white/75' : 'text-slate-500'}`}>{descricao}</p>
         </div>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl font-black transition group-hover:translate-x-1 ${
+          destaque ? 'bg-white text-[#05245c]' : 'bg-[#f5f8ff] text-[#05245c]'
+        }`}>
+          →
+        </span>
       </div>
     </Link>
   )
 }
 
-export default function PainelPage() {
-  const [empresa, setEmpresa] = useState<Empresa | null>(null)
-  const [pedidos, setPedidos] = useState<Pedido[]>([])
-  const [produtos, setProdutos] = useState<Produto[]>([])
-  const [itens, setItens] = useState<ItemPedido[]>([])
-  const [propostas, setPropostas] = useState<Proposta[]>([])
-  const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState('')
+function SectionTitle({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div>
+      <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">{subtitle}</p>
+      <h2 className="mt-1 text-2xl font-black tracking-[-0.03em] text-[#071b3a]">{title}</h2>
+    </div>
+  )
+}
 
-  async function carregarDados() {
-    setCarregando(true)
+export default function PainelPage() {
+  const [data, setData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [erro, setErro] = useState('')
+  const [adminOk, setAdminOk] = useState(false)
+
+  async function loadCompany(user: any) {
+    const { data: ownCompany, error: ownError } = await supabase
+      .from('companies')
+      .select('*')
+      .or(`owner_id.eq.${user.id},tester_id.eq.${user.id}`)
+      .maybeSingle()
+
+    if (ownError) throw ownError
+
+    if (ownCompany) {
+      return { company: ownCompany, role: 'dono' as const }
+    }
+
+    const { data: member, error: memberError } = await supabase
+      .from('company_members')
+      .select('company_id,cargo,status')
+      .eq('user_id', user.id)
+      .eq('status', 'ativo')
+      .maybeSingle()
+
+    if (memberError) throw memberError
+    if (!member?.company_id) return { company: null, role: 'atendente' as const }
+
+    const { data: memberCompany, error: companyError } = await supabase
+      .from('companies')
+      .select('*')
+      .eq('id', member.company_id)
+      .maybeSingle()
+
+    if (companyError) throw companyError
+
+    return {
+      company: memberCompany,
+      role: (member.cargo || 'atendente') as 'gerente' | 'atendente' | 'producao',
+    }
+  }
+
+  async function carregar() {
+    setLoading(true)
     setErro('')
 
     try {
-      const { data: sessaoData, error: sessaoError } = await supabase.auth.getSession()
+      const { data: sessionData } = await supabase.auth.getSession()
+      const user = sessionData.session?.user
 
-      if (sessaoError) {
-        setErro(`Erro ao verificar login: ${sessaoError.message}`)
-        setCarregando(false)
+      if (!user) {
+        window.location.href = '/login'
         return
       }
 
-      const usuario = sessaoData.session?.user
+      const email = String(user.email || '').toLowerCase()
+      setAdminOk(email === ADMIN_EMAIL)
 
-      if (!usuario) {
-        setErro('Voce precisa estar logado para acessar o painel.')
-        setCarregando(false)
+      const { company, role } = await loadCompany(user)
+
+      if (!company) {
+        setErro('Nenhuma empresa vinculada ao seu login.')
+        setLoading(false)
         return
       }
 
-      const { data: empresaData, error: empresaError } = await supabase
-        .from('companies')
-        .select('id, nome, slug, logo_url, whatsapp')
-        .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
-        .maybeSingle()
-
-      if (empresaError) {
-        setErro(`Erro ao buscar empresa: ${empresaError.message}`)
-        setCarregando(false)
-        return
-      }
-
-      if (!empresaData) {
-        setErro('Nenhuma empresa vinculada a esta conta.')
-        setCarregando(false)
-        return
-      }
-
-      const empresaAtual = empresaData as Empresa
-      setEmpresa(empresaAtual)
-
-      const [pedidosRes, produtosRes, itensRes, propostasRes] = await Promise.all([
+      const [
+        ordersRes,
+        productsRes,
+        proposalsRes,
+        financeRes,
+        followupsRes,
+        membersRes,
+      ] = await Promise.allSettled([
         supabase
           .from('orders')
-          .select('id, nome, telefone, produto, status, valor_total, preco_estimado, created_at')
-          .eq('company_id', empresaAtual.id)
+          .select('id,nome,telefone,produto,status,preco_estimado,valor_total,created_at,observacoes')
+          .eq('company_id', company.id)
           .order('created_at', { ascending: false })
-          .limit(80),
+          .limit(20),
         supabase
           .from('products')
-          .select('id, nome, categoria, preco')
-          .eq('company_id', empresaAtual.id)
+          .select('id,nome,preco,ativo,created_at')
+          .eq('company_id', company.id)
           .order('created_at', { ascending: false })
-          .limit(80),
-        supabase
-          .from('order_items')
-          .select('id, product_id, nome, quantidade')
-          .eq('company_id', empresaAtual.id)
-          .order('created_at', { ascending: false })
-          .limit(160),
+          .limit(20),
         supabase
           .from('proposals')
-          .select('id, status, valor_total, created_at')
-          .eq('company_id', empresaAtual.id)
+          .select('id,cliente_nome,cliente_whatsapp,status,valor_total,created_at,approved_at,token')
+          .eq('company_id', company.id)
           .order('created_at', { ascending: false })
+          .limit(20),
+        supabase
+          .from('financial_transactions')
+          .select('id,tipo,categoria,descricao,valor,status,vencimento,data_competencia')
+          .eq('company_id', company.id)
+          .order('data_competencia', { ascending: false })
           .limit(80),
+        supabase
+          .from('customer_followups')
+          .select('id,cliente_nome,cliente_telefone,titulo,status,prioridade,due_at,created_at')
+          .eq('company_id', company.id)
+          .eq('status', 'pendente')
+          .order('due_at', { ascending: true })
+          .limit(20),
+        supabase
+          .from('company_members_public')
+          .select('*')
+          .eq('company_id', company.id)
+          .order('created_at', { ascending: true }),
       ])
 
-      if (pedidosRes.error) throw pedidosRes.error
-      if (produtosRes.error) throw produtosRes.error
-      if (itensRes.error) throw itensRes.error
+      function value(result: any) {
+        if (result.status !== 'fulfilled') return []
+        if (result.value?.error) return []
+        return result.value?.data || []
+      }
 
-      setPedidos((pedidosRes.data || []) as Pedido[])
-      setProdutos((produtosRes.data || []) as Produto[])
-      setItens((itensRes.data || []) as ItemPedido[])
-      setPropostas((propostasRes.data || []) as Proposta[])
+      setData({
+        user,
+        company,
+        role,
+        orders: value(ordersRes),
+        products: value(productsRes),
+        proposals: value(proposalsRes),
+        finance: value(financeRes),
+        followups: value(followupsRes),
+        members: value(membersRes),
+      })
     } catch (error) {
-      const texto = error instanceof Error ? error.message : 'Erro desconhecido ao carregar painel.'
-      setErro(texto)
+      setErro(error instanceof Error ? error.message : 'Erro ao carregar painel.')
     }
 
-    setCarregando(false)
+    setLoading(false)
   }
 
   useEffect(() => {
-    carregarDados()
+    carregar()
   }, [])
 
-  const metricas = useMemo(() => {
-    const aprovados = pedidos.filter((pedido) => statusAprovado(pedido.status))
-    const abertos = pedidos.filter((pedido) => !statusAprovado(pedido.status))
-    const taxa = pedidos.length ? Math.round((aprovados.length / pedidos.length) * 100) : 0
-    const valorAberto = abertos.reduce((total, pedido) => total + valorPedido(pedido), 0)
-    const aprovadoMes = aprovados
-      .filter((pedido) => mesAtual(pedido.created_at))
-      .reduce((total, pedido) => total + valorPedido(pedido), 0)
+  async function sair() {
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }
+
+  const resumo = useMemo(() => {
+    const orders = data?.orders || []
+    const proposals = data?.proposals || []
+    const finance = data?.finance || []
+
+    const faturamentoPedidos = orders.reduce((acc, pedido) => acc + valorPedido(pedido), 0)
+    const emProducao = orders.filter((p) => String(p.status || '').toLowerCase().includes('produção')).length
+    const prontos = orders.filter((p) => String(p.status || '').toLowerCase().includes('pronto')).length
+    const clientes = new Set(orders.map((p) => limparTelefone(p.telefone)).filter(Boolean)).size
+
+    const entradas = finance.filter((f) => f.tipo === 'entrada' && f.status !== 'cancelado').reduce((acc, f) => acc + Number(f.valor || 0), 0)
+    const saidas = finance.filter((f) => f.tipo === 'saida' && f.status !== 'cancelado').reduce((acc, f) => acc + Number(f.valor || 0), 0)
+    const saldo = entradas - saidas
+
+    const propostasPendentes = proposals.filter((p) => !['aprovada', 'aprovado', 'approved'].includes(String(p.status || '').toLowerCase())).length
 
     return {
-      totalPedidos: pedidos.length,
-      aprovados: aprovados.length,
-      abertos: abertos.length,
-      taxa,
-      valorAberto,
-      aprovadoMes,
-      produto: produtoMaisPedido(itens, produtos),
-      categoria: categoriaMaisPedida(itens, produtos),
-      propostasPendentes: propostas.filter((proposta) => proposta.status !== 'aprovado').length,
+      faturamentoPedidos,
+      emProducao,
+      prontos,
+      clientes,
+      entradas,
+      saidas,
+      saldo,
+      propostasPendentes,
     }
-  }, [itens, pedidos, produtos, propostas])
+  }, [data])
 
-  const linkPublico = empresa?.slug ? `/orcamento/${empresa.slug}` : '/orcamento'
-  const whatsappEmpresa = linkWhatsapp(empresa?.whatsapp)
-  const pedidosRecentes = pedidos.slice(0, 6)
+  const siteUrl = useMemo(() => {
+    if (!data?.company) return ''
+    const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'orcaly.com.br'
+    const sub = data.company.subdomain_slug || String(data.company.slug || '').replace(/[^a-z0-9]/g, '')
+    return `https://${sub}.${root}`
+  }, [data])
+
+  const saudacao = useMemo(() => {
+    const hora = new Date().getHours()
+    if (hora < 12) return 'Bom dia'
+    if (hora < 18) return 'Boa tarde'
+    return 'Boa noite'
+  }, [])
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] text-[#071b3a]">
+        <div className="rounded-[2rem] bg-white p-8 font-black shadow-xl">Carregando painel...</div>
+      </main>
+    )
+  }
+
+  if (erro && !data) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4">
+        <section className="max-w-xl rounded-[2rem] bg-white p-8 text-center shadow-xl">
+          <h1 className="text-3xl font-black text-[#071b3a]">Painel indisponível</h1>
+          <p className="mt-3 font-bold text-red-600">{erro}</p>
+          <button onClick={sair} className="mt-6 rounded-2xl bg-[#05245c] px-5 py-3 font-black text-white">Voltar ao login</button>
+        </section>
+      </main>
+    )
+  }
+
+  const role = data?.role || 'atendente'
+  const isOwner = role === 'dono'
+  const canFinance = role === 'dono' || role === 'gerente'
+  const canConfig = role === 'dono'
+  const canProducts = role === 'dono' || role === 'gerente' || role === 'producao'
+  const canProposal = role === 'dono' || role === 'gerente' || role === 'atendente'
 
   return (
-    <main className="min-h-screen bg-[#f5f8ff] text-slate-950">
-      <style jsx global>{`
-        @keyframes painelFadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(14px);
-          }
+    <main className="min-h-screen bg-[#f5f8ff] px-4 py-6 text-[#071b3a]">
+      <section className="mx-auto max-w-7xl">
+        <header className="mb-6 overflow-hidden rounded-[2.5rem] border border-blue-100 bg-white shadow-2xl shadow-blue-950/8">
+          <div className="relative p-6 sm:p-8">
+            <div className="absolute right-0 top-0 h-48 w-48 rounded-full bg-blue-100 blur-3xl" />
+            <div className="absolute bottom-0 right-36 h-48 w-48 rounded-full bg-emerald-100 blur-3xl" />
 
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .painel-animado {
-          animation: painelFadeUp .5s ease both;
-        }
-      `}</style>
-
-      <div className="mx-auto grid min-h-screen max-w-[1500px] gap-5 px-4 py-4 lg:grid-cols-[310px_1fr]">
-        <aside className="sticky top-4 hidden h-[calc(100vh-32px)] overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-2xl shadow-blue-950/10 lg:flex lg:flex-col">
-          <div className="border-b border-blue-50 p-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-blue-100 bg-blue-50">
-                {empresa?.logo_url ? (
-                  <img src={empresa.logo_url} alt={empresa.nome} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-2xl font-black text-[#05245c]">
-                    {empresa?.nome?.slice(0, 1).toUpperCase() || 'O'}
+            <div className="relative flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-[#05245c] px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white">
+                    {role === 'dono' ? 'Dono' : role}
                   </span>
+                  <span className="rounded-full border border-blue-100 bg-[#f5f8ff] px-4 py-2 text-xs font-black text-[#05245c]">
+                    {data?.company?.assinatura_status || 'assinatura'}
+                  </span>
+                  {adminOk && (
+                    <Link href="/admin" className="rounded-full bg-black px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white shadow-lg shadow-black/15">
+                      Admin Master
+                    </Link>
+                  )}
+                </div>
+
+                <h1 className="mt-5 text-4xl font-black tracking-[-0.05em] text-[#071b3a] sm:text-5xl">
+                  {saudacao}, {data?.company?.nome || 'empresa'}.
+                </h1>
+                <p className="mt-3 max-w-2xl font-bold leading-7 text-slate-500">
+                  Visão geral dos pedidos, clientes, propostas, financeiro, site e equipe do Orçaly.
+                </p>
+
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <a href={siteUrl} target="_blank" rel="noreferrer" className="rounded-2xl bg-[#05245c] px-5 py-3 text-center font-black text-white">
+                    Abrir site
+                  </a>
+                  <Link href="/painel/orcamento-inteligente" className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-center font-black text-[#05245c]">
+                    Novo orçamento
+                  </Link>
+                  <button onClick={sair} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-black text-slate-600">
+                    Sair
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[520px]">
+                <CardMetrica titulo="Pedidos recentes" valor={String(data?.orders.length || 0)} detalhe={`${resumo.emProducao} em produção • ${resumo.prontos} prontos`} />
+                <CardMetrica titulo="Clientes" valor={String(resumo.clientes)} detalhe="Base gerada por pedidos" />
+                <CardMetrica titulo="Financeiro" valor={moeda(resumo.saldo)} detalhe={`${moeda(resumo.entradas)} entradas`} destaque={resumo.saldo >= 0 ? 'text-emerald-700' : 'text-red-700'} />
+                <CardMetrica titulo="Follow-ups" valor={String(data?.followups.length || 0)} detalhe="Pendentes no Mini-CRM" destaque="text-yellow-700" />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <ModuleCard href="/painel/orcamento-inteligente" titulo="Orçamento inteligente" descricao="Receba pedidos com perguntas adaptadas ao tipo de negócio." etiqueta="Pedidos" destaque />
+          <ModuleCard href="/painel/catalogo" titulo="Catálogo" descricao="Produtos, serviços, preços e itens que aparecem no site." etiqueta="Produtos" />
+          <ModuleCard href="/painel/clientes" titulo="Mini-CRM" descricao="Clientes, notas, oportunidades e follow-ups de venda." etiqueta="Clientes" />
+          {canFinance && <ModuleCard href="/painel/financeiro" titulo="Financeiro" descricao="Entradas, despesas, materiais, notas fiscais e relatórios." etiqueta="Gestão" />}
+          <ModuleCard href="/painel/site" titulo="Site profissional" descricao="Edite as seções, textos e aparência do site público." etiqueta="Site" />
+          {canProposal && <ModuleCard href="/painel/gerar-proposta" titulo="Propostas" descricao="Monte propostas profissionais para enviar aos clientes." etiqueta="Vendas" />}
+          <ModuleCard href="/painel/oportunidades" titulo="Oportunidades" descricao="Acompanhe chances de venda e tarefas importantes." etiqueta="Comercial" />
+          {canConfig && <ModuleCard href="/painel/configuracoes" titulo="Configurações" descricao="Empresa, PIX, recebimento, equipe e permissões." etiqueta="Sistema" />}
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
+          <section className="grid gap-5">
+            <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <SectionTitle subtitle="Operação" title="Pedidos recentes" />
+                <Link href="/painel/orcamento-inteligente" className="rounded-2xl bg-[#05245c] px-4 py-3 text-sm font-black text-white">
+                  Ver pedidos
+                </Link>
+              </div>
+
+              <div className="grid gap-3">
+                {(data?.orders || []).slice(0, 8).map((pedido) => (
+                  <article key={pedido.id} className="rounded-[1.4rem] border border-slate-200 bg-white p-4 transition hover:bg-[#f8fbff]">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-black text-[#071b3a]">{pedido.nome}</h3>
+                          <span className={`rounded-full border px-3 py-1 text-xs font-black ${statusStyle[pedido.status] || 'border-slate-200 bg-slate-100 text-slate-600'}`}>
+                            {pedido.status || 'Recebido'}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm font-bold text-slate-500">
+                          {pedido.produto || 'Pedido'} • {dataBR(pedido.created_at)} • {moeda(valorPedido(pedido))}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {pedido.telefone && (
+                          <a
+                            href={whatsappLink(pedido.telefone, `Olá, ${pedido.nome}! Estou entrando em contato sobre seu pedido no Orçaly.`)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700"
+                          >
+                            WhatsApp
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                ))}
+
+                {(data?.orders || []).length === 0 && (
+                  <div className="rounded-[1.5rem] border border-dashed border-slate-300 p-8 text-center">
+                    <p className="font-black text-[#071b3a]">Nenhum pedido ainda.</p>
+                    <p className="mt-2 text-sm font-bold text-slate-500">Quando um cliente solicitar orçamento, aparecerá aqui.</p>
+                  </div>
                 )}
               </div>
-
-              <div className="min-w-0">
-                <p className="truncate text-xl font-black text-[#071b3a]">
-                  {empresa?.nome || 'Carregando...'}
-                </p>
-                <p className="truncate text-sm font-bold text-slate-500">
-                  Painel empresarial
-                </p>
-              </div>
             </div>
-          </div>
 
-          <nav className="grid gap-2 p-4">
-            <SidebarLink href="/painel" label="D" title="Dashboard" description="Visao geral" />
-            <SidebarLink href="/painel/catalogo" label="CA" title="Catalogo" description="Produtos e imagens" />
-            <SidebarLink href="/painel/oportunidades" label="OI" title="Central de oportunidades" description="Perguntas por categoria" />
-            <SidebarLink href="/painel/clientes" label="CRM" title="Clientes" description="Relacionamento e vendas" />
-            <SidebarLink href="/painel/configuracoes" label="CFG" title="Configuracoes" description="Empresa e pagamentos" />
-          </nav>
-
-          <div className="mt-auto grid gap-3 border-t border-blue-50 p-4">
-            <Link
-              href={linkPublico}
-              className="rounded-2xl bg-[#05245c] px-4 py-3 text-center text-sm font-black text-white transition hover:bg-[#031a43]"
-            >
-              Nova solicitacao
-            </Link>
-
-            {whatsappEmpresa && (
-              <a
-                href={whatsappEmpresa}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-black text-emerald-700 transition hover:bg-emerald-100"
-              >
-                WhatsApp da empresa
-              </a>
-            )}
-
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-center">
-              <img src="/logo-orcaly.png" alt="Orcaly" className="mx-auto h-9 w-auto object-contain" />
-            </div>
-          </div>
-        </aside>
-
-        <section className="grid gap-5">
-          <header className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-blue-950/5">
-            <div className="relative p-5 sm:p-7">
-              <div className="pointer-events-none absolute inset-0">
-                <div className="absolute right-[-90px] top-[-90px] h-72 w-72 rounded-full bg-blue-100 blur-3xl" />
-                <div className="absolute bottom-[-120px] left-[30%] h-72 w-72 rounded-full bg-cyan-100 blur-3xl" />
-              </div>
-
-              <div className="relative flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-                <div>
-                  <div className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-black text-[#05245c]">
-                    Dashboard comercial
+            <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+              <SectionTitle subtitle="Sistema" title="Módulos ativos" />
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  ['Site público', data?.company?.site_status || 'publicado'],
+                  ['Produtos', `${data?.products.length || 0} cadastrados`],
+                  ['Propostas', `${data?.proposals.length || 0} recentes`],
+                  ['Funcionários', `${data?.members.length || 0}/2 logins`],
+                  ['Financeiro', canFinance ? 'ativo' : 'restrito'],
+                  ['Mini-CRM', 'ativo'],
+                ].map(([nome, valor]) => (
+                  <div key={nome} className="rounded-2xl bg-[#f5f8ff] p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{nome}</p>
+                    <p className="mt-2 font-black text-[#071b3a]">{valor}</p>
                   </div>
+                ))}
+              </div>
+            </div>
+          </section>
 
-                  <h1 className="mt-4 text-4xl font-black tracking-tight text-[#071b3a] sm:text-5xl">
-                    O que precisa de atencao hoje
-                  </h1>
+          <aside className="grid gap-5">
+            <section className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+              <SectionTitle subtitle="Atenção" title="O que olhar agora" />
 
-                  <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-600">
-                    Resumo direto de pedidos, propostas e oportunidades. O resto fica no menu, porque tela principal nao e armario de ferramentas.
-                  </p>
-                </div>
+              <div className="mt-5 grid gap-3">
+                <Link href="/painel/clientes" className="rounded-2xl bg-yellow-50 p-4 transition hover:bg-yellow-100">
+                  <p className="font-black text-yellow-800">{data?.followups.length || 0} follow-ups pendentes</p>
+                  <p className="mt-1 text-sm font-bold text-yellow-700">Clientes para retornar no Mini-CRM.</p>
+                </Link>
 
-                <div className="flex flex-col gap-3 sm:flex-row xl:items-center">
-                  <button
-                    type="button"
-                    onClick={carregarDados}
-                    className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-center font-black text-[#05245c] transition hover:bg-blue-100"
-                  >
-                    Atualizar
-                  </button>
+                <Link href="/painel/gerar-proposta" className="rounded-2xl bg-blue-50 p-4 transition hover:bg-blue-100">
+                  <p className="font-black text-[#05245c]">{resumo.propostasPendentes} propostas em aberto</p>
+                  <p className="mt-1 text-sm font-bold text-[#05245c]/70">Acompanhe oportunidades de venda.</p>
+                </Link>
 
-                  <Link
-                    href={linkPublico}
-                    className="rounded-2xl bg-[#05245c] px-5 py-4 text-center font-black text-white transition hover:bg-[#031a43]"
-                  >
-                    Nova solicitacao
+                {canFinance && (
+                  <Link href="/painel/financeiro" className="rounded-2xl bg-emerald-50 p-4 transition hover:bg-emerald-100">
+                    <p className="font-black text-emerald-700">Saldo do período: {moeda(resumo.saldo)}</p>
+                    <p className="mt-1 text-sm font-bold text-emerald-700/75">Controle entradas, despesas e notas.</p>
                   </Link>
-                </div>
+                )}
+
+                {canConfig && (
+                  <Link href="/painel/configuracoes" className="rounded-2xl bg-slate-100 p-4 transition hover:bg-slate-200">
+                    <p className="font-black text-slate-700">Configurações e recebimento</p>
+                    <p className="mt-1 text-sm font-bold text-slate-500">PIX, site, equipe e dados da empresa.</p>
+                  </Link>
+                )}
               </div>
-            </div>
-        <AdminMasterButton />
+            </section>
 
-      <a
-        href="/painel/site"
-        className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-black text-[#05245c] transition hover:bg-blue-100"
-      >
-        Editor do site
-      </a>
-</header>
+            <section className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+              <SectionTitle subtitle="Atalhos" title="Ações rápidas" />
 
-          <div className="grid gap-3 lg:hidden">
-            <div className="grid grid-cols-2 gap-3">
-              <Link href="/painel/catalogo" className="rounded-2xl border border-blue-100 bg-white px-4 py-4 text-center text-sm font-black text-[#05245c] shadow-sm shadow-blue-950/5">
-                Catalogo
-              </Link>
-              <Link href="/painel/oportunidades" className="rounded-2xl border border-blue-100 bg-white px-4 py-4 text-center text-sm font-black text-[#05245c] shadow-sm shadow-blue-950/5">
-                Central de oportunidades
-              </Link>
-              <Link href="/painel/clientes" className="rounded-2xl border border-blue-100 bg-white px-4 py-4 text-center text-sm font-black text-[#05245c] shadow-sm shadow-blue-950/5">
-                Clientes
-              </Link>
-              <Link href="/painel/configuracoes" className="rounded-2xl border border-blue-100 bg-white px-4 py-4 text-center text-sm font-black text-[#05245c] shadow-sm shadow-blue-950/5">
-                Configuracoes
-              </Link>
-            </div>
-          </div>
-
-          {erro && (
-            <div className="rounded-3xl border border-red-100 bg-red-50 p-5 font-bold leading-7 text-red-700">
-              {erro}
-            </div>
-          )}
-
-          {carregando && (
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {[1, 2, 3, 4].map((item) => (
-                <div key={item} className="h-44 animate-pulse rounded-[2rem] bg-white shadow-xl shadow-blue-950/5" />
-              ))}
-            </div>
-          )}
-
-          {!carregando && !erro && (
-            <>
-              <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                <div className="painel-animado rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">
-                    Orcamentos abertos
-                  </p>
-                  <h2 className="mt-3 text-3xl font-black text-[#071b3a]">
-                    {formatarMoeda(metricas.valorAberto)}
-                  </h2>
-                  <p className="mt-2 text-sm font-bold text-slate-500">
-                    {metricas.abertos} oportunidades em aberto.
-                  </p>
-                </div>
-
-                <div className="painel-animado rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5" style={{ animationDelay: '.06s' }}>
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">
-                    Aprovado no mes
-                  </p>
-                  <h2 className="mt-3 text-3xl font-black text-emerald-700">
-                    {formatarMoeda(metricas.aprovadoMes)}
-                  </h2>
-                  <p className="mt-2 text-sm font-bold text-slate-500">
-                    Pedidos aprovados no mes atual.
-                  </p>
-                </div>
-
-                <div className="painel-animado rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5" style={{ animationDelay: '.12s' }}>
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">
-                    Taxa de aprovacao
-                  </p>
-                  <h2 className="mt-3 text-5xl font-black text-[#071b3a]">
-                    {metricas.taxa}%
-                  </h2>
-                  <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full rounded-full bg-gradient-to-r from-blue-700 to-cyan-400 transition-all duration-700" style={{ width: `${metricas.taxa}%` }} />
-                  </div>
-                </div>
-
-                <div className="painel-animado rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5" style={{ animationDelay: '.18s' }}>
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">
-                    Propostas pendentes
-                  </p>
-                  <h2 className="mt-3 text-5xl font-black text-[#071b3a]">
-                    {metricas.propostasPendentes}
-                  </h2>
-                  <p className="mt-2 text-sm font-bold text-slate-500">
-                    Links aguardando decisao.
-                  </p>
-                </div>
-              </section>
-
-              <section className="grid gap-5 xl:grid-cols-[1fr_360px]">
-                <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm font-black uppercase tracking-[0.18em] text-[#05245c]">
-                        Pedidos recentes
-                      </p>
-                      <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
-                        Atendimentos em andamento
-                      </h2>
-                    </div>
-
-                    <p className="rounded-2xl bg-blue-50 px-4 py-3 text-sm font-black text-[#05245c]">
-                      {metricas.totalPedidos} pedidos no historico
-                    </p>
-                  </div>
-
-                  <div className="mt-5 grid gap-3">
-                    {pedidosRecentes.length === 0 && (
-                      <div className="rounded-3xl border border-dashed border-blue-200 bg-blue-50 p-8 text-center">
-                        <p className="text-4xl">--</p>
-                        <p className="mt-3 font-black text-[#071b3a]">Nenhum pedido ainda</p>
-                        <p className="mt-2 text-sm font-bold text-slate-500">
-                          Quando os clientes enviarem pedidos, eles aparecem aqui.
-                        </p>
-                      </div>
-                    )}
-
-                    {pedidosRecentes.map((pedido) => {
-                      const whats = linkWhatsapp(pedido.telefone)
-
-                      return (
-                        <div key={pedido.id} className="rounded-3xl border border-blue-50 bg-slate-50 p-4 transition hover:bg-blue-50">
-                          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="font-black text-[#071b3a]">
-                                  {pedido.nome || 'Cliente sem nome'}
-                                </h3>
-                                <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600">
-                                  {pedido.status || 'Recebido'}
-                                </span>
-                              </div>
-
-                              <p className="mt-1 text-sm font-bold text-slate-500">
-                                {pedido.produto || 'Pedido sem produto'} - {formatarData(pedido.created_at)}
-                              </p>
-
-                              <p className="mt-2 text-lg font-black text-[#05245c]">
-                                {formatarMoeda(valorPedido(pedido))}
-                              </p>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2">
-                              <Link href={`/painel/proposta/${pedido.id}`} className="rounded-2xl bg-[#05245c] px-4 py-3 text-sm font-black text-white transition hover:bg-[#031a43]">
-                                Gerar proposta
-                              </Link>
-
-                              {whats && (
-                                <a href={whats} target="_blank" rel="noreferrer" className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-700">
-                                  WhatsApp
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                <aside className="grid gap-5">
-                  <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-                    <p className="text-sm font-black uppercase tracking-[0.18em] text-[#05245c]">
-                      Leitura rapida
-                    </p>
-
-                    <div className="mt-5 grid gap-4">
-                      <div className="rounded-3xl border border-blue-100 bg-blue-50 p-4">
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-                          Produto mais pedido
-                        </p>
-                        <p className="mt-2 text-2xl font-black text-[#071b3a]">
-                          {metricas.produto?.nome || 'Sem dados'}
-                        </p>
-                      </div>
-
-                      <div className="rounded-3xl border border-blue-100 bg-blue-50 p-4">
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-                          Categoria mais acessada
-                        </p>
-                        <p className="mt-2 text-2xl font-black text-[#071b3a]">
-                          {metricas.categoria}
-                        </p>
-                      </div>
-
-                      <div className="rounded-3xl border border-blue-100 bg-blue-50 p-4">
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-                          Aprovados
-                        </p>
-                        <p className="mt-2 text-2xl font-black text-[#071b3a]">
-                          {metricas.aprovados}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-[2rem] border border-blue-100 bg-[#05245c] p-6 text-white shadow-xl shadow-blue-950/10">
-                    <p className="text-sm font-black uppercase tracking-[0.18em] text-blue-100">
-                      Fluxo recomendado
-                    </p>
-                    <ol className="mt-4 grid gap-3 text-sm font-bold leading-6 text-blue-50">
-                      <li>1. Cliente envia solicitacao.</li>
-                      <li>2. Empresa gera proposta.</li>
-                      <li>3. Cliente aprova ou negocia.</li>
-                      <li>4. Pagamento do sinal confirma o pedido.</li>
-                    </ol>
-                  </div>
-                </aside>
-              </section>
-            </>
-          )}
-        </section>
-      </div>
+              <div className="mt-5 grid gap-3">
+                <Link href="/painel/orcamento-inteligente" className="rounded-2xl bg-[#05245c] px-5 py-4 text-center font-black text-white">
+                  Novo orçamento
+                </Link>
+                {canProducts && (
+                  <Link href="/painel/catalogo" className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-center font-black text-[#05245c]">
+                    Adicionar produto
+                  </Link>
+                )}
+                <Link href="/painel/site" className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-center font-black text-[#05245c]">
+                  Editar site
+                </Link>
+                {adminOk && (
+                  <Link href="/admin" className="rounded-2xl bg-black px-5 py-4 text-center font-black text-white">
+                    Admin Master
+                  </Link>
+                )}
+              </div>
+            </section>
+          </aside>
+        </div>
+      </section>
     </main>
   )
 }
