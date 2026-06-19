@@ -25,7 +25,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   await admin.supabaseAdmin.from('admin_audit_logs').insert({
     admin_email: admin.email,
     action: 'site_default_created',
-    payload: { company_id: id },
+    metadata: { company_id: id },
   })
 
   return NextResponse.json({ ok: true })

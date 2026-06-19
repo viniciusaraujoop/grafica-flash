@@ -10,6 +10,9 @@ type Empresa = {
   nome: string
   whatsapp: string | null
   logo_url: string | null
+  pix_key?: string | null
+  cobrar_sinal?: boolean | null
+  percentual_sinal?: number | null
 }
 
 type Pedido = {
@@ -30,12 +33,25 @@ type Item = {
   quantidade: number | null
   subtotal: number | null
   preco_unitario: number | null
-  respostas: Record<string, string> | null
+  respostas: Record<string, any> | null
   detalhes_calculo: string | null
 }
 
+type Proposal = {
+  id: string
+  token: string
+  titulo: string | null
+  status: string | null
+  valor_total: number | null
+  valor_sinal: number | null
+  valid_until: string | null
+  viewed_at: string | null
+  approved_at: string | null
+  created_at: string | null
+}
+
 function moeda(valor: number) {
-  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
 function numero(valor: string) {
@@ -55,12 +71,29 @@ function linkWhatsapp(numero: string | null | undefined, texto: string) {
 }
 
 function tokenCurto() {
-  return crypto.randomUUID().replaceAll('-', '').slice(0, 12)
+  return crypto.randomUUID().replaceAll('-', '').slice(0, 16)
 }
 
-function dataCurta(data: string | null) {
+function dataBR(data?: string | null) {
   if (!data) return 'Sem data'
   return new Date(data).toLocaleDateString('pt-BR')
+}
+
+function statusLabel(status?: string | null) {
+  const labels: Record<string, string> = {
+    rascunho: 'Rascunho',
+    enviado: 'Enviado',
+    visto: 'Visualizado',
+    aprovado: 'Aprovado',
+    alteracao_solicitada: 'Alteração solicitada',
+    recusado: 'Recusado',
+    expirado: 'Expirado',
+    cancelado: 'Cancelado',
+    pago_sinal: 'Sinal pago',
+    convertido: 'Convertido',
+  }
+
+  return labels[status || ''] || status || 'Sem status'
 }
 
 export default function GerarPropostaPage() {
@@ -70,11 +103,16 @@ export default function GerarPropostaPage() {
   const [empresa, setEmpresa] = useState<Empresa | null>(null)
   const [pedido, setPedido] = useState<Pedido | null>(null)
   const [itens, setItens] = useState<Item[]>([])
+  const [propostas, setPropostas] = useState<Proposal[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [titulo, setTitulo] = useState('Proposta comercial')
+  const [introducao, setIntroducao] = useState('Preparamos seu orçamento com base nas informações enviadas. Confira os itens, valores e condições antes de aprovar.')
   const [valorTotal, setValorTotal] = useState('')
+  const [valorDesconto, setValorDesconto] = useState('')
   const [valorSinal, setValorSinal] = useState('')
+  const [percentualSinal, setPercentualSinal] = useState('')
+  const [validadeDias, setValidadeDias] = useState('7')
   const [prazo, setPrazo] = useState('')
   const [condicoes, setCondicoes] = useState('Valores sujeitos à confirmação após aprovação. Produção ou execução iniciada após pagamento do sinal, quando houver.')
   const [observacaoInterna, setObservacaoInterna] = useState('')
@@ -82,66 +120,81 @@ export default function GerarPropostaPage() {
   const [linkProposta, setLinkProposta] = useState('')
   const [mensagem, setMensagem] = useState('')
 
-  useEffect(() => {
-    async function carregar() {
-      if (!orderId) return
+  async function carregar() {
+    if (!orderId) return
 
-      setCarregando(true)
-      setErro('')
+    setCarregando(true)
+    setErro('')
 
-      try {
-        const { data: sessionData } = await supabase.auth.getSession()
-        const usuario = sessionData.session?.user
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const usuario = sessionData.session?.user
 
-        if (!usuario) {
-          setErro('Você precisa estar logado.')
-          setCarregando(false)
-          return
-        }
-
-        const { data: empresaData, error: empresaError } = await supabase
-          .from('companies')
-          .select('id, nome, whatsapp, logo_url')
-          .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
-          .maybeSingle()
-
-        if (empresaError) throw empresaError
-        if (!empresaData) throw new Error('Empresa não encontrada.')
-
-        const empresaAtual = empresaData as Empresa
-        setEmpresa(empresaAtual)
-
-        const { data: pedidoData, error: pedidoError } = await supabase
-          .from('orders')
-          .select('id, nome, telefone, produto, observacoes, valor_total, preco_estimado, status, created_at')
-          .eq('id', orderId)
-          .eq('company_id', empresaAtual.id)
-          .maybeSingle()
-
-        if (pedidoError) throw pedidoError
-        if (!pedidoData) throw new Error('Pedido não encontrado.')
-
-        const pedidoAtual = pedidoData as Pedido
-        setPedido(pedidoAtual)
-
-        const valorBase = Number(pedidoAtual.valor_total ?? pedidoAtual.preco_estimado ?? 0)
-        setValorTotal(String(valorBase || ''))
-
-        const { data: itensData, error: itensError } = await supabase
-          .from('order_items')
-          .select('id, nome, quantidade, subtotal, preco_unitario, respostas, detalhes_calculo')
-          .eq('order_id', orderId)
-          .order('created_at', { ascending: true })
-
-        if (itensError) throw itensError
-        setItens((itensData || []) as Item[])
-      } catch (error) {
-        setErro(error instanceof Error ? error.message : 'Erro ao carregar pedido.')
+      if (!usuario) {
+        setErro('Você precisa estar logado.')
+        setCarregando(false)
+        return
       }
 
-      setCarregando(false)
+      const { data: empresaData, error: empresaError } = await supabase
+        .from('companies')
+        .select('id, nome, whatsapp, logo_url, pix_key, cobrar_sinal, percentual_sinal')
+        .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
+        .maybeSingle()
+
+      if (empresaError) throw empresaError
+      if (!empresaData) throw new Error('Empresa não encontrada.')
+
+      const empresaAtual = empresaData as Empresa
+      setEmpresa(empresaAtual)
+
+      const { data: pedidoData, error: pedidoError } = await supabase
+        .from('orders')
+        .select('id, nome, telefone, produto, observacoes, valor_total, preco_estimado, status, created_at')
+        .eq('id', orderId)
+        .eq('company_id', empresaAtual.id)
+        .maybeSingle()
+
+      if (pedidoError) throw pedidoError
+      if (!pedidoData) throw new Error('Pedido não encontrado.')
+
+      const pedidoAtual = pedidoData as Pedido
+      setPedido(pedidoAtual)
+
+      const valorBase = Number(pedidoAtual.valor_total ?? pedidoAtual.preco_estimado ?? 0)
+      setValorTotal(String(valorBase || ''))
+
+      if (empresaAtual.cobrar_sinal && Number(empresaAtual.percentual_sinal || 0) > 0) {
+        const sinal = Number((valorBase * Number(empresaAtual.percentual_sinal || 0) / 100).toFixed(2))
+        setPercentualSinal(String(empresaAtual.percentual_sinal || ''))
+        setValorSinal(String(sinal || ''))
+      }
+
+      const { data: itensData, error: itensError } = await supabase
+        .from('order_items')
+        .select('id, nome, quantidade, subtotal, preco_unitario, respostas, detalhes_calculo')
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: true })
+
+      if (itensError) throw itensError
+      setItens((itensData || []) as Item[])
+
+      const { data: propsData } = await supabase
+        .from('proposals')
+        .select('id, token, titulo, status, valor_total, valor_sinal, valid_until, viewed_at, approved_at, created_at')
+        .eq('order_id', orderId)
+        .eq('company_id', empresaAtual.id)
+        .order('created_at', { ascending: false })
+
+      setPropostas((propsData || []) as Proposal[])
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Erro ao carregar pedido.')
     }
 
+    setCarregando(false)
+  }
+
+  useEffect(() => {
     carregar()
   }, [orderId])
 
@@ -167,19 +220,19 @@ export default function GerarPropostaPage() {
     ]
   }, [itens, pedido])
 
-  const valorItens = useMemo(() => {
-    return itensProposta.reduce((soma, item) => soma + Number(item.valor || 0), 0)
-  }, [itensProposta])
-
   async function gerarProposta(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
 
     if (!empresa || !pedido || !orderId) return
 
-    const valor = numero(valorTotal)
+    const total = numero(valorTotal)
+    const desconto = numero(valorDesconto)
     const sinal = numero(valorSinal)
+    const validade = Math.max(1, Number(validadeDias || 7))
+    const validUntil = new Date()
+    validUntil.setDate(validUntil.getDate() + validade)
 
-    if (valor <= 0) {
+    if (total <= 0) {
       alert('Informe o valor total.')
       return
     }
@@ -188,25 +241,37 @@ export default function GerarPropostaPage() {
     setMensagem('Gerando proposta...')
 
     const token = tokenCurto()
+    const propostaNumero = `PROP-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`
 
-    const { error } = await supabase.from('proposals').insert({
-      company_id: empresa.id,
-      order_id: orderId,
-      token,
-      titulo,
-      cliente_nome: pedido.nome,
-      cliente_whatsapp: pedido.telefone,
-      itens: itensProposta,
-      valor_total: valor,
-      valor_sinal: sinal,
-      prazo,
-      condicoes,
-      status: 'enviado',
-      raw_data: {
-        origem: 'painel_proposta',
-        observacao_interna: observacaoInterna,
-      },
-    })
+    const { data, error } = await supabase
+      .from('proposals')
+      .insert({
+        company_id: empresa.id,
+        order_id: orderId,
+        token,
+        proposta_numero: propostaNumero,
+        titulo,
+        cliente_nome: pedido.nome,
+        cliente_whatsapp: pedido.telefone,
+        itens: itensProposta,
+        valor_total: total,
+        valor_desconto: desconto,
+        valor_sinal: sinal,
+        percentual_sinal: numero(percentualSinal),
+        prazo,
+        condicoes,
+        introducao,
+        validade_dias: validade,
+        valid_until: validUntil.toISOString(),
+        status: 'enviado',
+        sent_at: new Date().toISOString(),
+        raw_data: {
+          origem: 'painel_proposta_v6',
+          observacao_interna: observacaoInterna,
+        },
+      })
+      .select('id, token')
+      .single()
 
     if (error) {
       setMensagem(`Erro: ${error.message}`)
@@ -214,12 +279,28 @@ export default function GerarPropostaPage() {
       return
     }
 
+    await supabase.from('proposal_events').insert({
+      proposal_id: data.id,
+      company_id: empresa.id,
+      event_type: 'sent',
+      actor_type: 'company',
+      actor_name: empresa.nome,
+      note: 'Proposta criada e enviada pelo painel.',
+      metadata: { order_id: orderId, proposta_numero: propostaNumero },
+    })
+
     await supabase.from('orders').update({ status: 'Proposta enviada' }).eq('id', orderId)
 
     const url = `${window.location.origin}/proposta/${token}`
     setLinkProposta(url)
     setMensagem('Proposta gerada com sucesso.')
     setSalvando(false)
+    await carregar()
+  }
+
+  async function copiar(texto: string) {
+    await navigator.clipboard.writeText(texto)
+    setMensagem('Copiado.')
   }
 
   if (carregando) {
@@ -236,157 +317,156 @@ export default function GerarPropostaPage() {
         <div className="rounded-[2rem] border border-red-100 bg-white p-8 text-center shadow-xl">
           <p className="text-3xl font-black text-[#071b3a]">Não foi possível abrir</p>
           <p className="mt-3 font-bold text-red-600">{erro}</p>
-          <Link href="/painel" className="mt-5 inline-block rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white">
-            Voltar
-          </Link>
+          <Link href="/painel" className="mt-5 inline-block rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white">Voltar</Link>
         </div>
       </main>
     )
   }
 
-  const textoWhatsapp = linkProposta
-    ? `Olá, ${pedido.nome || ''}! Seu orçamento está pronto: ${linkProposta}`
+  const mensagemWhats = linkProposta
+    ? `Olá, ${pedido.nome || ''}! Seu orçamento está pronto.\n\nAcesse o link para visualizar e aprovar:\n${linkProposta}`
     : ''
+
+  const whats = linkWhatsapp(pedido.telefone, mensagemWhats)
 
   return (
     <main className="min-h-screen bg-[#f5f8ff] px-4 py-6 text-slate-950">
       <section className="mx-auto max-w-7xl">
-        <Link href="/painel" className="text-sm font-black text-[#05245c]">
-          ← Voltar ao painel
-        </Link>
-
-        <header className="mt-5 rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <header className="mb-6 overflow-hidden rounded-[2.5rem] border border-blue-100 bg-white p-6 shadow-2xl shadow-blue-950/8 sm:p-8">
+          <Link href="/painel" className="text-sm font-black text-[#05245c]">← Voltar ao painel</Link>
+          <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_360px] lg:items-end">
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
-                Gerar proposta
-              </p>
-              <h1 className="mt-3 text-4xl font-black text-[#071b3a] sm:text-5xl">
-                Transforme o pedido em uma proposta profissional.
-              </h1>
-              <p className="mt-3 max-w-3xl leading-7 text-slate-600">
-                Revise os itens, ajuste valor, prazo e condições. Depois envie um link bonito para o cliente aprovar.
-              </p>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Link de aprovação</p>
+              <h1 className="mt-2 text-4xl font-black tracking-[-0.05em] text-[#071b3a]">Gerar proposta para {pedido.nome || 'cliente'}</h1>
+              <p className="mt-3 font-bold text-slate-500">O cliente recebe um link para visualizar, aprovar, pedir alteração, recusar e pagar sinal via PIX.</p>
             </div>
-
-            <div className="rounded-3xl bg-[#05245c] p-5 text-white">
-              <p className="text-sm font-bold text-blue-100">Valor dos itens</p>
-              <p className="text-3xl font-black">{moeda(valorItens)}</p>
+            <div className="rounded-[2rem] bg-[#f5f8ff] p-5">
+              <p className="text-sm font-bold text-slate-500">Pedido</p>
+              <p className="mt-1 font-black text-[#071b3a]">{pedido.produto || 'Pedido'}</p>
+              <p className="mt-2 text-2xl font-black text-[#05245c]">{moeda(Number(pedido.valor_total || pedido.preco_estimado || 0))}</p>
             </div>
           </div>
         </header>
 
-        {mensagem && (
-          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
-            {mensagem}
-          </div>
-        )}
+        {mensagem && <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-center text-sm font-bold text-[#05245c]">{mensagem}</div>}
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_430px]">
-          <form onSubmit={gerarProposta} className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-            <div className="grid gap-5">
+        <div className="grid gap-5 xl:grid-cols-[1fr_430px]">
+          <form onSubmit={gerarProposta} className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Dados da proposta</p>
+
+            <div className="mt-5 grid gap-4">
               <label className="grid gap-2">
-                <span className="text-sm font-black text-slate-700">Título da proposta</span>
-                <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100" />
+                <span className="text-sm font-black text-slate-700">Título</span>
+                <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
               </label>
 
-              <div className="grid gap-4 md:grid-cols-3">
-                <label className="grid gap-2">
-                  <span className="text-sm font-black text-slate-700">Valor total</span>
-                  <input value={valorTotal} onChange={(e) => setValorTotal(e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100" />
-                </label>
+              <label className="grid gap-2">
+                <span className="text-sm font-black text-slate-700">Introdução</span>
+                <textarea value={introducao} onChange={(e) => setIntroducao(e.target.value)} rows={3} className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+              </label>
 
+              <div className="grid gap-4 sm:grid-cols-4">
                 <label className="grid gap-2">
-                  <span className="text-sm font-black text-slate-700">Valor do sinal</span>
-                  <input value={valorSinal} onChange={(e) => setValorSinal(e.target.value)} placeholder="Opcional" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100" />
+                  <span className="text-sm font-black text-slate-700">Total</span>
+                  <input value={valorTotal} onChange={(e) => setValorTotal(e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
                 </label>
-
                 <label className="grid gap-2">
-                  <span className="text-sm font-black text-slate-700">Prazo</span>
-                  <input value={prazo} onChange={(e) => setPrazo(e.target.value)} placeholder="Ex: 3 dias úteis" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100" />
+                  <span className="text-sm font-black text-slate-700">Desconto</span>
+                  <input value={valorDesconto} onChange={(e) => setValorDesconto(e.target.value)} placeholder="0,00" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-slate-700">% Sinal</span>
+                  <input value={percentualSinal} onChange={(e) => {
+                    setPercentualSinal(e.target.value)
+                    const p = numero(e.target.value)
+                    const total = numero(valorTotal)
+                    if (p > 0 && total > 0) setValorSinal(String((total * p / 100).toFixed(2)))
+                  }} placeholder="50" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-slate-700">Valor sinal</span>
+                  <input value={valorSinal} onChange={(e) => setValorSinal(e.target.value)} placeholder="0,00" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+                </label>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-slate-700">Validade em dias</span>
+                  <input type="number" min={1} value={validadeDias} onChange={(e) => setValidadeDias(e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-slate-700">Prazo de execução/produção</span>
+                  <input value={prazo} onChange={(e) => setPrazo(e.target.value)} placeholder="Ex.: 3 dias úteis após aprovação" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
                 </label>
               </div>
 
               <label className="grid gap-2">
-                <span className="text-sm font-black text-slate-700">Condições comerciais</span>
-                <textarea value={condicoes} onChange={(e) => setCondicoes(e.target.value)} rows={5} className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold leading-7 outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100" />
+                <span className="text-sm font-black text-slate-700">Condições</span>
+                <textarea value={condicoes} onChange={(e) => setCondicoes(e.target.value)} rows={5} className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
               </label>
 
               <label className="grid gap-2">
                 <span className="text-sm font-black text-slate-700">Observação interna</span>
-                <textarea value={observacaoInterna} onChange={(e) => setObservacaoInterna(e.target.value)} rows={3} placeholder="Essa observação fica salva nos dados da proposta, mas não precisa aparecer para o cliente." className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-semibold leading-7 outline-none focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100" />
+                <textarea value={observacaoInterna} onChange={(e) => setObservacaoInterna(e.target.value)} rows={3} className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
               </label>
 
-              <button disabled={salvando} className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white transition hover:bg-[#031a43] disabled:opacity-60">
-                {salvando ? 'Gerando...' : 'Gerar link da proposta'}
+              <div className="rounded-2xl bg-[#f5f8ff] p-4">
+                <p className="font-black text-[#071b3a]">Itens da proposta</p>
+                <div className="mt-3 grid gap-2">
+                  {itensProposta.map((item, index) => (
+                    <div key={`${item.nome}-${index}`} className="flex items-center justify-between gap-3 rounded-xl bg-white p-3">
+                      <p className="font-bold text-slate-600">{item.quantidade}x {item.nome}</p>
+                      <p className="font-black text-[#05245c]">{moeda(Number(item.valor || 0))}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button disabled={salvando} className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white disabled:opacity-60">
+                {salvando ? 'Gerando...' : 'Gerar link de aprovação'}
               </button>
             </div>
           </form>
 
           <aside className="grid h-fit gap-5">
-            <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
-                Pedido original
-              </p>
-
-              <h2 className="mt-2 text-3xl font-black text-[#071b3a]">
-                {pedido.nome || 'Cliente'}
-              </h2>
-
-              <p className="mt-1 font-bold text-slate-500">
-                {pedido.telefone || 'Sem telefone'} • {dataCurta(pedido.created_at)}
-              </p>
-
-              <div className="mt-5 grid gap-3">
-                {itensProposta.map((item, index) => (
-                  <div key={`${item.nome}-${index}`} className="rounded-3xl bg-blue-50 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-black text-[#071b3a]">{item.quantidade}x {item.nome}</p>
-                        {Object.entries(item.respostas || {}).filter(([, valor]) => valor).length > 0 && (
-                          <div className="mt-2 grid gap-1 text-xs font-bold text-slate-600">
-                            {Object.entries(item.respostas || {})
-                              .filter(([, valor]) => valor)
-                              .slice(0, 5)
-                              .map(([chave, valor]) => (
-                                <p key={chave}>{chave}: {valor}</p>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <p className="font-black text-[#05245c]">{moeda(Number(item.valor || 0))}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {linkProposta && (
-              <div className="rounded-[2rem] border border-emerald-100 bg-emerald-50 p-6 shadow-xl shadow-blue-950/5">
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-700">
-                  Link pronto
-                </p>
-
-                <p className="mt-3 break-all rounded-2xl bg-white p-4 text-sm font-bold text-slate-700">
-                  {linkProposta}
-                </p>
-
-                <div className="mt-4 grid gap-3">
-                  <button type="button" onClick={() => navigator.clipboard.writeText(linkProposta)} className="rounded-2xl bg-white px-5 py-4 font-black text-emerald-700">
-                    Copiar link
-                  </button>
-
-                  <a href={linkWhatsapp(pedido.telefone, textoWhatsapp)} target="_blank" rel="noreferrer" className="rounded-2xl bg-emerald-600 px-5 py-4 text-center font-black text-white">
-                    Enviar no WhatsApp
-                  </a>
-
-                  <a href={linkProposta} target="_blank" rel="noreferrer" className="rounded-2xl border border-emerald-200 bg-emerald-100 px-5 py-4 text-center font-black text-emerald-800">
-                    Ver proposta
-                  </a>
+              <section className="rounded-[2rem] border border-emerald-100 bg-emerald-50 p-5 shadow-xl shadow-emerald-950/5">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-700">Pronto</p>
+                <h2 className="mt-2 text-2xl font-black text-emerald-950">Link de aprovação gerado</h2>
+                <input readOnly value={linkProposta} className="mt-4 w-full rounded-2xl border border-emerald-200 bg-white px-4 py-4 text-sm font-bold outline-none" />
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <button type="button" onClick={() => copiar(linkProposta)} className="rounded-2xl bg-white px-4 py-3 font-black text-emerald-700">Copiar link</button>
+                  {whats && <a href={whats} target="_blank" rel="noreferrer" className="rounded-2xl bg-emerald-600 px-4 py-3 text-center font-black text-white">Enviar WhatsApp</a>}
                 </div>
-              </div>
+                <textarea readOnly value={mensagemWhats} className="mt-3 h-28 w-full resize-none rounded-2xl border border-emerald-200 bg-white p-3 text-sm font-bold outline-none" />
+              </section>
             )}
+
+            <section className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Propostas deste pedido</p>
+              <div className="mt-4 grid gap-3">
+                {propostas.length === 0 && <p className="font-bold text-slate-500">Nenhuma proposta gerada ainda.</p>}
+                {propostas.map((proposta) => {
+                  const url = typeof window !== 'undefined' ? `${window.location.origin}/proposta/${proposta.token}` : `/proposta/${proposta.token}`
+
+                  return (
+                    <div key={proposta.id} className="rounded-2xl bg-[#f5f8ff] p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-black text-[#071b3a]">{proposta.titulo || 'Proposta'}</p>
+                          <p className="mt-1 text-sm font-bold text-slate-500">{statusLabel(proposta.status)} • {dataBR(proposta.created_at)}</p>
+                        </div>
+                        <p className="font-black text-[#05245c]">{moeda(Number(proposta.valor_total || 0))}</p>
+                      </div>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        <a href={url} target="_blank" rel="noreferrer" className="rounded-xl bg-white px-3 py-2 text-center text-sm font-black text-[#05245c]">Abrir</a>
+                        <button onClick={() => copiar(url)} className="rounded-xl bg-white px-3 py-2 text-sm font-black text-[#05245c]">Copiar link</button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
           </aside>
         </div>
       </section>

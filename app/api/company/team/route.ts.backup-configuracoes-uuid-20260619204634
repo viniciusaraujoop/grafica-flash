@@ -46,11 +46,6 @@ const cargoPermissions: Record<string, Record<string, boolean>> = {
   },
 }
 
-function isUuid(value: unknown) {
-  return typeof value === 'string'
-    && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
-}
-
 function cleanEmail(value: string) {
   return String(value || '').trim().toLowerCase()
 }
@@ -61,6 +56,7 @@ function cleanCargo(value: string) {
 
 async function getRequester(request: NextRequest) {
   const token = (request.headers.get('authorization') || '').replace('Bearer ', '').trim()
+
   if (!token) return null
 
   const { data, error } = await supabaseAdmin.auth.getUser(token)
@@ -70,15 +66,13 @@ async function getRequester(request: NextRequest) {
 }
 
 async function getCompanyForUser(userId: string, email?: string) {
-  if (!isUuid(userId)) return { company: null, requesterRole: null }
-
   const { data: ownCompany } = await supabaseAdmin
     .from('companies')
     .select('*')
     .or(`owner_id.eq.${userId},tester_id.eq.${userId}`)
     .maybeSingle()
 
-  if (ownCompany?.id) {
+  if (ownCompany) {
     return { company: ownCompany, requesterRole: 'dono' }
   }
 
@@ -89,7 +83,7 @@ async function getCompanyForUser(userId: string, email?: string) {
     .eq('status', 'ativo')
     .maybeSingle()
 
-  if (member?.company_id && isUuid(member.company_id)) {
+  if (member?.company_id) {
     const { data: company } = await supabaseAdmin
       .from('companies')
       .select('*')
@@ -106,7 +100,7 @@ async function getCompanyForUser(userId: string, email?: string) {
       .eq('slug', 'grafica-flash')
       .maybeSingle()
 
-    if (firstCompany?.id) {
+    if (firstCompany) {
       return { company: firstCompany, requesterRole: 'dono' }
     }
   }
@@ -147,31 +141,6 @@ async function ensureAuthUser(email: string, nome: string, senha?: string) {
   return data.user
 }
 
-function publicCompany(company: any) {
-  return {
-    id: company.id,
-    nome: company.nome,
-    slug: company.slug,
-    subdomain_slug: company.subdomain_slug,
-    logo_url: company.logo_url,
-    whatsapp: company.whatsapp,
-    cidade: company.cidade,
-    estado: company.estado,
-    instagram: company.instagram,
-    atendimento_horario: company.atendimento_horario,
-    atendimento_observacao: company.atendimento_observacao,
-    site_status: company.site_status,
-    pix_key: company.pix_key,
-    pix_tipo: company.pix_tipo,
-    pix_nome: company.pix_nome,
-    pix_cidade: company.pix_cidade,
-    aceita_pix: company.aceita_pix,
-    aceita_cartao: company.aceita_cartao,
-    cobrar_sinal: company.cobrar_sinal,
-    percentual_sinal: company.percentual_sinal,
-  }
-}
-
 export async function GET(request: NextRequest) {
   try {
     const requester = await getRequester(request)
@@ -182,7 +151,7 @@ export async function GET(request: NextRequest) {
 
     const { company } = await getCompanyForUser(requester.id, requester.email || '')
 
-    if (!company?.id || !isUuid(company.id)) {
+    if (!company?.id) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     }
 
@@ -195,7 +164,6 @@ export async function GET(request: NextRequest) {
     if (error) throw error
 
     return NextResponse.json({
-      company: publicCompany(company),
       company_id: company.id,
       members: members || [],
       limit: 2,
@@ -221,16 +189,27 @@ export async function POST(request: NextRequest) {
     const nome = String(body.nome || '').trim()
     const email = cleanEmail(body.email || '')
     const cargo = cleanCargo(body.cargo || 'atendente')
-    const senha = String(body.senha || body.password || '').trim()
+    const senha = String(body.senha || '').trim()
 
-    if (!nome) return NextResponse.json({ error: 'Informe o nome do funcionário.' }, { status: 400 })
-    if (!email || !email.includes('@')) return NextResponse.json({ error: 'Informe um e-mail válido.' }, { status: 400 })
-    if (email === 'araujovinicius249@gmail.com') return NextResponse.json({ error: 'Este e-mail é do Admin Master e não pode ser cadastrado como funcionário.' }, { status: 400 })
-    if (senha && senha.length < 6) return NextResponse.json({ error: 'A senha inicial precisa ter pelo menos 6 caracteres.' }, { status: 400 })
+    if (!nome) {
+      return NextResponse.json({ error: 'Informe o nome do funcionário.' }, { status: 400 })
+    }
+
+    if (!email || !email.includes('@')) {
+      return NextResponse.json({ error: 'Informe um e-mail válido.' }, { status: 400 })
+    }
+
+    if (email === 'araujovinicius249@gmail.com') {
+      return NextResponse.json({ error: 'Este e-mail é do Admin Master e não pode ser cadastrado como funcionário.' }, { status: 400 })
+    }
+
+    if (senha && senha.length < 6) {
+      return NextResponse.json({ error: 'A senha inicial precisa ter pelo menos 6 caracteres.' }, { status: 400 })
+    }
 
     const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
 
-    if (!company?.id || !isUuid(company.id)) {
+    if (!company?.id) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     }
 
@@ -253,10 +232,6 @@ export async function POST(request: NextRequest) {
     }
 
     const user = await ensureAuthUser(email, nome, senha)
-
-    if (!user?.id || !isUuid(user.id)) {
-      return NextResponse.json({ error: 'Usuário inválido.' }, { status: 400 })
-    }
 
     const payload = {
       company_id: company.id,
@@ -281,7 +256,7 @@ export async function POST(request: NextRequest) {
 
     let savedMember: any = null
 
-    if (existingMember?.id && isUuid(existingMember.id)) {
+    if (existingMember?.id) {
       const { data, error } = await supabaseAdmin
         .from('company_members')
         .update(payload)
@@ -325,19 +300,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const id = String(body.id || '').trim()
-
-    if (!isUuid(id)) {
-      return NextResponse.json({ error: 'Funcionário inválido. Recarregue a página e tente novamente.' }, { status: 400 })
-    }
-
+    const id = String(body.id || '')
     const cargo = body.cargo ? cleanCargo(body.cargo) : null
     const status = ['ativo', 'bloqueado', 'removido'].includes(body.status) ? body.status : null
     const nome = body.nome ? String(body.nome).trim() : null
 
     const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
 
-    if (!company?.id || !isUuid(company.id)) {
+    if (!company?.id) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     }
 
@@ -363,10 +333,9 @@ export async function PATCH(request: NextRequest) {
       .eq('id', id)
       .eq('company_id', company.id)
       .select('id,company_id,user_id,nome,email,cargo,status,permissions,created_at,updated_at')
-      .maybeSingle()
+      .single()
 
     if (error) throw error
-    if (!data) return NextResponse.json({ error: 'Funcionário não encontrado.' }, { status: 404 })
 
     return NextResponse.json({ ok: true, member: data })
   } catch (error) {
@@ -386,15 +355,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const id = String(searchParams.get('id') || '').trim()
-
-    if (!isUuid(id)) {
-      return NextResponse.json({ error: 'Funcionário inválido. Recarregue a página e tente novamente.' }, { status: 400 })
-    }
+    const id = searchParams.get('id') || ''
 
     const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
 
-    if (!company?.id || !isUuid(company.id)) {
+    if (!company?.id) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     }
 

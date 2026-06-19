@@ -5,6 +5,12 @@ type RouteContext = {
   params: Promise<{ id: string }>
 }
 
+function novaDataExpiracao(dias: number) {
+  const data = new Date()
+  data.setDate(data.getDate() + dias)
+  return data.toISOString()
+}
+
 export async function PATCH(request: NextRequest, context: RouteContext) {
   const admin = await requireAdmin(request)
 
@@ -15,29 +21,28 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const { id } = await context.params
   const body = await request.json().catch(() => ({}))
   const action = String(body.action || '')
-  const note = String(body.note || '')
+  const dias = Number(body.dias || 30)
 
-  if (!['resolver', 'reabrir'].includes(action)) {
+  let updatePayload: Record<string, unknown> = {}
+
+  if (action === 'bloquear') {
+    updatePayload = {
+      ativo: false,
+      assinatura_status: 'bloqueada',
+    }
+  } else if (action === 'liberar') {
+    updatePayload = {
+      ativo: true,
+      assinatura_status: 'ativa',
+      assinatura_inicio: new Date().toISOString(),
+      assinatura_expira_em: novaDataExpiracao(Number.isFinite(dias) && dias > 0 ? dias : 30),
+    }
+  } else {
     return NextResponse.json({ error: 'Ação inválida.' }, { status: 400 })
   }
 
-  const updatePayload =
-    action === 'resolver'
-      ? {
-          status: 'resolvido',
-          resolved_at: new Date().toISOString(),
-          resolved_by: admin.email,
-          resolution_note: note || null,
-        }
-      : {
-          status: 'aberto',
-          resolved_at: null,
-          resolved_by: null,
-          resolution_note: null,
-        }
-
   const { error } = await admin.supabaseAdmin
-    .from('admin_bug_reports')
+    .from('companies')
     .update(updatePayload)
     .eq('id', id)
 
@@ -47,10 +52,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   await admin.supabaseAdmin.from('admin_audit_logs').insert({
     admin_email: admin.email,
-    action: `bug_${action}`,
-    payload: {
-      bug_id: id,
-      note,
+    action: `company_${action}`,
+    metadata: {
+      company_id: id,
+      dias,
     },
   })
 

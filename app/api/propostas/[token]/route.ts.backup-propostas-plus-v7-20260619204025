@@ -11,7 +11,9 @@ function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (!url || !key) throw new Error('Variáveis do Supabase não configuradas no servidor.')
+  if (!url || !key) {
+    throw new Error('Variáveis do Supabase não configuradas no servidor.')
+  }
 
   return createClient(url, key, {
     auth: {
@@ -27,8 +29,17 @@ function getIp(request: NextRequest) {
     || ''
 }
 
-function makeHash(parts: Array<string | null | undefined>) {
-  return crypto.createHash('sha256').update(parts.join('|')).digest('hex')
+function approvalHash(input: {
+  proposalId: string
+  token: string
+  name: string
+  document?: string
+  ip?: string
+}) {
+  return crypto
+    .createHash('sha256')
+    .update(`${input.proposalId}|${input.token}|${input.name}|${input.document || ''}|${input.ip || ''}|${new Date().toISOString().slice(0, 10)}`)
+    .digest('hex')
 }
 
 async function insertEvent(supabaseAdmin: any, proposal: any, event: {
@@ -90,104 +101,13 @@ async function getProposalBundle(supabaseAdmin: any, token: string) {
 
   if (empresaError) throw empresaError
 
-  const { data: config } = await supabaseAdmin
-    .from('company_proposal_settings')
-    .select('*')
-    .eq('company_id', proposta.company_id)
-    .maybeSingle()
-
   const { data: events } = await supabaseAdmin
     .from('proposal_events')
     .select('id,event_type,actor_type,actor_name,note,metadata,created_at')
     .eq('proposal_id', proposta.id)
     .order('created_at', { ascending: true })
 
-  return { proposta, empresa, config, events: events || [] }
-}
-
-async function createProductionOrder(supabaseAdmin: any, proposta: any, config: any) {
-  if (!config?.auto_create_production) return null
-
-  const existing = await supabaseAdmin
-    .from('production_orders')
-    .select('id')
-    .eq('proposal_id', proposta.id)
-    .maybeSingle()
-
-  if (existing.data?.id) return existing.data.id
-
-  const due = new Date()
-  due.setDate(due.getDate() + 7)
-
-  const { data: order, error } = await supabaseAdmin
-    .from('production_orders')
-    .insert({
-      company_id: proposta.company_id,
-      proposal_id: proposta.id,
-      order_id: proposta.order_id,
-      title: proposta.titulo || proposta.proposta_numero || 'Ordem de produção',
-      customer_name: proposta.cliente_nome,
-      customer_whatsapp: proposta.cliente_whatsapp,
-      total_value: Number(proposta.valor_total || 0),
-      signal_value: Number(proposta.valor_sinal || 0),
-      status: Number(proposta.valor_sinal || 0) > 0 ? 'aguardando_sinal' : 'aprovado',
-      due_date: due.toISOString(),
-      metadata: {
-        proposal_token: proposta.token,
-        proposal_number: proposta.proposta_numero,
-      },
-    })
-    .select('id')
-    .single()
-
-  if (error) throw error
-
-  const rawSteps = Array.isArray(config?.default_production_steps) && config.default_production_steps.length > 0
-    ? config.default_production_steps
-    : [
-        { titulo: 'Conferir informações do cliente', descricao: 'Validar itens, medidas e observações.' },
-        { titulo: 'Separar materiais', descricao: 'Separar insumos ou arquivos necessários.' },
-        { titulo: 'Produzir/executar', descricao: 'Realizar a produção ou serviço.' },
-        { titulo: 'Revisar qualidade', descricao: 'Conferir acabamento e qualidade final.' },
-        { titulo: 'Entregar ao cliente', descricao: 'Registrar entrega, retirada ou envio.' },
-      ]
-
-  const steps = rawSteps.map((step: any, index: number) => ({
-    production_order_id: order.id,
-    company_id: proposta.company_id,
-    title: step.titulo || step.title || `Etapa ${index + 1}`,
-    description: step.descricao || step.description || null,
-    status: 'pendente',
-    sort_order: index + 1,
-  }))
-
-  if (steps.length > 0) {
-    await supabaseAdmin.from('production_steps').insert(steps)
-  }
-
-  await supabaseAdmin
-    .from('proposals')
-    .update({
-      converted_to_production: true,
-      production_order_id: order.id,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', proposta.id)
-
-  await supabaseAdmin.from('notifications').insert({
-    company_id: proposta.company_id,
-    type: 'proposal_approved',
-    title: 'Proposta aprovada',
-    message: `${proposta.cliente_nome || 'Cliente'} aprovou uma proposta.`,
-    link: `/painel/producao`,
-    priority: 'alta',
-    metadata: {
-      proposal_id: proposta.id,
-      production_order_id: order.id,
-    },
-  })
-
-  return order.id
+  return { proposta, empresa, events: events || [] }
 }
 
 export async function GET(request: NextRequest, context: RouteContext) {
@@ -196,15 +116,21 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const supabaseAdmin = getSupabaseAdmin()
     const bundle = await getProposalBundle(supabaseAdmin, token)
 
-    if (!bundle) return NextResponse.json({ error: 'Proposta não encontrada.' }, { status: 404 })
+    if (!bundle) {
+      return NextResponse.json({ error: 'Proposta não encontrada.' }, { status: 404 })
+    }
 
-    const { proposta, empresa, config, events } = bundle
+    const { proposta, empresa, events } = bundle
     const now = new Date()
 
     if (proposta.valid_until && ['enviado', 'visto'].includes(proposta.status) && new Date(proposta.valid_until) < now) {
       await supabaseAdmin
         .from('proposals')
-        .update({ status: 'expirado', expired_at: now.toISOString(), updated_at: now.toISOString() })
+        .update({
+          status: 'expirado',
+          expired_at: now.toISOString(),
+          updated_at: now.toISOString(),
+        })
         .eq('id', proposta.id)
 
       proposta.status = 'expirado'
@@ -250,16 +176,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
         atendimento_horario: empresa.atendimento_horario,
         aceita_pix: empresa.aceita_pix !== false,
       } : null,
-      config: {
-        require_document: Boolean(config?.require_document),
-        require_drawn_signature: config?.require_drawn_signature !== false,
-        require_signature_name: config?.require_signature_name !== false,
-        allow_print_pdf: config?.allow_print_pdf !== false,
-      },
       events,
     })
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro desconhecido.' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Erro desconhecido.'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
@@ -272,14 +193,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const supabaseAdmin = getSupabaseAdmin()
     const bundle = await getProposalBundle(supabaseAdmin, token)
 
-    if (!bundle) return NextResponse.json({ error: 'Proposta não encontrada.' }, { status: 404 })
+    if (!bundle) {
+      return NextResponse.json({ error: 'Proposta não encontrada.' }, { status: 404 })
+    }
 
-    const { proposta, empresa, config } = bundle
+    const { proposta, empresa } = bundle
     const now = new Date().toISOString()
     const ip = getIp(request)
     const userAgent = request.headers.get('user-agent') || ''
 
-    if (['expirado', 'cancelado', 'recusado'].includes(proposta.status)) {
+    if (proposta.status === 'expirado' || proposta.status === 'cancelado') {
       return NextResponse.json({ error: 'Esta proposta não está mais disponível para resposta.' }, { status: 400 })
     }
 
@@ -288,18 +211,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const approvalDocument = String(body.documento || '').trim()
       const approvalNote = String(body.observacao || '').trim()
       const acceptedTerms = Boolean(body.aceitou_termos)
-      const signatureDataUrl = String(body.assinatura_data_url || '').trim()
 
-      if (!approvalName) return NextResponse.json({ error: 'Informe o nome de quem está aprovando.' }, { status: 400 })
-      if (config?.require_document && !approvalDocument) return NextResponse.json({ error: 'Informe CPF/CNPJ para aprovar.' }, { status: 400 })
-      if (config?.require_drawn_signature !== false && !signatureDataUrl) return NextResponse.json({ error: 'Assine no campo de assinatura para aprovar.' }, { status: 400 })
-      if (!acceptedTerms) return NextResponse.json({ error: 'Confirme que leu e aceita as condições da proposta.' }, { status: 400 })
+      if (!approvalName) {
+        return NextResponse.json({ error: 'Informe o nome de quem está aprovando.' }, { status: 400 })
+      }
+
+      if (!acceptedTerms) {
+        return NextResponse.json({ error: 'Confirme que leu e aceita as condições da proposta.' }, { status: 400 })
+      }
 
       let pixPayload = proposta.pix_payload || ''
       let pixTxid = proposta.pix_txid || ''
       let pixValor = Number(proposta.pix_valor || proposta.valor_sinal || 0)
 
-      if (!pixPayload && config?.auto_generate_pix !== false && empresa?.aceita_pix !== false && empresa?.pix_key && Number(proposta.valor_sinal || 0) > 0) {
+      if (!pixPayload && empresa?.aceita_pix !== false && empresa?.pix_key && Number(proposta.valor_sinal || 0) > 0) {
         pixTxid = sanitizeTxid(`PROP${String(Date.now()).slice(-10)}`)
         pixValor = Number(proposta.valor_sinal || 0)
 
@@ -313,44 +238,26 @@ export async function POST(request: NextRequest, context: RouteContext) {
         })
       }
 
-      const hash = makeHash([
-        proposta.id,
-        proposta.token,
-        approvalName,
-        approvalDocument,
+      const hash = approvalHash({
+        proposalId: proposta.id,
+        token: proposta.token,
+        name: approvalName,
+        document: approvalDocument,
         ip,
-        signatureDataUrl ? crypto.createHash('sha256').update(signatureDataUrl).digest('hex') : '',
-        now,
-      ])
+      })
 
-      const contractSnapshot = {
-        empresa: empresa?.nome,
-        cliente_nome: approvalName,
-        cliente_documento: approvalDocument || null,
-        proposta_numero: proposta.proposta_numero,
-        valor_total: proposta.valor_total,
-        valor_sinal: proposta.valor_sinal,
-        prazo: proposta.prazo,
-        condicoes: proposta.condicoes,
-        itens: proposta.itens,
-        accepted_at: now,
-        approval_hash: hash,
-      }
+      const nextStatus = pixPayload && pixValor > 0 ? 'aprovado' : 'aprovado'
 
       const { data, error } = await supabaseAdmin
         .from('proposals')
         .update({
-          status: 'aprovado',
+          status: nextStatus,
           approved_at: now,
           approval_name: approvalName,
           approval_document: approvalDocument || null,
           approval_note: approvalNote || null,
           accepted_terms: true,
           approval_hash: hash,
-          signature_name: approvalName,
-          signature_data_url: signatureDataUrl || null,
-          signature_signed_at: now,
-          contract_snapshot: contractSnapshot,
           client_ip: ip,
           user_agent: userAgent,
           pix_payload: pixPayload || null,
@@ -369,12 +276,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
         event_type: 'approved',
         actor_type: 'client',
         actor_name: approvalName,
-        note: approvalNote || 'Cliente aprovou e assinou a proposta.',
+        note: approvalNote || 'Cliente aprovou a proposta.',
         metadata: {
           approval_document: approvalDocument || null,
           accepted_terms: true,
           approval_hash: hash,
-          has_signature: Boolean(signatureDataUrl),
           pix_generated: Boolean(pixPayload),
           pix_valor: pixValor || null,
         },
@@ -389,25 +295,22 @@ export async function POST(request: NextRequest, context: RouteContext) {
           .eq('id', proposta.order_id)
       }
 
-      const productionOrderId = await createProductionOrder(supabaseAdmin, data, config || {})
-
       return NextResponse.json({
         ok: true,
         status: data.status,
-        proposta: {
-          ...data,
-          production_order_id: productionOrderId || data.production_order_id,
-        },
+        proposta: data,
         pix_payload: pixPayload || null,
         pix_valor: pixValor || null,
         approval_hash: hash,
-        production_order_id: productionOrderId,
       })
     }
 
     if (action === 'alteracao') {
       const note = String(body.mensagem || '').trim()
-      if (!note) return NextResponse.json({ error: 'Escreva o que precisa ser alterado.' }, { status: 400 })
+
+      if (!note) {
+        return NextResponse.json({ error: 'Escreva o que precisa ser alterado.' }, { status: 400 })
+      }
 
       const { data, error } = await supabaseAdmin
         .from('proposals')
@@ -434,24 +337,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
         user_agent: userAgent,
       })
 
-      await supabaseAdmin.from('notifications').insert({
-        company_id: proposta.company_id,
-        type: 'proposal_change_requested',
-        title: 'Cliente pediu alteração',
-        message: `${proposta.cliente_nome || 'Cliente'} pediu alteração em uma proposta.`,
-        link: `/painel/proposta/${proposta.order_id || ''}`,
-        priority: 'alta',
-        metadata: { proposal_id: proposta.id, order_id: proposta.order_id },
-      })
-
-      if (proposta.order_id) await supabaseAdmin.from('orders').update({ status: 'Cliente pediu alteração na proposta' }).eq('id', proposta.order_id)
+      if (proposta.order_id) {
+        await supabaseAdmin.from('orders').update({ status: 'Cliente pediu alteração na proposta' }).eq('id', proposta.order_id)
+      }
 
       return NextResponse.json({ ok: true, status: data?.status, proposta: data })
     }
 
     if (action === 'recusar') {
       const reason = String(body.motivo || '').trim()
-      if (!reason) return NextResponse.json({ error: 'Informe o motivo da recusa.' }, { status: 400 })
+
+      if (!reason) {
+        return NextResponse.json({ error: 'Informe o motivo da recusa.' }, { status: 400 })
+      }
 
       const { data, error } = await supabaseAdmin
         .from('proposals')
@@ -478,23 +376,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
         user_agent: userAgent,
       })
 
-      await supabaseAdmin.from('notifications').insert({
-        company_id: proposta.company_id,
-        type: 'proposal_rejected',
-        title: 'Proposta recusada',
-        message: `${proposta.cliente_nome || 'Cliente'} recusou uma proposta.`,
-        link: `/painel/propostas`,
-        priority: 'normal',
-        metadata: { proposal_id: proposta.id, order_id: proposta.order_id },
-      })
-
-      if (proposta.order_id) await supabaseAdmin.from('orders').update({ status: 'Proposta recusada' }).eq('id', proposta.order_id)
+      if (proposta.order_id) {
+        await supabaseAdmin.from('orders').update({ status: 'Proposta recusada' }).eq('id', proposta.order_id)
+      }
 
       return NextResponse.json({ ok: true, status: data?.status, proposta: data })
     }
 
     return NextResponse.json({ error: 'Ação inválida.' }, { status: 400 })
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro desconhecido.' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Erro desconhecido.'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

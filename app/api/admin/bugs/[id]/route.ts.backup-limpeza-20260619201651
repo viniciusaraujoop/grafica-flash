@@ -48,7 +48,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   await admin.supabaseAdmin.from('admin_audit_logs').insert({
     admin_email: admin.email,
     action: `bug_${action}`,
-    payload: {
+    metadata: {
       bug_id: id,
       note,
     },
