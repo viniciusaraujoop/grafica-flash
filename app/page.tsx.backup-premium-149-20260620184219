@@ -138,7 +138,7 @@ const planos = [
   {
     id: 'premium',
     nome: 'Premium',
-    preco: 'R$ 149,90',
+    preco: 'R$ 199,90',
     descricao: 'Para empresas que querem automatizar atendimento e recuperar vendas.',
     destaque: false,
     recursos: [

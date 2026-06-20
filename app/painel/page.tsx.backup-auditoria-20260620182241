@@ -321,7 +321,6 @@ export default function PainelPage() {
   const canConfig = role === 'dono'
   const canProducts = role === 'dono' || role === 'gerente' || role === 'producao'
   const canProposal = role === 'dono' || role === 'gerente' || role === 'atendente'
-  const canProduction = role === 'dono' || role === 'gerente' || role === 'producao'
 
   return (
     <main className="min-h-screen bg-[#f5f8ff] px-4 py-6 text-[#071b3a]">
@@ -383,8 +382,7 @@ export default function PainelPage() {
           <ModuleCard href="/painel/clientes" titulo="Mini-CRM" descricao="Clientes, notas, oportunidades e follow-ups de venda." etiqueta="Clientes" />
           {canFinance && <ModuleCard href="/painel/financeiro" titulo="Financeiro" descricao="Entradas, despesas, materiais, notas fiscais e relatórios." etiqueta="Gestão" />}
           <ModuleCard href="/painel/site" titulo="Site profissional" descricao="Edite as seções, textos e aparência do site público." etiqueta="Site" />
-          {canProposal && <ModuleCard href="/painel/propostas" titulo="Propostas" descricao="Acompanhe aprovações, links enviados, recusas e pedidos de alteração." etiqueta="Vendas" />}
-          {canProduction && <ModuleCard href="/painel/producao" titulo="Produção" descricao="Controle ordens, etapas, prazos e entregas depois da aprovação." etiqueta="Operação" />}
+          {canProposal && <ModuleCard href="/painel/gerar-proposta" titulo="Propostas" descricao="Monte propostas profissionais para enviar aos clientes." etiqueta="Vendas" />}
           <ModuleCard href="/painel/oportunidades" titulo="Oportunidades" descricao="Acompanhe chances de venda e tarefas importantes." etiqueta="Comercial" />
           {canConfig && <ModuleCard href="/painel/configuracoes" titulo="Configurações" descricao="Empresa, PIX, recebimento, equipe e permissões." etiqueta="Sistema" />}
         </div>
@@ -470,7 +468,7 @@ export default function PainelPage() {
                   <p className="mt-1 text-sm font-bold text-yellow-700">Clientes para retornar no Mini-CRM.</p>
                 </Link>
 
-                <Link href="/painel/propostas" className="rounded-2xl bg-blue-50 p-4 transition hover:bg-blue-100">
+                <Link href="/painel/gerar-proposta" className="rounded-2xl bg-blue-50 p-4 transition hover:bg-blue-100">
                   <p className="font-black text-[#05245c]">{resumo.propostasPendentes} propostas em aberto</p>
                   <p className="mt-1 text-sm font-bold text-[#05245c]/70">Acompanhe oportunidades de venda.</p>
                 </Link>
