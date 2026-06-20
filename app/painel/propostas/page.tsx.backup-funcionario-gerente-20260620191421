@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { getCurrentCompany } from '@/lib/current-company-client'
 
 type Proposal = {
   id: string
@@ -67,7 +66,22 @@ export default function PropostasPage() {
     setErro('')
 
     try {
-      const { company: empresaData } = await getCurrentCompany<any>()
+      const { data: sessionData } = await supabase.auth.getSession()
+      const usuario = sessionData.session?.user
+
+      if (!usuario) {
+        window.location.href = '/login'
+        return
+      }
+
+      const { data: empresaData, error: empresaError } = await supabase
+        .from('companies')
+        .select('id,nome,slug')
+        .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
+        .maybeSingle()
+
+      if (empresaError) throw empresaError
+      if (!empresaData) throw new Error('Empresa não encontrada.')
 
       setCompany(empresaData)
 

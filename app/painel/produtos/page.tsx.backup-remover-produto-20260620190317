@@ -213,7 +213,6 @@ export default function ProdutosPage() {
       .from('products')
       .select('*')
       .eq('company_id', empresaData.id)
-      .eq('arquivado', false)
       .order('created_at', { ascending: false })
 
     if (itensError) {
@@ -433,27 +432,23 @@ export default function ProdutosPage() {
   async function excluirItem(itemId: string) {
     if (!empresa) return
 
-    const confirmar = confirm('Remover este item do catálogo? O histórico de pedidos será preservado.')
+    const confirmar = confirm('Deseja excluir este item do catálogo?')
 
     if (!confirmar) return
 
     const { error } = await supabase
       .from('products')
-      .update({
-        ativo: false,
-        arquivado: true,
-        deleted_at: new Date().toISOString(),
-      })
+      .delete()
       .eq('id', itemId)
       .eq('company_id', empresa.id)
 
     if (error) {
-      setMensagem(`Erro ao remover item: ${error.message}`)
+      setMensagem(`Erro ao excluir item: ${error.message}`)
       return
     }
 
     setItens((listaAtual) => listaAtual.filter((item) => item.id !== itemId))
-    setMensagem('Item removido do catálogo.')
+    setMensagem('Item excluído com sucesso.')
   }
 
   useEffect(() => {

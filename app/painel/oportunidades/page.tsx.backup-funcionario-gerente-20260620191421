@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { getCurrentCompany } from '@/lib/current-company-client'
 
 type Empresa = {
   id: string
@@ -78,7 +77,25 @@ export default function OportunidadesPage() {
       setErro('')
 
       try {
-        const { company: empresaAtual } = await getCurrentCompany<Empresa>()
+        const { data: sessao } = await supabase.auth.getSession()
+        const usuario = sessao.session?.user
+
+        if (!usuario) {
+          setErro('Você precisa estar logado.')
+          setCarregando(false)
+          return
+        }
+
+        const { data: empresaData, error: empresaError } = await supabase
+          .from('companies')
+          .select('id, nome, slug')
+          .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
+          .maybeSingle()
+
+        if (empresaError) throw empresaError
+        if (!empresaData) throw new Error('Empresa não encontrada.')
+
+        const empresaAtual = empresaData as Empresa
         setEmpresa(empresaAtual)
 
         const [pedidosRes, propostasRes, produtosRes] = await Promise.all([

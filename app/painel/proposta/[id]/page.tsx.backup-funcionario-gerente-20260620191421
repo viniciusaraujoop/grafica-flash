@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { getCurrentCompany } from '@/lib/current-company-client'
 
 type Empresa = {
   id: string
@@ -128,7 +127,25 @@ export default function GerarPropostaPage() {
     setErro('')
 
     try {
-      const { company: empresaAtual } = await getCurrentCompany<Empresa>()
+      const { data: sessionData } = await supabase.auth.getSession()
+      const usuario = sessionData.session?.user
+
+      if (!usuario) {
+        setErro('Você precisa estar logado.')
+        setCarregando(false)
+        return
+      }
+
+      const { data: empresaData, error: empresaError } = await supabase
+        .from('companies')
+        .select('id, nome, whatsapp, logo_url, pix_key, cobrar_sinal, percentual_sinal')
+        .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
+        .maybeSingle()
+
+      if (empresaError) throw empresaError
+      if (!empresaData) throw new Error('Empresa não encontrada.')
+
+      const empresaAtual = empresaData as Empresa
       setEmpresa(empresaAtual)
 
       const { data: pedidoData, error: pedidoError } = await supabase

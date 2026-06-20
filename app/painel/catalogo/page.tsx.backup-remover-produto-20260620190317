@@ -253,7 +253,6 @@ export default function CatalogoPage() {
         .from('products')
         .select('*')
         .eq('company_id', empresa.id)
-        .eq('arquivado', false)
         .order('created_at', { ascending: false })
 
       if (productError) throw productError
@@ -507,25 +506,15 @@ export default function CatalogoPage() {
   }
 
   async function deleteProduct(id: string) {
-    if (!company) return
-
-    const ok = window.confirm('Remover este produto/serviço do catálogo? O histórico de pedidos será preservado.')
+    const ok = window.confirm('Remover este produto/serviço?')
     if (!ok) return
 
-    const { error } = await supabase
-      .from('products')
-      .update({
-        ativo: false,
-        arquivado: true,
-        deleted_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .eq('company_id', company.id)
+    const { error } = await supabase.from('products').delete().eq('id', id)
 
     if (error) setErro(error.message)
     else {
-      setProducts((current) => current.filter((product) => product.id !== id))
-      setMessage('Produto removido do catálogo.')
+      setMessage('Produto removido.')
+      await carregar()
     }
   }
 
