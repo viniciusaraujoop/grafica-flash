@@ -206,7 +206,7 @@ export default function HomePage() {
   const perdaAnual = perdaMensal * 12
 
   return (
-    <main className="min-h-screen overflow-hidden bg-white pb-24 text-[#061a36] sm:pb-0" style={{ colorScheme: 'light' }}>
+    <main className="min-h-screen overflow-hidden bg-white text-[#061a36]" style={{ colorScheme: 'light' }}>
       <style>{`
         @keyframes orcalyFloat {
           0%, 100% { transform: translateY(0) rotate(0deg); }
@@ -246,31 +246,6 @@ export default function HomePage() {
         html {
           scroll-behavior: smooth;
         }
-
-
-        @media (max-width: 640px) {
-          .home-title {
-            font-size: clamp(2.25rem, 10.5vw, 3rem);
-            line-height: 1.02;
-            letter-spacing: -0.045em;
-          }
-
-          .home-heading {
-            font-size: clamp(2rem, 8.8vw, 2.65rem);
-            line-height: 1.06;
-            letter-spacing: -0.035em;
-          }
-
-          .home-subtitle {
-            font-size: 1rem;
-            line-height: 1.75rem;
-          }
-
-          section {
-            scroll-margin-top: 82px;
-          }
-        }
-
 
         @media (prefers-reduced-motion: reduce) {
           .orcaly-float,
@@ -325,7 +300,7 @@ export default function HomePage() {
           <div className="absolute bottom-[-260px] left-[-220px] h-[560px] w-[560px] rounded-full bg-[#fff4d6] blur-3xl" />
         </div>
 
-        <div className="relative mx-auto grid min-h-[calc(100vh-82px)] max-w-7xl items-center gap-10 px-4 py-10 sm:px-6 sm:py-16 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-20">
+        <div className="relative mx-auto grid min-h-[calc(100vh-82px)] max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-20">
           <div className="orcaly-slide text-center lg:text-left">
             <div className="mb-7 inline-flex max-w-full items-center gap-2 rounded-full border border-[#d7e3f3] bg-white px-4 py-2 shadow-sm">
               <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#22c55e]" />
@@ -334,11 +309,11 @@ export default function HomePage() {
               </span>
             </div>
 
-            <h1 className="home-title break-words text-[2.45rem] font-black leading-[1.02] tracking-[-0.045em] text-[#061a36] sm:text-6xl sm:leading-[0.98] sm:tracking-[-0.06em] lg:text-7xl">
+            <h1 className="text-5xl font-black leading-[0.96] tracking-[-0.065em] text-[#061a36] sm:text-6xl lg:text-7xl">
               Transforme pedidos, orçamentos e propostas em uma operação organizada.
             </h1>
 
-            <p className="home-subtitle mx-auto mt-6 max-w-3xl text-base font-semibold leading-7 text-[#4f6885] sm:mt-7 sm:text-xl sm:leading-8 lg:mx-0">
+            <p className="mx-auto mt-7 max-w-3xl text-lg font-semibold leading-8 text-[#4f6885] sm:text-xl lg:mx-0">
               O Orçaly ajuda empresas a receber pedidos, gerar orçamentos profissionais, acompanhar propostas e vender com mais controle em um só lugar.
             </p>
 
@@ -410,15 +385,15 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
                     {[
                       ['Pedidos', '28'],
                       ['Propostas', '13'],
                       ['Produção', '07'],
                     ].map(([label, value]) => (
-                      <div key={label} className="rounded-2xl bg-[#f5f8ff] p-3 sm:p-4">
-                        <p className="break-words text-[0.62rem] font-black uppercase tracking-[0.1em] text-[#607895] sm:text-xs sm:tracking-[0.14em]">{label}</p>
-                        <p className="mt-2 text-2xl font-black text-[#05245c] sm:text-3xl">{value}</p>
+                      <div key={label} className="rounded-2xl bg-[#f5f8ff] p-4">
+                        <p className="text-xs font-black uppercase tracking-[0.14em] text-[#607895]">{label}</p>
+                        <p className="mt-2 text-3xl font-black text-[#05245c]">{value}</p>
                       </div>
                     ))}
                   </div>
@@ -442,10 +417,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="dor" className="bg-white px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+      <section id="dor" className="bg-white px-4 py-20 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">A dor</p>
-          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+          <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
             Pedidos espalhados e orçamentos perdidos custam caro.
           </h2>
           <p className="mx-auto mt-5 max-w-3xl text-lg font-semibold leading-8 text-[#607895]">
@@ -464,10 +439,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="solucao" className="bg-[#05245c] px-4 py-14 sm:py-20 text-center text-white sm:px-6 lg:px-8">
+      <section id="solucao" className="bg-[#05245c] px-4 py-20 text-center text-white sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <p className="text-sm font-black uppercase tracking-[0.24em] text-[#b9d6ff]">A solução</p>
-          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] sm:text-5xl lg:text-6xl">
+          <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-black leading-tight tracking-[-0.04em] sm:text-6xl">
             O Orçaly organiza tudo, do primeiro pedido até a entrega.
           </h2>
 
@@ -487,11 +462,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="mockup" className="bg-[#f8fbff] px-4 py-14 sm:py-20 sm:px-6 lg:px-8">
+      <section id="mockup" className="bg-[#f8fbff] px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="text-center lg:text-left">
             <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Mockup do painel</p>
-            <h2 className="mt-4 home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+            <h2 className="mt-4 text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
               Um painel para ver o que entrou, o que foi aprovado e o que precisa sair.
             </h2>
             <p className="mt-5 text-lg font-semibold leading-8 text-[#607895]">
@@ -509,7 +484,7 @@ export default function HomePage() {
                 <span className="rounded-full bg-emerald-50 px-4 py-2 text-xs font-black text-emerald-700">Tudo salvo</span>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="mt-4 grid gap-3 sm:grid-cols-4">
                 {[
                   ['Novos pedidos', '12'],
                   ['Propostas abertas', '08'],
@@ -517,7 +492,7 @@ export default function HomePage() {
                   ['Em produção', '07'],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-2xl bg-white p-4">
-                    <p className="break-words text-[0.62rem] font-black uppercase tracking-[0.1em] text-[#607895] sm:text-xs sm:tracking-[0.14em]">{label}</p>
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-[#607895]">{label}</p>
                     <p className="mt-2 text-3xl font-black text-[#05245c]">{value}</p>
                   </div>
                 ))}
@@ -559,10 +534,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="link-proprio" className="bg-white px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+      <section id="link-proprio" className="bg-white px-4 py-20 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl rounded-[2.5rem] border border-[#d7e3f3] bg-[#f8fbff] p-8 shadow-2xl shadow-[#05245c]/10 sm:p-12">
           <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Link próprio por empresa</p>
-          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+          <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
             Cada empresa ganha um endereço profissional para vender melhor.
           </h2>
           <p className="mx-auto mt-5 max-w-3xl text-lg font-semibold leading-8 text-[#607895]">
@@ -583,10 +558,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="segmentos" className="bg-[#f8fbff] px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+      <section id="segmentos" className="bg-[#f8fbff] px-4 py-20 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Funciona para vários segmentos</p>
-          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+          <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
             Onde existe pedido, orçamento ou serviço, existe bagunça para organizar.
           </h2>
 
@@ -600,11 +575,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="simulador" className="bg-white px-4 py-14 sm:py-20 sm:px-6 lg:px-8">
+      <section id="simulador" className="bg-white px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div className="text-center lg:text-left">
             <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Simulador de oportunidade perdida</p>
-            <h2 className="mt-4 home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+            <h2 className="mt-4 text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
               Quanto custa perder orçamento por falta de organização?
             </h2>
             <p className="mt-5 text-lg font-semibold leading-8 text-[#607895]">
@@ -633,46 +608,46 @@ export default function HomePage() {
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div className="rounded-[1.5rem] bg-white p-5">
                 <p className="text-sm font-black uppercase tracking-[0.16em] text-[#607895]">Perda estimada/mês</p>
-                <p className="mt-2 text-3xl font-black text-[#05245c] sm:text-4xl">{formatMoney(perdaMensal)}</p>
+                <p className="mt-2 text-4xl font-black text-[#05245c]">{formatMoney(perdaMensal)}</p>
               </div>
               <div className="rounded-[1.5rem] bg-[#05245c] p-5 text-white">
                 <p className="text-sm font-black uppercase tracking-[0.16em] text-white/60">Perda estimada/ano</p>
-                <p className="mt-2 text-3xl font-black sm:text-4xl">{formatMoney(perdaAnual)}</p>
+                <p className="mt-2 text-4xl font-black">{formatMoney(perdaAnual)}</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="antes-depois" className="bg-[#05245c] px-4 py-14 sm:py-20 text-white sm:px-6 lg:px-8">
+      <section id="antes-depois" className="bg-[#05245c] px-4 py-20 text-white sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="text-center">
             <p className="text-sm font-black uppercase tracking-[0.24em] text-[#b9d6ff]">Antes e depois</p>
-            <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] sm:text-5xl lg:text-6xl">
+            <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-black leading-tight tracking-[-0.04em] sm:text-6xl">
               A diferença aparece no atendimento.
             </h2>
           </div>
 
           <div className="mt-10 overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 shadow-2xl shadow-black/10 backdrop-blur">
             <div className="grid grid-cols-2 border-b border-white/15 bg-white/10">
-              <div className="p-3 text-xs font-black uppercase tracking-[0.14em] text-white/60 sm:p-5 sm:text-sm sm:tracking-[0.18em]">Antes</div>
-              <div className="p-3 text-xs font-black uppercase tracking-[0.14em] text-[#b9ffd4] sm:p-5 sm:text-sm sm:tracking-[0.18em]">Depois do Orçaly</div>
+              <div className="p-5 text-sm font-black uppercase tracking-[0.18em] text-white/60">Antes</div>
+              <div className="p-5 text-sm font-black uppercase tracking-[0.18em] text-[#b9ffd4]">Depois do Orçaly</div>
             </div>
 
             {antesDepois.map(([antes, depois]) => (
               <div key={antes} className="grid grid-cols-2 border-b border-white/10 last:border-0">
-                <div className="break-words p-3 text-sm font-bold text-white/72 sm:p-5 sm:text-base">{antes}</div>
-                <div className="break-words p-3 text-sm font-black text-white sm:p-5 sm:text-base">{depois}</div>
+                <div className="p-5 font-bold text-white/72">{antes}</div>
+                <div className="p-5 font-black text-white">{depois}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="recursos" className="bg-white px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+      <section id="recursos" className="bg-white px-4 py-20 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Recursos principais</p>
-          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+          <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
             O que realmente ajuda a vender e operar melhor.
           </h2>
 
@@ -692,17 +667,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="como-funciona" className="bg-[#f8fbff] px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+      <section id="como-funciona" className="bg-[#f8fbff] px-4 py-20 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Como funciona</p>
-          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+          <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
             Em três passos, a empresa sai do improviso.
           </h2>
 
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {passos.map((passo) => (
               <article key={passo.numero} className="rounded-[2rem] border border-[#e5edf8] bg-white p-8 text-left shadow-xl shadow-[#05245c]/5">
-                <p className="text-4xl font-black text-[#05245c] sm:text-5xl">{passo.numero}</p>
+                <p className="text-5xl font-black text-[#05245c]">{passo.numero}</p>
                 <h3 className="mt-5 text-2xl font-black text-[#071b3a]">{passo.titulo}</h3>
                 <p className="mt-3 font-semibold leading-7 text-[#607895]">{passo.texto}</p>
               </article>
@@ -711,10 +686,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="planos" className="bg-white px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+      <section id="planos" className="bg-white px-4 py-20 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Planos</p>
-          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+          <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
             Comece simples e evolua conforme a operação cresce.
           </h2>
 
@@ -761,11 +736,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="faq" className="bg-[#f8fbff] px-4 py-14 sm:py-20 sm:px-6 lg:px-8">
+      <section id="faq" className="bg-[#f8fbff] px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
             <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">FAQ</p>
-            <h2 className="mt-4 home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+            <h2 className="mt-4 text-4xl font-black leading-tight tracking-[-0.04em] text-[#061a36] sm:text-6xl">
               Perguntas frequentes
             </h2>
           </div>
@@ -784,10 +759,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+      <section className="bg-white px-4 py-20 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl rounded-[2.5rem] border border-[#d7e3f3] bg-[#05245c] p-8 text-white shadow-2xl shadow-[#05245c]/20 sm:p-12">
-          <img src="/icone-orcaly.png" alt="Ícone Orçaly" className="mx-auto h-12 w-12 object-contain sm:h-16 sm:w-16" />
-          <h2 className="mt-6 home-heading text-3xl font-black leading-tight tracking-[-0.035em] sm:text-5xl lg:text-6xl">
+          <img src="/icone-orcaly.png" alt="Ícone Orçaly" className="mx-auto h-16 w-16 object-contain" />
+          <h2 className="mt-6 text-4xl font-black leading-tight tracking-[-0.04em] sm:text-6xl">
             Pronto para transformar pedidos em vendas organizadas?
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-lg font-semibold leading-8 text-white/75">
