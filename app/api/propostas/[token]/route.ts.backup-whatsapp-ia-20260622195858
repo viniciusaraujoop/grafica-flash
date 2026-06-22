@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { generatePixPayload, sanitizeTxid } from '@/lib/pix'
-import { notifyProposalAction } from '@/lib/whatsapp-notifications'
 
 type RouteContext = {
   params: Promise<{ token: string }>
@@ -392,18 +391,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
       const productionOrderId = await createProductionOrder(supabaseAdmin, data, config || {})
 
-      try {
-        await notifyProposalAction(supabaseAdmin, {
-          company: empresa,
-          proposal: data,
-          event: 'approved',
-          note: approvalNote || null,
-          pixValor: pixValor || null,
-        })
-      } catch (proposal_approved_whatsapp) {
-        console.error('[OrÃ§aly WhatsApp] Falha ao avisar proposta aprovada:', proposal_approved_whatsapp)
-      }
-
       return NextResponse.json({
         ok: true,
         status: data.status,
@@ -502,17 +489,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       })
 
       if (proposta.order_id) await supabaseAdmin.from('orders').update({ status: 'Proposta recusada' }).eq('id', proposta.order_id)
-
-      try {
-        await notifyProposalAction(supabaseAdmin, {
-          company: empresa,
-          proposal: data || proposta,
-          event: 'rejected',
-          note: reason,
-        })
-      } catch (proposal_rejected_whatsapp) {
-        console.error('[OrÃ§aly WhatsApp] Falha ao avisar recusa de proposta:', proposal_rejected_whatsapp)
-      }
 
       return NextResponse.json({ ok: true, status: data?.status, proposta: data })
     }

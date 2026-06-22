@@ -181,7 +181,7 @@ const planos = [
   {
     id: 'essencial',
     nome: 'Essencial',
-    preco: 'R$ 5,00',
+    preco: 'R$ 49,90',
     descricao: 'Site, catálogo e pedidos.',
   },
   {
@@ -194,7 +194,7 @@ const planos = [
   {
     id: 'premium',
     nome: 'Premium',
-    preco: 'R$ 15,00',
+    preco: 'R$ 149,90',
     descricao: 'Mais recursos para operação comercial.',
   },
 ]

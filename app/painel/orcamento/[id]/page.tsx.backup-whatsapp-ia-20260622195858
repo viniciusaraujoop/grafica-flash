@@ -174,29 +174,6 @@ export default function OrcamentoPedidoPage() {
     }
   }
 
-  async function notificarStatusPedido(novoStatus: string) {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const token = sessionData.session?.access_token
-      if (!token || !pedido?.id) return
-
-      await fetch('/api/whatsapp/order-status', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          order_id: pedido.id,
-          status: novoStatus,
-          source: 'pedido',
-        }),
-      })
-    } catch (error) {
-      console.error('[OrÃ§aly WhatsApp] Falha ao avisar status:', error)
-    }
-  }
-
   async function atualizarStatus(novoStatus: string) {
     if (!pedido) return
 
@@ -211,7 +188,6 @@ export default function OrcamentoPedidoPage() {
     }
 
     setPedido({ ...pedido, status: novoStatus })
-    await notificarStatusPedido(novoStatus)
     setMensagem('Status atualizado.')
   }
 

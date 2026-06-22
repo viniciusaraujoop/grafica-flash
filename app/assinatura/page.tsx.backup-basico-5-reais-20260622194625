@@ -31,7 +31,7 @@ type Plan = {
 const planos: Record<PlanoId, Plan> = {
   basico: {
     nome: 'Essencial',
-    valor: 5,
+    valor: 49.9,
     descricao: 'Página pública, formulário de orçamento e painel de pedidos.',
   },
   profissional: {

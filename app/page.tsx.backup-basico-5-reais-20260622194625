@@ -74,7 +74,7 @@ const passos = [
 const planos = [
   {
     nome: 'Essencial',
-    preco: 'R$ 5,00',
+    preco: 'R$ 49,90',
     descricao: 'Para começar a receber pedidos com organização.',
     recursos: [
       'Link empresa.orcaly.com.br',
@@ -101,7 +101,7 @@ const planos = [
   },
   {
     nome: 'Premium',
-    preco: 'R$ 15,00',
+    preco: 'R$ 149,90',
     descricao: 'Para empresas que querem automatizar atendimento e recuperar vendas.',
     recursos: [
       'Tudo do Profissional',

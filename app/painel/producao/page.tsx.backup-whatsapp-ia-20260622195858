@@ -170,29 +170,6 @@ export default function ProducaoPage() {
     return steps.filter((step) => step.production_order_id === orderId)
   }
 
-  async function notificarStatusProducao(id: string, status: string) {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const token = sessionData.session?.access_token
-      if (!token) return
-
-      await fetch('/api/whatsapp/order-status', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          production_order_id: id,
-          status: statusLabel(status),
-          source: 'producao',
-        }),
-      })
-    } catch (error) {
-      console.error('[OrÃ§aly WhatsApp] Falha ao avisar produÃ§Ã£o:', error)
-    }
-  }
-
   async function updateOrder(id: string, status: string) {
     const update: Record<string, any> = {
       status,

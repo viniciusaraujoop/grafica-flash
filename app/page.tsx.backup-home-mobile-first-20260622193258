@@ -1,0 +1,827 @@
+'use client'
+
+import Link from 'next/link'
+import { useMemo, useState } from 'react'
+
+const segmentos = [
+  'Gráficas e personalizados',
+  'Assistências técnicas',
+  'Salões e estética',
+  'Oficinas e automotivo',
+  'Docerias e encomendas',
+  'Serviços e reformas',
+  'Clínicas e consultórios',
+  'Agências e prestadores',
+]
+
+const dores = [
+  {
+    titulo: 'Pedidos espalhados no WhatsApp',
+    texto: 'Cliente manda áudio, foto, medida, muda de ideia e depois ninguém acha o que foi combinado.',
+  },
+  {
+    titulo: 'Orçamentos feitos no improviso',
+    texto: 'Preço solto no chat pode até funcionar, mas passa menos confiança e facilita a perda da venda.',
+  },
+  {
+    titulo: 'Sem histórico comercial',
+    texto: 'A empresa atende, negocia, promete retorno e depois perde oportunidades porque tudo ficou solto.',
+  },
+]
+
+const solucoes = [
+  {
+    titulo: 'Pedidos organizados',
+    texto: 'Cada solicitação entra com dados, arquivos, produto, observações e status em um painel simples.',
+  },
+  {
+    titulo: 'Propostas profissionais',
+    texto: 'O cliente recebe um link bonito para visualizar, aprovar, pedir alteração ou recusar o orçamento.',
+  },
+  {
+    titulo: 'Operação com controle',
+    texto: 'A empresa acompanha pedidos, propostas, clientes, produção e oportunidades sem depender de memória.',
+  },
+]
+
+const antesDepois = [
+  ['Pedido perdido no WhatsApp', 'Pedido salvo no painel'],
+  ['Orçamento feito manualmente', 'Proposta organizada'],
+  ['Cliente cobrando status', 'Cliente acompanha pelo link'],
+  ['Informações espalhadas', 'Tudo centralizado'],
+  ['Sem histórico', 'Histórico completo'],
+]
+
+const recursos = [
+  {
+    titulo: 'Página própria por empresa',
+    texto: 'Link profissional para colocar no Instagram, WhatsApp, cartão, QR Code e bio.',
+  },
+  {
+    titulo: 'Catálogo de produtos e serviços',
+    texto: 'Itens organizados com preços, categorias, descrições, imagens e opcionais.',
+  },
+  {
+    titulo: 'Formulário de orçamento',
+    texto: 'Cliente envia medidas, detalhes, arquivos e observações sem bagunçar o atendimento.',
+  },
+  {
+    titulo: 'Painel de pedidos',
+    texto: 'Tudo em um lugar: recebido, em análise, aprovado, produção, pronto e entregue.',
+  },
+  {
+    titulo: 'Propostas profissionais',
+    texto: 'Link de aprovação, assinatura, histórico e PIX de sinal para fechar com mais controle.',
+  },
+  {
+    titulo: 'Status do pedido',
+    texto: 'Acompanhe etapas e reduza aquele ritual humano de “e aí, ficou pronto?”.',
+  },
+  {
+    titulo: 'Upload de arquivos',
+    texto: 'Artes, fotos, referências e documentos vinculados ao pedido.',
+  },
+  {
+    titulo: 'Relatórios de oportunidades',
+    texto: 'Veja o que virou venda, o que ficou parado e onde há chance de recuperação.',
+  },
+]
+
+const passos = [
+  {
+    numero: '01',
+    titulo: 'Configure sua empresa',
+    texto: 'Adicione logo, categorias, produtos, serviços, cores e informações de atendimento.',
+  },
+  {
+    numero: '02',
+    titulo: 'Compartilhe seu link',
+    texto: 'Envie para clientes, coloque no Instagram, cartão, QR Code, anúncios ou WhatsApp.',
+  },
+  {
+    numero: '03',
+    titulo: 'Receba e acompanhe pedidos',
+    texto: 'Organize orçamentos, gere propostas, acompanhe status e transforme contato em venda.',
+  },
+]
+
+const planos = [
+  {
+    id: 'essencial',
+    nome: 'Essencial',
+    preco: 'R$ 49,90',
+    descricao: 'Para começar a receber pedidos com organização.',
+    destaque: false,
+    recursos: [
+      'Link empresa.orcaly.com.br',
+      'Página pública',
+      'Formulário de orçamento',
+      'Painel de pedidos',
+      'Botão WhatsApp',
+    ],
+  },
+  {
+    id: 'profissional',
+    nome: 'Profissional',
+    preco: 'R$ 99,90',
+    descricao: 'Para empresas que querem vender com mais controle.',
+    destaque: true,
+    recursos: [
+      'Tudo do Essencial',
+      'Catálogo completo',
+      'Propostas profissionais',
+      'Status do pedido',
+      'Upload de arquivos',
+      'Relatórios',
+    ],
+  },
+  {
+    id: 'premium',
+    nome: 'Premium',
+    preco: 'R$ 149,90',
+    descricao: 'Para empresas que querem automatizar atendimento e recuperar vendas.',
+    destaque: false,
+    recursos: [
+      'Tudo do Profissional',
+      'Recuperação de orçamento',
+      'Mensagens prontas',
+      'Domínio próprio',
+      'Automações',
+      'Recursos inteligentes',
+    ],
+  },
+]
+
+const faqs = [
+  {
+    pergunta: 'O Orçaly é só um site?',
+    resposta: 'Não. A página pública é a porta de entrada, mas o valor está no painel: pedidos, catálogo, propostas, clientes, produção, oportunidades e controle comercial.',
+  },
+  {
+    pergunta: 'Preciso saber programação?',
+    resposta: 'Não. A empresa configura textos, cores, produtos e informações pelo painel. O máximo de código que o cliente deveria ver é o do PIX, e olhe lá.',
+  },
+  {
+    pergunta: 'Serve para qualquer segmento?',
+    resposta: 'Sim. O Orçaly foi pensado para negócios que recebem pedidos, orçamentos, encomendas ou solicitações de serviço.',
+  },
+  {
+    pergunta: 'O cliente consegue aprovar orçamento pelo link?',
+    resposta: 'Sim. A proposta pode ter link público, aceite, assinatura, histórico, pedido de alteração e PIX de sinal.',
+  },
+  {
+    pergunta: 'Posso colocar o link no Instagram e WhatsApp?',
+    resposta: 'Sim. A ideia é que o link da empresa vire o centro do atendimento digital.',
+  },
+]
+
+function formatMoney(value: number) {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+function FloatingCard({ label, value, tone = 'blue' }: { label: string; value: string; tone?: 'blue' | 'green' | 'amber' }) {
+  const tones = {
+    blue: 'border-blue-100 bg-blue-50 text-[#05245c]',
+    green: 'border-emerald-100 bg-emerald-50 text-emerald-700',
+    amber: 'border-amber-100 bg-amber-50 text-amber-700',
+  }
+
+  return (
+    <div className={`orcaly-float rounded-2xl border px-4 py-3 shadow-xl shadow-blue-950/10 ${tones[tone]}`}>
+      <p className="text-xs font-black uppercase tracking-[0.16em] opacity-70">{label}</p>
+      <p className="mt-1 text-sm font-black">{value}</p>
+    </div>
+  )
+}
+
+export default function HomePage() {
+  const [pedidosMes, setPedidosMes] = useState(40)
+  const [ticketMedio, setTicketMedio] = useState(180)
+  const [taxaPerda, setTaxaPerda] = useState(25)
+
+  const perdaMensal = useMemo(() => {
+    return pedidosMes * ticketMedio * (taxaPerda / 100)
+  }, [pedidosMes, ticketMedio, taxaPerda])
+
+  const perdaAnual = perdaMensal * 12
+
+  return (
+    <main className="min-h-screen overflow-hidden bg-white pb-24 text-[#061a36] sm:pb-0" style={{ colorScheme: 'light' }}>
+      <style>{`
+        @keyframes orcalyFloat {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-12px) rotate(1deg); }
+        }
+
+        @keyframes orcalyPulse {
+          0%, 100% { transform: scale(1); opacity: .72; }
+          50% { transform: scale(1.08); opacity: 1; }
+        }
+
+        @keyframes orcalySlide {
+          0% { transform: translateX(-18px); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+
+        .orcaly-float {
+          animation: orcalyFloat 5.5s ease-in-out infinite;
+        }
+
+        .orcaly-float:nth-child(2) {
+          animation-delay: .8s;
+        }
+
+        .orcaly-float:nth-child(3) {
+          animation-delay: 1.4s;
+        }
+
+        .orcaly-pulse {
+          animation: orcalyPulse 4s ease-in-out infinite;
+        }
+
+        .orcaly-slide {
+          animation: orcalySlide .7s ease-out both;
+        }
+
+        html {
+          scroll-behavior: smooth;
+        }
+
+
+        @media (max-width: 640px) {
+          .home-title {
+            font-size: clamp(2.25rem, 10.5vw, 3rem);
+            line-height: 1.02;
+            letter-spacing: -0.045em;
+          }
+
+          .home-heading {
+            font-size: clamp(2rem, 8.8vw, 2.65rem);
+            line-height: 1.06;
+            letter-spacing: -0.035em;
+          }
+
+          .home-subtitle {
+            font-size: 1rem;
+            line-height: 1.75rem;
+          }
+
+          section {
+            scroll-margin-top: 82px;
+          }
+        }
+
+
+        @media (prefers-reduced-motion: reduce) {
+          .orcaly-float,
+          .orcaly-pulse,
+          .orcaly-slide {
+            animation: none;
+          }
+
+          html {
+            scroll-behavior: auto;
+          }
+        }
+      `}</style>
+
+      <header className="sticky top-0 z-50 border-b border-[#e5edf8] bg-white/92 shadow-sm shadow-[#05245c]/5 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex min-w-0 items-center gap-3" aria-label="Página inicial do Orçaly">
+            <img src="/logo-orcaly.png" alt="Orçaly" className="h-10 w-auto object-contain sm:h-12" />
+          </Link>
+
+          <nav className="hidden items-center gap-7 text-sm font-black text-[#526b88] xl:flex">
+            <a href="#dor" className="transition hover:text-[#05245c]">Dor</a>
+            <a href="#solucao" className="transition hover:text-[#05245c]">Solução</a>
+            <a href="#recursos" className="transition hover:text-[#05245c]">Recursos</a>
+            <a href="#como-funciona" className="transition hover:text-[#05245c]">Como funciona</a>
+            <a href="#planos" className="transition hover:text-[#05245c]">Planos</a>
+            <a href="#faq" className="transition hover:text-[#05245c]">FAQ</a>
+          </nav>
+
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <Link
+              href="/login"
+              className="rounded-2xl border border-[#d7e3f3] bg-white px-4 py-3 text-sm font-black text-[#05245c] shadow-sm transition hover:border-[#05245c] hover:bg-[#f5f8ff]"
+            >
+              Entrar
+            </Link>
+
+            <Link
+              href="/cadastro"
+              className="hidden rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#05245c]/20 transition hover:-translate-y-0.5 hover:bg-[#031a43] sm:inline-flex"
+            >
+              Começar agora
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <section className="relative overflow-hidden bg-[#f8fbff]">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-[-340px] h-[740px] w-[740px] -translate-x-1/2 rounded-full bg-[#dcecff] blur-3xl" />
+          <div className="absolute right-[-260px] top-[260px] h-[520px] w-[520px] rounded-full bg-[#dffbea] blur-3xl" />
+          <div className="absolute bottom-[-260px] left-[-220px] h-[560px] w-[560px] rounded-full bg-[#fff4d6] blur-3xl" />
+        </div>
+
+        <div className="relative mx-auto grid min-h-[calc(100vh-82px)] max-w-7xl items-center gap-10 px-4 py-10 sm:px-6 sm:py-16 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-20">
+          <div className="orcaly-slide text-center lg:text-left">
+            <div className="mb-7 inline-flex max-w-full items-center gap-2 rounded-full border border-[#d7e3f3] bg-white px-4 py-2 shadow-sm">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#22c55e]" />
+              <span className="truncate text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">
+                Pedidos, orçamentos, propostas e produção em um só lugar
+              </span>
+            </div>
+
+            <h1 className="home-title break-words text-[2.45rem] font-black leading-[1.02] tracking-[-0.045em] text-[#061a36] sm:text-6xl sm:leading-[0.98] sm:tracking-[-0.06em] lg:text-7xl">
+              Transforme pedidos, orçamentos e propostas em uma operação organizada.
+            </h1>
+
+            <p className="home-subtitle mx-auto mt-6 max-w-3xl text-base font-semibold leading-7 text-[#4f6885] sm:mt-7 sm:text-xl sm:leading-8 lg:mx-0">
+              O Orçaly ajuda empresas a receber pedidos, gerar orçamentos profissionais, acompanhar propostas e vender com mais controle em um só lugar.
+            </p>
+
+            <div className="mt-9 flex w-full flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+              <Link
+                href="/cadastro"
+                className="rounded-[1.4rem] bg-[#05245c] px-8 py-5 text-base font-black text-white shadow-2xl shadow-[#05245c]/25 transition hover:-translate-y-0.5 hover:bg-[#031a43]"
+              >
+                Começar agora
+              </Link>
+
+              <a
+                href="#como-funciona"
+                className="rounded-[1.4rem] border border-[#d7e3f3] bg-white px-8 py-5 text-base font-black text-[#05245c] shadow-xl shadow-[#05245c]/5 transition hover:-translate-y-0.5 hover:border-[#05245c]"
+              >
+                Ver como funciona
+              </a>
+            </div>
+
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3 text-sm font-black text-[#607895] lg:justify-start">
+              <span className="rounded-full bg-white px-4 py-2 shadow-sm">Link próprio</span>
+              <span className="rounded-full bg-white px-4 py-2 shadow-sm">Propostas com aceite</span>
+              <span className="rounded-full bg-white px-4 py-2 shadow-sm">Painel comercial</span>
+            </div>
+          </div>
+
+          <div className="relative mx-auto w-full max-w-[560px]">
+            <div className="orcaly-pulse absolute -right-8 -top-8 h-28 w-28 rounded-[2rem] bg-[#22c55e]/18 blur-xl" />
+            <div className="orcaly-pulse absolute -bottom-10 -left-8 h-32 w-32 rounded-[2rem] bg-[#05245c]/18 blur-xl" />
+
+            <div className="absolute -left-4 top-8 z-20 hidden sm:block">
+              <FloatingCard label="Novo orçamento" value="Cliente enviou medidas" />
+            </div>
+            <div className="absolute -right-2 top-32 z-20 hidden sm:block">
+              <FloatingCard label="Proposta aprovada" value="R$ 980,00 fechado" tone="green" />
+            </div>
+            <div className="absolute bottom-16 left-3 z-20 hidden sm:block">
+              <FloatingCard label="Pedido em produção" value="4 de 6 etapas" tone="amber" />
+            </div>
+
+            <div className="relative rounded-[2.4rem] border border-[#d7e3f3] bg-white p-4 shadow-2xl shadow-[#05245c]/14">
+              <div className="rounded-[1.9rem] bg-[#05245c] p-5 text-white">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-16 w-16 rounded-[1.4rem] bg-white shadow-xl">
+                      <div className="absolute left-1/2 top-3 h-5 w-8 -translate-x-1/2 rounded-full bg-[#05245c]" />
+                      <div className="absolute bottom-3 left-1/2 h-7 w-10 -translate-x-1/2 rounded-2xl bg-[#22c55e]" />
+                      <div className="absolute left-5 top-5 h-1.5 w-1.5 rounded-full bg-white" />
+                      <div className="absolute right-5 top-5 h-1.5 w-1.5 rounded-full bg-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-white/55">Mascote Orçaly</p>
+                      <p className="text-lg font-black">Operação no controle</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-full bg-white/10 px-3 py-2 text-xs font-black text-white/80">Ao vivo</div>
+                </div>
+
+                <div className="mt-6 rounded-[1.5rem] bg-white p-4 text-[#071b3a]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#607895]">Dashboard</p>
+                      <h2 className="mt-1 text-2xl font-black">Resumo comercial</h2>
+                    </div>
+                    <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-right">
+                      <p className="text-xs font-black text-emerald-700">Aprovado</p>
+                      <p className="text-lg font-black text-emerald-700">R$ 4.820</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+                    {[
+                      ['Pedidos', '28'],
+                      ['Propostas', '13'],
+                      ['Produção', '07'],
+                    ].map(([label, value]) => (
+                      <div key={label} className="rounded-2xl bg-[#f5f8ff] p-3 sm:p-4">
+                        <p className="break-words text-[0.62rem] font-black uppercase tracking-[0.1em] text-[#607895] sm:text-xs sm:tracking-[0.14em]">{label}</p>
+                        <p className="mt-2 text-2xl font-black text-[#05245c] sm:text-3xl">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-5 grid gap-3">
+                    {[
+                      ['Banner personalizado', 'Em análise', 'bg-blue-50 text-[#05245c]'],
+                      ['Catálogo de serviços', 'Proposta enviada', 'bg-amber-50 text-amber-700'],
+                      ['Pedido corporativo', 'Aprovado', 'bg-emerald-50 text-emerald-700'],
+                    ].map(([name, status, cls]) => (
+                      <div key={name} className="flex items-center justify-between rounded-2xl border border-[#e5edf8] bg-white p-3">
+                        <p className="font-black">{name}</p>
+                        <span className={`rounded-full px-3 py-1 text-xs font-black ${cls}`}>{status}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="dor" className="bg-white px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">A dor</p>
+          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+            Pedidos espalhados e orçamentos perdidos custam caro.
+          </h2>
+          <p className="mx-auto mt-5 max-w-3xl text-lg font-semibold leading-8 text-[#607895]">
+            A maioria das empresas não perde venda por falta de esforço. Perde porque informação, atendimento e follow-up ficam espalhados.
+          </p>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {dores.map((item) => (
+              <article key={item.titulo} className="rounded-[2rem] border border-[#e5edf8] bg-[#f8fbff] p-8 text-left shadow-xl shadow-[#05245c]/5">
+                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl font-black text-[#05245c] shadow-sm">!</div>
+                <h3 className="text-2xl font-black text-[#071b3a]">{item.titulo}</h3>
+                <p className="mt-3 font-semibold leading-7 text-[#607895]">{item.texto}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="solucao" className="bg-[#05245c] px-4 py-14 sm:py-20 text-center text-white sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-[#b9d6ff]">A solução</p>
+          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] sm:text-5xl lg:text-6xl">
+            O Orçaly organiza tudo, do primeiro pedido até a entrega.
+          </h2>
+
+          <div className="mt-10 grid gap-5 lg:grid-cols-3">
+            {solucoes.map((item) => (
+              <article key={item.titulo} className="rounded-[2rem] border border-white/15 bg-white/10 p-8 text-left shadow-xl shadow-black/10 backdrop-blur">
+                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-lg font-black text-[#05245c]">✓</div>
+                <h3 className="text-2xl font-black">{item.titulo}</h3>
+                <p className="mt-3 font-semibold leading-7 text-white/72">{item.texto}</p>
+              </article>
+            ))}
+          </div>
+
+          <p className="mx-auto mt-8 max-w-3xl rounded-[1.5rem] border border-white/15 bg-white/10 px-5 py-4 font-bold leading-7 text-white/80">
+            Em vez de depender de conversas soltas, a empresa ganha uma operação digital com site, catálogo, orçamento, proposta, aprovação, pagamento de sinal e produção.
+          </p>
+        </div>
+      </section>
+
+      <section id="mockup" className="bg-[#f8fbff] px-4 py-14 sm:py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="text-center lg:text-left">
+            <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Mockup do painel</p>
+            <h2 className="mt-4 home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+              Um painel para ver o que entrou, o que foi aprovado e o que precisa sair.
+            </h2>
+            <p className="mt-5 text-lg font-semibold leading-8 text-[#607895]">
+              A tela principal mostra pedidos, propostas, produção, clientes e oportunidades. Sem aquela caça ao tesouro dentro do WhatsApp.
+            </p>
+          </div>
+
+          <div className="rounded-[2.2rem] border border-[#d7e3f3] bg-white p-4 shadow-2xl shadow-[#05245c]/12">
+            <div className="rounded-[1.7rem] bg-[#f5f8ff] p-5">
+              <div className="flex items-center justify-between rounded-2xl bg-white p-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#607895]">Painel Orçaly</p>
+                  <p className="mt-1 text-2xl font-black text-[#071b3a]">Hoje na operação</p>
+                </div>
+                <span className="rounded-full bg-emerald-50 px-4 py-2 text-xs font-black text-emerald-700">Tudo salvo</span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  ['Novos pedidos', '12'],
+                  ['Propostas abertas', '08'],
+                  ['Aprovadas', '05'],
+                  ['Em produção', '07'],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-2xl bg-white p-4">
+                    <p className="break-words text-[0.62rem] font-black uppercase tracking-[0.1em] text-[#607895] sm:text-xs sm:tracking-[0.14em]">{label}</p>
+                    <p className="mt-2 text-3xl font-black text-[#05245c]">{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_0.8fr]">
+                <div className="rounded-2xl bg-white p-4">
+                  <p className="font-black text-[#071b3a]">Funil de propostas</p>
+                  <div className="mt-4 space-y-3">
+                    {[
+                      ['Enviadas', '78%'],
+                      ['Visualizadas', '63%'],
+                      ['Aprovadas', '41%'],
+                    ].map(([label, width]) => (
+                      <div key={label}>
+                        <div className="flex justify-between text-xs font-black text-[#607895]">
+                          <span>{label}</span>
+                          <span>{width}</span>
+                        </div>
+                        <div className="mt-2 h-3 rounded-full bg-[#edf4ff]">
+                          <div className="h-3 rounded-full bg-[#05245c]" style={{ width }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-white p-4">
+                  <p className="font-black text-[#071b3a]">Próximas ações</p>
+                  <div className="mt-4 space-y-3">
+                    {['Responder alteração', 'Cobrar proposta vista', 'Finalizar pedido pronto'].map((item) => (
+                      <div key={item} className="rounded-xl bg-[#f5f8ff] px-3 py-3 text-sm font-black text-[#05245c]">{item}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="link-proprio" className="bg-white px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl rounded-[2.5rem] border border-[#d7e3f3] bg-[#f8fbff] p-8 shadow-2xl shadow-[#05245c]/10 sm:p-12">
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Link próprio por empresa</p>
+          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+            Cada empresa ganha um endereço profissional para vender melhor.
+          </h2>
+          <p className="mx-auto mt-5 max-w-3xl text-lg font-semibold leading-8 text-[#607895]">
+            Use no Instagram, WhatsApp, cartão, QR Code, anúncio e assinatura de e-mail. O cliente acessa, escolhe, pede orçamento e acompanha pelo link.
+          </p>
+
+          <div className="mx-auto mt-8 max-w-3xl rounded-[1.8rem] border border-[#d7e3f3] bg-white p-4 text-left shadow-xl shadow-[#05245c]/8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#607895]">Exemplo</p>
+                <p className="mt-1 break-all text-2xl font-black text-[#05245c]">empresa.orcaly.com.br</p>
+              </div>
+              <Link href="/cadastro" className="rounded-2xl bg-[#05245c] px-5 py-4 text-center font-black text-white">
+                Solicitar meu link
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="segmentos" className="bg-[#f8fbff] px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Funciona para vários segmentos</p>
+          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+            Onde existe pedido, orçamento ou serviço, existe bagunça para organizar.
+          </h2>
+
+          <div className="mt-10 flex flex-wrap justify-center gap-3">
+            {segmentos.map((segmento) => (
+              <span key={segmento} className="rounded-full border border-[#d7e3f3] bg-white px-5 py-3 text-sm font-black text-[#05245c] shadow-sm">
+                {segmento}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="simulador" className="bg-white px-4 py-14 sm:py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div className="text-center lg:text-left">
+            <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Simulador de oportunidade perdida</p>
+            <h2 className="mt-4 home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+              Quanto custa perder orçamento por falta de organização?
+            </h2>
+            <p className="mt-5 text-lg font-semibold leading-8 text-[#607895]">
+              Ajuste os números e veja uma estimativa simples. Não é previsão financeira, é só um lembrete elegante de que desorganização também manda boleto.
+            </p>
+          </div>
+
+          <div className="rounded-[2rem] border border-[#d7e3f3] bg-[#f8fbff] p-6 shadow-2xl shadow-[#05245c]/10">
+            <div className="grid gap-5">
+              <label className="grid gap-3">
+                <span className="font-black text-[#071b3a]">Pedidos/orçamentos por mês: {pedidosMes}</span>
+                <input min={5} max={300} type="range" value={pedidosMes} onChange={(event) => setPedidosMes(Number(event.target.value))} />
+              </label>
+
+              <label className="grid gap-3">
+                <span className="font-black text-[#071b3a]">Ticket médio: {formatMoney(ticketMedio)}</span>
+                <input min={50} max={2500} step={10} type="range" value={ticketMedio} onChange={(event) => setTicketMedio(Number(event.target.value))} />
+              </label>
+
+              <label className="grid gap-3">
+                <span className="font-black text-[#071b3a]">Oportunidades perdidas: {taxaPerda}%</span>
+                <input min={5} max={70} type="range" value={taxaPerda} onChange={(event) => setTaxaPerda(Number(event.target.value))} />
+              </label>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-[1.5rem] bg-white p-5">
+                <p className="text-sm font-black uppercase tracking-[0.16em] text-[#607895]">Perda estimada/mês</p>
+                <p className="mt-2 text-3xl font-black text-[#05245c] sm:text-4xl">{formatMoney(perdaMensal)}</p>
+              </div>
+              <div className="rounded-[1.5rem] bg-[#05245c] p-5 text-white">
+                <p className="text-sm font-black uppercase tracking-[0.16em] text-white/60">Perda estimada/ano</p>
+                <p className="mt-2 text-3xl font-black sm:text-4xl">{formatMoney(perdaAnual)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="antes-depois" className="bg-[#05245c] px-4 py-14 sm:py-20 text-white sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center">
+            <p className="text-sm font-black uppercase tracking-[0.24em] text-[#b9d6ff]">Antes e depois</p>
+            <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] sm:text-5xl lg:text-6xl">
+              A diferença aparece no atendimento.
+            </h2>
+          </div>
+
+          <div className="mt-10 overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 shadow-2xl shadow-black/10 backdrop-blur">
+            <div className="grid grid-cols-2 border-b border-white/15 bg-white/10">
+              <div className="p-3 text-xs font-black uppercase tracking-[0.14em] text-white/60 sm:p-5 sm:text-sm sm:tracking-[0.18em]">Antes</div>
+              <div className="p-3 text-xs font-black uppercase tracking-[0.14em] text-[#b9ffd4] sm:p-5 sm:text-sm sm:tracking-[0.18em]">Depois do Orçaly</div>
+            </div>
+
+            {antesDepois.map(([antes, depois]) => (
+              <div key={antes} className="grid grid-cols-2 border-b border-white/10 last:border-0">
+                <div className="break-words p-3 text-sm font-bold text-white/72 sm:p-5 sm:text-base">{antes}</div>
+                <div className="break-words p-3 text-sm font-black text-white sm:p-5 sm:text-base">{depois}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="recursos" className="bg-white px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Recursos principais</p>
+          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+            O que realmente ajuda a vender e operar melhor.
+          </h2>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+            {recursos.map((recurso) => (
+              <article key={recurso.titulo} className="rounded-[2rem] border border-[#e5edf8] bg-[#f8fbff] p-6 text-left shadow-lg shadow-[#05245c]/5 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#05245c]/10">
+                <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-sm font-black text-[#05245c] shadow-sm">✓</div>
+                <h3 className="text-xl font-black text-[#071b3a]">{recurso.titulo}</h3>
+                <p className="mt-3 text-sm font-semibold leading-6 text-[#607895]">{recurso.texto}</p>
+              </article>
+            ))}
+          </div>
+
+          <p className="mx-auto mt-8 max-w-3xl rounded-[1.5rem] border border-[#d7e3f3] bg-[#f8fbff] px-5 py-4 font-bold leading-7 text-[#526b88]">
+            Evoluindo para automações, pagamentos, recuperação de orçamento e inteligência comercial.
+          </p>
+        </div>
+      </section>
+
+      <section id="como-funciona" className="bg-[#f8fbff] px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Como funciona</p>
+          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+            Em três passos, a empresa sai do improviso.
+          </h2>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {passos.map((passo) => (
+              <article key={passo.numero} className="rounded-[2rem] border border-[#e5edf8] bg-white p-8 text-left shadow-xl shadow-[#05245c]/5">
+                <p className="text-4xl font-black text-[#05245c] sm:text-5xl">{passo.numero}</p>
+                <h3 className="mt-5 text-2xl font-black text-[#071b3a]">{passo.titulo}</h3>
+                <p className="mt-3 font-semibold leading-7 text-[#607895]">{passo.texto}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="planos" className="bg-white px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">Planos</p>
+          <h2 className="mx-auto mt-4 max-w-4xl home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+            Comece simples e evolua conforme a operação cresce.
+          </h2>
+
+          <div className="mt-10 grid gap-5 lg:grid-cols-3">
+            {planos.map((plano) => (
+              <article
+                key={plano.id}
+                className={`relative rounded-[2rem] border p-7 text-left shadow-xl transition hover:-translate-y-1 ${
+                  plano.destaque
+                    ? 'border-[#05245c] bg-[#05245c] text-white shadow-[#05245c]/20'
+                    : 'border-[#e5edf8] bg-[#f8fbff] text-[#071b3a] shadow-[#05245c]/5'
+                }`}
+              >
+                {plano.destaque && (
+                  <span className="mb-4 inline-flex rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-[#05245c]">
+                    Mais escolhido
+                  </span>
+                )}
+
+                <h3 className="text-3xl font-black">{plano.nome}</h3>
+                <p className={`mt-2 font-semibold leading-7 ${plano.destaque ? 'text-white/72' : 'text-[#607895]'}`}>{plano.descricao}</p>
+                <p className="mt-6 text-4xl font-black">{plano.preco}<span className={`text-base ${plano.destaque ? 'text-white/60' : 'text-[#607895]'}`}>/mês</span></p>
+
+                <div className="mt-6 grid gap-3">
+                  {plano.recursos.map((recurso) => (
+                    <div key={recurso} className={`flex gap-3 rounded-2xl px-4 py-3 text-sm font-black ${plano.destaque ? 'bg-white/10 text-white' : 'bg-white text-[#05245c]'}`}>
+                      <span>✓</span>
+                      <span>{recurso}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Link
+                  href="/cadastro"
+                  className={`mt-7 inline-flex w-full justify-center rounded-2xl px-5 py-4 font-black ${
+                    plano.destaque ? 'bg-white text-[#05245c]' : 'bg-[#05245c] text-white'
+                  }`}
+                >
+                  Solicitar acesso antecipado
+                </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="bg-[#f8fbff] px-4 py-14 sm:py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <div className="text-center">
+            <p className="text-sm font-black uppercase tracking-[0.24em] text-[#05245c]">FAQ</p>
+            <h2 className="mt-4 home-heading text-3xl font-black leading-tight tracking-[-0.035em] text-[#061a36] sm:text-5xl lg:text-6xl">
+              Perguntas frequentes
+            </h2>
+          </div>
+
+          <div className="mt-10 grid gap-4">
+            {faqs.map((faq) => (
+              <details key={faq.pergunta} className="group rounded-[1.5rem] border border-[#e5edf8] bg-white p-6 shadow-lg shadow-[#05245c]/5">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left text-xl font-black text-[#071b3a]">
+                  {faq.pergunta}
+                  <span className="rounded-full bg-[#f5f8ff] px-3 py-1 text-[#05245c] transition group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-4 font-semibold leading-7 text-[#607895]">{faq.resposta}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white px-4 py-14 sm:py-20 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl rounded-[2.5rem] border border-[#d7e3f3] bg-[#05245c] p-8 text-white shadow-2xl shadow-[#05245c]/20 sm:p-12">
+          <img src="/icone-orcaly.png" alt="Ícone Orçaly" className="mx-auto h-12 w-12 object-contain sm:h-16 sm:w-16" />
+          <h2 className="mt-6 home-heading text-3xl font-black leading-tight tracking-[-0.035em] sm:text-5xl lg:text-6xl">
+            Pronto para transformar pedidos em vendas organizadas?
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-lg font-semibold leading-8 text-white/75">
+            Comece com uma página própria, receba orçamentos e acompanhe cada oportunidade em um só lugar.
+          </p>
+
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href="/cadastro" className="rounded-[1.4rem] bg-white px-8 py-5 font-black text-[#05245c] shadow-xl shadow-black/10">
+              Solicitar acesso antecipado
+            </Link>
+            <a href="#planos" className="rounded-[1.4rem] border border-white/20 bg-white/10 px-8 py-5 font-black text-white">
+              Ver planos
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-[#e5edf8] bg-white px-4 py-8 text-center">
+        <img src="/logo-orcaly.png" alt="Orçaly" className="mx-auto h-10 w-auto object-contain" />
+        <p className="mx-auto mt-4 max-w-2xl text-sm font-bold leading-6 text-[#607895]">
+          Orçaly, pedidos inteligentes, propostas profissionais e operação organizada para empresas que querem vender melhor.
+        </p>
+      </footer>
+
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[#d7e3f3] bg-white/95 p-3 shadow-2xl shadow-[#05245c]/15 backdrop-blur sm:hidden">
+        <div className="grid grid-cols-2 gap-2">
+          <a href="#como-funciona" className="rounded-2xl border border-[#d7e3f3] bg-white px-4 py-3 text-center text-sm font-black text-[#05245c]">
+            Como funciona
+          </a>
+          <Link href="/cadastro" className="rounded-2xl bg-[#05245c] px-4 py-3 text-center text-sm font-black text-white">
+            Começar
+          </Link>
+        </div>
+      </div>
+    </main>
+  )
+}
