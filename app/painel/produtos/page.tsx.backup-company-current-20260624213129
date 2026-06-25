@@ -190,13 +190,20 @@ export default function ProdutosPage() {
       return
     }
 
-    let empresaData: Empresa
+    const { data: empresaData, error: empresaError } = await supabase
+      .from('companies')
+      .select('id, nome, slug')
+      .or(`owner_id.eq.${usuario.id},tester_id.eq.${usuario.id}`)
+      .maybeSingle()
 
-    try {
-      const current = await getCurrentCompanyClient()
-      empresaData = current.company as Empresa
-    } catch (error) {
-      setMensagem(error instanceof Error ? error.message : 'Nenhuma empresa vinculada a esta conta.')
+    if (empresaError) {
+      setMensagem(`Erro ao buscar empresa: ${empresaError.message}`)
+      setCarregando(false)
+      return
+    }
+
+    if (!empresaData) {
+      setMensagem('Nenhuma empresa vinculada a esta conta.')
       setCarregando(false)
       return
     }

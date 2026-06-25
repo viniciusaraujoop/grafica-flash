@@ -17,6 +17,24 @@ export async function GET(request: NextRequest) {
 
     const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
 
+    if (!access.company?.id) {
+      return NextResponse.json({
+        company: null,
+        role: access.role,
+        assinatura_ativa: false,
+        is_admin_master: access.isAdminMaster,
+        permissions: {
+          is_owner: access.isOwner,
+          can_manage: access.canManage,
+          can_finance: access.canFinance,
+          can_config: access.canConfig,
+          can_products: access.canProducts,
+          can_proposal: access.canProposal,
+          can_subscription: access.canSubscription,
+        },
+      })
+    }
+
     return NextResponse.json({
       user: {
         id: requester.id,
@@ -34,11 +52,12 @@ export async function GET(request: NextRequest) {
         can_products: access.canProducts,
         can_proposal: access.canProposal,
         can_subscription: access.canSubscription,
-        can_production: access.canProduction,
       },
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erro ao buscar empresa atual.'
+    const message =
+      error instanceof Error ? error.message : 'Erro ao buscar empresa atual.'
+
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

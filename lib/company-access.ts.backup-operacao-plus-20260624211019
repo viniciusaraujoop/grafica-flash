@@ -1,20 +1,27 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 
-export type CurrentRole =
-  | 'dono'
-  | 'gerente'
-  | 'atendente'
-  | 'producao'
-  | 'super_admin'
-  | 'funcionario'
+export type CurrentRole = 'dono' | 'gerente' | 'atendente' | 'producao' | 'super_admin' | 'funcionario'
+
+export type CurrentCompanyAccess = {
+  company: any | null
+  role: CurrentRole | null
+  isOwner: boolean
+  isAdminMaster: boolean
+  canManage: boolean
+  canFinance: boolean
+  canConfig: boolean
+  canProducts: boolean
+  canProposal: boolean
+  canSubscription: boolean
+}
 
 export function getSupabaseAdmin() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('VariÃƒÂ¡veis do Supabase nÃƒÂ£o configuradas no servidor.')
+    throw new Error('Variáveis do Supabase não configuradas no servidor.')
   }
 
   return createClient(supabaseUrl, serviceRoleKey, {
@@ -46,15 +53,18 @@ export function assinaturaEstaAtiva(company: any | null) {
   if (!company) return false
   if (company.assinatura_status !== 'ativa') return false
   if (!company.assinatura_expira_em) return true
-  return new Date(company.assinatura_expira_em) > new Date()
+
+  const expiresAt = new Date(company.assinatura_expira_em)
+  return expiresAt > new Date()
 }
 
 export function permissionsByRole(role: CurrentRole | null, isAdminMaster = false) {
-  const r = String(role || '').toLowerCase()
-  const isOwner = r === 'dono'
-  const isManager = r === 'gerente'
-  const isAttendant = r === 'atendente'
-  const isProduction = r === 'producao'
+  const normalizedRole = String(role || '').toLowerCase()
+
+  const isOwner = normalizedRole === 'dono'
+  const isManager = normalizedRole === 'gerente'
+  const isAttendant = normalizedRole === 'atendente'
+  const isProduction = normalizedRole === 'producao'
 
   return {
     isOwner,
@@ -65,7 +75,6 @@ export function permissionsByRole(role: CurrentRole | null, isAdminMaster = fals
     canProducts: isAdminMaster || isOwner || isManager || isProduction,
     canProposal: isAdminMaster || isOwner || isManager || isAttendant,
     canSubscription: isAdminMaster || isOwner || isManager,
-    canProduction: isAdminMaster || isOwner || isManager || isProduction,
   }
 }
 
@@ -73,12 +82,17 @@ export async function getCompanyAccess(
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
   email?: string | null
-) {
+): Promise<CurrentCompanyAccess> {
   const normalizedEmail = String(email || '').toLowerCase()
   const isAdminMaster = normalizedEmail === 'araujovinicius249@gmail.com'
 
   if (!isUuid(userId)) {
-    return { company: null, role: null, ...permissionsByRole(null, isAdminMaster) }
+    return {
+      company: null,
+      role: null,
+      isAdminMaster,
+      ...permissionsByRole(null, isAdminMaster),
+    }
   }
 
   const { data: ownerCompany, error: ownerError } = await supabaseAdmin
@@ -94,6 +108,7 @@ export async function getCompanyAccess(
     return {
       company: ownerCompany,
       role: isAdminMaster ? 'super_admin' : 'dono',
+      isAdminMaster,
       ...permissionsByRole('dono', isAdminMaster),
     }
   }
@@ -109,7 +124,7 @@ export async function getCompanyAccess(
   if (memberError) throw memberError
 
   if (member?.company_id && isUuid(member.company_id)) {
-    const { data: company, error: companyError } = await supabaseAdmin
+    const { data: memberCompany, error: companyError } = await supabaseAdmin
       .from('companies')
       .select('*')
       .eq('id', member.company_id)
@@ -118,7 +133,13 @@ export async function getCompanyAccess(
     if (companyError) throw companyError
 
     const role = (member.cargo || 'funcionario') as CurrentRole
-    return { company, role, ...permissionsByRole(role, isAdminMaster) }
+
+    return {
+      company: memberCompany,
+      role,
+      isAdminMaster,
+      ...permissionsByRole(role, isAdminMaster),
+    }
   }
 
   if (isAdminMaster) {
@@ -131,9 +152,19 @@ export async function getCompanyAccess(
     if (adminCompanyError) throw adminCompanyError
 
     if (adminCompany?.id) {
-      return { company: adminCompany, role: 'super_admin', ...permissionsByRole('dono', true) }
+      return {
+        company: adminCompany,
+        role: 'super_admin',
+        isAdminMaster,
+        ...permissionsByRole('dono', true),
+      }
     }
   }
 
-  return { company: null, role: null, ...permissionsByRole(null, isAdminMaster) }
+  return {
+    company: null,
+    role: null,
+    isAdminMaster,
+    ...permissionsByRole(null, isAdminMaster),
+  }
 }

@@ -1,11 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-
-type PlanoId = 'basico' | 'profissional' | 'premium'
 
 type Empresa = {
   id: string
@@ -15,54 +13,50 @@ type Empresa = {
   assinatura_plano: string | null
   assinatura_status: string | null
   assinatura_expira_em: string | null
-  assinatura_auto_recorrente: boolean | null
-  assinatura_checkout_url: string | null
-  assinatura_proxima_cobranca: string | null
-  mercado_pago_subscription_id: string | null
-  mercado_pago_subscription_status: string | null
+  ativo: boolean | null
 }
 
-type Plan = {
-  nome: string
-  valor: number
-  descricao: string
-}
+type PlanoId = 'basico' | 'profissional' | 'premium'
 
-const planos: Record<PlanoId, Plan> = {
+const planos: Record<
+  PlanoId,
+  { nome: string; preco: string; valor: number; descricao: string }
+> = {
   basico: {
     nome: 'Essencial',
-    valor: 5,
-    descricao: 'Página pública, formulário de orçamento e painel de pedidos.',
+    preco: 'R$ 49,90/mês',
+    valor: 49.9,
+    descricao: 'Catálogo, página pública, formulário de orçamento e painel de pedidos.',
   },
   profissional: {
     nome: 'Profissional',
+    preco: 'R$ 99,90/mês',
     valor: 99.9,
     descricao: 'Catálogo completo, propostas profissionais, status e relatórios.',
   },
   premium: {
     nome: 'Premium',
+    preco: 'R$ 149,90/mês',
     valor: 149.9,
     descricao: 'Automações, recuperação de orçamento e recursos inteligentes.',
   },
 }
 
-function normalizarPlano(value: unknown): PlanoId {
-  if (value === 'basico' || value === 'profissional' || value === 'premium') return value
-  return 'profissional'
-}
+function assinaturaEstaAtiva(empresa: Empresa | null) {
+  if (!empresa) return false
+  if (empresa.assinatura_status !== 'ativa') return false
+  if (!empresa.assinatura_expira_em) return true
 
-function formatMoney(value: number) {
-  return value.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
+  const agora = new Date()
+  const expiraEm = new Date(empresa.assinatura_expira_em)
+
+  return expiraEm > agora
 }
 
 function formatarData(data: string | null | undefined) {
   if (!data) return 'Não informado'
 
   const parsed = new Date(data)
-
   if (Number.isNaN(parsed.getTime())) return 'Não informado'
 
   return parsed.toLocaleDateString('pt-BR', {
@@ -72,145 +66,139 @@ function formatarData(data: string | null | undefined) {
   })
 }
 
-function assinaturaEstaAtiva(empresa: Empresa | null) {
-  if (!empresa) return false
-  if (empresa.assinatura_status !== 'ativa') return false
-  if (!empresa.assinatura_expira_em) return true
-
-  return new Date(empresa.assinatura_expira_em) > new Date()
-}
-
 export default function AssinaturaPage() {
   const router = useRouter()
 
   const [empresa, setEmpresa] = useState<Empresa | null>(null)
+  const [emailUsuario, setEmailUsuario] = useState('')
   const [role, setRole] = useState('')
-  const [canManage, setCanManage] = useState(false)
-  const [token, setToken] = useState('')
-  const [planoSelecionado, setPlanoSelecionado] = useState<PlanoId>('profissional')
+  const [canSubscription, setCanSubscription] = useState(false)
+  const [planoSelecionado, setPlanoSelecionado] =
+    useState<PlanoId>('profissional')
   const [carregando, setCarregando] = useState(true)
-  const [processando, setProcessando] = useState(false)
+  const [pagando, setPagando] = useState(false)
   const [mensagem, setMensagem] = useState('')
-  const [erro, setErro] = useState('')
-
-  const planoAtual = planos[planoSelecionado]
-  const ativa = assinaturaEstaAtiva(empresa)
-
-  const statusLabel = useMemo(() => {
-    if (!empresa) return 'Carregando'
-    if (empresa.assinatura_status === 'ativa' && empresa.assinatura_auto_recorrente) return 'Recorrência ativa'
-    if (empresa.assinatura_status === 'ativa') return 'Ativa'
-    if (empresa.assinatura_status === 'pendente') return 'Pendente'
-    if (empresa.assinatura_status === 'cancelada') return 'Cancelada'
-    if (empresa.assinatura_status === 'pausada') return 'Pausada'
-    return empresa.assinatura_status || 'Pendente'
-  }, [empresa])
 
   async function carregarAssinatura() {
     setCarregando(true)
     setMensagem('')
-    setErro('')
 
     const { data: sessaoData } = await supabase.auth.getSession()
-    const accessToken = sessaoData.session?.access_token
+    const usuario = sessaoData.session?.user
+    const token = sessaoData.session?.access_token
 
-    if (!accessToken) {
+    if (!usuario || !token) {
       router.push('/login')
       return
     }
 
-    setToken(accessToken)
+    setEmailUsuario(usuario.email || '')
 
-    const resposta = await fetch('/api/company/subscription', {
+    const response = await fetch('/api/company/current', {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${token}`,
       },
     })
 
-    const dados = await resposta.json()
+    const payload = await response.json()
 
-    if (!resposta.ok) {
-      setErro(dados.error || 'Erro ao carregar assinatura.')
+    if (!response.ok) {
+      setMensagem(payload.error || 'Erro ao buscar assinatura.')
       setCarregando(false)
       return
     }
 
-    const loadedCompany = dados.company as Empresa
-    const plano = normalizarPlano(loadedCompany.assinatura_plano || loadedCompany.plano)
+    if (!payload.company?.id) {
+      setMensagem('Nenhuma empresa encontrada para esta conta.')
+      setCarregando(false)
+      return
+    }
 
-    setEmpresa(loadedCompany)
-    setRole(dados.role || '')
-    setCanManage(Boolean(dados.can_manage))
-    setPlanoSelecionado(plano)
+    const empresaCarregada = payload.company as Empresa
+    setEmpresa(empresaCarregada)
+    setRole(payload.role || '')
+    setCanSubscription(Boolean(payload.permissions?.can_subscription))
+
+    const planoAtual = String(
+      empresaCarregada.assinatura_plano ||
+        empresaCarregada.plano ||
+        'profissional'
+    ) as PlanoId
+
+    if (planos[planoAtual]) {
+      setPlanoSelecionado(planoAtual)
+    }
+
     setCarregando(false)
   }
 
-  async function executarAcao(action: 'create' | 'renew' | 'sync' | 'cancel') {
-    if (!token) return
+  async function pagarPlano() {
+    if (!empresa) return
 
-    if (action === 'cancel') {
-      const confirmar = window.confirm('Cancelar a assinatura automática desta empresa?')
-      if (!confirmar) return
-    }
-
-    setProcessando(true)
-    setMensagem('')
-    setErro('')
-
-    const resposta = await fetch('/api/company/subscription', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action,
-        plano: planoSelecionado,
-      }),
-    })
-
-    const dados = await resposta.json()
-
-    if (!resposta.ok) {
-      setErro(dados.error || 'Erro ao processar assinatura.')
-      setProcessando(false)
+    if (!canSubscription) {
+      setMensagem('Apenas dono ou gerente pode renovar, cancelar ou pagar assinatura.')
       return
     }
 
-    if ((action === 'create' || action === 'renew') && dados.checkout_url) {
-      window.location.href = dados.checkout_url
-      return
+    setPagando(true)
+    setMensagem('Gerando checkout...')
+
+    try {
+      const resposta = await fetch('/api/checkout/plano', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          companyId: empresa.id,
+          email: empresa.email || emailUsuario,
+          nomeEmpresa: empresa.nome,
+          plano: planoSelecionado,
+        }),
+      })
+
+      const data = await resposta.json()
+
+      if (!resposta.ok) {
+        setMensagem(data.error || 'Erro ao gerar pagamento.')
+        setPagando(false)
+        return
+      }
+
+      const checkoutUrl = data.checkout_url || data.init_point || data.sandbox_init_point
+
+      if (!checkoutUrl) {
+        setMensagem('Checkout gerado, mas URL de pagamento não foi retornada.')
+        setPagando(false)
+        return
+      }
+
+      window.location.href = checkoutUrl
+    } catch (error) {
+      const texto =
+        error instanceof Error ? error.message : 'Erro desconhecido ao pagar plano.'
+
+      setMensagem(`Erro: ${texto}`)
+      setPagando(false)
     }
-
-    if (dados.company) {
-      setEmpresa(dados.company)
-    }
-
-    setMensagem(
-      action === 'cancel'
-        ? 'Assinatura cancelada.'
-        : action === 'sync'
-          ? 'Status atualizado.'
-          : 'Assinatura atualizada.'
-    )
-
-    setProcessando(false)
-  }
-
-  async function sair() {
-    await supabase.auth.signOut()
-    router.push('/login')
   }
 
   useEffect(() => {
     carregarAssinatura()
   }, [])
 
+  const planoAtual = planos[planoSelecionado]
+  const ativa = assinaturaEstaAtiva(empresa)
+
   if (carregando) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f8fbff] px-4">
         <div className="rounded-[2rem] border border-blue-100 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
-          <img src="/logo-orcaly.png" alt="Orçaly" className="mx-auto mb-6 h-14 w-auto object-contain" />
+          <img
+            src="/logo-orcaly.png"
+            alt="Orçaly"
+            className="mx-auto mb-6 h-14 w-auto object-contain"
+          />
           <p className="font-bold text-slate-500">Carregando assinatura...</p>
         </div>
       </main>
@@ -218,97 +206,96 @@ export default function AssinaturaPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#f8fbff] pb-16 text-[#071b3a]">
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute left-[-220px] top-[-220px] h-[520px] w-[520px] rounded-full bg-blue-100 blur-3xl" />
-        <div className="absolute right-[-220px] top-[24%] h-[420px] w-[420px] rounded-full bg-emerald-100 blur-3xl" />
-      </div>
-
-      <section className="relative mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-4 rounded-[2rem] border border-blue-100 bg-white/92 p-4 shadow-xl shadow-blue-950/5 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+    <main className="min-h-screen bg-[#f8fbff] px-4 py-8 text-[#071b3a]">
+      <section className="mx-auto max-w-6xl">
+        <header className="mb-6 flex flex-col gap-4 rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/icone-orcaly.png" alt="Orçaly" className="h-11 w-11 rounded-2xl bg-blue-50 object-contain p-2" />
-            <img src="/logo-orcaly.png" alt="Orçaly" className="h-10 w-auto object-contain" />
+            <img
+              src="/icone-orcaly.png"
+              alt="Orçaly"
+              className="h-11 w-11 rounded-2xl bg-blue-50 object-contain p-2"
+            />
+            <img
+              src="/logo-orcaly.png"
+              alt="Orçaly"
+              className="h-10 w-auto object-contain"
+            />
           </Link>
 
           <div className="flex flex-wrap gap-2">
-            <Link href="/painel" className="rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white">
+            <Link
+              href="/painel"
+              className="rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white"
+            >
               Painel
             </Link>
-            <button type="button" onClick={sair} className="rounded-2xl bg-red-50 px-5 py-3 text-sm font-black text-red-700">
-              Sair
-            </button>
+            <Link
+              href="/login"
+              className="rounded-2xl border border-blue-100 bg-white px-5 py-3 text-sm font-black text-[#05245c]"
+            >
+              Login
+            </Link>
           </div>
         </header>
 
         {mensagem && (
-          <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-bold text-emerald-700">
+          <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
             {mensagem}
           </div>
         )}
 
-        {erro && (
-          <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-700">
-            {erro}
-          </div>
-        )}
-
-        <section className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <aside className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Assinatura</p>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
+              Assinatura
+            </p>
 
             <h1 className="mt-3 text-4xl font-black leading-tight tracking-[-0.04em] text-[#071b3a] sm:text-5xl">
-              {ativa ? 'Sua empresa está liberada' : 'Ative a assinatura'}
+              {ativa ? 'Sua empresa está liberada' : 'Escolha um plano'}
             </h1>
 
             <p className="mt-4 text-base font-semibold leading-7 text-slate-600 sm:text-lg sm:leading-8">
-              A assinatura automática usa o Mercado Pago para autorizar a cobrança mensal. O cliente autoriza uma vez, e as próximas cobranças são recorrentes.
+              Gerencie o plano da empresa, liberação do painel e renovação pelo Mercado Pago.
             </p>
 
             <div className="mt-6 grid gap-3 rounded-3xl border border-blue-100 bg-blue-50 p-5 text-sm font-bold text-slate-700">
               <p><span className="text-slate-500">Empresa:</span> {empresa?.nome || 'Empresa'}</p>
               <p><span className="text-slate-500">Perfil:</span> {role || 'usuário'}</p>
-              <p><span className="text-slate-500">Status:</span> {statusLabel}</p>
-              <p><span className="text-slate-500">Plano:</span> {empresa?.assinatura_plano || empresa?.plano || 'não definido'}</p>
+              <p><span className="text-slate-500">Status:</span> {empresa?.assinatura_status || 'pendente'}</p>
+              <p><span className="text-slate-500">Plano atual:</span> {empresa?.assinatura_plano || empresa?.plano || 'não definido'}</p>
               <p><span className="text-slate-500">Expira em:</span> {formatarData(empresa?.assinatura_expira_em)}</p>
-              <p><span className="text-slate-500">Próxima cobrança:</span> {formatarData(empresa?.assinatura_proxima_cobranca)}</p>
             </div>
 
-            {empresa?.mercado_pago_subscription_id && (
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Mercado Pago</p>
-                <p className="mt-2 break-all text-sm font-bold text-slate-600">
-                  {empresa.mercado_pago_subscription_id}
-                </p>
-              </div>
-            )}
-
-            {!canManage && (
+            {!canSubscription && (
               <div className="mt-5 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-800">
-                Você pode visualizar a assinatura, mas apenas dono ou gerente podem renovar, cancelar ou pagar.
+                Você pode visualizar a assinatura, mas apenas dono ou gerente podem pagar ou renovar.
               </div>
             )}
           </aside>
 
           <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-2xl shadow-blue-950/10">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Planos</p>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
+              Planos
+            </p>
             <h2 className="mt-2 text-3xl font-black tracking-[-0.03em] text-[#071b3a]">
-              Gerenciar assinatura automática
+              Selecione o plano da empresa
             </h2>
 
             <div className="mt-6 grid gap-3">
               {(Object.keys(planos) as PlanoId[]).map((id) => {
                 const plano = planos[id]
-                const selected = planoSelecionado === id
+                const selecionado = planoSelecionado === id
 
                 return (
                   <button
                     key={id}
                     type="button"
-                    disabled={!canManage || processando}
+                    disabled={!canSubscription || pagando}
                     onClick={() => setPlanoSelecionado(id)}
                     className={`rounded-2xl border px-4 py-4 text-left transition disabled:cursor-not-allowed disabled:opacity-70 ${
-                      selected ? 'border-[#05245c] bg-blue-50 shadow-lg shadow-blue-950/5' : 'border-blue-100 bg-white hover:bg-blue-50'
+                      selecionado
+                        ? 'border-[#05245c] bg-blue-50 shadow-lg shadow-blue-950/5'
+                        : 'border-blue-100 bg-white hover:bg-blue-50'
                     }`}
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -317,7 +304,7 @@ export default function AssinaturaPage() {
                         <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{plano.descricao}</p>
                       </div>
 
-                      <p className="shrink-0 text-2xl font-black text-[#05245c]">{formatMoney(plano.valor)}<span className="text-sm text-slate-500">/mês</span></p>
+                      <p className="shrink-0 text-2xl font-black text-[#05245c]">{plano.preco}</p>
                     </div>
                   </button>
                 )
@@ -327,42 +314,22 @@ export default function AssinaturaPage() {
             <div className="mt-6 rounded-3xl border border-blue-100 bg-[#f8fbff] p-5">
               <p className="text-sm font-bold text-slate-500">Plano selecionado</p>
               <h3 className="mt-1 text-2xl font-black text-[#071b3a]">{planoAtual.nome}</h3>
-              <p className="mt-1 text-3xl font-black text-[#05245c]">{formatMoney(planoAtual.valor)}/mês</p>
+              <p className="mt-1 text-3xl font-black text-[#05245c]">{planoAtual.preco}</p>
               <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
-                Ao continuar, o Mercado Pago abrirá a autorização da assinatura. Depois da aprovação, as próximas mensalidades serão cobradas automaticamente.
+                O pagamento será processado pelo Mercado Pago. Após a aprovação, o webhook atualiza a assinatura da empresa.
               </p>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => executarAcao(empresa?.mercado_pago_subscription_id ? 'renew' : 'create')}
-                disabled={!canManage || processando}
-                className="rounded-2xl bg-[#05245c] px-6 py-4 font-black text-white shadow-lg shadow-blue-950/15 transition hover:bg-[#031a43] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {processando ? 'Processando...' : empresa?.mercado_pago_subscription_id ? 'Renovar / alterar plano' : 'Ativar assinatura automática'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => executarAcao('sync')}
-                disabled={!canManage || processando || !empresa?.mercado_pago_subscription_id}
-                className="rounded-2xl border border-blue-100 bg-white px-6 py-4 font-black text-[#05245c] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Atualizar status
-              </button>
-
-              <button
-                type="button"
-                onClick={() => executarAcao('cancel')}
-                disabled={!canManage || processando || !empresa?.mercado_pago_subscription_id}
-                className="rounded-2xl bg-red-50 px-6 py-4 font-black text-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
-              >
-                Cancelar assinatura automática
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={pagarPlano}
+              disabled={!canSubscription || pagando}
+              className="mt-6 w-full rounded-2xl bg-[#05245c] px-6 py-4 font-black text-white shadow-lg shadow-blue-950/15 transition hover:bg-[#031a43] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {pagando ? 'Gerando checkout...' : ativa ? 'Renovar / alterar plano' : 'Pagar assinatura'}
+            </button>
           </section>
-        </section>
+        </div>
       </section>
     </main>
   )

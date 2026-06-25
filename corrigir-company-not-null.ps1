@@ -1,3 +1,24 @@
+$ErrorActionPreference = "Stop"
+
+$project = "C:\Users\arauj\grafica-flash"
+
+if (!(Test-Path -LiteralPath $project)) {
+  Write-Host "Projeto nao encontrado em $project" -ForegroundColor Red
+  exit 1
+}
+
+Set-Location -LiteralPath $project
+
+$target = Join-Path $project "lib\current-company-client.ts"
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+if (Test-Path -LiteralPath $target) {
+  $backup = $target + ".backup-company-not-null-" + (Get-Date -Format "yyyyMMddHHmmss")
+  Copy-Item -LiteralPath $target -Destination $backup -Force
+  Write-Host "Backup criado: $backup" -ForegroundColor DarkYellow
+}
+
+$content = @"
 import { supabase } from '@/lib/supabase'
 
 export type CurrentCompanyClientPayload<TCompany = any> = {
@@ -5,6 +26,8 @@ export type CurrentCompanyClientPayload<TCompany = any> = {
     id: string
     email?: string | null
   }
+  // A função abaixo já lança erro quando não existe empresa.
+  // Por isso, no retorno final, company é sempre não-nulo.
   company: TCompany
   role: 'dono' | 'gerente' | 'atendente' | 'producao' | 'super_admin' | 'funcionario' | null
   assinatura_ativa: boolean
@@ -59,6 +82,17 @@ export async function getAccessTokenClient() {
   return token
 }
 
+// Compatibilidade com páginas que usam getCurrentCompany<Empresa>().
 export async function getCurrentCompany<TCompany = any>(): Promise<CurrentCompanyClientPayload<TCompany>> {
   return getCurrentCompanyClient<TCompany>()
 }
+
+"@
+
+[System.IO.File]::WriteAllText($target, $content, $utf8NoBom)
+
+Remove-Item -Recurse -Force ".next" -ErrorAction SilentlyContinue
+
+Write-Host ""
+Write-Host "Tipo company nao-nulo corrigido." -ForegroundColor Green
+Write-Host "Agora rode: npm run build" -ForegroundColor Yellow

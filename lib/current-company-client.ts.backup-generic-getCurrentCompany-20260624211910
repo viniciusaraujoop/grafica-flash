@@ -1,11 +1,11 @@
 import { supabase } from '@/lib/supabase'
 
-export type CurrentCompanyClientPayload<TCompany = any> = {
+export type CurrentCompanyClientPayload = {
   user?: {
     id: string
     email?: string | null
   }
-  company: TCompany
+  company: any | null
   role: 'dono' | 'gerente' | 'atendente' | 'producao' | 'super_admin' | 'funcionario' | null
   assinatura_ativa: boolean
   is_admin_master: boolean
@@ -21,17 +21,17 @@ export type CurrentCompanyClientPayload<TCompany = any> = {
   }
 }
 
-export async function getCurrentCompanyClient<TCompany = any>(): Promise<CurrentCompanyClientPayload<TCompany>> {
+export async function getCurrentCompanyClient(): Promise<CurrentCompanyClientPayload> {
   const { data: sessionData } = await supabase.auth.getSession()
   const token = sessionData.session?.access_token
 
   if (!token) {
-    throw new Error('Você precisa estar logado.')
+    throw new Error('VocÃª precisa estar logado.')
   }
 
   const response = await fetch('/api/company/current', {
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: Bearer ,
     },
   })
 
@@ -42,10 +42,10 @@ export async function getCurrentCompanyClient<TCompany = any>(): Promise<Current
   }
 
   if (!payload.company?.id) {
-    throw new Error('Empresa não encontrada.')
+    throw new Error('Empresa nÃ£o encontrada.')
   }
 
-  return payload as CurrentCompanyClientPayload<TCompany>
+  return payload as CurrentCompanyClientPayload
 }
 
 export async function getAccessTokenClient() {
@@ -53,12 +53,15 @@ export async function getAccessTokenClient() {
   const token = sessionData.session?.access_token
 
   if (!token) {
-    throw new Error('Você precisa estar logado.')
+    throw new Error('VocÃª precisa estar logado.')
   }
 
   return token
 }
 
-export async function getCurrentCompany<TCompany = any>(): Promise<CurrentCompanyClientPayload<TCompany>> {
-  return getCurrentCompanyClient<TCompany>()
+// Compatibilidade com pÃ¡ginas antigas/patches anteriores.
+// Algumas pÃ¡ginas importavam getCurrentCompany. Mantemos o nome antigo
+// apontando para a funÃ§Ã£o nova para nÃ£o quebrar build.
+export async function getCurrentCompany(): Promise<CurrentCompanyClientPayload> {
+  return getCurrentCompanyClient()
 }

@@ -14,7 +14,7 @@ export function getSupabaseAdmin() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('VariÃƒÂ¡veis do Supabase nÃƒÂ£o configuradas no servidor.')
+    throw new Error('VariÃ¡veis do Supabase nÃ£o configuradas no servidor.')
   }
 
   return createClient(supabaseUrl, serviceRoleKey, {
@@ -118,7 +118,7 @@ export async function getCompanyAccess(
     if (companyError) throw companyError
 
     const role = (member.cargo || 'funcionario') as CurrentRole
-    return { company, role, ...permissionsByRole(role, isAdminMaster) }
+    return { company, role, isAdminMaster, ...permissionsByRole(role, isAdminMaster) }
   }
 
   if (isAdminMaster) {
@@ -131,7 +131,7 @@ export async function getCompanyAccess(
     if (adminCompanyError) throw adminCompanyError
 
     if (adminCompany?.id) {
-      return { company: adminCompany, role: 'super_admin', ...permissionsByRole('dono', true) }
+      return { company: adminCompany, role: 'super_admin', isAdminMaster, ...permissionsByRole('dono', true) }
     }
   }
 

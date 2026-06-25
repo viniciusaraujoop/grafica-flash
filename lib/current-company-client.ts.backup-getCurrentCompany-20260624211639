@@ -1,11 +1,11 @@
 import { supabase } from '@/lib/supabase'
 
-export type CurrentCompanyClientPayload<TCompany = any> = {
+export type CurrentCompanyClientPayload = {
   user?: {
     id: string
     email?: string | null
   }
-  company: TCompany
+  company: any | null
   role: 'dono' | 'gerente' | 'atendente' | 'producao' | 'super_admin' | 'funcionario' | null
   assinatura_ativa: boolean
   is_admin_master: boolean
@@ -17,17 +17,15 @@ export type CurrentCompanyClientPayload<TCompany = any> = {
     can_products: boolean
     can_proposal: boolean
     can_subscription: boolean
-    can_production?: boolean
+    can_production: boolean
   }
 }
 
-export async function getCurrentCompanyClient<TCompany = any>(): Promise<CurrentCompanyClientPayload<TCompany>> {
+export async function getCurrentCompanyClient(): Promise<CurrentCompanyClientPayload> {
   const { data: sessionData } = await supabase.auth.getSession()
   const token = sessionData.session?.access_token
 
-  if (!token) {
-    throw new Error('Você precisa estar logado.')
-  }
+  if (!token) throw new Error('Você precisa estar logado.')
 
   const response = await fetch('/api/company/current', {
     headers: {
@@ -45,20 +43,12 @@ export async function getCurrentCompanyClient<TCompany = any>(): Promise<Current
     throw new Error('Empresa não encontrada.')
   }
 
-  return payload as CurrentCompanyClientPayload<TCompany>
+  return payload as CurrentCompanyClientPayload
 }
 
 export async function getAccessTokenClient() {
   const { data: sessionData } = await supabase.auth.getSession()
   const token = sessionData.session?.access_token
-
-  if (!token) {
-    throw new Error('Você precisa estar logado.')
-  }
-
+  if (!token) throw new Error('Você precisa estar logado.')
   return token
-}
-
-export async function getCurrentCompany<TCompany = any>(): Promise<CurrentCompanyClientPayload<TCompany>> {
-  return getCurrentCompanyClient<TCompany>()
 }

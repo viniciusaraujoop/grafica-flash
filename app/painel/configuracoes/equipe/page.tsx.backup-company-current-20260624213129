@@ -57,18 +57,13 @@ export default function ConfiguracoesEquipeCorrigidaPage() {
 
     setToken(accessToken)
 
-    try {
-      const currentRes = await fetch('/api/company/current', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
-      const currentPayload = await currentRes.json()
+    const { data: empresa } = await supabase
+      .from('companies')
+      .select('*')
+      .or(`owner_id.eq.${user.id},tester_id.eq.${user.id}`)
+      .maybeSingle()
 
-      if (currentRes.ok) {
-        setCompany(currentPayload.company)
-      }
-    } catch {
-      setCompany(null)
-    }
+    setCompany(empresa)
 
     const res = await fetch('/api/company/team', {
       headers: { Authorization: `Bearer ${accessToken}` },

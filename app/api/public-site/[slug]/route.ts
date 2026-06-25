@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getSiteTemplate } from '@/lib/orcaly-site-templates'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -9,19 +10,6 @@ const supabaseAdmin = createClient(
 
 type RouteContext = {
   params: Promise<{ slug: string }>
-}
-
-const perguntasPorModelo: Record<string, string[]> = {
-  grafica: ['Qual tamanho?', 'Qual material?', 'Tem arte pronta?', 'Qual prazo desejado?'],
-  assistencia_tecnica: ['Qual aparelho?', 'Qual defeito?', 'Já foi consertado antes?', 'Tem urgência?'],
-  servicos_gerais: ['Qual serviço?', 'Qual local?', 'Qual prazo?', 'Alguma observação importante?'],
-  alimenticio: ['Qual sabor/opção?', 'Para quantas pessoas?', 'Data de entrega?', 'Tem restrição alimentar?'],
-  beleza_estetica: ['Qual procedimento?', 'Data desejada?', 'Já é cliente?', 'Alguma observação?'],
-  automotivo: ['Qual veículo?', 'Ano/modelo?', 'Qual serviço?', 'Tem fotos do problema?'],
-  eventos: ['Tipo de evento?', 'Data do evento?', 'Quantidade de pessoas?', 'Local do evento?'],
-  construcao_reformas: ['Qual ambiente?', 'Medidas aproximadas?', 'Prazo desejado?', 'Tem fotos/referências?'],
-  moda_varejo: ['Tamanho?', 'Cor desejada?', 'Quantidade?', 'Retirada ou entrega?'],
-  outros: ['O que você precisa?', 'Qual quantidade?', 'Qual prazo?', 'Alguma observação?'],
 }
 
 function safeArray(value: any) {
@@ -63,78 +51,47 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     }
 
     const { data: company, error: companyError } = await supabaseAdmin
-      .from('public_site_companies')
+      .from('companies')
       .select('*')
       .or(`slug.eq.${slug},subdomain_slug.eq.${slug}`)
       .maybeSingle()
 
     if (companyError) throw companyError
 
-    if (!company) {
+    if (!company || company.site_publico_ativo === false || company.ativo === false) {
       return NextResponse.json({ error: 'Site não encontrado.' }, { status: 404 })
     }
 
-    const { data: products, error: productError } = await supabaseAdmin
+    const { data: products, error: productsError } = await supabaseAdmin
       .from('products')
-      .select(`
-        id,
-        nome,
-        preco,
-        ativo,
-        descricao,
-        categoria,
-        tipo,
-        unidade,
-        imagem_url,
-        image_urls,
-        destaque,
-        precificacao,
-        unidade_label,
-        permite_largura,
-        permite_altura,
-        permite_comprimento,
-        permite_quantidade,
-        valor_minimo,
-        configuracoes,
-        prazo_medio,
-        created_at
-      `)
+      .select('*')
       .eq('company_id', company.id)
       .eq('ativo', true)
+      .or('arquivado.is.null,arquivado.eq.false')
       .order('destaque', { ascending: false })
       .order('created_at', { ascending: false })
+      .limit(80)
 
-    if (productError) throw productError
+    if (productsError) throw productsError
 
-    const modelo = company.modelo_negocio || 'outros'
-    const perguntas = Array.isArray(company.modelo_perguntas) && company.modelo_perguntas.length > 0
-      ? company.modelo_perguntas
-      : perguntasPorModelo[modelo] || perguntasPorModelo.outros
+    const template = getSiteTemplate(company.site_template || company.modelo_negocio)
 
     return NextResponse.json({
       company: {
         ...company,
-        cor_principal: company.cor_principal || company.site_primary_color || '#05245c',
-        site_primary_color: company.site_primary_color || company.cor_principal || '#05245c',
-        site_accent_color: company.site_accent_color || '#22c55e',
-        site_background_color: company.site_background_color || '#f5f8ff',
-        modelo_negocio: modelo,
-        modelo_nome: company.modelo_nome || modelo,
-        modelo_perguntas: perguntas,
-        site_features: safeArray(company.site_features),
-        site_faq: safeArray(company.site_faq),
-        site_testimonials: safeArray(company.site_testimonials),
-        site_custom_sections: safeArray(company.site_custom_sections),
-        aceita_pix: company.aceita_pix !== false,
-        cobrar_sinal: Boolean(company.cobrar_sinal),
-        percentual_sinal: Number(company.percentual_sinal || 0),
+        site_features: safeArray(company.site_features).length ? company.site_features : template.features,
+        site_benefits: safeArray(company.site_benefits).length ? company.site_benefits : template.benefits,
+        site_faq: safeArray(company.site_faq).length ? company.site_faq : template.faq,
+        site_testimonials: safeArray(company.site_testimonials).length ? company.site_testimonials : template.testimonials,
+        site_gallery: safeArray(company.site_gallery).length ? company.site_gallery : template.gallery,
+        site_payment_methods: safeArray(company.site_payment_methods).length ? company.site_payment_methods : template.paymentMethods,
+        site_delivery_options: safeArray(company.site_delivery_options).length ? company.site_delivery_options : template.deliveryOptions,
       },
+      template,
       products: (products || []).map(sanitizeProduct),
     })
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao carregar site.' },
-      { status: 500 }
-    )
+    const message = error instanceof Error ? error.message : 'Erro ao carregar site.'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
