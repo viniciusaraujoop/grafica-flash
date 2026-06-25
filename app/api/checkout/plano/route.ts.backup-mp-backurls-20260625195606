@@ -47,24 +47,12 @@ function isUuid(value: unknown) {
     && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(value)
 }
 
-function getSafeHttpsSiteUrl(request: NextRequest) {
-  const candidates = [
-    process.env.NEXT_PUBLIC_SITE_URL,
-    request.headers.get('origin'),
-    'https://orcaly.com.br',
-  ].filter(Boolean) as string[]
+function getSiteUrl(request: NextRequest) {
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL
+  if (fromEnv) return fromEnv.replace(/\/$/, '')
 
-  for (const candidate of candidates) {
-    const clean = candidate.replace(/\/$/, '')
-
-    if (
-      clean.startsWith('https://') &&
-      !clean.includes('localhost') &&
-      !clean.includes('127.0.0.1')
-    ) {
-      return clean
-    }
-  }
+  const origin = request.headers.get('origin')
+  if (origin) return origin.replace(/\/$/, '')
 
   return 'https://orcaly.com.br'
 }
@@ -97,33 +85,31 @@ async function getCompany(
       .maybeSingle()
 
     if (ownerError) throw ownerError
-    if (ownerCompany?.id) return { company: ownerCompany, requester, canManage: true }
+    if (ownerCompany?.id) {
+      return { company: ownerCompany, requester, canManage: true }
+    }
 
-    try {
-      const { data: member } = await supabaseAdmin
-        .from('company_members')
-        .select('company_id,cargo,status')
-        .eq('user_id', requester.id)
-        .eq('status', 'ativo')
-        .limit(1)
+    const { data: member } = await supabaseAdmin
+      .from('company_members')
+      .select('company_id,cargo,status')
+      .eq('user_id', requester.id)
+      .eq('status', 'ativo')
+      .limit(1)
+      .maybeSingle()
+
+    if (member?.company_id) {
+      const { data: memberCompany, error: memberCompanyError } = await supabaseAdmin
+        .from('companies')
+        .select('*')
+        .eq('id', member.company_id)
         .maybeSingle()
 
-      if (member?.company_id) {
-        const { data: memberCompany, error: memberCompanyError } = await supabaseAdmin
-          .from('companies')
-          .select('*')
-          .eq('id', member.company_id)
-          .maybeSingle()
+      if (memberCompanyError) throw memberCompanyError
 
-        if (memberCompanyError) throw memberCompanyError
+      const role = String(member.cargo || '').toLowerCase()
+      const canManage = ['dono', 'gerente', 'admin', 'super_admin'].includes(role)
 
-        const role = String(member.cargo || '').toLowerCase()
-        const canManage = ['dono', 'gerente', 'admin', 'super_admin'].includes(role)
-
-        return { company: memberCompany, requester, canManage }
-      }
-    } catch {
-      // Mantém fallback por companyId se a tabela de equipe estiver diferente.
+      return { company: memberCompany, requester, canManage }
     }
   }
 
@@ -143,13 +129,12 @@ async function getCompany(
   return { company: null, requester, canManage: false }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   return NextResponse.json({
     ok: true,
     route: '/api/checkout/plano',
+    message: 'Use POST para criar checkout.',
     mercadoPagoConfigured: Boolean(process.env.MERCADO_PAGO_ACCESS_TOKEN),
-    siteUrl: getSafeHttpsSiteUrl(request),
-    note: 'Use POST para criar checkout.',
   })
 }
 
@@ -194,7 +179,7 @@ export async function POST(request: NextRequest) {
     }
 
     const nomeEmpresa = String(body.nomeEmpresa || body.nome_empresa || access.company.nome || 'Empresa').trim()
-    const siteUrl = getSafeHttpsSiteUrl(request)
+    const siteUrl = getSiteUrl(request)
 
     const { data: payment, error: paymentError } = await supabaseAdmin
       .from('plan_payments')
@@ -208,7 +193,6 @@ export async function POST(request: NextRequest) {
         raw_payment: {
           origem: body.origem || 'assinatura',
           created_by: access.requester?.id || null,
-          site_url_usada: siteUrl,
         },
       })
       .select('id')
@@ -219,12 +203,6 @@ export async function POST(request: NextRequest) {
         { error: paymentError?.message || 'Erro ao registrar pagamento em plan_payments.' },
         { status: 500 }
       )
-    }
-
-    const backUrls = {
-      success: `${siteUrl}/assinatura?assinatura=retorno&status=success`,
-      failure: `${siteUrl}/assinatura?assinatura=retorno&status=failure`,
-      pending: `${siteUrl}/assinatura?assinatura=retorno&status=pending`,
     }
 
     const preferencePayload = {
@@ -240,7 +218,6 @@ export async function POST(request: NextRequest) {
       ],
       payer: {
         email,
-        name: nomeEmpresa,
       },
       external_reference: payment.id,
       metadata: {
@@ -248,9 +225,13 @@ export async function POST(request: NextRequest) {
         company_id: access.company.id,
         plano: planoId,
       },
-      back_urls: backUrls,
+      back_urls: {
+        success: `${siteUrl}/assinatura?assinatura=retorno&status=success`,
+        failure: `${siteUrl}/assinatura?assinatura=retorno&status=failure`,
+        pending: `${siteUrl}/assinatura?assinatura=retorno&status=pending`,
+      },
       notification_url: `${siteUrl}/api/mercado-pago/webhook`,
-      statement_descriptor: 'ORCALY',
+      auto_return: 'approved',
     }
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
@@ -281,7 +262,6 @@ export async function POST(request: NextRequest) {
         {
           error: mpData.message || mpData.error || 'Erro do Mercado Pago ao criar preferência.',
           details: mpData,
-          request_back_urls: backUrls,
         },
         { status: 500 }
       )
@@ -295,10 +275,7 @@ export async function POST(request: NextRequest) {
         status: checkoutUrl ? 'checkout_gerado' : 'pendente',
         mercado_pago_preference_id: mpData.id || null,
         checkout_url: checkoutUrl,
-        raw_payment: {
-          mercado_pago: mpData,
-          request_back_urls: backUrls,
-        },
+        raw_payment: mpData,
         updated_at: new Date().toISOString(),
       })
       .eq('id', payment.id)
@@ -324,7 +301,6 @@ export async function POST(request: NextRequest) {
       checkoutUrl,
       init_point: mpData.init_point || null,
       sandbox_init_point: mpData.sandbox_init_point || null,
-      back_urls: backUrls,
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro inesperado ao gerar checkout.'

@@ -1,0 +1,6 @@
+import { NextRequest } from 'next/server'
+import { POST as subscriptionPost } from '@/app/api/company/subscription/route'
+
+export async function POST(request: NextRequest) {
+  return subscriptionPost(request)
+}

@@ -1,0 +1,425 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+
+type PlanoId = 'basico' | 'profissional' | 'premium'
+
+type Empresa = {
+  id: string
+  nome: string
+  email?: string | null
+  plano?: string | null
+  ativo?: boolean | null
+  assinatura_status?: string | null
+  assinatura_plano?: string | null
+  assinatura_inicio?: string | null
+  assinatura_expira_em?: string | null
+  assinatura_ultimo_pagamento?: string | null
+  assinatura_checkout_url?: string | null
+}
+
+type Plano = {
+  id: PlanoId
+  nome: string
+  preco: number
+  destaque: string
+  descricao: string
+  recursos: string[]
+}
+
+const planos: Record<PlanoId, Plano> = {
+  basico: {
+    id: 'basico',
+    nome: 'Essencial',
+    preco: 49.9,
+    destaque: 'Para comeÃ§ar organizado',
+    descricao: 'Ideal para empresa pequena sair do WhatsApp bagunÃ§ado e receber pedidos com pÃ¡gina pÃºblica.',
+    recursos: [
+      'PÃ¡gina pÃºblica da empresa',
+      'CatÃ¡logo simples',
+      'Pedidos e orÃ§amentos',
+      'Status bÃ¡sico',
+    ],
+  },
+  profissional: {
+    id: 'profissional',
+    nome: 'Profissional',
+    preco: 99.9,
+    destaque: 'Mais vendido',
+    descricao: 'Para operaÃ§Ã£o diÃ¡ria com catÃ¡logo, propostas, painel e gestÃ£o comercial mais completa.',
+    recursos: [
+      'CatÃ¡logo completo',
+      'Propostas profissionais',
+      'Painel de pedidos',
+      'Produtos e clientes',
+      'GestÃ£o de status',
+    ],
+  },
+  premium: {
+    id: 'premium',
+    nome: 'Premium',
+    preco: 149.9,
+    destaque: 'Mais automaÃ§Ã£o',
+    descricao: 'Para empresas que querem recursos avanÃ§ados, automaÃ§Ãµes e experiÃªncia mais premium.',
+    recursos: [
+      'Tudo do Profissional',
+      'IA de orÃ§amento',
+      'Ãrea do cliente',
+      'QR Code e recorrÃªncia',
+      'Recursos inteligentes',
+    ],
+  },
+}
+
+function normalizarPlano(value: unknown): PlanoId {
+  if (value === 'basico' || value === 'profissional' || value === 'premium') return value
+  return 'profissional'
+}
+
+function formatMoney(value: number) {
+  return value.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  })
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return 'NÃ£o informado'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'NÃ£o informado'
+
+  return date.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+function assinaturaEstaAtiva(empresa: Empresa | null) {
+  if (!empresa) return false
+  if (empresa.assinatura_status !== 'ativa') return false
+  if (!empresa.assinatura_expira_em) return true
+  return new Date(empresa.assinatura_expira_em) > new Date()
+}
+
+export default function AssinaturaPage() {
+  const router = useRouter()
+
+  const [empresa, setEmpresa] = useState<Empresa | null>(null)
+  const [token, setToken] = useState('')
+  const [emailUsuario, setEmailUsuario] = useState('')
+  const [canManage, setCanManage] = useState(true)
+  const [role, setRole] = useState('')
+  const [planoSelecionado, setPlanoSelecionado] = useState<PlanoId>('profissional')
+  const [carregando, setCarregando] = useState(true)
+  const [processando, setProcessando] = useState(false)
+  const [mensagem, setMensagem] = useState('')
+  const [erro, setErro] = useState('')
+
+  const planoAtual = planos[planoSelecionado]
+  const ativa = assinaturaEstaAtiva(empresa)
+
+  const statusLabel = useMemo(() => {
+    if (!empresa) return 'Carregando'
+    if (ativa) return 'Ativa'
+    if (empresa.assinatura_status === 'pendente') return 'Pagamento pendente'
+    if (empresa.assinatura_status === 'cancelada') return 'Cancelada'
+    if (empresa.assinatura_status === 'vencida') return 'Vencida'
+    return empresa.assinatura_status || 'Pendente'
+  }, [empresa, ativa])
+
+  async function carregarAssinatura() {
+    setCarregando(true)
+    setMensagem('')
+    setErro('')
+
+    const retorno = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('assinatura') : null
+    if (retorno === 'retorno') {
+      setMensagem('Retorno recebido. Se o pagamento foi aprovado, o status serÃ¡ atualizado pelo Mercado Pago em instantes.')
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession()
+    const session = sessionData.session
+    const accessToken = session?.access_token
+    const user = session?.user
+
+    if (!accessToken || !user) {
+      router.push('/login')
+      return
+    }
+
+    setToken(accessToken)
+    setEmailUsuario(user.email || '')
+
+    const currentResponse = await fetch('/api/company/current', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+    const currentPayload = await currentResponse.json().catch(() => ({}))
+
+    if (currentResponse.ok && currentPayload.company?.id) {
+      const loaded = currentPayload.company as Empresa
+      setEmpresa(loaded)
+      setCanManage(Boolean(currentPayload.permissions?.can_subscription ?? currentPayload.permissions?.can_manage ?? true))
+      setRole(currentPayload.role || '')
+
+      const plano = normalizarPlano(loaded.assinatura_plano || loaded.plano)
+      setPlanoSelecionado(plano)
+      setCarregando(false)
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('companies')
+      .select('id, nome, email, plano, ativo, assinatura_status, assinatura_plano, assinatura_inicio, assinatura_expira_em, assinatura_ultimo_pagamento, assinatura_checkout_url')
+      .or(`owner_id.eq.${user.id},tester_id.eq.${user.id}`)
+      .limit(1)
+      .maybeSingle()
+
+    if (error) {
+      setErro(`Erro ao buscar assinatura: ${error.message}`)
+      setCarregando(false)
+      return
+    }
+
+    if (!data) {
+      setErro(currentPayload.error || 'Nenhuma empresa encontrada para esta conta.')
+      setCarregando(false)
+      return
+    }
+
+    const loaded = data as Empresa
+    setEmpresa(loaded)
+    setCanManage(true)
+    setRole('dono')
+    setPlanoSelecionado(normalizarPlano(loaded.assinatura_plano || loaded.plano))
+    setCarregando(false)
+  }
+
+  async function renovarOuAlterarPlano() {
+    if (!empresa?.id) {
+      setErro('Empresa nÃ£o carregada. Recarregue a pÃ¡gina e tente de novo.')
+      return
+    }
+
+    if (!canManage) {
+      setErro('Seu perfil nÃ£o tem permissÃ£o para alterar a assinatura. PeÃ§a ao dono ou gerente da empresa.')
+      return
+    }
+
+    setProcessando(true)
+    setMensagem('Gerando checkout do Mercado Pago...')
+    setErro('')
+
+    try {
+      const response = await fetch('/api/checkout/plano', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'renew',
+          plano: planoSelecionado,
+          companyId: empresa.id,
+          email: empresa.email || emailUsuario,
+          nomeEmpresa: empresa.nome,
+        }),
+      })
+
+      const payload = await response.json().catch(() => ({}))
+
+      const checkoutUrl =
+        payload.checkout_url ||
+        payload.checkoutUrl ||
+        payload.init_point ||
+        payload.sandbox_init_point ||
+        payload.url
+
+      if (!response.ok) {
+        const details = payload.details?.message || payload.message || ''
+        throw new Error(payload.error || details || 'Erro ao gerar checkout.')
+      }
+
+      if (!checkoutUrl) {
+        throw new Error('O Mercado Pago nÃ£o retornou o link de pagamento. Verifique o token e a resposta da API.')
+      }
+
+      window.location.assign(checkoutUrl)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro desconhecido ao gerar checkout.'
+      setErro(message)
+      setMensagem('')
+      setProcessando(false)
+    }
+  }
+
+  async function sair() {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
+  useEffect(() => {
+    carregarAssinatura()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  if (carregando) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f8fbff] px-4">
+        <div className="rounded-[2rem] border border-blue-100 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
+          <img src="/logo-orcaly.png" alt="OrÃ§aly" className="mx-auto mb-6 h-14 w-auto object-contain" />
+          <p className="font-bold text-slate-500">Carregando assinatura...</p>
+        </div>
+      </main>
+    )
+  }
+
+  return (
+    <main className="min-h-screen overflow-x-hidden bg-[#f8fbff] pb-16 text-[#071b3a]">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute left-[-220px] top-[-220px] h-[520px] w-[520px] rounded-full bg-blue-100 blur-3xl" />
+        <div className="absolute right-[-220px] top-[24%] h-[420px] w-[420px] rounded-full bg-emerald-100 blur-3xl" />
+      </div>
+
+      <section className="relative mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+        <header className="flex flex-col gap-4 rounded-[2rem] border border-blue-100 bg-white/90 p-4 shadow-xl shadow-blue-950/5 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <img src="/icone-orcaly.png" alt="OrÃ§aly" className="h-11 w-11 rounded-2xl bg-blue-50 object-contain p-2" />
+            <img src="/logo-orcaly.png" alt="OrÃ§aly" className="h-10 w-auto object-contain" />
+          </Link>
+
+          <div className="flex flex-wrap gap-2">
+            <Link href="/painel" className="rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white">
+              Painel
+            </Link>
+            <button type="button" onClick={sair} className="rounded-2xl bg-red-50 px-5 py-3 text-sm font-black text-red-700">
+              Sair
+            </button>
+          </div>
+        </header>
+
+        {mensagem && (
+          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
+            {mensagem}
+          </div>
+        )}
+
+        {erro && (
+          <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-700">
+            {erro}
+          </div>
+        )}
+
+        <section className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <aside className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Assinatura</p>
+
+            <h1 className="mt-3 text-4xl font-black leading-tight tracking-[-0.04em] text-[#071b3a] sm:text-5xl">
+              {ativa ? 'Sua empresa estÃ¡ liberada' : 'Selecione o plano da empresa'}
+            </h1>
+
+            <p className="mt-4 text-base font-semibold leading-7 text-slate-600 sm:text-lg sm:leading-8">
+              Escolha o plano, clique em renovar/alterar e o OrÃ§aly abre o checkout do Mercado Pago. Se nÃ£o abrir, agora aparece o erro na tela, em vez desse teatro mudo que estava acontecendo.
+            </p>
+
+            <div className="mt-6 grid gap-3 rounded-3xl border border-blue-100 bg-blue-50 p-5 text-sm font-bold text-slate-700">
+              <p><span className="text-slate-500">Empresa:</span> {empresa?.nome || 'Empresa'}</p>
+              <p><span className="text-slate-500">Perfil:</span> {role || 'usuÃ¡rio'}</p>
+              <p><span className="text-slate-500">Status:</span> {statusLabel}</p>
+              <p><span className="text-slate-500">Plano atual:</span> {empresa?.assinatura_plano || empresa?.plano || 'nÃ£o definido'}</p>
+              <p><span className="text-slate-500">Expira em:</span> {formatDate(empresa?.assinatura_expira_em)}</p>
+              <p><span className="text-slate-500">Ãšltimo pagamento:</span> {formatDate(empresa?.assinatura_ultimo_pagamento)}</p>
+            </div>
+
+            {!canManage && (
+              <div className="mt-5 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-800">
+                VocÃª pode visualizar a assinatura, mas apenas dono ou gerente podem renovar ou alterar plano.
+              </div>
+            )}
+          </aside>
+
+          <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-2xl shadow-blue-950/10">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Selecione o plano da empresa</p>
+            <h2 className="mt-2 text-3xl font-black tracking-[-0.03em] text-[#071b3a]">
+              Renovar / alterar plano
+            </h2>
+            <p className="mt-3 font-semibold leading-7 text-slate-500">
+              Selecione abaixo o plano desejado. O botÃ£o final deve redirecionar para o Mercado Pago imediatamente apÃ³s o checkout ser criado.
+            </p>
+
+            <div className="mt-6 grid gap-3">
+              {(Object.keys(planos) as PlanoId[]).map((id) => {
+                const plano = planos[id]
+                const selected = planoSelecionado === id
+
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    disabled={processando}
+                    onClick={() => setPlanoSelecionado(id)}
+                    className={`rounded-2xl border px-4 py-4 text-left transition disabled:cursor-not-allowed disabled:opacity-70 ${
+                      selected ? 'border-[#05245c] bg-blue-50 shadow-lg shadow-blue-950/5' : 'border-blue-100 bg-white hover:bg-blue-50'
+                    }`}
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-lg font-black text-[#071b3a]">{plano.nome}</p>
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#05245c]">{plano.destaque}</span>
+                        </div>
+                        <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{plano.descricao}</p>
+                        <ul className="mt-3 grid gap-1 text-sm font-bold text-slate-600">
+                          {plano.recursos.map((item) => <li key={item}>â€¢ {item}</li>)}
+                        </ul>
+                      </div>
+
+                      <p className="shrink-0 text-2xl font-black text-[#05245c]">
+                        {formatMoney(plano.preco)}<span className="text-sm text-slate-500">/mÃªs</span>
+                      </p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="mt-6 rounded-3xl border border-blue-100 bg-[#f8fbff] p-5">
+              <p className="text-sm font-bold text-slate-500">Plano selecionado</p>
+              <h3 className="mt-1 text-2xl font-black text-[#071b3a]">{planoAtual.nome}</h3>
+              <p className="mt-1 text-3xl font-black text-[#05245c]">{formatMoney(planoAtual.preco)}/mÃªs</p>
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                Ao clicar no botÃ£o, o Mercado Pago abrirÃ¡ em outra etapa para concluir o pagamento do plano selecionado.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={renovarOuAlterarPlano}
+              disabled={processando || !empresa?.id}
+              className="mt-6 w-full rounded-2xl bg-[#05245c] px-6 py-4 font-black text-white shadow-lg shadow-blue-950/15 transition hover:bg-[#031a43] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {processando ? 'Gerando checkout...' : 'Renovar / alterar plano'}
+            </button>
+
+            {empresa?.assinatura_checkout_url && (
+              <a
+                href={empresa.assinatura_checkout_url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 block rounded-2xl border border-blue-100 bg-white px-6 py-4 text-center font-black text-[#05245c]"
+              >
+                Abrir Ãºltimo checkout gerado
+              </a>
+            )}
+          </section>
+        </section>
+      </section>
+    </main>
+  )
+}
