@@ -42,6 +42,18 @@ function normalizarPlano(value: unknown): PlanoId {
   return 'profissional'
 }
 
+function assinaturaEstaAtiva(company: any | null) {
+  if (!company) return false
+  if (company.assinatura_status !== 'ativa') return false
+  if (!company.assinatura_expira_em) return true
+
+  const expiraEm = new Date(company.assinatura_expira_em)
+
+  if (Number.isNaN(expiraEm.getTime())) return false
+
+  return expiraEm > new Date()
+}
+
 function isUuid(value: unknown) {
   return typeof value === 'string'
     && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(value)
@@ -303,12 +315,16 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', payment.id)
 
+    const empresaAindaAtiva = assinaturaEstaAtiva(access.company)
+
     await supabaseAdmin
       .from('companies')
       .update({
         plano: planoId,
         assinatura_plano: planoId,
-        assinatura_status: 'pendente',
+        // Gerar um checkout não deve derrubar uma empresa que ainda está no prazo.
+        // Se já venceu, fica pendente e o painel entra em modo bloqueado.
+        assinatura_status: empresaAindaAtiva ? 'ativa' : 'pendente',
         assinatura_checkout_url: checkoutUrl,
         updated_at: new Date().toISOString(),
       })

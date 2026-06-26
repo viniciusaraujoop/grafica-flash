@@ -188,13 +188,14 @@ export default function LoginPage() {
         return
       }
 
-      if (!assinaturaEstaAtiva(empresaData)) {
-        router.push('/assinatura')
-        return
-      }
-
+      // A assinatura não deve mais expulsar o usuário para /assinatura no login.
+      // O painel sempre abre; se a assinatura estiver vencida/pendente,
+      // o próprio layout do painel bloqueia as funções e libera somente a renovação.
       setTipoMensagem('sucesso')
-      setMensagem('Acesso liberado. Abrindo painel...')
+      setMensagem(assinaturaEstaAtiva(empresaData)
+        ? 'Acesso liberado. Abrindo painel...'
+        : 'Acesso liberado. Abrindo painel em modo bloqueado...'
+      )
 
       router.push('/painel')
     } catch (erro) {
