@@ -42,6 +42,46 @@ type Company = {
   percentual_sinal?: number | null
 }
 
+type Uf = {
+  sigla: string
+  nome: string
+}
+
+type CidadeIbge = {
+  id: number
+  nome: string
+}
+
+const ufs: Uf[] = [
+  { sigla: 'AC', nome: 'Acre' },
+  { sigla: 'AL', nome: 'Alagoas' },
+  { sigla: 'AP', nome: 'Amapá' },
+  { sigla: 'AM', nome: 'Amazonas' },
+  { sigla: 'BA', nome: 'Bahia' },
+  { sigla: 'CE', nome: 'Ceará' },
+  { sigla: 'DF', nome: 'Distrito Federal' },
+  { sigla: 'ES', nome: 'Espírito Santo' },
+  { sigla: 'GO', nome: 'Goiás' },
+  { sigla: 'MA', nome: 'Maranhão' },
+  { sigla: 'MT', nome: 'Mato Grosso' },
+  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+  { sigla: 'MG', nome: 'Minas Gerais' },
+  { sigla: 'PA', nome: 'Pará' },
+  { sigla: 'PB', nome: 'Paraíba' },
+  { sigla: 'PR', nome: 'Paraná' },
+  { sigla: 'PE', nome: 'Pernambuco' },
+  { sigla: 'PI', nome: 'Piauí' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro' },
+  { sigla: 'RN', nome: 'Rio Grande do Norte' },
+  { sigla: 'RS', nome: 'Rio Grande do Sul' },
+  { sigla: 'RO', nome: 'Rondônia' },
+  { sigla: 'RR', nome: 'Roraima' },
+  { sigla: 'SC', nome: 'Santa Catarina' },
+  { sigla: 'SP', nome: 'São Paulo' },
+  { sigla: 'SE', nome: 'Sergipe' },
+  { sigla: 'TO', nome: 'Tocantins' },
+]
+
 const tabs = [
   { id: 'empresa', label: 'Empresa' },
   { id: 'recebimento', label: 'Recebimento' },
@@ -125,6 +165,9 @@ export default function ConfiguracoesPage() {
   const [error, setError] = useState('')
   const [form, setForm] = useState<Record<string, any>>(getInitialForm(null))
 
+  const [cidades, setCidades] = useState<string[]>([])
+  const [carregandoCidades, setCarregandoCidades] = useState(false)
+
   const [newMember, setNewMember] = useState({
     nome: '',
     email: '',
@@ -144,6 +187,47 @@ export default function ConfiguracoesPage() {
   function update(campo: string, valor: any) {
     setForm((atual) => ({ ...atual, [campo]: valor }))
   }
+
+
+  function updateEstado(uf: string) {
+    setForm((atual) => ({ ...atual, estado: uf, cidade: '' }))
+  }
+
+  useEffect(() => {
+    const estado = String(form.estado || '').toUpperCase().slice(0, 2)
+
+    if (!estado) {
+      setCidades([])
+      return
+    }
+
+    let cancelado = false
+
+    async function carregarCidadesPorUf() {
+      setCarregandoCidades(true)
+
+      try {
+        const resposta = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios?orderBy=nome`)
+
+        if (!resposta.ok) throw new Error('Erro ao carregar cidades.')
+
+        const dados = (await resposta.json()) as CidadeIbge[]
+        const nomes = dados.map((cidade) => cidade.nome).filter(Boolean)
+
+        if (!cancelado) setCidades(nomes)
+      } catch {
+        if (!cancelado) setCidades([])
+      } finally {
+        if (!cancelado) setCarregandoCidades(false)
+      }
+    }
+
+    carregarCidadesPorUf()
+
+    return () => {
+      cancelado = true
+    }
+  }, [form.estado])
 
   async function getAccessToken() {
     const { supabase } = await import('@/lib/supabase')
@@ -448,14 +532,36 @@ export default function ConfiguracoesPage() {
                   </label>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-[1fr_110px]">
-                  <label className="grid gap-2">
-                    <span className="text-sm font-black text-slate-700">Cidade</span>
-                    <input value={form.cidade} onChange={(e) => update('cidade', e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
-                  </label>
+                <div className="grid gap-3 sm:grid-cols-[112px_minmax(0,1fr)]">
                   <label className="grid gap-2">
                     <span className="text-sm font-black text-slate-700">UF</span>
-                    <input value={form.estado} onChange={(e) => update('estado', e.target.value.toUpperCase().slice(0, 2))} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-center font-bold uppercase outline-none focus:border-[#05245c] focus:bg-white" />
+                    <select
+                      value={String(form.estado || '').toUpperCase().slice(0, 2)}
+                      onChange={(e) => updateEstado(e.target.value)}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-center font-bold uppercase outline-none focus:border-[#05245c] focus:bg-white"
+                    >
+                      {ufs.map((uf) => (
+                        <option key={uf.sigla} value={uf.sigla}>
+                          {uf.sigla}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="grid min-w-0 gap-2">
+                    <span className="text-sm font-black text-slate-700">Cidade</span>
+                    <select
+                      value={form.cidade || ''}
+                      onChange={(e) => update('cidade', e.target.value)}
+                      disabled={carregandoCidades || cidades.length === 0}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white disabled:opacity-60"
+                    >
+                      <option value="">{carregandoCidades ? 'Carregando cidades...' : 'Selecione a cidade'}</option>
+                      {cidades.map((cidade) => (
+                        <option key={cidade} value={cidade}>
+                          {cidade}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                 </div>
               </div>
