@@ -47,6 +47,41 @@ function normalizePlano(value?: string | null) {
   return value
 }
 
+function esperar(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function obterTokenComRetry() {
+  for (let tentativa = 0; tentativa < 8; tentativa += 1) {
+    const { data, error } = await supabase.auth.getSession()
+
+    if (error) {
+      throw new Error(`Erro ao verificar login: ${error.message}`)
+    }
+
+    const token = data.session?.access_token
+
+    if (token) return token
+
+    await esperar(250)
+  }
+
+  return null
+}
+
+async function consultarEmpresaAtual(token: string) {
+  const response = await fetch('/api/company/current', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: 'no-store',
+  })
+
+  const data = await response.json().catch(() => ({})) as CompanyCurrentPayload
+
+  return { response, data }
+}
+
 function PainelBloqueado({ payload }: { payload: CompanyCurrentPayload }) {
   const empresa = payload.company
   const podeRenovar = payload.permissions?.can_subscription !== false
@@ -169,32 +204,38 @@ export default function PainelLayout({ children }: { children: ReactNode }) {
       setMensagem('')
 
       try {
-        const { data: sessaoData, error: sessaoError } = await supabase.auth.getSession()
-
-        if (sessaoError) {
-          if (!ativo) return
-          setMensagem(`Erro ao verificar login: ${sessaoError.message}`)
-          setCarregando(false)
-          return
-        }
-
-        const token = sessaoData.session?.access_token
+        let token = await obterTokenComRetry()
 
         if (!token) {
           router.replace('/login')
           return
         }
 
-        const response = await fetch('/api/company/current', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          cache: 'no-store',
-        })
+        let { response, data } = await consultarEmpresaAtual(token)
 
-        const data = await response.json().catch(() => ({})) as CompanyCurrentPayload
+        // Quando o login acabou de acontecer, às vezes o access token antigo/expirado
+        // ainda está no navegador por alguns instantes. Tentamos renovar e consultar de novo
+        // antes de mostrar “Não autorizado”. DNS já atormenta o suficiente, sessão vencida
+        // não precisa entrar na festa.
+        if (response.status === 401) {
+          const { data: refreshed } = await supabase.auth.refreshSession()
+          const novoToken = refreshed.session?.access_token
+
+          if (novoToken) {
+            token = novoToken
+            const retry = await consultarEmpresaAtual(token)
+            response = retry.response
+            data = retry.data
+          }
+        }
 
         if (!ativo) return
+
+        if (response.status === 401) {
+          await supabase.auth.signOut()
+          router.replace('/login?expired=1')
+          return
+        }
 
         if (!response.ok) {
           setMensagem(data.error || 'Erro ao verificar empresa atual.')

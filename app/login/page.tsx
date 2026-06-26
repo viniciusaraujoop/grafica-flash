@@ -181,13 +181,21 @@ export default function LoginPage() {
         window.localStorage.setItem('orcaly_login_email', emailLimpo)
       }
 
+      if (loginData.session?.access_token && loginData.session?.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: loginData.session.access_token,
+          refresh_token: loginData.session.refresh_token,
+        })
+      }
+
       // Depois do login, sempre abre o painel.
       // A tela /painel decide o estado correto: liberado, bloqueado por assinatura
       // ou sem empresa vinculada. Isso evita jogar usuário pago de volta para /cadastro.
       setTipoMensagem('sucesso')
       setMensagem('Acesso validado. Abrindo painel...')
 
-      router.push('/painel')
+      await new Promise((resolve) => setTimeout(resolve, 150))
+      router.replace('/painel')
     } catch (erro) {
       const textoErro = erro instanceof Error ? erro.message : 'Erro desconhecido ao entrar.'
 
