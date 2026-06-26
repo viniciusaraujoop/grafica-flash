@@ -121,6 +121,43 @@ export async function getCompanyAccess(
     return { company, role, ...permissionsByRole(role, isAdminMaster) }
   }
 
+  // Fallback importante para contas criadas manualmente/teste:
+  // se a empresa já existe com o mesmo e-mail do usuário, vinculamos o owner_id
+  // automaticamente e liberamos o acesso ao painel. Sem isso, o login cai em /cadastro
+  // mesmo com a empresa cadastrada no banco. Coisa linda: o usuário existe, a empresa
+  // existe, mas um UUID separando os dois resolve destruir a tarde.
+  if (normalizedEmail) {
+    const { data: emailCompany, error: emailCompanyError } = await supabaseAdmin
+      .from('companies')
+      .select('*')
+      .eq('email', normalizedEmail)
+      .limit(1)
+      .maybeSingle()
+
+    if (emailCompanyError) throw emailCompanyError
+
+    if (emailCompany?.id) {
+      const shouldAttachOwner = !emailCompany.owner_id
+
+      if (shouldAttachOwner) {
+        const { error: attachError } = await supabaseAdmin
+          .from('companies')
+          .update({ owner_id: userId, updated_at: new Date().toISOString() })
+          .eq('id', emailCompany.id)
+
+        if (attachError) throw attachError
+
+        emailCompany.owner_id = userId
+      }
+
+      return {
+        company: emailCompany,
+        role: isAdminMaster ? 'super_admin' : 'dono',
+        ...permissionsByRole('dono', isAdminMaster),
+      }
+    }
+  }
+
   if (isAdminMaster) {
     const { data: adminCompany, error: adminCompanyError } = await supabaseAdmin
       .from('companies')

@@ -181,21 +181,11 @@ export default function LoginPage() {
         window.localStorage.setItem('orcaly_login_email', emailLimpo)
       }
 
-      const empresaData = await buscarEmpresaDoUsuario(usuario.id)
-
-      if (!empresaData) {
-        router.push('/cadastro')
-        return
-      }
-
-      // A assinatura não deve mais expulsar o usuário para /assinatura no login.
-      // O painel sempre abre; se a assinatura estiver vencida/pendente,
-      // o próprio layout do painel bloqueia as funções e libera somente a renovação.
+      // Depois do login, sempre abre o painel.
+      // A tela /painel decide o estado correto: liberado, bloqueado por assinatura
+      // ou sem empresa vinculada. Isso evita jogar usuário pago de volta para /cadastro.
       setTipoMensagem('sucesso')
-      setMensagem(assinaturaEstaAtiva(empresaData)
-        ? 'Acesso liberado. Abrindo painel...'
-        : 'Acesso liberado. Abrindo painel em modo bloqueado...'
-      )
+      setMensagem('Acesso validado. Abrindo painel...')
 
       router.push('/painel')
     } catch (erro) {
