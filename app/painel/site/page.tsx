@@ -4,8 +4,15 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { siteTemplates } from '@/lib/orcaly-site-templates'
 import { getAccessTokenClient } from '@/lib/current-company-client'
+import { supabase } from '@/lib/supabase'
 
 type Tab = 'template' | 'visual' | 'conteudo' | 'secoes' | 'comercial' | 'seo' | 'preview'
+
+type SitePreviewProps = {
+  form: any
+  company: any
+  template: any
+}
 
 type ItemText = {
   titulo?: string
@@ -111,6 +118,98 @@ function ArtPreview({ style, primary, accent }: { style: string; primary: string
   )
 }
 
+
+function SiteLivePreview({ form, company, template }: SitePreviewProps) {
+  const primary = form.site_primary_color || template?.paleta?.primary || '#05245c'
+  const accent = form.site_accent_color || template?.paleta?.accent || '#22c55e'
+  const background = form.site_background_color || template?.paleta?.background || '#f5f8ff'
+  const text = form.site_text_color || template?.paleta?.text || '#071b3a'
+  const logo = form.logo_url || company?.logo_url
+  const nome = form.nome || company?.nome || 'Sua empresa'
+  const benefits = Array.isArray(form.site_benefits) ? form.site_benefits.slice(0, 3) : []
+  const gallery = Array.isArray(form.site_gallery) ? form.site_gallery.slice(0, 3) : []
+
+  return (
+    <aside className="hidden xl:block xl:sticky xl:top-6 xl:self-start">
+      <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-2xl shadow-blue-950/10">
+        <div className="border-b border-blue-50 p-4">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Prévia em tempo real</p>
+          <p className="mt-1 text-sm font-bold text-slate-500">Altere qualquer campo e veja a aparência antes de publicar.</p>
+        </div>
+
+        <div className="max-h-[calc(100vh-150px)] overflow-y-auto bg-slate-100 p-3">
+          <div className="overflow-hidden rounded-[1.6rem] bg-white text-[10px] shadow-xl" style={{ color: text }}>
+            <div className="flex items-center justify-between border-b border-black/5 bg-white/90 p-3">
+              <div className="flex items-center gap-2">
+                {logo ? (
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+                    <img src={logo} alt={nome} className="max-h-[78%] max-w-[78%] object-contain" />
+                  </span>
+                ) : (
+                  <span className="grid h-9 w-9 place-items-center rounded-xl font-black text-white" style={{ background: primary }}>{nome.slice(0, 1)}</span>
+                )}
+                <div>
+                  <p className="text-xs font-black">{nome}</p>
+                  <p className="text-[9px] font-bold opacity-50">{form.cidade || template?.segmento || 'Atendimento online'}</p>
+                </div>
+              </div>
+              <span className="rounded-xl px-3 py-2 text-[9px] font-black text-white" style={{ background: primary }}>{form.site_cta_text || 'Pedir orçamento'}</span>
+            </div>
+
+            <div className="p-4" style={{ background }}>
+              <div className="rounded-[1.5rem] bg-white p-4 shadow-sm">
+                <span className="rounded-full px-3 py-1 text-[8px] font-black uppercase tracking-[0.15em] text-white" style={{ background: primary }}>
+                  {form.site_badge_text || template?.conteudo?.badge || 'Site premium'}
+                </span>
+                <h3 className="mt-4 text-2xl font-black leading-none tracking-[-0.06em]">
+                  {form.site_headline || template?.conteudo?.headline || nome}
+                </h3>
+                <p className="mt-3 text-[11px] font-bold leading-5 opacity-65">
+                  {form.site_subheadline || template?.conteudo?.subheadline || 'Subtítulo do site aparecerá aqui.'}
+                </p>
+                <div className="mt-4 flex gap-2">
+                  <span className="rounded-xl px-3 py-2 text-[9px] font-black text-white" style={{ background: primary }}>{form.site_cta_text || 'Pedir orçamento'}</span>
+                  <span className="rounded-xl border border-black/10 bg-white px-3 py-2 text-[9px] font-black" style={{ color: primary }}>{form.site_secondary_cta_text || 'Ver catálogo'}</span>
+                </div>
+              </div>
+
+              <div className="mt-3 min-h-36 rounded-[1.5rem] p-4 text-white" style={{ background: form.site_banner_url ? `linear-gradient(135deg, ${primary}, ${accent})` : `radial-gradient(circle at 20% 20%, ${accent}aa, transparent 34%), linear-gradient(135deg, ${primary}, #020617)` }}>
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/60">Visual</p>
+                <p className="mt-2 text-lg font-black tracking-[-0.04em]">{form.site_art_style || template?.arte || 'profissional'}</p>
+                <div className="mt-6 grid grid-cols-3 gap-2 opacity-70">
+                  {Array.from({ length: 6 }).map((_, index) => <span key={index} className="h-10 rounded-xl bg-white/15" />)}
+                </div>
+              </div>
+
+              {benefits.length > 0 && (
+                <div className="mt-3 grid gap-2">
+                  {benefits.map((item: any, index: number) => (
+                    <div key={index} className="rounded-2xl bg-white p-3 shadow-sm">
+                      <p className="text-xs font-black">{item.titulo || `Benefício ${index + 1}`}</p>
+                      <p className="mt-1 text-[10px] font-bold leading-4 opacity-55">{item.texto || 'Texto explicativo.'}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {gallery.length > 0 && (
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {gallery.map((item: any, index: number) => (
+                    <div key={index} className="rounded-2xl bg-white p-2 shadow-sm">
+                      <div className="h-12 rounded-xl" style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }} />
+                      <p className="mt-2 text-[9px] font-black leading-3">{item.titulo || 'Serviço'}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
 export default function PainelSitePremiumPage() {
   const [tab, setTab] = useState<Tab>('template')
   const [token, setToken] = useState('')
@@ -120,9 +219,12 @@ export default function PainelSitePremiumPage() {
   const [message, setMessage] = useState('')
   const [erro, setErro] = useState('')
   const [selectedTemplate, setSelectedTemplate] = useState('grafica')
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
 
   const [form, setForm] = useState<any>({
     site_publico_ativo: true,
+    logo_url: '',
     site_template: 'grafica',
     site_layout: 'moderno',
     site_art_style: 'profissional',
@@ -180,6 +282,54 @@ export default function PainelSitePremiumPage() {
 
   function update(field: string, value: any) {
     setForm((current: any) => ({ ...current, [field]: value }))
+  }
+
+  function cleanFileName(name: string) {
+    return name
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9.-]/g, '')
+  }
+
+  async function uploadLogo(file: File) {
+    if (!company?.id) throw new Error('Empresa não carregada.')
+
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Envie uma imagem válida para a logo.')
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      throw new Error('A logo precisa ter até 3 MB.')
+    }
+
+    const path = `${company.id}/logos/${Date.now()}-${cleanFileName(file.name)}`
+    const { error } = await supabase.storage.from('produtos').upload(path, file, { cacheControl: '3600', upsert: true })
+    if (error) throw new Error(error.message)
+
+    const { data } = supabase.storage.from('produtos').getPublicUrl(path)
+    return data.publicUrl
+  }
+
+  async function handleLogoUpload() {
+    if (!logoFile) {
+      setErro('Selecione uma imagem antes de enviar.')
+      return
+    }
+
+    setUploadingLogo(true)
+    setErro('')
+    setMessage('')
+
+    try {
+      const url = await uploadLogo(logoFile)
+      update('logo_url', url)
+      setLogoFile(null)
+      setMessage('Logo enviada. Confira a prévia e clique em Salvar site para publicar.')
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Erro ao enviar logo.')
+    }
+
+    setUploadingLogo(false)
   }
 
   const publicUrl = useMemo(() => {
@@ -326,7 +476,7 @@ export default function PainelSitePremiumPage() {
         {message && <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 font-bold text-emerald-700">{message}</div>}
         {erro && <div className="rounded-2xl border border-red-100 bg-red-50 p-4 font-bold text-red-700">{erro}</div>}
 
-        <div className="grid gap-6 xl:grid-cols-[310px_1fr]">
+        <div className="grid gap-6 xl:grid-cols-[310px_minmax(0,1fr)_420px]">
           <aside className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-xl shadow-blue-950/5 xl:sticky xl:top-6 xl:self-start">
             <div className="mb-4 rounded-[1.5rem] bg-[#f5f8ff] p-4">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Editor premium</p>
@@ -397,6 +547,41 @@ export default function PainelSitePremiumPage() {
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Identidade visual</p>
                   <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]">Como o site deve parecer?</h2>
                   <p className="mt-2 font-bold leading-7 text-slate-500">Aqui o usuário controla a aparência sem abrir Figma, Canva ou outro calvário moderno.</p>
+                </div>
+
+                <div className="rounded-[1.8rem] border border-blue-100 bg-[#f8fbff] p-5">
+                  <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
+                    <div className="grid min-h-40 place-items-center rounded-[1.5rem] bg-white p-4 shadow-sm">
+                      {form.logo_url ? (
+                        <img src={form.logo_url} alt="Logo da empresa" className="max-h-32 max-w-full object-contain" />
+                      ) : (
+                        <div className="text-center">
+                          <div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-[#05245c] text-3xl font-black text-white">{(form.nome || company?.nome || 'O').slice(0, 1)}</div>
+                          <p className="mt-3 text-sm font-bold text-slate-500">Sem logo enviada</p>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      {fieldHelp('Logo da empresa', 'Envie a marca que aparecerá no topo do site, no hero, no rodapé e em experiências públicas. Use PNG com fundo transparente quando possível.')}
+                      <div className="flex flex-col gap-3 sm:flex-row">
+                        <label className="flex-1 cursor-pointer rounded-2xl border border-dashed border-blue-200 bg-white px-4 py-4 text-sm font-black text-[#05245c]">
+                          {logoFile ? logoFile.name : 'Selecionar logo'}
+                          <input type="file" accept="image/*" className="hidden" onChange={(event) => setLogoFile(event.target.files?.[0] || null)} />
+                        </label>
+                        <button type="button" onClick={handleLogoUpload} disabled={uploadingLogo || !logoFile} className="rounded-2xl bg-[#05245c] px-5 py-4 text-sm font-black text-white disabled:opacity-50">
+                          {uploadingLogo ? 'Enviando...' : 'Enviar logo'}
+                        </button>
+                        {form.logo_url && (
+                          <button type="button" onClick={() => update('logo_url', '')} className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-sm font-black text-[#05245c]">
+                            Remover
+                          </button>
+                        )}
+                      </div>
+                      <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-xs font-bold leading-5 text-slate-500">
+                        A prévia ao lado muda na hora. Para publicar de verdade, clique em Salvar site. Sim, dois passos, porque salvar sem querer é uma obra-prima do arrependimento humano.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -568,6 +753,8 @@ export default function PainelSitePremiumPage() {
               </button>
             </div>
           </form>
+
+          <SiteLivePreview form={form} company={company} template={templateAtual} />
         </div>
       </section>
     </main>

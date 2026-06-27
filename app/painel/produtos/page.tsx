@@ -23,6 +23,8 @@ type ItemCatalogo = {
   ativo: boolean
   destaque: boolean | null
   imagem_url: string | null
+  image_urls?: string[] | null
+  video_url?: string | null
   company_id: string | null
   created_at: string
   precificacao: string | null
@@ -161,7 +163,8 @@ export default function ProdutosPage() {
   const [unidade, setUnidade] = useState('unidade')
   const [preco, setPreco] = useState('')
   const [destaque, setDestaque] = useState(false)
-  const [arquivoImagem, setArquivoImagem] = useState<File | null>(null)
+  const [arquivosImagens, setArquivosImagens] = useState<File[]>([])
+  const [arquivoVideo, setArquivoVideo] = useState<File | null>(null)
 
   const [precificacao, setPrecificacao] = useState('unidade')
   const [unidadeLabel, setUnidadeLabel] = useState('unidade')
@@ -240,6 +243,64 @@ export default function ProdutosPage() {
     return data.publicUrl
   }
 
+
+  async function enviarVideo(companyId: string, arquivo: File) {
+    if (!arquivo.type.startsWith('video/')) {
+      throw new Error('Envie um vídeo válido.')
+    }
+
+    if (arquivo.size > 50 * 1024 * 1024) {
+      throw new Error('O vídeo precisa ter até 50 MB.')
+    }
+
+    const duracao = await obterDuracaoVideo(arquivo)
+
+    if (duracao > 30.5) {
+      throw new Error('O vídeo precisa ter no máximo 30 segundos.')
+    }
+
+    const nomeArquivo = limparNomeArquivo(arquivo.name)
+    const caminho = `${companyId}/videos/${Date.now()}-${nomeArquivo}`
+
+    const { error } = await supabase.storage.from('produtos').upload(caminho, arquivo, {
+      cacheControl: '3600',
+      upsert: true,
+    })
+
+    if (error) throw new Error(error.message)
+
+    const { data } = supabase.storage.from('produtos').getPublicUrl(caminho)
+    return data.publicUrl
+  }
+
+  function obterDuracaoVideo(arquivo: File) {
+    return new Promise<number>((resolve, reject) => {
+      const video = document.createElement('video')
+      const url = URL.createObjectURL(arquivo)
+
+      video.preload = 'metadata'
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(url)
+        resolve(video.duration || 0)
+      }
+      video.onerror = () => {
+        URL.revokeObjectURL(url)
+        reject(new Error('Não foi possível validar a duração do vídeo.'))
+      }
+      video.src = url
+    })
+  }
+
+  function selecionarImagens(files: FileList | null) {
+    const selecionadas = Array.from(files || []).filter((file) => file.type.startsWith('image/'))
+
+    if (selecionadas.length > 4) {
+      setMensagem('Você pode selecionar no máximo 4 fotos por item.')
+    }
+
+    setArquivosImagens(selecionadas.slice(0, 4))
+  }
+
   function aplicarTipoPrecificacao(id: string) {
     const tipoSelecionado = tiposPrecificacao.find((item) => item.id === id)
 
@@ -263,7 +324,8 @@ export default function ProdutosPage() {
     setUnidade('unidade')
     setPreco('')
     setDestaque(false)
-    setArquivoImagem(null)
+    setArquivosImagens([])
+    setArquivoVideo(null)
 
     setPrecificacao('unidade')
     setUnidadeLabel('unidade')
@@ -327,11 +389,18 @@ export default function ProdutosPage() {
     setMensagem('')
 
     try {
-      let imagemUrl = ''
-
-      if (arquivoImagem) {
-        imagemUrl = await enviarImagem(empresa.id, arquivoImagem)
-      }
+      const itemAtual = editandoId ? itens.find((item) => item.id === editandoId) : null
+      const imagensAtuais = Array.isArray(itemAtual?.image_urls)
+        ? itemAtual?.image_urls?.filter(Boolean) || []
+        : itemAtual?.imagem_url
+          ? [itemAtual.imagem_url]
+          : []
+      const novasImagens = arquivosImagens.length
+        ? await Promise.all(arquivosImagens.slice(0, 4).map((arquivo) => enviarImagem(empresa.id, arquivo)))
+        : []
+      const imageUrls = [...imagensAtuais, ...novasImagens].slice(0, 4)
+      const videoUrl = arquivoVideo ? await enviarVideo(empresa.id, arquivoVideo) : itemAtual?.video_url || null
+      const imagemUrl = imageUrls[0] || ''
 
       const dadosProduto = {
         nome,
@@ -343,6 +412,8 @@ export default function ProdutosPage() {
         preco: precoNumero,
         destaque,
         imagem_url: imagemUrl || undefined,
+        image_urls: imageUrls,
+        video_url: videoUrl,
         precificacao,
         permite_largura: permiteLargura,
         permite_altura: permiteAltura,
@@ -356,13 +427,13 @@ export default function ProdutosPage() {
       }
 
       if (editandoId) {
-        const itemAtual = itens.find((item) => item.id === editandoId)
-
         const { error } = await supabase
           .from('products')
           .update({
             ...dadosProduto,
             imagem_url: imagemUrl || itemAtual?.imagem_url || null,
+            image_urls: imageUrls,
+            video_url: videoUrl,
           })
           .eq('id', editandoId)
           .eq('company_id', empresa.id)
@@ -767,19 +838,37 @@ export default function ProdutosPage() {
 
               <label className="grid cursor-pointer gap-2">
                 <span className="text-sm font-black text-[#071b3a]">
-                  Imagem
+                  Fotos do marketplace, até 4 imagens
                 </span>
 
                 <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50 px-4 py-5 text-sm font-bold text-[#05245c] transition hover:bg-blue-100">
-                  {arquivoImagem
-                    ? arquivoImagem.name
-                    : 'Clique para enviar imagem do item'}
+                  {arquivosImagens.length
+                    ? `${arquivosImagens.length} foto(s) selecionada(s)`
+                    : 'Clique para enviar até 4 fotos do item'}
                 </div>
 
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setArquivoImagem(e.target.files?.[0] || null)}
+                  multiple
+                  onChange={(e) => selecionarImagens(e.target.files)}
+                  className="hidden"
+                />
+              </label>
+
+              <label className="grid cursor-pointer gap-2">
+                <span className="text-sm font-black text-[#071b3a]">
+                  Vídeo curto, opcional, até 30 segundos
+                </span>
+
+                <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 px-4 py-5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100">
+                  {arquivoVideo ? arquivoVideo.name : 'Clique para enviar um vídeo MP4/WebM/MOV'}
+                </div>
+
+                <input
+                  type="file"
+                  accept="video/mp4,video/webm,video/quicktime,video/*"
+                  onChange={(e) => setArquivoVideo(e.target.files?.[0] || null)}
                   className="hidden"
                 />
               </label>
@@ -858,7 +947,15 @@ export default function ProdutosPage() {
                   >
                     <div className="grid gap-4 md:grid-cols-[120px_1fr]">
                       <div className="h-32 overflow-hidden rounded-2xl bg-white">
-                        {item.imagem_url ? (
+                        {item.video_url ? (
+                          <video
+                            src={item.video_url}
+                            className="h-full w-full object-cover"
+                            muted
+                            playsInline
+                            controls
+                          />
+                        ) : item.imagem_url ? (
                           <img
                             src={item.imagem_url}
                             alt={item.nome}
@@ -898,6 +995,18 @@ export default function ProdutosPage() {
                               >
                                 {item.ativo ? 'Ativo' : 'Inativo'}
                               </span>
+
+                              {Array.isArray(item.image_urls) && item.image_urls.length > 1 && (
+                                <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600">
+                                  {item.image_urls.length} fotos
+                                </span>
+                              )}
+
+                              {item.video_url && (
+                                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
+                                  vídeo 30s
+                                </span>
+                              )}
                             </div>
 
                             <h3 className="mt-3 text-xl font-black text-[#071b3a]">

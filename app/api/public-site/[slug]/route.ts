@@ -29,6 +29,7 @@ function sanitizeProduct(product: any) {
     unidade: product.unidade || 'unidade',
     imagem_url: product.imagem_url || images[0] || null,
     image_urls: images,
+    video_url: product.video_url || null,
     destaque: Boolean(product.destaque),
     precificacao: product.precificacao || 'unidade',
     unidade_label: product.unidade_label || product.unidade || 'unidade',

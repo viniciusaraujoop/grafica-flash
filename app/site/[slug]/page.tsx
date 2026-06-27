@@ -10,6 +10,8 @@ type Product = {
   descricao?: string
   categoria?: string
   imagem_url?: string | null
+  image_urls?: string[]
+  video_url?: string | null
   destaque?: boolean
 }
 
@@ -27,33 +29,91 @@ function whatsappLink(phone: string | null | undefined, message: string) {
   return raw ? `https://wa.me/${final}?text=${encodeURIComponent(message)}` : '#'
 }
 
-function AutoArt({ company, template }: { company: any; template: any }) {
-  const primary = company.site_primary_color || template?.paleta?.primary || '#05245c'
-  const accent = company.site_accent_color || template?.paleta?.accent || '#22c55e'
+function getMedia(product: Product) {
+  const images = Array.isArray(product.image_urls) ? product.image_urls.filter(Boolean).slice(0, 4) : []
+  const fallback = product.imagem_url && !images.includes(product.imagem_url) ? [product.imagem_url] : []
+  return { images: [...fallback, ...images].slice(0, 4), video: product.video_url || null }
+}
+
+function Section({ children, id, className = '' }: { children: React.ReactNode; id?: string; className?: string }) {
+  return <section id={id} className={`mx-auto max-w-7xl px-4 py-12 sm:py-16 ${className}`}>{children}</section>
+}
+
+function LogoMark({ company, theme, large = false }: { company: any; theme: any; large?: boolean }) {
+  const size = large ? 'h-16 w-16 rounded-[1.35rem]' : 'h-12 w-12 rounded-2xl'
+
+  if (company.logo_url) {
+    return (
+      <span className={`${size} grid place-items-center bg-white shadow-lg shadow-black/10 ring-1 ring-black/5`}>
+        <img src={company.logo_url} alt={company.nome} className="max-h-[80%] max-w-[80%] object-contain" />
+      </span>
+    )
+  }
+
+  return (
+    <span className={`${size} grid place-items-center text-xl font-black text-white shadow-lg shadow-black/10`} style={{ background: theme.primary }}>
+      {company.nome?.slice(0, 1) || 'O'}
+    </span>
+  )
+}
+
+function AutoArt({ company, template, theme }: { company: any; template: any; theme: any }) {
   const style = company.site_art_style || template?.arte || 'profissional'
 
   return (
     <div
-      className="relative min-h-[340px] overflow-hidden rounded-[2.25rem] p-6 text-white shadow-2xl shadow-black/20"
-      style={{ background: `radial-gradient(circle at 15% 20%, ${accent}cc, transparent 32%), linear-gradient(135deg, ${primary}, #020617)` }}
+      className="relative min-h-[420px] overflow-hidden rounded-[2.5rem] border border-white/50 p-6 text-white shadow-2xl shadow-blue-950/20"
+      style={{ background: `radial-gradient(circle at 16% 20%, ${theme.accent}cc, transparent 32%), radial-gradient(circle at 80% 10%, #ffffff2b, transparent 24%), linear-gradient(135deg, ${theme.primary}, #020617 72%)` }}
     >
-      <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-white/10" />
-      <div className="absolute bottom-6 right-6 grid grid-cols-3 gap-3 opacity-70">
-        {Array.from({ length: 9 }).map((_, index) => <span key={index} className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur" />)}
+      <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-sm" />
+      <div className="absolute -bottom-20 left-8 h-52 w-52 rounded-full" style={{ background: `${theme.accent}55`, filter: 'blur(45px)' }} />
+      <div className="absolute bottom-6 right-6 grid grid-cols-3 gap-3 opacity-80">
+        {Array.from({ length: 9 }).map((_, index) => <span key={index} className="h-16 w-16 rounded-3xl bg-white/15 backdrop-blur" />)}
       </div>
-      <div className="relative">
-        <p className="text-xs font-black uppercase tracking-[0.25em] text-white/70">Site pré-desenhado</p>
-        <h3 className="mt-5 max-w-sm text-4xl font-black tracking-[-0.05em]">{style}</h3>
-        <p className="mt-4 max-w-sm text-sm font-bold leading-7 text-white/75">
-          Visual automático por segmento, pronto para vender sem parecer uma página abandonada desde 2012.
-        </p>
+
+      <div className="relative flex h-full min-h-[360px] flex-col justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-white/70">Site premium por segmento</p>
+          <h3 className="mt-5 max-w-sm text-5xl font-black tracking-[-0.06em]">{style}</h3>
+          <p className="mt-4 max-w-sm text-sm font-bold leading-7 text-white/75">
+            Layout pronto para vender, com catálogo, prova social, atendimento e visual profissional adaptado ao ramo.
+          </p>
+        </div>
+
+        <div className="relative grid gap-3 sm:grid-cols-3">
+          {['Catálogo', 'Orçamento', 'Atendimento'].map((item) => (
+            <span key={item} className="rounded-2xl bg-white/15 px-4 py-3 text-sm font-black backdrop-blur">{item}</span>
+          ))}
+        </div>
       </div>
     </div>
   )
 }
 
-function Section({ children, id }: { children: React.ReactNode; id?: string }) {
-  return <section id={id} className="mx-auto max-w-7xl px-4 py-12 sm:py-16">{children}</section>
+function ProductMedia({ product, theme }: { product: Product; theme: any }) {
+  const { images, video } = getMedia(product)
+
+  if (video) {
+    return (
+      <div className="relative h-56 overflow-hidden bg-black">
+        <video src={video} controls muted playsInline preload="metadata" className="h-full w-full object-cover" />
+        <span className="absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-xs font-black text-white backdrop-blur">Vídeo</span>
+      </div>
+    )
+  }
+
+  if (images.length) {
+    return (
+      <div className="relative h-56 overflow-hidden">
+        <img src={images[0]} alt={product.nome} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
+        {images.length > 1 && (
+          <span className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-black shadow-sm">+{images.length - 1} fotos</span>
+        )}
+      </div>
+    )
+  }
+
+  return <div className="h-56" style={{ background: `radial-gradient(circle at 20% 20%, ${theme.accent}99, transparent 35%), linear-gradient(135deg, ${theme.primary}, #020617)` }} />
 }
 
 export default function SitePublicoPremiumPage() {
@@ -68,6 +128,7 @@ export default function SitePublicoPremiumPage() {
 
   async function load() {
     setLoading(true)
+    setError('')
     const response = await fetch(`/api/public-site/${slug}`)
     const payload = await response.json()
 
@@ -120,19 +181,21 @@ export default function SitePublicoPremiumPage() {
   const gallery = Array.isArray(company.site_gallery) ? company.site_gallery : []
   const payments = Array.isArray(company.site_payment_methods) ? company.site_payment_methods : []
   const delivery = Array.isArray(company.site_delivery_options) ? company.site_delivery_options : []
+  const featuredProducts = products.filter((product) => product.destaque).slice(0, 3)
+  const proofItems = [
+    { label: 'Atendimento', value: company.atendimento_horario || 'Online' },
+    { label: 'Região', value: [company.cidade, company.estado].filter(Boolean).join(' / ') || template?.segmento || 'Local' },
+    { label: 'Catálogo', value: `${products.length} opções` },
+  ]
 
   return (
-    <main style={{ background: theme.background, color: theme.text }} className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-black/5 bg-white/85 backdrop-blur">
+    <main style={{ background: theme.background, color: theme.text }} className="min-h-screen overflow-hidden">
+      <header className="sticky top-0 z-30 border-b border-black/5 bg-white/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
           <a href="#" className="flex items-center gap-3">
-            {company.logo_url ? (
-              <img src={company.logo_url} alt={company.nome} className="h-12 w-12 rounded-2xl object-contain" />
-            ) : (
-              <span className="grid h-12 w-12 place-items-center rounded-2xl font-black text-white" style={{ background: theme.primary }}>{company.nome?.slice(0, 1) || 'O'}</span>
-            )}
+            <LogoMark company={company} theme={theme} />
             <div>
-              <p className="font-black">{company.nome}</p>
+              <p className="font-black tracking-[-0.02em]">{company.nome}</p>
               <p className="text-xs font-bold opacity-60">{company.cidade || company.segmento || template?.segmento}</p>
             </div>
           </a>
@@ -144,19 +207,24 @@ export default function SitePublicoPremiumPage() {
             <a href="#contato">Contato</a>
           </nav>
 
-          <a href={whats} className="rounded-2xl px-5 py-3 text-sm font-black text-white" style={{ background: theme.primary }}>
+          <a href={whats} className="rounded-2xl px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/10" style={{ background: theme.primary }}>
             {company.site_cta_text || 'Pedir orçamento'}
           </a>
         </div>
       </header>
 
-      <Section>
-        <div className="grid items-center gap-8 lg:grid-cols-[1fr_0.9fr]">
+      <Section className="relative">
+        <div className="absolute left-1/2 top-0 -z-0 h-80 w-80 -translate-x-1/2 rounded-full opacity-20 blur-3xl" style={{ background: theme.accent }} />
+        <div className="relative grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
-            <p className="inline-flex rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-white" style={{ background: theme.primary }}>
-              {company.site_badge_text || template?.conteudo?.badge || company.segmento || 'Atendimento online'}
-            </p>
-            <h1 className="mt-6 max-w-4xl text-5xl font-black tracking-[-0.07em] sm:text-6xl lg:text-7xl">
+            <div className="inline-flex items-center gap-3 rounded-full border border-black/5 bg-white px-3 py-2 shadow-xl shadow-black/5">
+              <LogoMark company={company} theme={theme} />
+              <span className="pr-2 text-xs font-black uppercase tracking-[0.18em]" style={{ color: theme.primary }}>
+                {company.site_badge_text || template?.conteudo?.badge || company.segmento || 'Atendimento online'}
+              </span>
+            </div>
+
+            <h1 className="mt-7 max-w-5xl text-5xl font-black tracking-[-0.075em] sm:text-6xl lg:text-7xl">
               {company.site_headline || template?.conteudo?.headline || company.nome}
             </h1>
             <p className="mt-6 max-w-2xl text-lg font-bold leading-8 opacity-70">
@@ -167,31 +235,36 @@ export default function SitePublicoPremiumPage() {
               <a href={whats} className="rounded-2xl px-6 py-4 font-black text-white shadow-xl shadow-black/10" style={{ background: theme.primary }}>
                 {company.site_cta_text || 'Pedir orçamento'}
               </a>
-              <a href="#catalogo" className="rounded-2xl border border-black/10 bg-white px-6 py-4 font-black" style={{ color: theme.primary }}>
+              <a href="#catalogo" className="rounded-2xl border border-black/10 bg-white px-6 py-4 font-black shadow-sm" style={{ color: theme.primary }}>
                 {company.site_secondary_cta_text || 'Ver catálogo'}
               </a>
             </div>
 
-            {(payments.length > 0 || delivery.length > 0) && (
-              <div className="mt-8 flex flex-wrap gap-2">
-                {[...payments, ...delivery].slice(0, 8).map((item: string) => (
-                  <span key={item} className="rounded-full bg-white px-4 py-2 text-xs font-black shadow-sm">{item}</span>
-                ))}
-              </div>
-            )}
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              {proofItems.map((item) => (
+                <div key={item.label} className="rounded-3xl border border-black/5 bg-white p-4 shadow-xl shadow-black/5">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] opacity-50">{item.label}</p>
+                  <p className="mt-2 text-sm font-black">{item.value}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           {company.site_banner_url ? (
-            <img src={company.site_banner_url} alt={company.nome} className="min-h-[340px] w-full rounded-[2.25rem] object-cover shadow-2xl shadow-black/15" />
+            <div className="relative">
+              <div className="absolute -inset-4 rounded-[2.7rem] opacity-25 blur-2xl" style={{ background: theme.accent }} />
+              <img src={company.site_banner_url} alt={company.nome} className="relative min-h-[420px] w-full rounded-[2.5rem] object-cover shadow-2xl shadow-black/15" />
+            </div>
           ) : (
-            <AutoArt company={company} template={template} />
+            <AutoArt company={company} template={template} theme={theme} />
           )}
         </div>
       </Section>
 
       {company.site_promo_active && (
         <Section>
-          <div className="rounded-[2rem] p-6 text-white shadow-xl shadow-black/10 sm:p-8" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})` }}>
+          <div className="relative overflow-hidden rounded-[2.25rem] p-7 text-white shadow-xl shadow-black/10 sm:p-9" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})` }}>
+            <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/15" />
             <p className="text-sm font-black uppercase tracking-[0.2em] text-white/70">Oferta em destaque</p>
             <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]">{company.site_promo_title || 'Promoção especial'}</h2>
             <p className="mt-3 max-w-3xl font-bold leading-7 text-white/80">{company.site_promo_text}</p>
@@ -206,8 +279,8 @@ export default function SitePublicoPremiumPage() {
         <Section>
           <div className="grid gap-4 md:grid-cols-3">
             {benefits.map((item: any, index: number) => (
-              <div key={index} className="rounded-[1.7rem] bg-white p-6 shadow-xl shadow-black/5">
-                <span className="grid h-12 w-12 place-items-center rounded-2xl text-lg font-black text-white" style={{ background: theme.primary }}>{index + 1}</span>
+              <div key={index} className="group rounded-[1.9rem] bg-white p-6 shadow-xl shadow-black/5 ring-1 ring-black/5 transition hover:-translate-y-1">
+                <span className="grid h-12 w-12 place-items-center rounded-2xl text-lg font-black text-white" style={{ background: index === 1 ? theme.accent : theme.primary }}>{index + 1}</span>
                 <h3 className="mt-5 text-xl font-black">{item.titulo}</h3>
                 <p className="mt-2 font-bold leading-7 opacity-65">{item.texto}</p>
               </div>
@@ -216,15 +289,39 @@ export default function SitePublicoPremiumPage() {
         </Section>
       )}
 
+      {featuredProducts.length > 0 && (
+        <Section>
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Destaques</p>
+              <h2 className="mt-2 text-4xl font-black tracking-[-0.05em]">Mais procurados</h2>
+            </div>
+            <a href="#catalogo" className="rounded-2xl bg-white px-5 py-3 font-black shadow-sm" style={{ color: theme.primary }}>Ver tudo</a>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {featuredProducts.map((product) => (
+              <article key={product.id} className="overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-black/5 ring-1 ring-black/5">
+                <ProductMedia product={product} theme={theme} />
+                <div className="p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] opacity-50">{product.categoria || 'Geral'}</p>
+                  <h3 className="mt-2 text-xl font-black">{product.nome}</h3>
+                  <p className="mt-3 text-2xl font-black" style={{ color: theme.primary }}>{moeda(product.preco || 0)}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </Section>
+      )}
+
       {company.site_show_gallery !== false && gallery.length > 0 && (
         <Section id="servicos">
           <div className="mb-6">
-            <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Artes e serviços</p>
+            <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Serviços</p>
             <h2 className="mt-2 text-4xl font-black tracking-[-0.05em]">{company.site_services_title || 'O que fazemos'}</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {gallery.map((item: any, index: number) => (
-              <article key={index} className="overflow-hidden rounded-[1.8rem] bg-white shadow-xl shadow-black/5">
+              <article key={index} className="overflow-hidden rounded-[1.9rem] bg-white shadow-xl shadow-black/5 ring-1 ring-black/5">
                 <div className="h-44" style={{ background: `radial-gradient(circle at 20% 20%, ${theme.accent}aa, transparent 35%), linear-gradient(135deg, ${theme.primary}, #020617)` }} />
                 <div className="p-5">
                   <p className="text-xs font-black uppercase tracking-[0.2em] opacity-50">{item.tipo || 'serviço'}</p>
@@ -241,20 +338,17 @@ export default function SitePublicoPremiumPage() {
         <Section id="catalogo">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Catálogo</p>
+              <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Marketplace</p>
               <h2 className="mt-2 text-4xl font-black tracking-[-0.05em]">Produtos e serviços</h2>
+              <p className="mt-2 max-w-2xl font-bold leading-7 opacity-60">Fotos, vídeos curtos e detalhes para o cliente entender antes de chamar.</p>
             </div>
             <a href={whats} className="rounded-2xl px-5 py-3 font-black text-white" style={{ background: theme.primary }}>Comprar pelo WhatsApp</a>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((product) => (
-              <article key={product.id} className="overflow-hidden rounded-[1.8rem] bg-white shadow-xl shadow-black/5">
-                {product.imagem_url ? (
-                  <img src={product.imagem_url} alt={product.nome} className="h-52 w-full object-cover" />
-                ) : (
-                  <div className="h-52" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})` }} />
-                )}
+              <article key={product.id} className="overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-black/5 ring-1 ring-black/5 transition hover:-translate-y-1">
+                <ProductMedia product={product} theme={theme} />
                 <div className="p-5">
                   <p className="text-xs font-black uppercase tracking-[0.2em] opacity-50">{product.categoria || 'Geral'}</p>
                   <h3 className="mt-2 text-xl font-black">{product.nome}</h3>
@@ -272,24 +366,25 @@ export default function SitePublicoPremiumPage() {
 
       {company.site_show_about !== false && (
         <Section id="sobre">
-          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="grid gap-8 rounded-[2.25rem] bg-white p-6 shadow-xl shadow-black/5 ring-1 ring-black/5 lg:grid-cols-[0.85fr_1.15fr] sm:p-8">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Sobre</p>
               <h2 className="mt-2 text-4xl font-black tracking-[-0.05em]">{company.site_about_title || 'Sobre a empresa'}</h2>
             </div>
-            <p className="text-lg font-bold leading-9 opacity-70">{company.site_about_text || 'Empresa com atendimento profissional, produtos organizados e orçamento facilitado pelo Orçaly.'}</p>
-          </div>
-
-          {features.length > 0 && (
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {features.map((item: any, index: number) => (
-                <div key={index} className="rounded-[1.6rem] bg-white p-5 shadow-xl shadow-black/5">
-                  <h3 className="text-lg font-black">{item.titulo}</h3>
-                  <p className="mt-2 font-bold leading-7 opacity-65">{item.texto}</p>
+            <div>
+              <p className="text-lg font-bold leading-9 opacity-70">{company.site_about_text || 'Empresa com atendimento profissional, produtos organizados e orçamento facilitado pelo Orçaly.'}</p>
+              {features.length > 0 && (
+                <div className="mt-8 grid gap-4 md:grid-cols-3">
+                  {features.map((item: any, index: number) => (
+                    <div key={index} className="rounded-[1.6rem] p-5" style={{ background: theme.background }}>
+                      <h3 className="text-lg font-black">{item.titulo}</h3>
+                      <p className="mt-2 font-bold leading-7 opacity-65">{item.texto}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
+          </div>
         </Section>
       )}
 
@@ -301,7 +396,7 @@ export default function SitePublicoPremiumPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {testimonials.map((item: any, index: number) => (
-              <blockquote key={index} className="rounded-[1.7rem] bg-white p-6 shadow-xl shadow-black/5">
+              <blockquote key={index} className="rounded-[1.8rem] bg-white p-6 shadow-xl shadow-black/5 ring-1 ring-black/5">
                 <p className="text-lg font-bold leading-8 opacity-75">“{item.texto}”</p>
                 <footer className="mt-4 font-black" style={{ color: theme.primary }}>{item.nome}</footer>
               </blockquote>
@@ -318,7 +413,7 @@ export default function SitePublicoPremiumPage() {
           </div>
           <div className="grid gap-3">
             {faq.map((item: any, index: number) => (
-              <details key={index} className="rounded-[1.3rem] bg-white p-5 shadow-xl shadow-black/5">
+              <details key={index} className="rounded-[1.4rem] bg-white p-5 shadow-xl shadow-black/5 ring-1 ring-black/5">
                 <summary className="cursor-pointer font-black">{item.pergunta}</summary>
                 <p className="mt-3 font-bold leading-7 opacity-70">{item.resposta}</p>
               </details>
@@ -328,17 +423,33 @@ export default function SitePublicoPremiumPage() {
       )}
 
       <Section id="contato">
-        <div className="rounded-[2rem] p-7 text-white shadow-2xl shadow-black/20 sm:p-10" style={{ background: `linear-gradient(135deg, ${theme.primary}, #020617)` }}>
-          <p className="text-sm font-black uppercase tracking-[0.2em] text-white/60">Contato</p>
-          <h2 className="mt-2 text-4xl font-black tracking-[-0.05em]">{company.site_contact_title || 'Fale conosco'}</h2>
-          <p className="mt-3 max-w-2xl font-bold leading-8 text-white/70">
-            {company.marketplace_endereco || company.atendimento_horario || company.atendimento_observacao || 'Chame no WhatsApp para tirar dúvidas, pedir orçamento ou combinar detalhes.'}
-          </p>
-          <a href={whats} className="mt-7 inline-flex rounded-2xl bg-white px-6 py-4 font-black" style={{ color: theme.primary }}>
-            Chamar no WhatsApp
-          </a>
+        <div className="relative overflow-hidden rounded-[2.5rem] p-7 text-white shadow-2xl shadow-black/20 sm:p-10" style={{ background: `radial-gradient(circle at 80% 10%, ${theme.accent}99, transparent 30%), linear-gradient(135deg, ${theme.primary}, #020617)` }}>
+          <div className="relative grid gap-8 lg:grid-cols-[1fr_340px] lg:items-center">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-white/60">Contato</p>
+              <h2 className="mt-2 text-4xl font-black tracking-[-0.05em]">{company.site_contact_title || 'Fale conosco'}</h2>
+              <p className="mt-3 max-w-2xl font-bold leading-8 text-white/70">
+                {company.marketplace_endereco || company.atendimento_horario || company.atendimento_observacao || 'Chame no WhatsApp para tirar dúvidas, pedir orçamento ou combinar detalhes.'}
+              </p>
+              {(payments.length > 0 || delivery.length > 0) && (
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {[...payments, ...delivery].slice(0, 10).map((item: string) => <span key={item} className="rounded-full bg-white/15 px-4 py-2 text-xs font-black backdrop-blur">{item}</span>)}
+                </div>
+              )}
+            </div>
+            <a href={whats} className="inline-flex justify-center rounded-2xl bg-white px-6 py-4 text-center font-black shadow-xl" style={{ color: theme.primary }}>
+              Chamar no WhatsApp
+            </a>
+          </div>
         </div>
       </Section>
+
+      <footer className="border-t border-black/5 bg-white/80 px-4 py-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 text-sm font-bold opacity-65 sm:flex-row sm:items-center sm:justify-between">
+          <span>{company.nome} · Site criado com Orçaly</span>
+          <span>{[company.cidade, company.estado].filter(Boolean).join(' / ')}</span>
+        </div>
+      </footer>
     </main>
   )
 }

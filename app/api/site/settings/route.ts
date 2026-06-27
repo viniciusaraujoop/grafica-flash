@@ -4,6 +4,7 @@ import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-
 
 const allowedFields = [
   'nome',
+  'logo_url',
   'whatsapp',
   'instagram',
   'cidade',
