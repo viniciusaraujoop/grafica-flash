@@ -9,6 +9,7 @@ const supabaseAdmin = createClient(
 
 const allowedFields = [
   'nome',
+  'subdomain_slug',
   'whatsapp',
   'cidade',
   'estado',
@@ -40,6 +41,65 @@ function isUuid(value: unknown) {
 
 function cleanText(value: unknown) {
   return String(value || '').trim()
+}
+
+function normalizeSubdomain(value: unknown) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40)
+}
+
+const reservedSubdomains = new Set([
+  'www',
+  'app',
+  'admin',
+  'api',
+  'login',
+  'painel',
+  'dashboard',
+  'checkout',
+  'assinatura',
+  'cadastro',
+  'site',
+  'loja',
+  'cliente',
+  'clientes',
+  'proposta',
+  'propostas',
+  'arte',
+  'marketplace',
+  'suporte',
+  'help',
+  'orcaly',
+  'mail',
+  'email',
+  'smtp',
+  'ftp',
+  'static',
+  'assets',
+  'next',
+  'vercel',
+])
+
+function validateSubdomain(slug: string) {
+  if (!slug || slug.length < 3) return 'O link precisa ter pelo menos 3 caracteres.'
+  if (slug.length > 40) return 'O link precisa ter no máximo 40 caracteres.'
+  if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(slug)) {
+    return 'Use apenas letras, números e hífen, sem hífen no início ou no fim.'
+  }
+  if (reservedSubdomains.has(slug)) return 'Este endereço é reservado pelo Orçaly. Escolha outro nome.'
+  return ''
+}
+
+function suggestSubdomain(base: string) {
+  const clean = normalizeSubdomain(base) || 'minha-empresa'
+  const safe = reservedSubdomains.has(clean) ? `empresa-${clean}` : clean
+  return `${safe}-${Math.floor(100 + Math.random() * 900)}`
 }
 
 async function getRequester(request: NextRequest) {
@@ -143,6 +203,48 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     }
 
+    const checkSubdomain = request.nextUrl.searchParams.get('check_subdomain')
+
+    if (checkSubdomain !== null) {
+      if (requesterRole !== 'dono' && requester.email?.toLowerCase() !== 'araujovinicius249@gmail.com') {
+        return NextResponse.json({ error: 'Você não tem permissão para verificar este link.' }, { status: 403 })
+      }
+
+      const nextSubdomain = normalizeSubdomain(checkSubdomain)
+      const validationError = validateSubdomain(nextSubdomain)
+
+      if (validationError) {
+        return NextResponse.json({
+          available: false,
+          slug: nextSubdomain,
+          suggestion: suggestSubdomain(nextSubdomain || company.nome || company.slug),
+          error: validationError,
+        }, { status: 400 })
+      }
+
+      const { data: existing, error: existingError } = await supabaseAdmin
+        .from('companies')
+        .select('id,nome,slug,subdomain_slug')
+        .or(`slug.eq.${nextSubdomain},subdomain_slug.eq.${nextSubdomain}`)
+        .neq('id', company.id)
+        .limit(1)
+
+      if (existingError) throw existingError
+
+      const used = Array.isArray(existing) && existing.length > 0
+      const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'orcaly.com.br'
+
+      return NextResponse.json({
+        available: !used,
+        slug: nextSubdomain,
+        url: `https://${nextSubdomain}.${root}`,
+        suggestion: used ? suggestSubdomain(nextSubdomain) : null,
+        message: used
+          ? 'Este link já está sendo usado por outra empresa. Tente outro nome.'
+          : 'Este link está disponível.',
+      }, { status: used ? 409 : 200 })
+    }
+
     return NextResponse.json({
       company: publicCompany(company),
       requester_role: requesterRole,
@@ -180,6 +282,38 @@ export async function PATCH(request: NextRequest) {
       if (Object.prototype.hasOwnProperty.call(body, field)) {
         update[field] = body[field]
       }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(body, 'subdomain_slug')) {
+      const nextSubdomain = normalizeSubdomain(body.subdomain_slug || company.subdomain_slug || company.slug || company.nome)
+      const validationError = validateSubdomain(nextSubdomain)
+
+      if (validationError) {
+        return NextResponse.json({
+          error: validationError,
+          suggestion: suggestSubdomain(nextSubdomain || company.nome || company.slug),
+        }, { status: 400 })
+      }
+
+      const { data: existing, error: existingError } = await supabaseAdmin
+        .from('companies')
+        .select('id,nome,slug,subdomain_slug')
+        .or(`slug.eq.${nextSubdomain},subdomain_slug.eq.${nextSubdomain}`)
+        .neq('id', company.id)
+        .limit(1)
+
+      if (existingError) throw existingError
+
+      if (Array.isArray(existing) && existing.length > 0) {
+        return NextResponse.json({
+          error: 'Este link já está sendo usado por outra empresa. Escolha outro nome.',
+          suggestion: suggestSubdomain(nextSubdomain),
+        }, { status: 409 })
+      }
+
+      update.subdomain_slug = nextSubdomain
+    } else {
+      delete update.subdomain_slug
     }
 
     update.nome = cleanText(update.nome || company.nome)

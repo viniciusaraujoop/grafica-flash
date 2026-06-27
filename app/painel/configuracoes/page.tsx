@@ -119,6 +119,18 @@ function isUuid(value: unknown) {
     && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
+
+function normalizeSubdomain(value: unknown) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40)
+}
+
 function statusClasse(status: string) {
   if (status === 'ativa' || status === 'ativo' || status === 'publicado') return 'bg-emerald-50 text-emerald-700 border-emerald-100'
   if (status === 'bloqueado' || status === 'rascunho') return 'bg-yellow-50 text-yellow-700 border-yellow-100'
@@ -128,6 +140,7 @@ function statusClasse(status: string) {
 function getInitialForm(company?: Partial<Company> | null) {
   return {
     nome: company?.nome || '',
+    subdomain_slug: company?.subdomain_slug || normalizeSubdomain(company?.slug || company?.nome || ''),
     whatsapp: company?.whatsapp || '',
     cidade: company?.cidade || '',
     estado: company?.estado || '',
@@ -164,6 +177,13 @@ export default function ConfiguracoesPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [form, setForm] = useState<Record<string, any>>(getInitialForm(null))
+  const [linkStatus, setLinkStatus] = useState<{
+    checking: boolean
+    checkedSlug: string
+    available: boolean | null
+    message: string
+    suggestion?: string | null
+  }>({ checking: false, checkedSlug: '', available: null, message: '' })
 
   const [cidades, setCidades] = useState<string[]>([])
   const [carregandoCidades, setCarregandoCidades] = useState(false)
@@ -176,16 +196,25 @@ export default function ConfiguracoesPage() {
   })
 
   const activeMembers = useMemo(() => members.filter((member) => member.status === 'ativo'), [members])
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'orcaly.com.br'
 
   const siteUrl = useMemo(() => {
     if (!company?.slug) return ''
-    const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'orcaly.com.br'
-    const sub = company.subdomain_slug || String(company.slug || '').replace(/[^a-z0-9]/g, '')
-    return `https://${sub}.${root}`
-  }, [company])
+    const sub = normalizeSubdomain(company.subdomain_slug || company.slug || company.nome || '')
+    return `https://${sub}.${rootDomain}`
+  }, [company, rootDomain])
+
+  const previewSubdomain = normalizeSubdomain(form.subdomain_slug || company?.subdomain_slug || company?.slug || company?.nome || '')
+  const previewSiteUrl = previewSubdomain ? `https://${previewSubdomain}.${rootDomain}` : siteUrl
 
   function update(campo: string, valor: any) {
     setForm((atual) => ({ ...atual, [campo]: valor }))
+  }
+
+  function updateSubdomain(valor: string) {
+    const next = normalizeSubdomain(valor)
+    setForm((atual) => ({ ...atual, subdomain_slug: next }))
+    setLinkStatus({ checking: false, checkedSlug: '', available: null, message: '' })
   }
 
 
@@ -305,6 +334,7 @@ export default function ConfiguracoesPage() {
 
     const payload = {
       ...form,
+      subdomain_slug: normalizeSubdomain(form.subdomain_slug || company?.subdomain_slug || company?.slug || company?.nome || ''),
       estado: String(form.estado || '').toUpperCase().slice(0, 2),
       percentual_sinal: Number(form.percentual_sinal || 0),
     }
@@ -330,6 +360,52 @@ export default function ConfiguracoesPage() {
     setForm(getInitialForm(data.company))
     setMessage('Configurações salvas.')
     setSavingCompany(false)
+  }
+
+
+  async function verificarLinkSite() {
+    setMessage('')
+    setError('')
+
+    const slug = normalizeSubdomain(form.subdomain_slug || company?.subdomain_slug || company?.slug || company?.nome || '')
+
+    if (!slug || slug.length < 3) {
+      setLinkStatus({
+        checking: false,
+        checkedSlug: slug,
+        available: false,
+        message: 'O link precisa ter pelo menos 3 caracteres.',
+      })
+      return
+    }
+
+    setForm((atual) => ({ ...atual, subdomain_slug: slug }))
+    setLinkStatus({ checking: true, checkedSlug: slug, available: null, message: 'Verificando disponibilidade...' })
+
+    const res = await fetch(`/api/company/settings?check_subdomain=${encodeURIComponent(slug)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      setLinkStatus({
+        checking: false,
+        checkedSlug: slug,
+        available: false,
+        message: data.error || data.message || 'Não foi possível usar este link.',
+        suggestion: data.suggestion || null,
+      })
+      return
+    }
+
+    setLinkStatus({
+      checking: false,
+      checkedSlug: slug,
+      available: Boolean(data.available),
+      message: data.message || 'Este link está disponível.',
+      suggestion: data.suggestion || null,
+    })
   }
 
   async function copiar(texto: string) {
@@ -720,8 +796,54 @@ export default function ConfiguracoesPage() {
                 </div>
 
                 <div className="rounded-2xl bg-[#f5f8ff] p-4">
-                  <p className="text-sm font-black text-[#05245c]">Endereço público</p>
-                  <p className="mt-2 break-all font-black text-[#071b3a]">{siteUrl}</p>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-black text-[#05245c]">Link do site</p>
+                      <p className="mt-1 text-xs font-bold text-slate-500">O cliente acessa pelo padrão empresa.orcaly.com.br.</p>
+                    </div>
+                    {company?.subdomain_slug && (
+                      <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#05245c]">Atual: {company.subdomain_slug}</span>
+                    )}
+                  </div>
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto]">
+                    <div className="flex min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white focus-within:border-[#05245c]">
+                      <input
+                        value={form.subdomain_slug || ''}
+                        onChange={(e) => updateSubdomain(e.target.value)}
+                        placeholder="empresa"
+                        className="min-w-0 flex-1 bg-transparent px-4 py-4 font-black lowercase outline-none"
+                      />
+                      <span className="flex items-center border-l border-slate-200 bg-slate-50 px-4 text-sm font-black text-slate-500">.{rootDomain}</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={verificarLinkSite}
+                      disabled={linkStatus.checking}
+                      className="rounded-2xl border border-blue-100 bg-white px-5 py-4 font-black text-[#05245c] disabled:opacity-60"
+                    >
+                      {linkStatus.checking ? 'Verificando...' : 'Verificar'}
+                    </button>
+                  </div>
+
+                  <p className="mt-3 break-all text-sm font-black text-[#071b3a]">{previewSiteUrl}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-500">Use letras, números e hífen. Sem acentos, espaços ou símbolos.</p>
+
+                  {linkStatus.message && (
+                    <div className={`mt-3 rounded-2xl border p-3 text-sm font-black ${linkStatus.available ? 'border-emerald-100 bg-emerald-50 text-emerald-700' : 'border-red-100 bg-red-50 text-red-700'}`}>
+                      {linkStatus.message}
+                      {linkStatus.suggestion && (
+                        <button
+                          type="button"
+                          onClick={() => updateSubdomain(String(linkStatus.suggestion || ''))}
+                          className="ml-2 underline"
+                        >
+                          Usar sugestão: {linkStatus.suggestion}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
