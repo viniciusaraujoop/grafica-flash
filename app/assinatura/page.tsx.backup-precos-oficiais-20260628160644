@@ -16,7 +16,7 @@ type Plano = {
 const planos: Plano[] = [
   {
     id: 'basico',
-    nome: 'Básico',
+    nome: 'Essencial',
     preco: 49.9,
     descricao: 'Catálogo, página pública, formulário de orçamento e painel de pedidos.',
   },

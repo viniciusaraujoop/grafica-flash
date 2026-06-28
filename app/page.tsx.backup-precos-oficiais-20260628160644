@@ -73,7 +73,7 @@ const passos = [
 
 const planos = [
   {
-    nome: 'Básico',
+    nome: 'Essencial',
     preco: 'R$ 49,90',
     descricao: 'Para começar a receber pedidos com organização.',
     recursos: [
@@ -90,7 +90,7 @@ const planos = [
     preco: 'R$ 99,90',
     descricao: 'Para empresas que querem vender com mais controle.',
     recursos: [
-      'Tudo do Básico',
+      'Tudo do Essencial',
       'Catálogo completo',
       'Propostas profissionais',
       'Status do pedido',

@@ -5,7 +5,7 @@ type PlanoId = 'basico' | 'profissional' | 'premium'
 
 const planos: Record<PlanoId, { nome: string; valor: number; descricao: string }> = {
   basico: {
-    nome: 'Básico',
+    nome: 'Essencial',
     valor: 49.9,
     descricao: 'Catálogo, página pública, formulário de orçamento e painel de pedidos.',
   },
