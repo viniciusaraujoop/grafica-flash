@@ -181,7 +181,7 @@ const planos = [
   {
     id: 'essencial',
     nome: 'Essencial',
-    preco: 'R$ 49,90',
+    preco: 'R$ 5,00',
     descricao: 'Site, catálogo e pedidos.',
   },
   {
@@ -194,7 +194,7 @@ const planos = [
   {
     id: 'premium',
     nome: 'Premium',
-    preco: 'R$ 149,90',
+    preco: 'R$ 15,00',
     descricao: 'Mais recursos para operação comercial.',
   },
 ]
@@ -480,7 +480,7 @@ function CadastroContent() {
                 <div className="rounded-2xl border border-[#d7e3f3] bg-[#f8fbff] p-4">
                   <p className="text-sm font-black text-[#05245c]">Resumo</p>
                   <p className="mt-2 font-bold leading-6 text-[#607895]">
-                    {form.empresa_nome || 'Sua empresa'} â€¢ {modeloSelecionado.nome} â€¢ {form.cidade || 'Cidade'} / {form.estado} â€¢ Plano {planoSelecionado.nome}
+                    {form.empresa_nome || 'Sua empresa'} • {modeloSelecionado.nome} • {form.cidade || 'Cidade'} / {form.estado} • Plano {planoSelecionado.nome}
                   </p>
                 </div>
 

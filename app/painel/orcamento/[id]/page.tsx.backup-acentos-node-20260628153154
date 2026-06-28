@@ -193,7 +193,7 @@ export default function OrcamentoPedidoPage() {
         }),
       })
     } catch (error) {
-      console.error('[Orçaly WhatsApp] Falha ao avisar status:', error)
+      console.error('[OrÃ§aly WhatsApp] Falha ao avisar status:', error)
     }
   }
 

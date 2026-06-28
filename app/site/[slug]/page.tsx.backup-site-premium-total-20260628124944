@@ -21,6 +21,20 @@ type CartLine = {
   quantidade: number
 }
 
+type CouponResult = {
+  valid?: boolean
+  discount?: number
+  total?: number
+  coupon?: {
+    id: string
+    codigo: string
+    tipo: string
+    valor: number
+    valor_minimo_pedido?: number
+    valor_maximo_desconto?: number | null
+  }
+}
+
 type Theme = {
   primary: string
   accent: string
@@ -29,269 +43,104 @@ type Theme = {
   card: string
 }
 
-type Scene = {
-  eyebrow: string
-  title: string
-  subtitle: string
-  primaryLabel: string
-  secondaryLabel: string
-  cards: Array<{ title: string; subtitle: string; meta: string }>
-  stats: Array<{ label: string; value: string }>
-  gradients: string[]
-}
-
-const segmentScenes: Record<string, Scene> = {
+const segmentScenes: Record<string, { eyebrow: string; title: string; subtitle: string; chips: string[]; cards: string[] }> = {
   grafica: {
-    eyebrow: 'Estúdio gráfico digital',
-    title: 'Materiais visuais com apresentação de marca grande',
-    subtitle: 'Uma capa pronta para gráficas, comunicação visual, adesivos, banners e personalizados.',
-    primaryLabel: 'Pedir orçamento',
-    secondaryLabel: 'Ver materiais',
-    cards: [
-      { title: 'Cartão premium', subtitle: 'Acabamento profissional', meta: 'Design + impressão' },
-      { title: 'Banner e lona', subtitle: 'Medidas sob demanda', meta: 'm² inteligente' },
-      { title: 'Adesivos', subtitle: 'Rótulos, vinil e vitrine', meta: 'Corte e aplicação' },
-    ],
-    stats: [
-      { label: 'Pedidos', value: 'Organizados' },
-      { label: 'Arte', value: 'Anexada' },
-      { label: 'Produção', value: 'Acompanhada' },
-    ],
-    gradients: ['#05245c', '#1d4ed8', '#22c55e'],
+    eyebrow: 'Vitrine gráfica',
+    title: 'Impressos e personalizados em destaque',
+    subtitle: 'Produtos, orçamento e atendimento reunidos em uma experiência de compra mais profissional.',
+    chips: ['Banners', 'Adesivos', 'Cartões'],
+    cards: ['Cartão premium', 'Banner 90x120', 'Adesivo vinil'],
   },
   alimenticio: {
-    eyebrow: 'Cardápio e encomendas',
-    title: 'Sabores, combos e pedidos com experiência de compra bonita',
-    subtitle: 'Para restaurantes, confeitarias, docerias, marmitas, kits e encomendas com retirada ou entrega.',
-    primaryLabel: 'Fazer pedido',
-    secondaryLabel: 'Ver cardápio',
-    cards: [
-      { title: 'Combo da semana', subtitle: 'Oferta montada', meta: 'Mais vendido' },
-      { title: 'Encomendas', subtitle: 'Data e quantidade', meta: 'Agendado' },
-      { title: 'Produtos do dia', subtitle: 'Disponível agora', meta: 'Retirada rápida' },
-    ],
-    stats: [
-      { label: 'Pedidos', value: 'No carrinho' },
-      { label: 'Entrega', value: 'Combinada' },
-      { label: 'Cupom', value: 'Aplicável' },
-    ],
-    gradients: ['#7c2d12', '#ea580c', '#facc15'],
+    eyebrow: 'Cardápio digital',
+    title: 'Pedidos, combos e encomendas sem confusão',
+    subtitle: 'O cliente escolhe, usa cupom, envia o carrinho e combina retirada ou entrega.',
+    chips: ['Combos', 'Encomendas', 'Retirada'],
+    cards: ['Combo da semana', 'Kit festa', 'Produto do dia'],
   },
   imobiliaria: {
     eyebrow: 'Vitrine imobiliária',
-    title: 'Imóveis apresentados com confiança e atendimento consultivo',
-    subtitle: 'Para corretores e imobiliárias exibirem imóveis, regiões, visitas e captação de interessados.',
-    primaryLabel: 'Quero atendimento',
-    secondaryLabel: 'Ver imóveis',
-    cards: [
-      { title: 'Casa em destaque', subtitle: 'Fotos e descrição', meta: 'Visita disponível' },
-      { title: 'Apartamento novo', subtitle: 'Perfil familiar', meta: 'Financiável' },
-      { title: 'Terreno premium', subtitle: 'Investimento local', meta: 'Oportunidade' },
-    ],
-    stats: [
-      { label: 'Leads', value: 'Qualificados' },
-      { label: 'Visitas', value: 'Agendadas' },
-      { label: 'Região', value: 'Destacada' },
-    ],
-    gradients: ['#0f172a', '#334155', '#d4af37'],
+    title: 'Imóveis com apresentação de alto padrão',
+    subtitle: 'Cards elegantes para imóveis, atendimento consultivo e captação de interessados pelo WhatsApp.',
+    chips: ['Casas', 'Apartamentos', 'Visitas'],
+    cards: ['Casa em destaque', 'Apartamento novo', 'Terreno premium'],
   },
   personalizados: {
     eyebrow: 'Loja criativa',
-    title: 'Personalizados, brindes e kits com visual de marca premium',
-    subtitle: 'Para camisetas, canecas, lembranças, brindes corporativos e produtos sob demanda.',
-    primaryLabel: 'Personalizar',
-    secondaryLabel: 'Ver ideias',
-    cards: [
-      { title: 'Camisas', subtitle: 'Arte, cor e tamanho', meta: 'Sob medida' },
-      { title: 'Canecas', subtitle: 'Presente personalizado', meta: 'Kit pronto' },
-      { title: 'Brindes', subtitle: 'Empresas e eventos', meta: 'Escala' },
-    ],
-    stats: [
-      { label: 'Briefing', value: 'Guiado' },
-      { label: 'Arte', value: 'Aprovada' },
-      { label: 'Recompra', value: 'Fácil' },
-    ],
-    gradients: ['#581c87', '#9333ea', '#ec4899'],
+    title: 'Produtos personalizados com compra guiada',
+    subtitle: 'Camisetas, canecas, brindes e kits com catálogo bonito e orçamento organizado.',
+    chips: ['Brindes', 'Kits', 'Arte'],
+    cards: ['Camisa personalizada', 'Caneca presente', 'Kit empresa'],
   },
   assistencia: {
-    eyebrow: 'Assistência técnica',
-    title: 'Diagnóstico, reparo e acompanhamento com mais transparência',
-    subtitle: 'Para consertos, manutenção, peças, garantia e atendimento técnico organizado.',
-    primaryLabel: 'Solicitar diagnóstico',
-    secondaryLabel: 'Ver serviços',
-    cards: [
-      { title: 'Celulares', subtitle: 'Tela, bateria e conector', meta: 'Triagem' },
-      { title: 'Notebooks', subtitle: 'Upgrade e manutenção', meta: 'Diagnóstico' },
-      { title: 'Games', subtitle: 'Limpeza e reparos', meta: 'Garantia' },
-    ],
-    stats: [
-      { label: 'Status', value: 'Atualizado' },
-      { label: 'Peças', value: 'Registradas' },
-      { label: 'Prazo', value: 'Claro' },
-    ],
-    gradients: ['#0f3d5e', '#0891b2', '#22d3ee'],
+    eyebrow: 'Assistência organizada',
+    title: 'Diagnóstico, reparo e acompanhamento',
+    subtitle: 'Serviços técnicos apresentados com confiança, prazos e solicitação rápida.',
+    chips: ['Celulares', 'Notebooks', 'Reparos'],
+    cards: ['Troca de tela', 'Bateria', 'Diagnóstico'],
   },
   barbearia: {
-    eyebrow: 'Agenda e estilo',
-    title: 'Cortes, combos e atendimento com presença forte',
-    subtitle: 'Para barbearias exibirem serviços, pacotes, profissionais e agendamento pelo WhatsApp.',
-    primaryLabel: 'Agendar horário',
-    secondaryLabel: 'Ver serviços',
-    cards: [
-      { title: 'Corte degradê', subtitle: 'Finalização completa', meta: 'Popular' },
-      { title: 'Barba', subtitle: 'Toalha, navalha e cuidado', meta: 'Clássico' },
-      { title: 'Combo premium', subtitle: 'Corte + barba', meta: 'Mais valor' },
-    ],
-    stats: [
-      { label: 'Agenda', value: 'Rápida' },
-      { label: 'Combo', value: 'Visível' },
-      { label: 'Retorno', value: 'Fácil' },
-    ],
-    gradients: ['#111827', '#92400e', '#f59e0b'],
+    eyebrow: 'Agenda premium',
+    title: 'Serviços, combos e horários em destaque',
+    subtitle: 'Visual forte para cortes, barba, pacotes e atendimento recorrente.',
+    chips: ['Corte', 'Barba', 'Combo'],
+    cards: ['Corte degradê', 'Barba completa', 'Combo premium'],
   },
   estetica: {
     eyebrow: 'Beleza e cuidado',
-    title: 'Procedimentos e pacotes com apresentação delicada e profissional',
-    subtitle: 'Para clínicas, estúdios e profissionais de estética venderem confiança antes do contato.',
-    primaryLabel: 'Agendar avaliação',
-    secondaryLabel: 'Ver procedimentos',
-    cards: [
-      { title: 'Facial', subtitle: 'Cuidados e limpeza', meta: 'Avaliação' },
-      { title: 'Corporal', subtitle: 'Sessões e pacotes', meta: 'Tratamento' },
-      { title: 'Pacote mensal', subtitle: 'Recorrência e retorno', meta: 'Fidelização' },
-    ],
-    stats: [
-      { label: 'Avaliação', value: 'Guiada' },
-      { label: 'Pacotes', value: 'Claros' },
-      { label: 'Confiança', value: 'Alta' },
-    ],
-    gradients: ['#831843', '#db2777', '#f9a8d4'],
+    title: 'Procedimentos com apresentação elegante',
+    subtitle: 'Serviços, pacotes e avaliações com visual que passa confiança.',
+    chips: ['Facial', 'Corporal', 'Pacotes'],
+    cards: ['Limpeza de pele', 'Drenagem', 'Pacote mensal'],
   },
   oficina: {
     eyebrow: 'Oficina digital',
-    title: 'Serviços automotivos com orçamento claro e visual confiável',
-    subtitle: 'Para oficinas organizarem revisão, diagnóstico, peças, mão de obra e pedido rápido.',
-    primaryLabel: 'Solicitar orçamento',
-    secondaryLabel: 'Ver serviços',
-    cards: [
-      { title: 'Revisão', subtitle: 'Check-up completo', meta: 'Preventivo' },
-      { title: 'Freios', subtitle: 'Segurança e troca', meta: 'Prioridade' },
-      { title: 'Suspensão', subtitle: 'Diagnóstico técnico', meta: 'Serviço' },
-    ],
-    stats: [
-      { label: 'Veículo', value: 'Identificado' },
-      { label: 'Peças', value: 'Listadas' },
-      { label: 'Status', value: 'Visível' },
-    ],
-    gradients: ['#1f2937', '#dc2626', '#f97316'],
+    title: 'Serviços automotivos com orçamento claro',
+    subtitle: 'O cliente entende serviços, envia pedido e acompanha o próximo passo.',
+    chips: ['Revisão', 'Freios', 'Suspensão'],
+    cards: ['Revisão completa', 'Troca de óleo', 'Diagnóstico'],
   },
   loja: {
     eyebrow: 'Loja online local',
-    title: 'Produtos, ofertas e pedidos em uma vitrine profissional',
-    subtitle: 'Para lojas locais venderem com catálogo, carrinho, cupons e atendimento rápido.',
-    primaryLabel: 'Comprar agora',
-    secondaryLabel: 'Ver produtos',
-    cards: [
-      { title: 'Produto destaque', subtitle: 'Foto e descrição', meta: 'Oferta' },
-      { title: 'Kit promocional', subtitle: 'Combo pronto', meta: 'Cupom' },
-      { title: 'Retirada local', subtitle: 'Pedido organizado', meta: 'Balcão' },
-    ],
-    stats: [
-      { label: 'Carrinho', value: 'Ativo' },
-      { label: 'Cupom', value: 'Opcional' },
-      { label: 'Pedido', value: 'Direto' },
-    ],
-    gradients: ['#172554', '#2563eb', '#f59e0b'],
+    title: 'Catálogo, carrinho e ofertas no mesmo lugar',
+    subtitle: 'Um marketplace simples para vender mais com retirada, entrega e cupom.',
+    chips: ['Produtos', 'Ofertas', 'Entrega'],
+    cards: ['Produto destaque', 'Kit oferta', 'Mais vendido'],
   },
   servicos: {
     eyebrow: 'Serviços locais',
-    title: 'Orçamento profissional para serviços sob medida',
-    subtitle: 'Para instalação, manutenção, visitas técnicas, consultorias e serviços locais.',
-    primaryLabel: 'Solicitar orçamento',
-    secondaryLabel: 'Ver serviços',
-    cards: [
-      { title: 'Visita técnica', subtitle: 'Escopo e agenda', meta: 'Avaliação' },
-      { title: 'Instalação', subtitle: 'Serviço local', meta: 'Execução' },
-      { title: 'Manutenção', subtitle: 'Atendimento recorrente', meta: 'Suporte' },
-    ],
-    stats: [
-      { label: 'Briefing', value: 'Completo' },
-      { label: 'Fotos', value: 'Enviadas' },
-      { label: 'Prazo', value: 'Combinado' },
-    ],
-    gradients: ['#064e3b', '#059669', '#10b981'],
+    title: 'Orçamentos profissionais para qualquer serviço',
+    subtitle: 'Ideal para visita técnica, manutenção, instalação e atendimento por demanda.',
+    chips: ['Visita', 'Orçamento', 'Execução'],
+    cards: ['Instalação', 'Manutenção', 'Visita técnica'],
   },
   vidracaria: {
     eyebrow: 'Vidros sob medida',
-    title: 'Box, espelhos e instalações com acabamento premium',
-    subtitle: 'Para vidraçarias apresentarem serviços por medida, visita e instalação.',
-    primaryLabel: 'Pedir orçamento',
-    secondaryLabel: 'Ver serviços',
-    cards: [
-      { title: 'Box', subtitle: 'Vidro sob medida', meta: 'Instalação' },
-      { title: 'Espelhos', subtitle: 'Ambientes e acabamento', meta: 'Projeto' },
-      { title: 'Janelas', subtitle: 'Medida e visita', meta: 'Técnico' },
-    ],
-    stats: [
-      { label: 'Medidas', value: 'Guiadas' },
-      { label: 'Fotos', value: 'Anexadas' },
-      { label: 'Instalação', value: 'Agendada' },
-    ],
-    gradients: ['#075985', '#0ea5e9', '#7dd3fc'],
+    title: 'Box, espelhos e instalações com visual premium',
+    subtitle: 'Apresente serviços por medida e facilite o pedido com fotos e informações.',
+    chips: ['Box', 'Espelhos', 'Instalação'],
+    cards: ['Box banheiro', 'Espelho grande', 'Janela sob medida'],
   },
   serralheria: {
     eyebrow: 'Fabricação sob medida',
-    title: 'Portões, grades e estruturas com proposta profissional',
-    subtitle: 'Para serralherias venderem fabricação, instalação, medidas e acabamento.',
-    primaryLabel: 'Solicitar orçamento',
-    secondaryLabel: 'Ver serviços',
-    cards: [
-      { title: 'Portões', subtitle: 'Projetos sob medida', meta: 'Fabricação' },
-      { title: 'Grades', subtitle: 'Segurança e acabamento', meta: 'Instalação' },
-      { title: 'Estruturas', subtitle: 'Solda e montagem', meta: 'Obra' },
-    ],
-    stats: [
-      { label: 'Medidas', value: 'Claras' },
-      { label: 'Material', value: 'Definido' },
-      { label: 'Entrega', value: 'Prevista' },
-    ],
-    gradients: ['#27272a', '#52525b', '#f97316'],
+    title: 'Portões, grades e estruturas com proposta clara',
+    subtitle: 'Serviços pesados apresentados com acabamento visual profissional.',
+    chips: ['Portões', 'Grades', 'Solda'],
+    cards: ['Portão moderno', 'Grade de proteção', 'Estrutura metálica'],
   },
   moveis: {
     eyebrow: 'Ambientes planejados',
-    title: 'Projetos sob medida com percepção de alto valor',
-    subtitle: 'Para marcenarias e móveis planejados apresentarem ambientes, materiais e etapas.',
-    primaryLabel: 'Solicitar projeto',
-    secondaryLabel: 'Ver ambientes',
-    cards: [
-      { title: 'Cozinha', subtitle: 'Projeto funcional', meta: 'Premium' },
-      { title: 'Quarto', subtitle: 'Guarda-roupa e painel', meta: 'Sob medida' },
-      { title: 'Comercial', subtitle: 'Lojas e escritórios', meta: 'Projeto' },
-    ],
-    stats: [
-      { label: 'Medição', value: 'Agendada' },
-      { label: 'Projeto', value: 'Guiado' },
-      { label: 'Instalação', value: 'Planejada' },
-    ],
-    gradients: ['#3f2a1d', '#92400e', '#facc15'],
+    title: 'Projetos sob medida com experiência premium',
+    subtitle: 'Mostre ambientes, materiais e solicitação de projeto com alta percepção de valor.',
+    chips: ['Cozinha', 'Quarto', 'Projeto'],
+    cards: ['Cozinha planejada', 'Guarda-roupa', 'Home office'],
   },
   eventos: {
     eyebrow: 'Eventos memoráveis',
-    title: 'Pacotes, decoração e serviços com proposta encantadora',
-    subtitle: 'Para festas, eventos, buffet, decoração, locação e experiências sob medida.',
-    primaryLabel: 'Solicitar proposta',
-    secondaryLabel: 'Ver pacotes',
-    cards: [
-      { title: 'Pacote festa', subtitle: 'Itens combinados', meta: 'Completo' },
-      { title: 'Decoração', subtitle: 'Tema e montagem', meta: 'Personalizado' },
-      { title: 'Corporativo', subtitle: 'Empresas e eventos', meta: 'Profissional' },
-    ],
-    stats: [
-      { label: 'Data', value: 'Reservada' },
-      { label: 'Pacote', value: 'Claro' },
-      { label: 'Equipe', value: 'Alinhada' },
-    ],
-    gradients: ['#4c1d95', '#7c3aed', '#facc15'],
+    title: 'Pacotes, decoração e serviços para festas',
+    subtitle: 'O cliente informa data, estilo e quantidade para receber proposta organizada.',
+    chips: ['Pacotes', 'Festas', 'Datas'],
+    cards: ['Pacote festa', 'Decoração', 'Evento empresa'],
   },
 }
 
@@ -337,75 +186,77 @@ function LogoMark({ company, theme, large = false }: { company: any; theme: Them
   )
 }
 
-function getScene(company: any, template: any) {
-  const key = company.site_template || template?.id || 'servicos'
-  return segmentScenes[key] || segmentScenes.servicos
-}
-
-function PremiumSegmentArt({ company, template, theme, products }: { company: any; template: any; theme: Theme; products: Product[] }) {
-  const scene = getScene(company, template)
-  const firstProducts = products.slice(0, 3)
-  const cardData = firstProducts.length > 0
-    ? firstProducts.map((product) => ({
-        title: product.nome,
-        subtitle: product.categoria || 'Produto',
-        meta: company.site_show_prices === false ? 'Sob consulta' : moeda(product.preco || 0),
-      }))
-    : scene.cards
+function PremiumSegmentArt({ company, template, theme }: { company: any; template: any; theme: Theme }) {
+  const key = company.site_template || template?.id || 'loja'
+  const scene = segmentScenes[key] || segmentScenes.servicos
+  const logoUrl = company.logo_url
 
   return (
     <div className="relative overflow-hidden rounded-[2.4rem] border border-white/70 bg-white p-3 shadow-2xl shadow-blue-950/15">
-      <div className="rounded-[2rem] border border-black/5 bg-white p-4">
-        <div className="relative min-h-[430px] overflow-hidden rounded-[1.65rem] p-5 sm:p-6" style={{ background: `linear-gradient(135deg, ${scene.gradients[0]}, ${scene.gradients[1]} 54%, ${scene.gradients[2]})` }}>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(255,255,255,0.28),transparent_28%),radial-gradient(circle_at_88%_10%,rgba(255,255,255,0.18),transparent_24%)]" />
-          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl" />
-          <div className="absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+      <div className="rounded-[2rem] border border-black/5 bg-slate-950 p-4 text-white">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-white/30" />
+            <span className="h-3 w-3 rounded-full bg-white/20" />
+            <span className="h-3 w-3 rounded-full bg-white/10" />
+          </div>
+          <div className="hidden rounded-full bg-white/10 px-4 py-2 text-xs font-black text-white/70 sm:block">
+            {company.slug ? `${company.slug}.orcaly.com.br` : 'site profissional'}
+          </div>
+        </div>
 
-          <div className="relative grid min-h-[380px] content-between gap-6 text-white">
+        <div className="relative min-h-[430px] overflow-hidden rounded-[1.65rem] p-5 sm:p-6" style={{ background: `radial-gradient(circle at 20% 15%, ${theme.accent}77, transparent 30%), radial-gradient(circle at 90% 5%, #ffffff24, transparent 25%), linear-gradient(145deg, ${theme.primary}, #020617 72%)` }}>
+          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute -bottom-24 left-1/3 h-72 w-72 rounded-full blur-3xl" style={{ background: `${theme.accent}44` }} />
+
+          <div className="relative grid min-h-[380px] content-between gap-6">
             <div>
-              <div className="inline-flex items-center gap-3 rounded-full bg-white/14 px-3 py-2 backdrop-blur">
-                <LogoMark company={company} theme={theme} />
+              <div className="inline-flex items-center gap-3 rounded-full bg-white/10 px-3 py-2 backdrop-blur">
+                {logoUrl ? (
+                  <span className="grid h-9 w-9 place-items-center rounded-2xl bg-white">
+                    <img src={logoUrl} alt={company.nome} className="max-h-[78%] max-w-[78%] object-contain" />
+                  </span>
+                ) : (
+                  <span className="grid h-9 w-9 place-items-center rounded-2xl bg-white/15 text-sm font-black">{company.nome?.slice(0, 1) || 'O'}</span>
+                )}
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-white/65">{scene.eyebrow}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-white/60">{scene.eyebrow}</p>
                   <p className="text-sm font-black text-white">{company.nome || template?.nome || 'Sua empresa'}</p>
                 </div>
               </div>
 
               <h3 className="mt-7 max-w-lg text-4xl font-black leading-none tracking-[-0.06em] sm:text-5xl">{scene.title}</h3>
-              <p className="mt-4 max-w-md text-sm font-bold leading-7 text-white/76">{scene.subtitle}</p>
+              <p className="mt-4 max-w-md text-sm font-bold leading-7 text-white/70">{scene.subtitle}</p>
             </div>
 
             <div className="grid gap-3 md:grid-cols-[1fr_0.78fr]">
               <div className="grid gap-3 sm:grid-cols-3">
-                {cardData.map((card, index) => (
-                  <div key={`${card.title}-${index}`} className="rounded-[1.35rem] border border-white/14 bg-white/16 p-3 backdrop-blur">
-                    <div className="h-20 rounded-[1rem] bg-white/20" />
-                    <p className="mt-3 text-xs font-black">{card.title}</p>
-                    <p className="mt-1 text-[11px] font-bold text-white/62">{card.subtitle}</p>
-                    <p className="mt-3 text-xs font-black text-white">{card.meta}</p>
+                {scene.cards.map((card, index) => (
+                  <div key={card} className="rounded-[1.35rem] border border-white/10 bg-white/12 p-3 backdrop-blur">
+                    <div className="h-20 rounded-[1rem]" style={{ background: `linear-gradient(135deg, ${index % 2 ? theme.accent : '#ffffff55'}, ${theme.primary})` }} />
+                    <p className="mt-3 text-xs font-black">{card}</p>
+                    <p className="mt-1 text-[11px] font-bold text-white/55">Adicionar ao carrinho</p>
                   </div>
                 ))}
               </div>
 
-              <div className="rounded-[1.35rem] border border-white/16 bg-white/94 p-4 text-slate-950 shadow-xl">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Atendimento</p>
+              <div className="rounded-[1.35rem] border border-white/10 bg-white p-4 text-slate-950 shadow-xl">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Resumo</p>
                 <div className="mt-4 space-y-3">
-                  {scene.stats.map((stat) => (
-                    <div key={stat.label} className="flex justify-between gap-3 text-sm font-black">
-                      <span className="text-slate-500">{stat.label}</span>
-                      <span>{stat.value}</span>
-                    </div>
-                  ))}
+                  <div className="flex justify-between text-sm font-black"><span>Subtotal</span><span>R$ 247,90</span></div>
+                  <div className="flex justify-between text-sm font-black" style={{ color: theme.primary }}><span>Cupom aplicado</span><span>-R$ 25,00</span></div>
+                  <div className="h-px bg-slate-100" />
+                  <div className="flex justify-between text-lg font-black"><span>Total</span><span>R$ 222,90</span></div>
                 </div>
-                <div className="mt-5 rounded-2xl px-4 py-3 text-center text-sm font-black text-white" style={{ background: theme.primary }}>
-                  {company.site_cta_text || scene.primaryLabel}
-                </div>
+                <button className="mt-5 w-full rounded-2xl px-4 py-3 text-sm font-black text-white" style={{ background: theme.primary }}>
+                  Finalizar pedido
+                </button>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {(company.site_brand_words || template?.keywords || []).slice(0, 5).map((word: string) => (
-                <span key={word} className="rounded-full border border-white/10 bg-white/12 px-4 py-2 text-xs font-black text-white/78 backdrop-blur">{word}</span>
+              {scene.chips.map((chip) => (
+                <span key={chip} className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-black text-white/75 backdrop-blur">{chip}</span>
               ))}
             </div>
           </div>
@@ -442,9 +293,10 @@ function ProductMedia({ product, theme }: { product: Product; theme: Theme }) {
 }
 
 function BenefitIcon({ theme, index }: { theme: Theme; index: number }) {
-  const shapes = ['rounded-full', 'rounded-2xl rotate-6', 'rounded-xl -rotate-6']
+  const rotation = index % 2 === 0 ? 'rotate-6' : '-rotate-6'
+
   return (
-    <span className={`grid h-12 w-12 place-items-center ${shapes[index % shapes.length]}`} style={{ background: `${theme.primary}12`, color: theme.primary }}>
+    <span className={`grid h-12 w-12 place-items-center rounded-2xl ${rotation}`} style={{ background: `${theme.primary}12`, color: theme.primary }}>
       <span className="h-5 w-5 rounded-full border-[6px]" style={{ borderColor: theme.accent }} />
     </span>
   )
@@ -462,7 +314,7 @@ export default function SitePublicoPremiumPage() {
   const [cart, setCart] = useState<CartLine[]>([])
   const [cartOpen, setCartOpen] = useState(false)
   const [couponCode, setCouponCode] = useState('')
-  const [coupon, setCoupon] = useState<any>(null)
+  const [coupon, setCoupon] = useState<CouponResult | null>(null)
   const [couponMessage, setCouponMessage] = useState('')
   const [cliente, setCliente] = useState({ nome: '', telefone: '', endereco: '', observacoes: '' })
   const [orderMessage, setOrderMessage] = useState('')
@@ -509,11 +361,6 @@ export default function SitePublicoPremiumPage() {
   const cartCount = cart.reduce((acc, line) => acc + line.quantidade, 0)
 
   function addToCart(product: Product) {
-    if (company?.site_enable_cart === false) {
-      window.location.href = whatsappLink(company.whatsapp, `Olá! Vim pelo site e quero saber sobre: ${product.nome}`)
-      return
-    }
-
     setCart((current) => {
       const existing = current.find((line) => line.product.id === product.id)
 
@@ -634,7 +481,6 @@ export default function SitePublicoPremiumPage() {
     )
   }
 
-  const scene = getScene(company, template)
   const message = company.site_whatsapp_message || `Olá! Vim pelo site da ${company.nome} e quero atendimento.`
   const whats = whatsappLink(company.whatsapp, message)
   const features = Array.isArray(company.site_features) ? company.site_features : []
@@ -645,7 +491,11 @@ export default function SitePublicoPremiumPage() {
   const payments = Array.isArray(company.site_payment_methods) ? company.site_payment_methods : []
   const delivery = Array.isArray(company.site_delivery_options) ? company.site_delivery_options : []
   const featuredProducts = products.filter((product) => product.destaque).slice(0, 3)
-  const showMarketplace = company.site_show_marketplace !== false && company.site_show_store !== false
+  const proofItems = [
+    { label: 'Atendimento', value: company.atendimento_horario || 'Online' },
+    { label: 'Região', value: [company.cidade, company.estado].filter(Boolean).join(' / ') || template?.segmento || 'Local' },
+    { label: 'Catálogo', value: `${products.length} opções` },
+  ]
 
   return (
     <main style={{ background: theme.background, color: theme.text }} className="min-h-screen overflow-hidden">
@@ -661,20 +511,18 @@ export default function SitePublicoPremiumPage() {
 
           <nav className="hidden items-center gap-5 text-sm font-black md:flex">
             <a href="#servicos">Serviços</a>
-            {showMarketplace && <a href="#catalogo">Catálogo</a>}
+            {company.site_show_store !== false && <a href="#catalogo">Catálogo</a>}
             {company.site_show_about !== false && <a href="#sobre">Sobre</a>}
             <a href="#contato">Contato</a>
           </nav>
 
           <div className="flex items-center gap-2">
-            {showMarketplace && company.site_enable_cart !== false && (
-              <button onClick={() => setCartOpen(true)} className="relative rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-black shadow-sm">
-                Carrinho
-                {cartCount > 0 && <span className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full text-xs text-white" style={{ background: theme.primary }}>{cartCount}</span>}
-              </button>
-            )}
+            <button onClick={() => setCartOpen(true)} className="relative rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-black shadow-sm">
+              Carrinho
+              {cartCount > 0 && <span className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full text-xs text-white" style={{ background: theme.primary }}>{cartCount}</span>}
+            </button>
             <a href={whats} className="hidden rounded-2xl px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/10 sm:inline-flex" style={{ background: theme.primary }}>
-              {company.site_cta_text || scene.primaryLabel}
+              {company.site_cta_text || 'Pedir orçamento'}
             </a>
           </div>
         </div>
@@ -687,7 +535,7 @@ export default function SitePublicoPremiumPage() {
             <div className="inline-flex items-center gap-3 rounded-full border border-black/5 bg-white/90 px-4 py-3 shadow-xl shadow-black/5">
               <LogoMark company={company} theme={theme} />
               <p className="text-xs font-black uppercase tracking-[0.22em]" style={{ color: theme.primary }}>
-                {company.site_badge_text || template?.conteudo?.badge || company.segmento || scene.eyebrow}
+                {company.site_badge_text || template?.conteudo?.badge || company.segmento || 'Atendimento online'}
               </p>
             </div>
 
@@ -695,23 +543,32 @@ export default function SitePublicoPremiumPage() {
               {company.site_headline || template?.conteudo?.headline || company.nome}
             </h1>
             <p className="mt-6 max-w-2xl text-lg font-bold leading-8 opacity-70">
-              {company.site_subheadline || template?.conteudo?.subheadline || scene.subtitle}
+              {company.site_subheadline || template?.conteudo?.subheadline || 'Conheça nossos produtos e solicite atendimento.'}
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
               <a href={whats} className="rounded-2xl px-6 py-4 font-black text-white shadow-xl shadow-black/10" style={{ background: theme.primary }}>
-                {company.site_cta_text || scene.primaryLabel}
+                {company.site_cta_text || 'Pedir orçamento'}
               </a>
-              {showMarketplace && <a href="#catalogo" className="rounded-2xl border border-black/10 bg-white px-6 py-4 font-black shadow-sm" style={{ color: theme.primary }}>
-                {company.site_secondary_cta_text || scene.secondaryLabel}
-              </a>}
+              <a href="#catalogo" className="rounded-2xl border border-black/10 bg-white px-6 py-4 font-black shadow-sm" style={{ color: theme.primary }}>
+                {company.site_secondary_cta_text || 'Ver catálogo'}
+              </a>
+            </div>
+
+            <div className="mt-9 grid gap-3 sm:grid-cols-3">
+              {proofItems.map((item) => (
+                <div key={item.label} className="rounded-3xl border border-black/5 bg-white/80 p-4 shadow-sm backdrop-blur">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] opacity-40">{item.label}</p>
+                  <p className="mt-2 font-black">{item.value}</p>
+                </div>
+              ))}
             </div>
           </div>
 
           {company.site_banner_url ? (
             <img src={company.site_banner_url} alt={company.nome} className="min-h-[420px] w-full rounded-[2.5rem] object-cover shadow-2xl shadow-black/15" />
           ) : (
-            <PremiumSegmentArt company={company} template={template} theme={theme} products={products} />
+            <PremiumSegmentArt company={company} template={template} theme={theme} />
           )}
         </div>
       </Section>
@@ -722,7 +579,7 @@ export default function SitePublicoPremiumPage() {
             <p className="text-sm font-black uppercase tracking-[0.2em] text-white/70">Oferta em destaque</p>
             <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]">{company.site_promo_title || 'Promoção especial'}</h2>
             <p className="mt-3 max-w-3xl font-bold leading-7 text-white/80">{company.site_promo_text}</p>
-            <a href={showMarketplace ? '#catalogo' : whats} className="mt-5 inline-flex rounded-2xl bg-white px-5 py-3 font-black" style={{ color: theme.primary }}>
+            <a href="#catalogo" className="mt-5 inline-flex rounded-2xl bg-white px-5 py-3 font-black" style={{ color: theme.primary }}>
               {company.site_promo_button_text || 'Aproveitar oferta'}
             </a>
           </div>
@@ -733,7 +590,7 @@ export default function SitePublicoPremiumPage() {
         <Section>
           <div className="mb-6">
             <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Diferenciais</p>
-            <h2 className="mt-2 text-4xl font-black tracking-[-0.06em]">{company.site_trust_title || 'Por que escolher a gente?'}</h2>
+            <h2 className="mt-2 text-4xl font-black tracking-[-0.06em]">Por que escolher {company.nome}?</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {benefits.map((item: any, index: number) => (
@@ -771,17 +628,17 @@ export default function SitePublicoPremiumPage() {
         </Section>
       )}
 
-      {showMarketplace && (
+      {company.site_show_store !== false && (
         <Section id="catalogo">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Catálogo</p>
-              <h2 className="mt-2 text-4xl font-black tracking-[-0.06em]">{company.site_marketplace_title || 'Catálogo online'}</h2>
-              <p className="mt-3 max-w-2xl font-bold leading-7 opacity-65">{company.site_marketplace_subtitle || 'Escolha produtos, monte seu pedido e envie tudo organizado para atendimento.'}</p>
+              <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Marketplace</p>
+              <h2 className="mt-2 text-4xl font-black tracking-[-0.06em]">Catálogo com carrinho</h2>
+              <p className="mt-3 max-w-2xl font-bold leading-7 opacity-65">Escolha produtos, aplique cupom e envie o pedido direto para a empresa.</p>
             </div>
-            {company.site_enable_cart !== false && <button onClick={() => setCartOpen(true)} className="rounded-2xl px-5 py-4 font-black text-white shadow-xl shadow-black/10" style={{ background: theme.primary }}>
+            <button onClick={() => setCartOpen(true)} className="rounded-2xl px-5 py-4 font-black text-white shadow-xl shadow-black/10" style={{ background: theme.primary }}>
               Ver carrinho ({cartCount})
-            </button>}
+            </button>
           </div>
 
           {featuredProducts.length > 0 && (
@@ -792,7 +649,7 @@ export default function SitePublicoPremiumPage() {
                   <button key={product.id} onClick={() => addToCart(product)} className="rounded-[1.5rem] border border-black/5 bg-slate-50 p-4 text-left transition hover:-translate-y-1 hover:bg-white">
                     <p className="font-black">{product.nome}</p>
                     <p className="mt-1 text-sm font-bold opacity-55">{product.categoria || 'Produto'}</p>
-                    {company.site_show_prices !== false && <p className="mt-3 text-xl font-black" style={{ color: theme.primary }}>{moeda(product.preco)}</p>}
+                    <p className="mt-3 text-xl font-black" style={{ color: theme.primary }}>{moeda(product.preco)}</p>
                   </button>
                 ))}
               </div>
@@ -814,10 +671,8 @@ export default function SitePublicoPremiumPage() {
                     </div>
                     {product.descricao && <p className="mt-2 line-clamp-3 font-bold leading-7 opacity-65">{product.descricao}</p>}
                     <div className="mt-5 flex items-center justify-between gap-3">
-                      <p className="text-2xl font-black" style={{ color: theme.primary }}>{company.site_show_prices === false ? 'Sob consulta' : moeda(product.preco || 0)}</p>
-                      <button onClick={() => addToCart(product)} className="rounded-2xl px-4 py-3 text-sm font-black text-white" style={{ background: theme.primary }}>
-                        {company.site_cart_button_text || (company.site_enable_cart === false ? 'Consultar' : 'Adicionar')}
-                      </button>
+                      <p className="text-2xl font-black" style={{ color: theme.primary }}>{moeda(product.preco || 0)}</p>
+                      <button onClick={() => addToCart(product)} className="rounded-2xl px-4 py-3 text-sm font-black text-white" style={{ background: theme.primary }}>Adicionar</button>
                     </div>
                   </div>
                 </article>
@@ -826,7 +681,7 @@ export default function SitePublicoPremiumPage() {
           ) : (
             <div className="rounded-[2rem] border border-dashed border-black/10 bg-white p-8 text-center shadow-sm">
               <h3 className="text-2xl font-black">Catálogo em preparação</h3>
-              <p className="mt-2 font-bold opacity-60">{company.site_empty_catalog_text || 'A empresa ainda está preparando o catálogo.'}</p>
+              <p className="mt-2 font-bold opacity-60">A empresa ainda não publicou produtos no marketplace.</p>
             </div>
           )}
         </Section>
@@ -907,16 +762,12 @@ export default function SitePublicoPremiumPage() {
         </div>
       </Section>
 
-      <footer className="border-t border-black/5 bg-white/70 px-4 py-8 text-center text-sm font-bold opacity-60">
-        {company.site_footer_text || `${company.nome} • Site criado com Orçaly`}
-      </footer>
-
       {cartOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 p-3 backdrop-blur-sm sm:p-5">
           <div className="ml-auto flex h-full max-w-xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-black/5 p-5">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] opacity-45">Pedido</p>
+                <p className="text-xs font-black uppercase tracking-[0.2em] opacity-45">Marketplace</p>
                 <h3 className="text-2xl font-black tracking-[-0.04em]">Seu carrinho</h3>
               </div>
               <button onClick={() => setCartOpen(false)} className="rounded-2xl border border-black/10 px-4 py-3 font-black">Fechar</button>
@@ -935,7 +786,7 @@ export default function SitePublicoPremiumPage() {
                       <div className="flex justify-between gap-3">
                         <div>
                           <p className="font-black">{line.product.nome}</p>
-                          {company.site_show_prices !== false && <p className="mt-1 text-sm font-bold opacity-55">{moeda(line.product.preco)} cada</p>}
+                          <p className="mt-1 text-sm font-bold opacity-55">{moeda(line.product.preco)} cada</p>
                         </div>
                         <button onClick={() => removeFromCart(line.product.id)} className="text-sm font-black text-red-600">Remover</button>
                       </div>
@@ -945,28 +796,26 @@ export default function SitePublicoPremiumPage() {
                           <span className="w-8 text-center font-black">{line.quantidade}</span>
                           <button onClick={() => changeQuantity(line.product.id, 1)} className="grid h-9 w-9 place-items-center rounded-xl bg-white font-black">+</button>
                         </div>
-                        {company.site_show_prices !== false && <p className="font-black" style={{ color: theme.primary }}>{moeda(line.product.preco * line.quantidade)}</p>}
+                        <p className="font-black" style={{ color: theme.primary }}>{moeda(line.product.preco * line.quantidade)}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
 
-              {company.site_enable_coupons !== false && company.site_show_prices !== false && (
-                <div className="mt-5 rounded-[1.5rem] border border-black/5 bg-white p-4 shadow-sm">
-                  <p className="font-black">Cupom de desconto</p>
-                  <div className="mt-3 flex gap-2">
-                    <input
-                      value={couponCode}
-                      onChange={(event) => setCouponCode(event.target.value.toUpperCase())}
-                      placeholder="EX: PRIMEIRA10"
-                      className="min-w-0 flex-1 rounded-2xl border border-black/10 px-4 py-3 font-bold outline-none"
-                    />
-                    <button onClick={applyCoupon} className="rounded-2xl px-4 py-3 font-black text-white" style={{ background: theme.primary }}>Aplicar</button>
-                  </div>
-                  {couponMessage && <p className={`mt-2 text-sm font-bold ${coupon ? 'text-emerald-600' : 'text-red-600'}`}>{couponMessage}</p>}
+              <div className="mt-5 rounded-[1.5rem] border border-black/5 bg-white p-4 shadow-sm">
+                <p className="font-black">Cupom de desconto</p>
+                <div className="mt-3 flex gap-2">
+                  <input
+                    value={couponCode}
+                    onChange={(event) => setCouponCode(event.target.value.toUpperCase())}
+                    placeholder="EX: PRIMEIRA10"
+                    className="min-w-0 flex-1 rounded-2xl border border-black/10 px-4 py-3 font-bold outline-none"
+                  />
+                  <button onClick={applyCoupon} className="rounded-2xl px-4 py-3 font-black text-white" style={{ background: theme.primary }}>Aplicar</button>
                 </div>
-              )}
+                {couponMessage && <p className={`mt-2 text-sm font-bold ${coupon ? 'text-emerald-600' : 'text-red-600'}`}>{couponMessage}</p>}
+              </div>
 
               <div className="mt-5 grid gap-3 rounded-[1.5rem] border border-black/5 bg-slate-50 p-4">
                 <input value={cliente.nome} onChange={(event) => setCliente({ ...cliente, nome: event.target.value })} placeholder="Seu nome" className="rounded-2xl border border-black/10 px-4 py-3 font-bold outline-none" />
@@ -980,22 +829,18 @@ export default function SitePublicoPremiumPage() {
             </div>
 
             <div className="border-t border-black/5 p-5">
-              {company.site_show_prices !== false ? (
-                <div className="space-y-2">
-                  <div className="flex justify-between font-bold opacity-65"><span>Subtotal</span><span>{moeda(subtotal)}</span></div>
-                  <div className="flex justify-between font-bold text-emerald-600"><span>Desconto</span><span>-{moeda(desconto)}</span></div>
-                  <div className="flex justify-between text-2xl font-black"><span>Total</span><span>{moeda(total)}</span></div>
-                </div>
-              ) : (
-                <p className="font-bold opacity-65">Os valores serão confirmados no atendimento.</p>
-              )}
+              <div className="space-y-2">
+                <div className="flex justify-between font-bold opacity-65"><span>Subtotal</span><span>{moeda(subtotal)}</span></div>
+                <div className="flex justify-between font-bold text-emerald-600"><span>Desconto</span><span>-{moeda(desconto)}</span></div>
+                <div className="flex justify-between text-2xl font-black"><span>Total</span><span>{moeda(total)}</span></div>
+              </div>
               <button
                 onClick={finishOrder}
                 disabled={sendingOrder || cart.length === 0}
                 className="mt-4 w-full rounded-2xl px-6 py-4 font-black text-white disabled:opacity-60"
                 style={{ background: theme.primary }}
               >
-                {sendingOrder ? 'Enviando pedido...' : (company.site_checkout_button_text || 'Finalizar pedido')}
+                {sendingOrder ? 'Enviando pedido...' : 'Finalizar pedido'}
               </button>
             </div>
           </div>

@@ -401,7 +401,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           pixValor: pixValor || null,
         })
       } catch (proposal_approved_whatsapp) {
-        console.error('[Orçaly WhatsApp] Falha ao avisar proposta aprovada:', proposal_approved_whatsapp)
+        console.error('[OrÃ§aly WhatsApp] Falha ao avisar proposta aprovada:', proposal_approved_whatsapp)
       }
 
       return NextResponse.json({
@@ -511,7 +511,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           note: reason,
         })
       } catch (proposal_rejected_whatsapp) {
-        console.error('[Orçaly WhatsApp] Falha ao avisar recusa de proposta:', proposal_rejected_whatsapp)
+        console.error('[OrÃ§aly WhatsApp] Falha ao avisar recusa de proposta:', proposal_rejected_whatsapp)
       }
 
       return NextResponse.json({ ok: true, status: data?.status, proposta: data })

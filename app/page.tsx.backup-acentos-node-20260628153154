@@ -6,82 +6,82 @@ import { useMemo, useState } from 'react'
 const dores = [
   {
     titulo: 'Pedidos espalhados',
-    texto: 'O cliente chama no WhatsApp, manda detalhes em partes, envia arquivo depois e a equipe precisa caçar tudo manualmente.',
+    texto: 'O cliente chama no WhatsApp, manda detalhes em partes, envia arquivo depois e a equipe precisa caÃ§ar tudo manualmente.',
   },
   {
-    titulo: 'Orçamentos perdidos',
-    texto: 'Sem painel, proposta e histórico, muita oportunidade boa morre esquecida no atendimento.',
+    titulo: 'OrÃ§amentos perdidos',
+    texto: 'Sem painel, proposta e histÃ³rico, muita oportunidade boa morre esquecida no atendimento.',
   },
   {
-    titulo: 'Operação sem clareza',
-    texto: 'A empresa até vende, mas não sabe exatamente o que entrou, o que foi aprovado e o que precisa ser produzido.',
+    titulo: 'OperaÃ§Ã£o sem clareza',
+    texto: 'A empresa atÃ© vende, mas nÃ£o sabe exatamente o que entrou, o que foi aprovado e o que precisa ser produzido.',
   },
 ]
 
 const solucoes = [
   {
     titulo: 'Receba pedidos no lugar certo',
-    texto: 'Cada solicitação entra com produto, medidas, observações, arquivos e dados do cliente.',
+    texto: 'Cada solicitaÃ§Ã£o entra com produto, medidas, observaÃ§Ãµes, arquivos e dados do cliente.',
   },
   {
     titulo: 'Gere propostas profissionais',
-    texto: 'Envie um link organizado para o cliente aprovar, pedir alteração ou recusar.',
+    texto: 'Envie um link organizado para o cliente aprovar, pedir alteraÃ§Ã£o ou recusar.',
   },
   {
     titulo: 'Acompanhe cada etapa',
-    texto: 'Pedidos, oportunidades, propostas e produção ficam centralizados no painel.',
+    texto: 'Pedidos, oportunidades, propostas e produÃ§Ã£o ficam centralizados no painel.',
   },
 ]
 
 const segmentos = [
-  'Gráficas',
+  'GrÃ¡ficas',
   'Personalizados',
-  'Assistência técnica',
+  'AssistÃªncia tÃ©cnica',
   'Oficinas',
-  'Estética',
+  'EstÃ©tica',
   'Docerias',
-  'Serviços',
+  'ServiÃ§os',
   'Reformas',
-  'Agências',
+  'AgÃªncias',
   'Consultorias',
 ]
 
 const antesDepois = [
   ['Pedido perdido no WhatsApp', 'Pedido salvo no painel'],
-  ['Orçamento manual', 'Proposta organizada'],
+  ['OrÃ§amento manual', 'Proposta organizada'],
   ['Cliente cobrando status', 'Status acompanhado'],
-  ['Informações espalhadas', 'Tudo centralizado'],
-  ['Sem histórico', 'Histórico completo'],
+  ['InformaÃ§Ãµes espalhadas', 'Tudo centralizado'],
+  ['Sem histÃ³rico', 'HistÃ³rico completo'],
 ]
 
 const recursos = [
-  ['Página própria por empresa', 'Link profissional para divulgar no Instagram, WhatsApp, cartão e QR Code.'],
-  ['Catálogo de produtos e serviços', 'Produtos, serviços, categorias, preços, imagens e opcionais em um só lugar.'],
-  ['Formulário de orçamento', 'Cliente envia detalhes, medidas e arquivos sem bagunçar o atendimento.'],
-  ['Painel de pedidos', 'Acompanhe recebidos, pendentes, aprovados, em produção e entregues.'],
-  ['Propostas profissionais', 'Link de aprovação, assinatura, aceite e histórico comercial.'],
+  ['PÃ¡gina prÃ³pria por empresa', 'Link profissional para divulgar no Instagram, WhatsApp, cartÃ£o e QR Code.'],
+  ['CatÃ¡logo de produtos e serviÃ§os', 'Produtos, serviÃ§os, categorias, preÃ§os, imagens e opcionais em um sÃ³ lugar.'],
+  ['FormulÃ¡rio de orÃ§amento', 'Cliente envia detalhes, medidas e arquivos sem bagunÃ§ar o atendimento.'],
+  ['Painel de pedidos', 'Acompanhe recebidos, pendentes, aprovados, em produÃ§Ã£o e entregues.'],
+  ['Propostas profissionais', 'Link de aprovaÃ§Ã£o, assinatura, aceite e histÃ³rico comercial.'],
   ['Status do pedido', 'Controle visual do andamento para equipe e cliente.'],
-  ['Upload de arquivos', 'Artes, fotos, referências e documentos anexados ao pedido.'],
-  ['Relatórios de oportunidades', 'Veja negociações abertas, perdidas e recuperáveis.'],
+  ['Upload de arquivos', 'Artes, fotos, referÃªncias e documentos anexados ao pedido.'],
+  ['RelatÃ³rios de oportunidades', 'Veja negociaÃ§Ãµes abertas, perdidas e recuperÃ¡veis.'],
 ]
 
 const passos = [
-  ['01', 'Configure sua empresa', 'Adicione logo, categorias, produtos, serviços e informações de atendimento.'],
-  ['02', 'Compartilhe seu link', 'Use no Instagram, WhatsApp, cartão, QR Code, anúncios e bio.'],
-  ['03', 'Receba e acompanhe pedidos', 'Organize orçamentos, propostas, status e oportunidades pelo painel.'],
+  ['01', 'Configure sua empresa', 'Adicione logo, categorias, produtos, serviÃ§os e informaÃ§Ãµes de atendimento.'],
+  ['02', 'Compartilhe seu link', 'Use no Instagram, WhatsApp, cartÃ£o, QR Code, anÃºncios e bio.'],
+  ['03', 'Receba e acompanhe pedidos', 'Organize orÃ§amentos, propostas, status e oportunidades pelo painel.'],
 ]
 
 const planos = [
   {
     nome: 'Essencial',
     preco: 'R$ 49,90',
-    descricao: 'Para começar a receber pedidos com organização.',
+    descricao: 'Para comeÃ§ar a receber pedidos com organizaÃ§Ã£o.',
     recursos: [
       'Link empresa.orcaly.com.br',
-      'Página pública',
-      'Formulário de orçamento',
+      'PÃ¡gina pÃºblica',
+      'FormulÃ¡rio de orÃ§amento',
       'Painel de pedidos',
-      'Botão WhatsApp',
+      'BotÃ£o WhatsApp',
     ],
     destaque: false,
   },
@@ -91,11 +91,11 @@ const planos = [
     descricao: 'Para empresas que querem vender com mais controle.',
     recursos: [
       'Tudo do Essencial',
-      'Catálogo completo',
+      'CatÃ¡logo completo',
       'Propostas profissionais',
       'Status do pedido',
       'Upload de arquivos',
-      'Relatórios',
+      'RelatÃ³rios',
     ],
     destaque: true,
   },
@@ -105,10 +105,10 @@ const planos = [
     descricao: 'Para empresas que querem automatizar atendimento e recuperar vendas.',
     recursos: [
       'Tudo do Profissional',
-      'Recuperação de orçamento',
+      'RecuperaÃ§Ã£o de orÃ§amento',
       'Mensagens prontas',
-      'Domínio próprio',
-      'Automações',
+      'DomÃ­nio prÃ³prio',
+      'AutomaÃ§Ãµes',
       'Recursos inteligentes',
     ],
     destaque: false,
@@ -116,11 +116,11 @@ const planos = [
 ]
 
 const faqs = [
-  ['O Orçaly é só um site?', 'Não. O site é a porta de entrada. O painel organiza pedidos, catálogo, propostas, clientes, oportunidades e produção.'],
-  ['Preciso saber programar?', 'Não. A empresa configura o essencial pelo painel, sem mexer em código. A civilização agradece.'],
-  ['Funciona para vários segmentos?', 'Sim. Funciona para negócios que recebem pedidos, orçamentos, encomendas ou solicitações de serviço.'],
-  ['O cliente aprova orçamento pelo link?', 'Sim. A proposta pode ter link público, aceite, assinatura, pedido de alteração e pagamento de sinal.'],
-  ['Posso usar no Instagram e WhatsApp?', 'Sim. O link da empresa foi pensado para ficar na bio, mensagens, anúncios, cartão e QR Code.'],
+  ['O OrÃ§aly Ã© sÃ³ um site?', 'NÃ£o. O site Ã© a porta de entrada. O painel organiza pedidos, catÃ¡logo, propostas, clientes, oportunidades e produÃ§Ã£o.'],
+  ['Preciso saber programar?', 'NÃ£o. A empresa configura o essencial pelo painel, sem mexer em cÃ³digo. A civilizaÃ§Ã£o agradece.'],
+  ['Funciona para vÃ¡rios segmentos?', 'Sim. Funciona para negÃ³cios que recebem pedidos, orÃ§amentos, encomendas ou solicitaÃ§Ãµes de serviÃ§o.'],
+  ['O cliente aprova orÃ§amento pelo link?', 'Sim. A proposta pode ter link pÃºblico, aceite, assinatura, pedido de alteraÃ§Ã£o e pagamento de sinal.'],
+  ['Posso usar no Instagram e WhatsApp?', 'Sim. O link da empresa foi pensado para ficar na bio, mensagens, anÃºncios, cartÃ£o e QR Code.'],
 ]
 
 function formatMoney(value: number) {
@@ -164,7 +164,7 @@ function DashboardMockup() {
       <div className="overflow-hidden rounded-[1.35rem] bg-[#05245c] p-4 text-white sm:rounded-[1.7rem] sm:p-5">
         <div className="flex min-w-0 items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate text-[0.65rem] font-black uppercase tracking-[0.16em] text-white/55">Painel Orçaly</p>
+            <p className="truncate text-[0.65rem] font-black uppercase tracking-[0.16em] text-white/55">Painel OrÃ§aly</p>
             <p className="mt-1 truncate text-lg font-black sm:text-2xl">Resumo comercial</p>
           </div>
           <div className="shrink-0 rounded-full bg-white/10 px-3 py-2 text-[0.7rem] font-black text-white/80">Ao vivo</div>
@@ -174,7 +174,7 @@ function DashboardMockup() {
           {[
             ['Pedidos', '28'],
             ['Propostas', '13'],
-            ['Produção', '07'],
+            ['ProduÃ§Ã£o', '07'],
           ].map(([label, value]) => (
             <div key={label} className="min-w-0 rounded-2xl bg-white p-3 text-[#071b3a] sm:p-4">
               <p className="truncate text-[0.62rem] font-black uppercase tracking-[0.08em] text-slate-500 sm:text-xs">{label}</p>
@@ -185,9 +185,9 @@ function DashboardMockup() {
 
         <div className="mt-3 space-y-2 sm:mt-4 sm:space-y-3">
           {[
-            ['Novo orçamento', 'Recebido', 'bg-blue-50 text-[#05245c]'],
+            ['Novo orÃ§amento', 'Recebido', 'bg-blue-50 text-[#05245c]'],
             ['Proposta enviada', 'Aguardando', 'bg-amber-50 text-amber-700'],
-            ['Pedido aprovado', 'Produção', 'bg-emerald-50 text-emerald-700'],
+            ['Pedido aprovado', 'ProduÃ§Ã£o', 'bg-emerald-50 text-emerald-700'],
           ].map(([label, status, tone]) => (
             <div key={label} className="flex min-w-0 items-center justify-between gap-3 rounded-2xl bg-white px-3 py-3 text-[#071b3a]">
               <p className="min-w-0 truncate text-sm font-black">{label}</p>
@@ -210,7 +210,7 @@ function MascoteCard() {
         <div className="absolute right-5 top-5 h-1.5 w-1.5 rounded-full bg-[#05245c]" />
       </div>
       <div className="min-w-0 text-left">
-        <p className="truncate text-xs font-black uppercase tracking-[0.16em] text-[#05245c]">Mascote Orçaly</p>
+        <p className="truncate text-xs font-black uppercase tracking-[0.16em] text-[#05245c]">Mascote OrÃ§aly</p>
         <p className="mt-1 text-sm font-bold leading-6 text-slate-600">Organizando pedidos enquanto humanos inventam planilhas novas.</p>
       </div>
     </div>
@@ -261,12 +261,12 @@ export default function HomePage() {
 
       <header className="sticky top-0 z-50 w-full border-b border-blue-100 bg-white/95 shadow-sm shadow-blue-950/5 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
-          <Link href="/" className="min-w-0" aria-label="Página inicial do Orçaly">
-            <img src="/logo-orcaly.png" alt="Orçaly" className="h-10 w-auto max-w-[140px] object-contain sm:h-12 sm:max-w-[180px]" />
+          <Link href="/" className="min-w-0" aria-label="PÃ¡gina inicial do OrÃ§aly">
+            <img src="/logo-orcaly.png" alt="OrÃ§aly" className="h-10 w-auto max-w-[140px] object-contain sm:h-12 sm:max-w-[180px]" />
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm font-black text-[#526b88] lg:flex">
-            <a href="#solucao" className="transition hover:text-[#05245c]">Solução</a>
+            <a href="#solucao" className="transition hover:text-[#05245c]">SoluÃ§Ã£o</a>
             <a href="#recursos" className="transition hover:text-[#05245c]">Recursos</a>
             <a href="#como-funciona" className="transition hover:text-[#05245c]">Como funciona</a>
             <a href="#planos" className="transition hover:text-[#05245c]">Planos</a>
@@ -277,7 +277,7 @@ export default function HomePage() {
               Entrar
             </Link>
             <Link href="/cadastro" className="hidden rounded-2xl bg-[#05245c] px-4 py-2.5 text-sm font-black text-white sm:inline-flex">
-              Começar
+              ComeÃ§ar
             </Link>
           </div>
         </div>
@@ -294,21 +294,21 @@ export default function HomePage() {
             <div className="mx-auto inline-flex max-w-full items-center rounded-full border border-blue-100 bg-white px-3 py-2 shadow-sm lg:mx-0">
               <span className="mr-2 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
               <span className="truncate text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#05245c] sm:text-xs">
-                Plataforma para pedidos, orçamentos e propostas
+                Plataforma para pedidos, orÃ§amentos e propostas
               </span>
             </div>
 
             <h1 className="mx-auto mt-5 max-w-4xl break-words text-[2.35rem] font-black leading-[1.03] tracking-[-0.05em] text-[#061a36] sm:text-6xl sm:leading-[0.98] lg:mx-0 lg:text-7xl">
-              Transforme pedidos, orçamentos e propostas em uma operação organizada.
+              Transforme pedidos, orÃ§amentos e propostas em uma operaÃ§Ã£o organizada.
             </h1>
 
             <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-[#4f6885] sm:text-xl sm:leading-8 lg:mx-0">
-              O Orçaly ajuda empresas a receber pedidos, gerar orçamentos profissionais, acompanhar propostas e vender com mais controle em um só lugar.
+              O OrÃ§aly ajuda empresas a receber pedidos, gerar orÃ§amentos profissionais, acompanhar propostas e vender com mais controle em um sÃ³ lugar.
             </p>
 
             <div className="mt-7 grid w-full gap-3 sm:mx-auto sm:max-w-lg sm:grid-cols-2 lg:mx-0">
               <Link href="/cadastro" className="rounded-[1.3rem] bg-[#05245c] px-6 py-4 text-center font-black text-white shadow-xl shadow-blue-950/20">
-                Começar agora
+                ComeÃ§ar agora
               </Link>
               <a href="#como-funciona" className="rounded-[1.3rem] border border-blue-100 bg-white px-6 py-4 text-center font-black text-[#05245c] shadow-lg shadow-blue-950/5">
                 Ver como funciona
@@ -316,7 +316,7 @@ export default function HomePage() {
             </div>
 
             <div className="mt-5 flex flex-wrap justify-center gap-2 text-xs font-black text-[#607895] lg:justify-start">
-              {['Link próprio', 'Propostas com aceite', 'Painel comercial'].map((item) => (
+              {['Link prÃ³prio', 'Propostas com aceite', 'Painel comercial'].map((item) => (
                 <span key={item} className="rounded-full bg-white px-3 py-2 shadow-sm">{item}</span>
               ))}
             </div>
@@ -335,8 +335,8 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <SectionTitle
             eyebrow="A dor"
-            title="Pedidos espalhados e orçamentos perdidos custam caro."
-            subtitle="A empresa não perde venda só por falta de cliente. Ã€s vezes perde porque não consegue acompanhar tudo que já chegou."
+            title="Pedidos espalhados e orÃ§amentos perdidos custam caro."
+            subtitle="A empresa nÃ£o perde venda sÃ³ por falta de cliente. Ã€s vezes perde porque nÃ£o consegue acompanhar tudo que jÃ¡ chegou."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -354,9 +354,9 @@ export default function HomePage() {
       <section id="solucao" className="w-full overflow-hidden bg-[#05245c] px-4 py-14 text-white sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <SectionTitle
-            eyebrow="A solução"
-            title="O Orçaly organiza tudo do primeiro pedido até a entrega."
-            subtitle="Site, catálogo, orçamento, proposta, aprovação, pagamento de sinal e produção trabalhando juntos."
+            eyebrow="A soluÃ§Ã£o"
+            title="O OrÃ§aly organiza tudo do primeiro pedido atÃ© a entrega."
+            subtitle="Site, catÃ¡logo, orÃ§amento, proposta, aprovaÃ§Ã£o, pagamento de sinal e produÃ§Ã£o trabalhando juntos."
             invert
           />
 
@@ -380,7 +380,7 @@ export default function HomePage() {
               Veja o que entrou, o que foi aprovado e o que precisa sair.
             </h2>
             <p className="mt-4 text-base font-semibold leading-7 text-[#607895] sm:text-lg sm:leading-8">
-              A tela principal mostra pedidos, propostas, produção, clientes e oportunidades. Sem caça ao tesouro dentro do WhatsApp.
+              A tela principal mostra pedidos, propostas, produÃ§Ã£o, clientes e oportunidades. Sem caÃ§a ao tesouro dentro do WhatsApp.
             </p>
           </div>
 
@@ -393,9 +393,9 @@ export default function HomePage() {
       <section id="link-proprio" className="w-full overflow-hidden bg-white px-4 py-14 text-center sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl rounded-[1.75rem] border border-blue-100 bg-[#f8fbff] p-5 shadow-xl shadow-blue-950/8 sm:rounded-[2.5rem] sm:p-10">
           <SectionTitle
-            eyebrow="Link próprio por empresa"
-            title="Cada empresa ganha um endereço profissional para divulgar."
-            subtitle="Use no Instagram, WhatsApp, cartão, QR Code, anúncios e assinatura de e-mail."
+            eyebrow="Link prÃ³prio por empresa"
+            title="Cada empresa ganha um endereÃ§o profissional para divulgar."
+            subtitle="Use no Instagram, WhatsApp, cartÃ£o, QR Code, anÃºncios e assinatura de e-mail."
           />
 
           <div className="mx-auto mt-7 max-w-2xl overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white p-4 text-left shadow-lg shadow-blue-950/5">
@@ -411,8 +411,8 @@ export default function HomePage() {
       <section id="segmentos" className="w-full overflow-hidden bg-[#f8fbff] px-4 py-14 text-center sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <SectionTitle
-            eyebrow="Funciona para vários segmentos"
-            title="Onde existe pedido, orçamento ou serviço, existe bagunça para organizar."
+            eyebrow="Funciona para vÃ¡rios segmentos"
+            title="Onde existe pedido, orÃ§amento ou serviÃ§o, existe bagunÃ§a para organizar."
           />
 
           <div className="mt-7 flex max-w-full flex-wrap justify-center gap-2 sm:gap-3">
@@ -430,22 +430,22 @@ export default function HomePage() {
           <div className="min-w-0 text-center lg:text-left">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#05245c]">Simulador de oportunidade perdida</p>
             <h2 className="mt-3 break-words text-[2rem] font-black leading-[1.05] tracking-[-0.045em] text-[#061a36] sm:text-5xl lg:text-6xl">
-              Quanto custa perder orçamento por falta de organização?
+              Quanto custa perder orÃ§amento por falta de organizaÃ§Ã£o?
             </h2>
             <p className="mt-4 text-base font-semibold leading-7 text-[#607895] sm:text-lg sm:leading-8">
-              Ajuste os números e veja uma estimativa simples. Não é previsão financeira, é só matemática cutucando a realidade.
+              Ajuste os nÃºmeros e veja uma estimativa simples. NÃ£o Ã© previsÃ£o financeira, Ã© sÃ³ matemÃ¡tica cutucando a realidade.
             </p>
           </div>
 
           <div className="min-w-0 rounded-[1.5rem] border border-blue-100 bg-[#f8fbff] p-5 shadow-xl shadow-blue-950/8 sm:rounded-[2rem] sm:p-7">
             <div className="grid gap-5">
               <label className="grid min-w-0 gap-3">
-                <span className="text-sm font-black text-[#071b3a] sm:text-base">Pedidos/orçamentos por mês: {pedidosMes}</span>
+                <span className="text-sm font-black text-[#071b3a] sm:text-base">Pedidos/orÃ§amentos por mÃªs: {pedidosMes}</span>
                 <input className="w-full" min={5} max={300} type="range" value={pedidosMes} onChange={(event) => setPedidosMes(Number(event.target.value))} />
               </label>
 
               <label className="grid min-w-0 gap-3">
-                <span className="text-sm font-black text-[#071b3a] sm:text-base">Ticket médio: {formatMoney(ticketMedio)}</span>
+                <span className="text-sm font-black text-[#071b3a] sm:text-base">Ticket mÃ©dio: {formatMoney(ticketMedio)}</span>
                 <input className="w-full" min={50} max={2500} step={10} type="range" value={ticketMedio} onChange={(event) => setTicketMedio(Number(event.target.value))} />
               </label>
 
@@ -457,7 +457,7 @@ export default function HomePage() {
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <div className="min-w-0 rounded-[1.25rem] bg-white p-4">
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-[#607895]">Perda estimada/mês</p>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-[#607895]">Perda estimada/mÃªs</p>
                 <p className="mt-2 break-words text-2xl font-black text-[#05245c] sm:text-4xl">{formatMoney(perdaMensal)}</p>
               </div>
               <div className="min-w-0 rounded-[1.25rem] bg-[#05245c] p-4 text-white">
@@ -471,7 +471,7 @@ export default function HomePage() {
 
       <section id="antes-depois" className="w-full overflow-hidden bg-[#05245c] px-4 py-14 text-white sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <SectionTitle eyebrow="Antes e depois" title="A diferença aparece no atendimento." invert />
+          <SectionTitle eyebrow="Antes e depois" title="A diferenÃ§a aparece no atendimento." invert />
 
           <div className="mt-8 grid gap-3">
             {antesDepois.map(([antes, depois]) => (
@@ -481,7 +481,7 @@ export default function HomePage() {
                   <p className="mt-1 break-words font-bold text-white/72">{antes}</p>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-200">Depois do Orçaly</p>
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-200">Depois do OrÃ§aly</p>
                   <p className="mt-1 break-words font-black text-white">{depois}</p>
                 </div>
               </article>
@@ -495,7 +495,7 @@ export default function HomePage() {
           <SectionTitle
             eyebrow="Recursos principais"
             title="O que realmente ajuda a vender e operar melhor."
-            subtitle="Sem listar quarenta coisas só para parecer complexo. O mundo já tem imposto para isso."
+            subtitle="Sem listar quarenta coisas sÃ³ para parecer complexo. O mundo jÃ¡ tem imposto para isso."
           />
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -509,7 +509,7 @@ export default function HomePage() {
           </div>
 
           <p className="mx-auto mt-7 max-w-3xl rounded-[1.25rem] border border-blue-100 bg-[#f8fbff] px-4 py-4 text-sm font-bold leading-7 text-[#526b88] sm:text-base">
-            Evoluindo para automações, pagamentos, recuperação de orçamento e inteligência comercial.
+            Evoluindo para automaÃ§Ãµes, pagamentos, recuperaÃ§Ã£o de orÃ§amento e inteligÃªncia comercial.
           </p>
         </div>
       </section>
@@ -518,7 +518,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <SectionTitle
             eyebrow="Como funciona"
-            title="Em três passos, a empresa sai do improviso."
+            title="Em trÃªs passos, a empresa sai do improviso."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -537,7 +537,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl">
           <SectionTitle
             eyebrow="Planos"
-            title="Comece simples e evolua conforme a operação cresce."
+            title="Comece simples e evolua conforme a operaÃ§Ã£o cresce."
           />
 
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
@@ -562,7 +562,7 @@ export default function HomePage() {
                 </p>
                 <p className="mt-5 text-3xl font-black sm:text-4xl">
                   {plano.preco}
-                  <span className={`text-base ${plano.destaque ? 'text-white/60' : 'text-[#607895]'}`}>/mês</span>
+                  <span className={`text-base ${plano.destaque ? 'text-white/60' : 'text-[#607895]'}`}>/mÃªs</span>
                 </p>
 
                 <div className="mt-5 grid gap-2.5">
@@ -603,12 +603,12 @@ export default function HomePage() {
 
       <section className="w-full overflow-hidden bg-white px-4 py-14 text-center sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-5xl rounded-[1.75rem] border border-blue-100 bg-[#05245c] p-6 text-white shadow-2xl shadow-blue-950/20 sm:rounded-[2.5rem] sm:p-12">
-          <img src="/icone-orcaly.png" alt="Ícone Orçaly" className="mx-auto h-12 w-12 object-contain sm:h-16 sm:w-16" />
+          <img src="/icone-orcaly.png" alt="Ãcone OrÃ§aly" className="mx-auto h-12 w-12 object-contain sm:h-16 sm:w-16" />
           <h2 className="mt-5 break-words text-[2rem] font-black leading-[1.05] tracking-[-0.045em] sm:text-5xl lg:text-6xl">
             Pronto para transformar pedidos em vendas organizadas?
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base font-semibold leading-7 text-white/75 sm:text-lg sm:leading-8">
-            Comece com uma página própria, receba orçamentos e acompanhe cada oportunidade em um só lugar.
+            Comece com uma pÃ¡gina prÃ³pria, receba orÃ§amentos e acompanhe cada oportunidade em um sÃ³ lugar.
           </p>
 
           <div className="mt-7 grid gap-3 sm:mx-auto sm:max-w-lg sm:grid-cols-2">
@@ -623,9 +623,9 @@ export default function HomePage() {
       </section>
 
       <footer className="w-full overflow-hidden border-t border-blue-100 bg-white px-4 py-8 text-center">
-        <img src="/logo-orcaly.png" alt="Orçaly" className="mx-auto h-10 w-auto max-w-[160px] object-contain" />
+        <img src="/logo-orcaly.png" alt="OrÃ§aly" className="mx-auto h-10 w-auto max-w-[160px] object-contain" />
         <p className="mx-auto mt-4 max-w-2xl text-sm font-bold leading-6 text-[#607895]">
-          Orçaly, pedidos inteligentes, propostas profissionais e operação organizada para empresas que querem vender melhor.
+          OrÃ§aly, pedidos inteligentes, propostas profissionais e operaÃ§Ã£o organizada para empresas que querem vender melhor.
         </p>
       </footer>
 
@@ -635,7 +635,7 @@ export default function HomePage() {
             Como funciona
           </a>
           <Link href="/cadastro" className="rounded-2xl bg-[#05245c] px-3 py-3 text-center text-sm font-black text-white">
-            Começar
+            ComeÃ§ar
           </Link>
         </div>
       </div>

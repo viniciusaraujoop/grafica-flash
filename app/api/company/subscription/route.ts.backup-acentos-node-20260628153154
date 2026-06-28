@@ -14,17 +14,17 @@ const planos: Record<PlanoId, { nome: string; valor: number; descricao: string }
   basico: {
     nome: 'Essencial',
     valor: 49.9,
-    descricao: 'Página pública, formulário de orçamento e painel de pedidos.',
+    descricao: 'PÃ¡gina pÃºblica, formulÃ¡rio de orÃ§amento e painel de pedidos.',
   },
   profissional: {
     nome: 'Profissional',
     valor: 99.9,
-    descricao: 'Catálogo completo, propostas profissionais, status e relatórios.',
+    descricao: 'CatÃ¡logo completo, propostas profissionais, status e relatÃ³rios.',
   },
   premium: {
     nome: 'Premium',
     valor: 149.9,
-    descricao: 'Automações, recuperação de orçamento e recursos inteligentes.',
+    descricao: 'AutomaÃ§Ãµes, recuperaÃ§Ã£o de orÃ§amento e recursos inteligentes.',
   },
 }
 
@@ -33,7 +33,7 @@ function getSupabaseAdmin() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Variáveis do Supabase não configuradas no servidor.')
+    throw new Error('VariÃ¡veis do Supabase nÃ£o configuradas no servidor.')
   }
 
   return createClient(supabaseUrl, serviceRoleKey, {
@@ -48,7 +48,7 @@ function getMercadoPagoToken() {
   const token = process.env.MERCADO_PAGO_ACCESS_TOKEN
 
   if (!token) {
-    throw new Error('MERCADO_PAGO_ACCESS_TOKEN não configurado.')
+    throw new Error('MERCADO_PAGO_ACCESS_TOKEN nÃ£o configurado.')
   }
 
   return token
@@ -327,13 +327,13 @@ export async function GET(request: NextRequest) {
     const requester = await getRequester(request, supabaseAdmin)
 
     if (!requester) {
-      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+      return NextResponse.json({ error: 'NÃ£o autorizado.' }, { status: 401 })
     }
 
     const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
 
     if (!access.company?.id) {
-      return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
+      return NextResponse.json({ error: 'Empresa nÃ£o encontrada.' }, { status: 404 })
     }
 
     return NextResponse.json({
@@ -357,13 +357,13 @@ export async function POST(request: NextRequest) {
     const requester = await getRequester(request, supabaseAdmin)
 
     if (!requester) {
-      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+      return NextResponse.json({ error: 'NÃ£o autorizado.' }, { status: 401 })
     }
 
     const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
 
     if (!access.company?.id || !isUuid(access.company.id)) {
-      return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
+      return NextResponse.json({ error: 'Empresa nÃ£o encontrada.' }, { status: 404 })
     }
 
     if (!access.canManage) {
@@ -379,7 +379,7 @@ export async function POST(request: NextRequest) {
 
     if (requestedCompanyId && requestedCompanyId !== access.company.id) {
       return NextResponse.json(
-        { error: 'Empresa inválida para este usuário.' },
+        { error: 'Empresa invÃ¡lida para este usuÃ¡rio.' },
         { status: 403 }
       )
     }
@@ -400,7 +400,7 @@ export async function POST(request: NextRequest) {
 
       if (!subscriptionId) {
         return NextResponse.json(
-          { error: 'Nenhuma assinatura automática encontrada para cancelar.' },
+          { error: 'Nenhuma assinatura automÃ¡tica encontrada para cancelar.' },
           { status: 400 }
         )
       }
@@ -472,7 +472,7 @@ export async function POST(request: NextRequest) {
 
     if (!email || !email.includes('@')) {
       return NextResponse.json(
-        { error: 'E-mail válido é obrigatório para criar a assinatura.' },
+        { error: 'E-mail vÃ¡lido Ã© obrigatÃ³rio para criar a assinatura.' },
         { status: 400 }
       )
     }
@@ -494,7 +494,7 @@ export async function POST(request: NextRequest) {
     if (paymentError) throw paymentError
 
     const preapprovalPayload = {
-      reason: `Plano ${plano.nome} - Orçaly`,
+      reason: `Plano ${plano.nome} - OrÃ§aly`,
       external_reference: paymentRow.id,
       payer_email: email,
       back_url: `${siteUrl}/assinatura?assinatura=retorno`,

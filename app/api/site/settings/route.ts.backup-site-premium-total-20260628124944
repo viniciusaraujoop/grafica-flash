@@ -17,16 +17,9 @@ const allowedFields = [
   'site_template',
   'site_layout',
   'site_art_style',
-  'site_art_variant',
   'site_font_style',
   'site_button_style',
   'site_hero_alignment',
-  'site_hero_style',
-  'site_section_style',
-  'site_product_card_style',
-  'site_nav_variant',
-  'site_corner_style',
-  'site_density',
   'site_primary_color',
   'site_accent_color',
   'site_background_color',
@@ -44,7 +37,6 @@ const allowedFields = [
   'site_services_title',
   'site_contact_title',
   'site_show_store',
-  'site_show_marketplace',
   'site_show_about',
   'site_show_contact',
   'site_show_featured',
@@ -52,25 +44,12 @@ const allowedFields = [
   'site_show_testimonials',
   'site_show_gallery',
   'site_show_benefits',
-  'site_enable_cart',
-  'site_enable_coupons',
-  'site_show_prices',
-  'site_checkout_mode',
-  'site_marketplace_title',
-  'site_marketplace_subtitle',
-  'site_cart_button_text',
-  'site_checkout_button_text',
-  'site_empty_catalog_text',
   'site_features',
   'site_faq',
   'site_testimonials',
   'site_gallery',
   'site_benefits',
   'site_custom_sections',
-  'site_hero_highlights',
-  'site_brand_words',
-  'site_trust_title',
-  'site_footer_text',
   'site_seo_title',
   'site_seo_description',
   'site_keywords',
@@ -162,38 +141,12 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const templateId = String(body.template || body.site_template || '')
-    const template = getSiteTemplate(templateId)
     const patch = templateToCompanyPatch(templateId)
-
-    const enhancedPatch = {
-      ...patch,
-      site_hero_style: body.site_hero_style || 'premium-showcase',
-      site_art_variant: body.site_art_variant || 'auto',
-      site_section_style: body.site_section_style || 'soft-premium',
-      site_product_card_style: body.site_product_card_style || 'premium',
-      site_nav_variant: body.site_nav_variant || 'clean',
-      site_corner_style: body.site_corner_style || 'rounded',
-      site_density: body.site_density || 'comfortable',
-      site_show_marketplace: true,
-      site_enable_cart: true,
-      site_enable_coupons: true,
-      site_show_prices: true,
-      site_marketplace_title: template.id === 'imobiliaria' ? 'Imóveis em destaque' : template.id === 'alimenticio' ? 'Cardápio e encomendas' : 'Catálogo online',
-      site_marketplace_subtitle: template.id === 'imobiliaria'
-        ? 'Veja opções, escolha o imóvel de interesse e solicite atendimento consultivo.'
-        : template.id === 'alimenticio'
-          ? 'Escolha produtos, monte seu pedido e combine retirada ou entrega.'
-          : 'Escolha produtos, monte seu pedido e envie tudo organizado para atendimento.',
-      site_cart_button_text: template.id === 'imobiliaria' ? 'Tenho interesse' : 'Adicionar',
-      site_checkout_button_text: template.id === 'imobiliaria' ? 'Solicitar atendimento' : 'Finalizar pedido',
-      site_trust_title: template.id === 'imobiliaria' ? 'Atendimento imobiliário com clareza' : 'Por que escolher a gente?',
-      site_brand_words: template.keywords || [],
-    }
 
     const { data, error } = await supabaseAdmin
       .from('companies')
       .update({
-        ...enhancedPatch,
+        ...patch,
         site_publico_ativo: true,
         site_updated_at: new Date().toISOString(),
       })
@@ -206,7 +159,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       company: data,
-      template,
+      template: getSiteTemplate(templateId),
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro ao aplicar template.'

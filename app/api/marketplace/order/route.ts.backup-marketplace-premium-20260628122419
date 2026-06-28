@@ -28,13 +28,6 @@ function money(value: any) {
   return Math.max(0, Number(value || 0))
 }
 
-function normalizeCode(value: unknown) {
-  return String(value || '')
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, '')
-}
-
 function selectedOptions(product: any, selections: Record<string, string> = {}) {
   const groups = Array.isArray(product.configuracoes?.opcoes) ? product.configuracoes.opcoes : []
   const selected: any[] = []
@@ -100,7 +93,7 @@ function calculateItem(product: any, item: CartItemInput) {
 
   if (valorMinimo > 0 && subtotal < valorMinimo) {
     subtotal = valorMinimo
-    detalhes += ' • mínimo aplicado'
+    detalhes += ` • mínimo aplicado`
   }
 
   if (opcoes.length > 0) {
@@ -122,62 +115,6 @@ function calculateItem(product: any, item: CartItemInput) {
   }
 }
 
-function validateCoupon(coupon: any, subtotal: number) {
-  const now = new Date()
-
-  if (!coupon || coupon.ativo === false) return { valid: false, reason: 'Cupom inválido ou inativo.' }
-  if (coupon.starts_at && new Date(coupon.starts_at) > now) return { valid: false, reason: 'Cupom ainda não está disponível.' }
-  if (coupon.ends_at && new Date(coupon.ends_at) < now) return { valid: false, reason: 'Cupom expirado.' }
-  if (coupon.usage_limit && Number(coupon.used_count || 0) >= Number(coupon.usage_limit)) return { valid: false, reason: 'Cupom atingiu o limite de uso.' }
-
-  const minOrder = money(coupon.valor_minimo_pedido)
-  if (minOrder > 0 && subtotal < minOrder) {
-    return { valid: false, reason: 'Pedido abaixo do valor mínimo do cupom.' }
-  }
-
-  const value = money(coupon.valor)
-  const maxDiscount = coupon.valor_maximo_desconto === null || coupon.valor_maximo_desconto === undefined
-    ? null
-    : money(coupon.valor_maximo_desconto)
-
-  let discount = coupon.tipo === 'fixo' ? value : subtotal * (value / 100)
-
-  if (maxDiscount !== null && maxDiscount > 0) {
-    discount = Math.min(discount, maxDiscount)
-  }
-
-  discount = Math.min(subtotal, Math.max(0, Number(discount.toFixed(2))))
-
-  return {
-    valid: discount > 0,
-    reason: discount > 0 ? '' : 'Cupom não gerou desconto.',
-    discount,
-  }
-}
-
-async function getCouponDiscount(companyId: string, code: string, subtotal: number) {
-  const normalized = normalizeCode(code)
-
-  if (!normalized) return { coupon: null, discount: 0, error: '' }
-
-  const { data: coupon, error } = await supabaseAdmin
-    .from('marketplace_coupons')
-    .select('*')
-    .eq('company_id', companyId)
-    .eq('codigo_normalizado', normalized)
-    .maybeSingle()
-
-  if (error) throw error
-
-  const validation = validateCoupon(coupon, subtotal)
-
-  if (!validation.valid) {
-    return { coupon: null, discount: 0, error: validation.reason || 'Cupom inválido.' }
-  }
-
-  return { coupon, discount: Number(validation.discount || 0), error: '' }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -185,7 +122,6 @@ export async function POST(request: NextRequest) {
     const companyId = String(body.company_id || '')
     const cliente = body.cliente || {}
     const items = Array.isArray(body.items) ? itemsSanitize(body.items) : []
-    const couponCode = normalizeCode(body.coupon_code || body.cupom_codigo || body.codigo_cupom)
 
     if (!companyId) {
       return NextResponse.json({ error: 'Empresa não informada.' }, { status: 400 })
@@ -255,15 +191,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nenhum produto válido no carrinho.' }, { status: 400 })
     }
 
-    const totalOriginal = Number(orderItems.reduce((acc, item) => acc + item.calc.subtotal, 0).toFixed(2))
-    const couponResult = await getCouponDiscount(companyId, couponCode, totalOriginal)
-
-    if (couponCode && couponResult.error) {
-      return NextResponse.json({ error: couponResult.error }, { status: 400 })
-    }
-
-    const valorDesconto = Number((couponResult.discount || 0).toFixed(2))
-    const total = Number(Math.max(0, totalOriginal - valorDesconto).toFixed(2))
+    const total = orderItems.reduce((acc, item) => acc + item.calc.subtotal, 0)
     const percentualSinal = company.cobrar_sinal ? Math.max(0, Number(company.percentual_sinal || 0)) : 0
     const valorSinal = percentualSinal > 0 ? Number((total * percentualSinal / 100).toFixed(2)) : 0
     const valorPix = valorSinal > 0 ? valorSinal : total
@@ -293,38 +221,21 @@ export async function POST(request: NextRequest) {
         observacoes: body.observacoes || cliente.observacoes || null,
         status: 'Recebido',
         preco_estimado: total,
-        valor_total_original: totalOriginal,
-        valor_desconto: valorDesconto,
         valor_total: total,
         valor_sinal: valorSinal,
         percentual_sinal: percentualSinal,
-        cupom_id: couponResult.coupon?.id || null,
-        cupom_codigo: couponResult.coupon?.codigo || null,
         forma_pagamento: pixPayload ? 'PIX' : 'A combinar',
         itens_resumo: resumo,
         cliente_empresa: cliente.empresa || null,
         marketplace_origem: 'marketplace',
         dados_inteligentes: {
-          origem: 'marketplace_premium_cupons',
+          origem: 'marketplace_v4',
           cliente,
-          total_original: totalOriginal,
-          valor_desconto: valorDesconto,
-          total_final: total,
-          cupom: couponResult.coupon
-            ? {
-                id: couponResult.coupon.id,
-                codigo: couponResult.coupon.codigo,
-                tipo: couponResult.coupon.tipo,
-                valor: couponResult.coupon.valor,
-              }
-            : null,
-          pix: pixPayload
-            ? {
-                txid,
-                valor_pix: valorPix,
-                copia_cola: pixPayload,
-              }
-            : null,
+          pix: pixPayload ? {
+            txid,
+            valor_pix: valorPix,
+            copia_cola: pixPayload,
+          } : null,
           perguntas_gerais: body.respostas_gerais || {},
           endereco: cliente.endereco || null,
         },
@@ -364,16 +275,6 @@ export async function POST(request: NextRequest) {
 
     if (itemsError) throw itemsError
 
-    if (couponResult.coupon?.id) {
-      await supabaseAdmin
-        .from('marketplace_coupons')
-        .update({
-          used_count: Number(couponResult.coupon.used_count || 0) + 1,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', couponResult.coupon.id)
-    }
-
     try {
       await notifyNewOrder(supabaseAdmin, {
         company,
@@ -392,18 +293,15 @@ export async function POST(request: NextRequest) {
         resumo,
       })
     } catch (notifyError) {
-      console.error('[Orçaly WhatsApp] Falha ao notificar novo pedido:', notifyError)
+      console.error('[OrÃ§aly WhatsApp] Falha ao notificar novo pedido:', notifyError)
     }
 
     return NextResponse.json({
       ok: true,
       order_id: order.id,
-      total_original: totalOriginal,
-      valor_desconto: valorDesconto,
       total,
       valor_sinal: valorSinal,
       valor_pix: valorPix,
-      cupom_codigo: couponResult.coupon?.codigo || null,
       forma_pagamento: pixPayload ? 'PIX' : 'A combinar',
       pix_payload: pixPayload,
       txid,

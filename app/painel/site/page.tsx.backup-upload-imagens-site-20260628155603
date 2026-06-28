@@ -86,69 +86,6 @@ function updateArrayItem(list: any[], index: number, key: string, value: string)
   return clone
 }
 
-
-function ImageUploadField({
-  label,
-  description,
-  value,
-  uploading,
-  onSelectFile,
-  onClear,
-}: {
-  label: string
-  description: string
-  value?: string
-  uploading?: boolean
-  onSelectFile: (file: File | null) => void
-  onClear: () => void
-}) {
-  const inputId = `site-image-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
-
-  return (
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
-      {help(label, description)}
-
-      {value ? (
-        <div className="mb-4 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
-          <img src={value} alt={label} className="h-44 w-full object-contain p-3" />
-        </div>
-      ) : (
-        <div className="mb-4 grid h-44 place-items-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-center">
-          <div>
-            <p className="font-black text-[#071b3a]">Nenhuma imagem enviada</p>
-            <p className="mt-1 text-xs font-bold text-slate-500">PNG, JPG, WEBP ou GIF até 10MB.</p>
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2">
-        <label htmlFor={inputId} className="cursor-pointer rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-950/10">
-          {uploading ? 'Enviando...' : value ? 'Trocar imagem' : 'Escolher da galeria'}
-        </label>
-
-        {value ? (
-          <button type="button" onClick={onClear} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-red-600">
-            Remover
-          </button>
-        ) : null}
-      </div>
-
-      <input
-        id={inputId}
-        type="file"
-        accept="image/png,image/jpeg,image/webp,image/gif"
-        disabled={uploading}
-        onChange={(event) => {
-          const file = event.currentTarget.files?.[0] || null
-          onSelectFile(file)
-          event.currentTarget.value = ''
-        }}
-        className="hidden"
-      />
-    </div>
-  )
-}
-
 function PremiumPreview({ form, company, template }: { form: any; company: any; template: any }) {
   const primary = form.site_primary_color || template?.paleta?.primary || '#05245c'
   const accent = form.site_accent_color || template?.paleta?.accent || '#22c55e'
@@ -238,7 +175,6 @@ export default function PainelSitePremiumTotalPage() {
   const [message, setMessage] = useState('')
   const [erro, setErro] = useState('')
   const [selectedTemplate, setSelectedTemplate] = useState('grafica')
-  const [uploadingImage, setUploadingImage] = useState('')
 
   const [form, setForm] = useState<any>({
     site_publico_ativo: true,
@@ -319,41 +255,6 @@ export default function PainelSitePremiumTotalPage() {
 
   function update(field: string, value: any) {
     setForm((current: any) => ({ ...current, [field]: value }))
-  }
-
-  async function uploadSiteImage(field: 'logo_url' | 'site_banner_url', purpose: 'logo' | 'banner', file: File | null) {
-    if (!file) return
-
-    setErro('')
-    setMessage('')
-    setUploadingImage(purpose)
-
-    try {
-      const body = new FormData()
-      body.append('file', file)
-      body.append('purpose', purpose)
-
-      const response = await fetch('/api/site/upload', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body,
-      })
-
-      const payload = await response.json().catch(() => ({}))
-
-      if (!response.ok) {
-        throw new Error(payload.error || 'Erro ao enviar imagem.')
-      }
-
-      update(field, payload.url)
-      setMessage(purpose === 'logo' ? 'Logo enviada com sucesso.' : 'Banner enviado com sucesso.')
-    } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Erro ao enviar imagem.')
-    }
-
-    setUploadingImage('')
   }
 
   async function load() {
@@ -548,22 +449,8 @@ export default function PainelSitePremiumTotalPage() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <ImageUploadField
-                    label="Logo da empresa"
-                    description="Clique para enviar a logo direto da galeria/arquivo do computador. Ela aparece no topo, capa e rodapé."
-                    value={form.logo_url}
-                    uploading={uploadingImage === 'logo'}
-                    onSelectFile={(file) => uploadSiteImage('logo_url', 'logo', file)}
-                    onClear={() => update('logo_url', '')}
-                  />
-                  <ImageUploadField
-                    label="Banner da capa"
-                    description="Clique para enviar uma imagem de destaque. Se deixar vazio, o Orçaly usa a arte automática do segmento."
-                    value={form.site_banner_url}
-                    uploading={uploadingImage === 'banner'}
-                    onSelectFile={(file) => uploadSiteImage('site_banner_url', 'banner', file)}
-                    onClear={() => update('site_banner_url', '')}
-                  />
+                  <Input label="Logo URL" description="URL da logo que aparecerá no topo, capa e rodapé." value={form.logo_url} onChange={(v) => update('logo_url', v)} />
+                  <Input label="URL do banner" description="Imagem grande opcional. Se vazio, usa arte automática por segmento." value={form.site_banner_url} onChange={(v) => update('site_banner_url', v)} />
                   <Input label="Cor principal" description="Botões, destaques e blocos fortes." value={form.site_primary_color} onChange={(v) => update('site_primary_color', v)} />
                   <Input label="Cor de destaque" description="Detalhes, selos e gradientes." value={form.site_accent_color} onChange={(v) => update('site_accent_color', v)} />
                   <Input label="Cor de fundo" description="Fundo geral do site." value={form.site_background_color} onChange={(v) => update('site_background_color', v)} />

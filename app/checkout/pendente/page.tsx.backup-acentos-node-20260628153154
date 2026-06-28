@@ -6,7 +6,7 @@ export default function CheckoutPendentePage() {
       <div className="max-w-lg rounded-[2rem] border border-amber-100 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
         <img
           src="/logo-orcaly.png"
-          alt="Orçaly"
+          alt="OrÃ§aly"
           className="mx-auto mb-6 h-14 w-auto object-contain"
         />
 
