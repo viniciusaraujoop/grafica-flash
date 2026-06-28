@@ -1,0 +1,89 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
+import { createAuditLog } from '@/lib/orcaly-audit'
+
+type Context = {
+  params: Promise<{ id: string }>
+}
+
+async function getAccess(request: NextRequest) {
+  const supabaseAdmin = getSupabaseAdmin()
+  const requester = await getRequester(request, supabaseAdmin)
+
+  if (!requester) {
+    return { supabaseAdmin, error: NextResponse.json({ error: 'Não autorizado.' }, { status: 401 }) }
+  }
+
+  const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
+
+  if (!access.company?.id) {
+    return { supabaseAdmin, error: NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 }) }
+  }
+
+  return { supabaseAdmin, requester, access }
+}
+
+export async function GET(request: NextRequest, context: Context) {
+  try {
+    const { id } = await context.params
+    const result = await getAccess(request)
+    if ('error' in result && result.error) return result.error
+
+    const { data, error } = await result.supabaseAdmin
+      .from('order_internal_comments')
+      .select('*')
+      .eq('order_id', id)
+      .eq('company_id', result.access!.company.id)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return NextResponse.json({ comments: data || [] })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Erro ao carregar comentários.'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest, context: Context) {
+  try {
+    const { id } = await context.params
+    const result = await getAccess(request)
+    if ('error' in result && result.error) return result.error
+
+    const body = await request.json()
+    const comentario = String(body.comentario || '').trim()
+
+    if (!comentario) {
+      return NextResponse.json({ error: 'Digite um comentário.' }, { status: 400 })
+    }
+
+    const { data, error } = await result.supabaseAdmin
+      .from('order_internal_comments')
+      .insert({
+        company_id: result.access!.company.id,
+        order_id: id,
+        user_id: result.requester!.id,
+        comentario,
+      })
+      .select('*')
+      .single()
+
+    if (error) throw error
+
+    await createAuditLog(result.supabaseAdmin, {
+      company_id: result.access!.company.id,
+      user_id: result.requester!.id,
+      action: 'order.comment.created',
+      entity: 'order_internal_comments',
+      entity_id: data.id,
+      details: { order_id: id },
+      request,
+    })
+
+    return NextResponse.json({ ok: true, comment: data })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Erro ao criar comentário.'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}

@@ -335,8 +335,8 @@ export default function PedidosPage() {
                       Chamar no WhatsApp
                     </a>
 
-                    <Link href={`/painel/pedidos/${order.id}`} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center text-sm font-black text-[#05245c]">
-                      Abrir Pedido Pro
+                    <Link href={`/painel/orcamento/${order.id}`} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center text-sm font-black text-[#05245c]">
+                      Ver detalhes
                     </Link>
 
                     {fileUrl ? (
