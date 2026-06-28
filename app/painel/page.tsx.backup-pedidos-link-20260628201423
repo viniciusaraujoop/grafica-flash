@@ -71,7 +71,7 @@ const quickLinks: QuickLink[] = [
   {
     title: 'Pedidos',
     description: 'Acompanhe solicitações recebidas e status do atendimento.',
-    href: '/painel/pedidos',
+    href: '/painel',
     group: 'vendas',
   },
   {
