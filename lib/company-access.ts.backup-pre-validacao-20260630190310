@@ -14,7 +14,7 @@ export function getSupabaseAdmin() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Variáveis do Supabase não configuradas no servidor.')
+    throw new Error('VariÃƒÂ¡veis do Supabase nÃƒÂ£o configuradas no servidor.')
   }
 
   return createClient(supabaseUrl, serviceRoleKey, {

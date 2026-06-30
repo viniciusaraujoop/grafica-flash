@@ -1,115 +1,120 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
 
-function normalizeCode(value: unknown) {
+function normalizeCode(value: string) {
   return String(value || '')
     .trim()
     .toUpperCase()
-    .replace(/\s+/g, '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/Ç/g, 'C')
+    .replace(/[^A-Z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 32)
 }
 
-function money(value: unknown) {
-  return Math.max(0, Number(value || 0))
+function toNumber(value: unknown, fallback = 0) {
+  const number = Number(value)
+  return Number.isFinite(number) ? number : fallback
 }
 
-function payloadFromBody(body: any) {
-  const codigo = normalizeCode(body.codigo || body.code)
-  const tipo = body.tipo === 'fixo' ? 'fixo' : 'percentual'
-  const valor = money(body.valor)
-  const valorMinimoPedido = money(body.valor_minimo_pedido)
-  const rawMax = body.valor_maximo_desconto === '' || body.valor_maximo_desconto === null || body.valor_maximo_desconto === undefined
-    ? null
-    : money(body.valor_maximo_desconto)
-  const usageLimit = body.usage_limit === '' || body.usage_limit === null || body.usage_limit === undefined
-    ? null
-    : Math.max(1, Number(body.usage_limit || 1))
+function toDateOrNull(value: unknown) {
+  if (!value) return null
+  const date = new Date(String(value))
+  if (Number.isNaN(date.getTime())) return null
+  return date.toISOString()
+}
 
-  if (!codigo) throw new Error('Informe o código do cupom.')
-  if (valor <= 0) throw new Error('Informe um valor de desconto maior que zero.')
-  if (tipo === 'percentual' && valor > 100) throw new Error('Cupom percentual não pode passar de 100%.')
+async function getAccess(request: NextRequest) {
+  const supabaseAdmin = getSupabaseAdmin()
+  const requester = await getRequester(request, supabaseAdmin)
 
-  return {
-    codigo,
-    codigo_normalizado: codigo,
-    descricao: String(body.descricao || '').trim() || null,
-    tipo,
-    valor,
-    valor_minimo_pedido: valorMinimoPedido,
-    valor_maximo_desconto: rawMax,
-    starts_at: body.starts_at || null,
-    ends_at: body.ends_at || null,
-    usage_limit: usageLimit,
-    ativo: body.ativo !== false,
-    updated_at: new Date().toISOString(),
+  if (!requester) {
+    return { supabaseAdmin, error: NextResponse.json({ error: 'Não autorizado.' }, { status: 401 }) }
   }
+
+  const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
+
+  if (!access.company?.id) {
+    return { supabaseAdmin, error: NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 }) }
+  }
+
+  return { supabaseAdmin, requester, access }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const supabaseAdmin = getSupabaseAdmin()
-    const requester = await getRequester(request, supabaseAdmin)
+    const result = await getAccess(request)
+    if ('error' in result && result.error) return result.error
 
-    if (!requester) {
-      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
-    }
-
-    const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
-
-    if (!access.company?.id) {
-      return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
-    }
-
-    if (!access.canManage) {
-      return NextResponse.json({ error: 'Seu perfil não pode gerenciar cupons.' }, { status: 403 })
-    }
-
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await result.supabaseAdmin
       .from('marketplace_coupons')
       .select('*')
-      .eq('company_id', access.company.id)
+      .eq('company_id', result.access!.company.id)
       .order('created_at', { ascending: false })
 
     if (error) throw error
 
     return NextResponse.json({ coupons: data || [] })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erro ao carregar cupons.'
+    const message = error instanceof Error ? error.message : 'Erro ao carregar cupons. Rode o SQL do pacote no Supabase se ainda não rodou.'
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabaseAdmin = getSupabaseAdmin()
-    const requester = await getRequester(request, supabaseAdmin)
-
-    if (!requester) {
-      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
-    }
-
-    const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
-
-    if (!access.company?.id) {
-      return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
-    }
-
-    if (!access.canManage) {
-      return NextResponse.json({ error: 'Seu perfil não pode criar cupons.' }, { status: 403 })
-    }
+    const result = await getAccess(request)
+    if ('error' in result && result.error) return result.error
 
     const body = await request.json()
-    const coupon = payloadFromBody(body)
+    const codigo = normalizeCode(body.codigo || body.code || '')
 
-    const { data, error } = await supabaseAdmin
+    if (!codigo || codigo.length < 3) {
+      return NextResponse.json({ error: 'O cupom precisa ter pelo menos 3 caracteres.' }, { status: 400 })
+    }
+
+    const tipo = body.tipo === 'fixo' ? 'fixo' : 'percentual'
+    const valor = toNumber(body.valor, 0)
+
+    if (valor <= 0) {
+      return NextResponse.json({ error: 'Informe um valor de desconto maior que zero.' }, { status: 400 })
+    }
+
+    if (tipo === 'percentual' && valor > 100) {
+      return NextResponse.json({ error: 'Cupom percentual não pode passar de 100%.' }, { status: 400 })
+    }
+
+    const payload = {
+      company_id: result.access!.company.id,
+      codigo,
+      codigo_normalizado: codigo,
+      descricao: body.descricao || null,
+      tipo,
+      valor,
+      valor_minimo_pedido: toNumber(body.valor_minimo_pedido, 0),
+      valor_maximo_desconto: body.valor_maximo_desconto === '' || body.valor_maximo_desconto === null || body.valor_maximo_desconto === undefined ? null : toNumber(body.valor_maximo_desconto, 0),
+      starts_at: toDateOrNull(body.starts_at),
+      ends_at: toDateOrNull(body.ends_at),
+      usage_limit: body.usage_limit === '' || body.usage_limit === null || body.usage_limit === undefined ? null : Math.max(1, Math.floor(toNumber(body.usage_limit, 1))),
+      ativo: body.ativo !== false,
+      updated_at: new Date().toISOString(),
+    }
+
+    const { data, error } = await result.supabaseAdmin
       .from('marketplace_coupons')
-      .insert({
-        ...coupon,
-        company_id: access.company.id,
-      })
+      .insert(payload)
       .select('*')
       .single()
 
-    if (error) throw error
+    if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json({ error: 'Esse código de cupom já existe para esta empresa.' }, { status: 409 })
+      }
+
+      throw error
+    }
 
     return NextResponse.json({ ok: true, coupon: data })
   } catch (error) {

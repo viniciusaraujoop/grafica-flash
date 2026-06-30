@@ -1,0 +1,347 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import { getAccessTokenClient } from '@/lib/current-company-client'
+
+type OnboardingPayload = {
+  company: {
+    id: string
+    nome?: string | null
+    slug?: string | null
+    logo_url?: string | null
+    whatsapp?: string | null
+    site_template?: string | null
+    site_publico_ativo?: boolean | null
+    onboarding_current_step?: number | null
+    onboarding_completed?: boolean
+    onboarding_dismissed?: boolean
+  }
+  counts: {
+    products: number
+    orders: number
+    coupons: number
+  }
+  checks: Record<string, boolean>
+  progress: {
+    doneCount: number
+    total: number
+    percent: number
+  }
+}
+
+type Step = {
+  number: number
+  key: string
+  title: string
+  description: string
+  href: string
+  action: string
+  done: boolean
+  helper: string
+}
+
+function statusLabel(done: boolean, active: boolean) {
+  if (done) return 'Concluído'
+  if (active) return 'Agora'
+  return 'Pendente'
+}
+
+function statusClass(done: boolean, active: boolean) {
+  if (done) return 'bg-emerald-100 text-emerald-700'
+  if (active) return 'bg-[#05245c] text-white'
+  return 'bg-slate-100 text-slate-500'
+}
+
+export default function OnboardingGuiadoPage() {
+  const [token, setToken] = useState('')
+  const [data, setData] = useState<OnboardingPayload | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  async function load() {
+    setLoading(true)
+    setError('')
+
+    try {
+      const accessToken = await getAccessTokenClient()
+      setToken(accessToken)
+
+      const response = await fetch('/api/onboarding/status', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Erro ao carregar onboarding.')
+      }
+
+      setData(payload)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar onboarding.')
+    }
+
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    load()
+  }, [])
+
+  const steps = useMemo<Step[]>(() => {
+    const checks = data?.checks || {}
+    const company = data?.company || {}
+    const slug = company.slug || ''
+
+    return [
+      {
+        number: 1,
+        key: 'company_data',
+        title: 'Dados da empresa',
+        description: 'Preencha nome, WhatsApp, endereço e informações básicas.',
+        href: '/painel/configuracoes',
+        action: 'Configurar dados',
+        done: Boolean(checks.company_data),
+        helper: company.whatsapp ? `WhatsApp: ${company.whatsapp}` : 'Sem WhatsApp informado.',
+      },
+      {
+        number: 2,
+        key: 'segment',
+        title: 'Escolher segmento',
+        description: 'Defina o ramo para o Orçaly sugerir textos, layout e estrutura.',
+        href: '/painel/site',
+        action: 'Escolher segmento',
+        done: Boolean(checks.segment),
+        helper: company.site_template ? `Segmento: ${company.site_template}` : 'Nenhum segmento selecionado.',
+      },
+      {
+        number: 3,
+        key: 'logo',
+        title: 'Enviar logo',
+        description: 'Adicione a identidade visual da empresa no site.',
+        href: '/painel/site',
+        action: 'Enviar logo',
+        done: Boolean(checks.logo),
+        helper: company.logo_url ? 'Logo adicionada.' : 'Sem logo enviada.',
+      },
+      {
+        number: 4,
+        key: 'products',
+        title: 'Criar produtos',
+        description: 'Cadastre produtos ou serviços para aparecerem no catálogo.',
+        href: '/painel/produtos',
+        action: 'Cadastrar produtos',
+        done: Boolean(checks.products),
+        helper: `${data?.counts.products || 0} produto(s) cadastrado(s).`,
+      },
+      {
+        number: 5,
+        key: 'site_config',
+        title: 'Configurar site',
+        description: 'Ajuste capa, textos, seções, cores, catálogo, SEO e botões.',
+        href: '/painel/site',
+        action: 'Editar site',
+        done: Boolean(checks.site_config),
+        helper: company.site_publico_ativo ? 'Site marcado como ativo.' : 'Site ainda precisa de ajustes.',
+      },
+      {
+        number: 6,
+        key: 'test_order',
+        title: 'Testar pedido',
+        description: 'Simule um pedido para garantir que tudo chega no painel.',
+        href: slug ? `/site/${slug}` : '/orcamento',
+        action: 'Fazer teste',
+        done: Boolean(checks.test_order),
+        helper: `${data?.counts.orders || 0} pedido(s) recebido(s).`,
+      },
+      {
+        number: 7,
+        key: 'publish',
+        title: 'Publicar',
+        description: 'Confirme o link público e compartilhe com clientes.',
+        href: slug ? `/site/${slug}` : '/painel/site',
+        action: 'Abrir site',
+        done: Boolean(checks.publish),
+        helper: slug ? `Link: ${slug}.orcaly.com.br` : 'Link público ainda não definido.',
+      },
+    ]
+  }, [data])
+
+  const firstPending = steps.find((step) => !step.done) || steps[steps.length - 1]
+  const activeStepNumber = firstPending?.number || 1
+  const progress = data?.progress?.percent || 0
+  const completed = steps.every((step) => step.done)
+
+  async function saveProgress(currentStep: number, completedValue = false, dismissedValue = false) {
+    setSaving(true)
+    setMessage('')
+    setError('')
+
+    try {
+      const response = await fetch('/api/onboarding/progress', {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          current_step: currentStep,
+          completed: completedValue,
+          dismissed: dismissedValue,
+        }),
+      })
+
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Erro ao salvar progresso.')
+      }
+
+      setMessage(completedValue ? 'Onboarding marcado como concluído.' : 'Progresso salvo.')
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar progresso.')
+    }
+
+    setSaving(false)
+  }
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4">
+        <div className="rounded-[2rem] bg-white p-8 font-black text-[#071b3a] shadow-xl shadow-blue-950/5">
+          Carregando onboarding...
+        </div>
+      </main>
+    )
+  }
+
+  return (
+    <main className="min-h-screen bg-[#f5f8ff] px-4 py-6 text-[#071b3a]">
+      <section className="mx-auto max-w-7xl space-y-6">
+        <header className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-blue-950/5">
+          <div className="grid gap-6 p-6 lg:grid-cols-[1fr_360px] lg:items-center">
+            <div>
+              <Link href="/painel" className="text-sm font-black text-[#05245c]">← Voltar ao painel</Link>
+              <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#05245c]">Primeiros passos</p>
+              <h1 className="mt-2 text-4xl font-black tracking-[-0.06em] sm:text-5xl">
+                Onboarding guiado
+              </h1>
+              <p className="mt-3 max-w-3xl font-bold leading-7 text-slate-500">
+                Configure a empresa em uma sequência simples: dados, segmento, logo, produtos, site, teste e publicação.
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Link href={firstPending?.href || '/painel'} className="rounded-2xl bg-[#05245c] px-5 py-4 text-sm font-black text-white">
+                  Continuar configuração
+                </Link>
+                <button
+                  onClick={() => saveProgress(activeStepNumber, completed)}
+                  disabled={saving}
+                  className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-sm font-black text-[#05245c] disabled:opacity-60"
+                >
+                  {saving ? 'Salvando...' : completed ? 'Marcar como concluído' : 'Salvar progresso'}
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-[1.7rem] bg-[#05245c] p-5 text-white">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-white/55">Progresso</p>
+              <p className="mt-2 text-5xl font-black">{progress}%</p>
+              <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/15">
+                <div className="h-full rounded-full bg-white" style={{ width: `${progress}%` }} />
+              </div>
+              <p className="mt-3 text-sm font-bold text-white/70">
+                {data?.progress.doneCount || 0} de {data?.progress.total || 7} etapas concluídas.
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {message ? <div className="rounded-2xl bg-emerald-50 p-4 font-bold text-emerald-700">{message}</div> : null}
+        {error ? <div className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">{error}</div> : null}
+
+        <section className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+          <div className="grid gap-3 md:grid-cols-7">
+            {steps.map((step) => (
+              <div key={step.key} className="rounded-2xl bg-[#f5f8ff] p-3 text-center">
+                <div className={`mx-auto grid h-10 w-10 place-items-center rounded-2xl text-sm font-black ${statusClass(step.done, step.number === activeStepNumber)}`}>
+                  {step.done ? '✓' : step.number}
+                </div>
+                <p className="mt-2 text-xs font-black leading-4">{step.title}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-2">
+          {steps.map((step) => {
+            const active = step.number === activeStepNumber
+
+            return (
+              <article
+                key={step.key}
+                className={`rounded-[1.8rem] border p-5 shadow-xl shadow-blue-950/5 ${
+                  active ? 'border-[#05245c] bg-white' : 'border-blue-100 bg-white/85'
+                }`}
+              >
+                <div className="flex gap-4">
+                  <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl font-black ${statusClass(step.done, active)}`}>
+                    {step.done ? '✓' : step.number}
+                  </span>
+
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-xl font-black tracking-[-0.03em]">{step.title}</h2>
+                      <span className={`rounded-full px-3 py-1 text-xs font-black ${statusClass(step.done, active)}`}>
+                        {statusLabel(step.done, active)}
+                      </span>
+                    </div>
+
+                    <p className="mt-2 font-bold leading-6 text-slate-500">{step.description}</p>
+                    <p className="mt-2 text-sm font-black text-[#05245c]">{step.helper}</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <Link href={step.href} target={step.href.startsWith('/site/') ? '_blank' : undefined} className="rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white">
+                    {step.action}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => saveProgress(step.number)}
+                    disabled={saving}
+                    className="rounded-2xl border border-blue-100 bg-white px-5 py-3 text-sm font-black text-[#05245c] disabled:opacity-60"
+                  >
+                    Estou nesta etapa
+                  </button>
+                </div>
+              </article>
+            )
+          })}
+        </section>
+
+        <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
+          <h2 className="text-2xl font-black tracking-[-0.04em]">Resumo rápido</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl bg-[#f5f8ff] p-4">
+              <p className="text-sm font-black text-slate-500">Produtos</p>
+              <p className="mt-1 text-3xl font-black text-[#05245c]">{data?.counts.products || 0}</p>
+            </div>
+            <div className="rounded-2xl bg-[#f5f8ff] p-4">
+              <p className="text-sm font-black text-slate-500">Pedidos de teste/recebidos</p>
+              <p className="mt-1 text-3xl font-black text-[#05245c]">{data?.counts.orders || 0}</p>
+            </div>
+            <div className="rounded-2xl bg-[#f5f8ff] p-4">
+              <p className="text-sm font-black text-slate-500">Cupons</p>
+              <p className="mt-1 text-3xl font-black text-[#05245c]">{data?.counts.coupons || 0}</p>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  )
+}

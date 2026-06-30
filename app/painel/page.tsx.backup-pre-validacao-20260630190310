@@ -40,9 +40,9 @@ type QuickLink = {
 
 const quickLinks: QuickLink[] = [
   {
-    title: 'Onboarding guiado',
-    description: 'Siga os 7 passos para publicar e testar a empresa.',
-    href: '/painel/onboarding',
+    title: 'Checklist inicial',
+    description: 'Configure empresa, site, produtos, cupom e WhatsApp.',
+    href: '/painel/setup',
     badge: 'Novo',
     group: 'principal',
   },
@@ -278,8 +278,8 @@ function SetupProgress({ company, metrics }: { company: Company | null; metrics:
         <div className="h-full rounded-full bg-[#05245c]" style={{ width: `${percent}%` }} />
       </div>
 
-      <Link href="/painel/onboarding" className="mt-5 inline-flex rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white">
-        Abrir onboarding
+      <Link href="/painel/setup" className="mt-5 inline-flex rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white">
+        Ver checklist
       </Link>
     </article>
   )
@@ -443,8 +443,8 @@ export default function PainelProPage() {
                 Comece pelo checklist se ainda estiver montando a operação.
               </p>
               <div className="mt-5 grid gap-2">
-                <Link href="/painel/onboarding" className="rounded-2xl bg-white px-5 py-3 text-center text-sm font-black text-[#05245c]">
-                  Abrir onboarding
+                <Link href="/painel/setup" className="rounded-2xl bg-white px-5 py-3 text-center text-sm font-black text-[#05245c]">
+                  Abrir checklist
                 </Link>
                 {company?.slug ? (
                   <a href={`/site/${company.slug}`} target="_blank" rel="noreferrer" className="rounded-2xl bg-white/10 px-5 py-3 text-center text-sm font-black text-white">

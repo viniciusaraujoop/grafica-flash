@@ -336,7 +336,7 @@ export default function HomePage() {
           <SectionTitle
             eyebrow="A dor"
             title="Pedidos espalhados e orçamentos perdidos custam caro."
-            subtitle="A empresa não perde venda só por falta de cliente. Às vezes perde porque não consegue acompanhar tudo que já chegou."
+            subtitle="A empresa não perde venda só por falta de cliente. Ã€s vezes perde porque não consegue acompanhar tudo que já chegou."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
