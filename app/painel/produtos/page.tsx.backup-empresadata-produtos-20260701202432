@@ -429,7 +429,7 @@ export default function ProdutosPage() {
         percentual_sinal_produto: cobrarSinalPersonalizado
           ? percentualSinalNumero
           : null,
-        business_type: (empresa as any)?.business_type || 'services',
+        business_type: (empresaData as any).business_type || 'services',
         available: true,
       }
 

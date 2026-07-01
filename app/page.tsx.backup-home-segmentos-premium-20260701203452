@@ -1,0 +1,644 @@
+'use client'
+
+import Link from 'next/link'
+import { useMemo, useState } from 'react'
+
+const dores = [
+  {
+    titulo: 'Pedidos espalhados',
+    texto: 'O cliente chama no WhatsApp, manda detalhes em partes, envia arquivo depois e a equipe precisa caçar tudo manualmente.',
+  },
+  {
+    titulo: 'Orçamentos perdidos',
+    texto: 'Sem painel, proposta e histórico, muita oportunidade boa morre esquecida no atendimento.',
+  },
+  {
+    titulo: 'Operação sem clareza',
+    texto: 'A empresa até vende, mas não sabe exatamente o que entrou, o que foi aprovado e o que precisa ser produzido.',
+  },
+]
+
+const solucoes = [
+  {
+    titulo: 'Receba pedidos no lugar certo',
+    texto: 'Cada solicitação entra com produto, medidas, observações, arquivos e dados do cliente.',
+  },
+  {
+    titulo: 'Gere propostas profissionais',
+    texto: 'Envie um link organizado para o cliente aprovar, pedir alteração ou recusar.',
+  },
+  {
+    titulo: 'Acompanhe cada etapa',
+    texto: 'Pedidos, oportunidades, propostas e produção ficam centralizados no painel.',
+  },
+]
+
+const segmentos = [
+  'Gráficas',
+  'Personalizados',
+  'Assistência técnica',
+  'Oficinas',
+  'Estética',
+  'Docerias',
+  'Serviços',
+  'Reformas',
+  'Agências',
+  'Consultorias',
+]
+
+const antesDepois = [
+  ['Pedido perdido no WhatsApp', 'Pedido salvo no painel'],
+  ['Orçamento manual', 'Proposta organizada'],
+  ['Cliente cobrando status', 'Status acompanhado'],
+  ['Informações espalhadas', 'Tudo centralizado'],
+  ['Sem histórico', 'Histórico completo'],
+]
+
+const recursos = [
+  ['Página própria por empresa', 'Link profissional para divulgar no Instagram, WhatsApp, cartão e QR Code.'],
+  ['Catálogo de produtos e serviços', 'Produtos, serviços, categorias, preços, imagens e opcionais em um só lugar.'],
+  ['Formulário de orçamento', 'Cliente envia detalhes, medidas e arquivos sem bagunçar o atendimento.'],
+  ['Painel de pedidos', 'Acompanhe recebidos, pendentes, aprovados, em produção e entregues.'],
+  ['Propostas profissionais', 'Link de aprovação, assinatura, aceite e histórico comercial.'],
+  ['Status do pedido', 'Controle visual do andamento para equipe e cliente.'],
+  ['Upload de arquivos', 'Artes, fotos, referências e documentos anexados ao pedido.'],
+  ['Relatórios de oportunidades', 'Veja negociações abertas, perdidas e recuperáveis.'],
+]
+
+const passos = [
+  ['01', 'Configure sua empresa', 'Adicione logo, categorias, produtos, serviços e informações de atendimento.'],
+  ['02', 'Compartilhe seu link', 'Use no Instagram, WhatsApp, cartão, QR Code, anúncios e bio.'],
+  ['03', 'Receba e acompanhe pedidos', 'Organize orçamentos, propostas, status e oportunidades pelo painel.'],
+]
+
+const planos = [
+  {
+    nome: 'Básico',
+    preco: 'R$ 49,90',
+    descricao: 'Para começar a receber pedidos com organização.',
+    recursos: [
+      'Link empresa.orcaly.com.br',
+      'Página pública',
+      'Formulário de orçamento',
+      'Painel de pedidos',
+      'Botão WhatsApp',
+    ],
+    destaque: false,
+  },
+  {
+    nome: 'Profissional',
+    preco: 'R$ 99,90',
+    descricao: 'Para empresas que querem vender com mais controle.',
+    recursos: [
+      'Tudo do Básico',
+      'Catálogo completo',
+      'Propostas profissionais',
+      'Status do pedido',
+      'Upload de arquivos',
+      'Relatórios',
+    ],
+    destaque: true,
+  },
+  {
+    nome: 'Premium',
+    preco: 'R$ 149,90',
+    descricao: 'Para empresas que querem automatizar atendimento e recuperar vendas.',
+    recursos: [
+      'Tudo do Profissional',
+      'Recuperação de orçamento',
+      'Mensagens prontas',
+      'Domínio próprio',
+      'Automações',
+      'Recursos inteligentes',
+    ],
+    destaque: false,
+  },
+]
+
+const faqs = [
+  ['O Orçaly é só um site?', 'Não. O site é a porta de entrada. O painel organiza pedidos, catálogo, propostas, clientes, oportunidades e produção.'],
+  ['Preciso saber programar?', 'Não. A empresa configura o essencial pelo painel, sem mexer em código. A civilização agradece.'],
+  ['Funciona para vários segmentos?', 'Sim. Funciona para negócios que recebem pedidos, orçamentos, encomendas ou solicitações de serviço.'],
+  ['O cliente aprova orçamento pelo link?', 'Sim. A proposta pode ter link público, aceite, assinatura, pedido de alteração e pagamento de sinal.'],
+  ['Posso usar no Instagram e WhatsApp?', 'Sim. O link da empresa foi pensado para ficar na bio, mensagens, anúncios, cartão e QR Code.'],
+]
+
+function formatMoney(value: number) {
+  return value.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  })
+}
+
+function SectionTitle({
+  eyebrow,
+  title,
+  subtitle,
+  invert = false,
+}: {
+  eyebrow: string
+  title: string
+  subtitle?: string
+  invert?: boolean
+}) {
+  return (
+    <div className="mx-auto max-w-3xl text-center">
+      <p className={`text-xs font-black uppercase tracking-[0.18em] ${invert ? 'text-blue-100' : 'text-[#05245c]'}`}>
+        {eyebrow}
+      </p>
+      <h2 className={`mt-3 text-[2rem] font-black leading-[1.05] tracking-[-0.045em] sm:text-5xl lg:text-6xl ${invert ? 'text-white' : 'text-[#061a36]'}`}>
+        {title}
+      </h2>
+      {subtitle && (
+        <p className={`mx-auto mt-4 max-w-2xl text-base font-semibold leading-7 sm:text-lg sm:leading-8 ${invert ? 'text-white/72' : 'text-[#607895]'}`}>
+          {subtitle}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function DashboardMockup() {
+  return (
+    <div className="w-full overflow-hidden rounded-[1.75rem] border border-blue-100 bg-white p-3 shadow-xl shadow-blue-950/10 sm:rounded-[2rem] sm:p-4">
+      <div className="overflow-hidden rounded-[1.35rem] bg-[#05245c] p-4 text-white sm:rounded-[1.7rem] sm:p-5">
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-[0.65rem] font-black uppercase tracking-[0.16em] text-white/55">Painel Orçaly</p>
+            <p className="mt-1 truncate text-lg font-black sm:text-2xl">Resumo comercial</p>
+          </div>
+          <div className="shrink-0 rounded-full bg-white/10 px-3 py-2 text-[0.7rem] font-black text-white/80">Ao vivo</div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
+          {[
+            ['Pedidos', '28'],
+            ['Propostas', '13'],
+            ['Produção', '07'],
+          ].map(([label, value]) => (
+            <div key={label} className="min-w-0 rounded-2xl bg-white p-3 text-[#071b3a] sm:p-4">
+              <p className="truncate text-[0.62rem] font-black uppercase tracking-[0.08em] text-slate-500 sm:text-xs">{label}</p>
+              <p className="mt-2 text-2xl font-black text-[#05245c] sm:text-3xl">{value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3 space-y-2 sm:mt-4 sm:space-y-3">
+          {[
+            ['Novo orçamento', 'Recebido', 'bg-blue-50 text-[#05245c]'],
+            ['Proposta enviada', 'Aguardando', 'bg-amber-50 text-amber-700'],
+            ['Pedido aprovado', 'Produção', 'bg-emerald-50 text-emerald-700'],
+          ].map(([label, status, tone]) => (
+            <div key={label} className="flex min-w-0 items-center justify-between gap-3 rounded-2xl bg-white px-3 py-3 text-[#071b3a]">
+              <p className="min-w-0 truncate text-sm font-black">{label}</p>
+              <span className={`shrink-0 rounded-full px-2.5 py-1 text-[0.68rem] font-black ${tone}`}>{status}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MascoteCard() {
+  return (
+    <div className="mx-auto flex w-full max-w-sm items-center gap-3 rounded-[1.5rem] border border-blue-100 bg-white p-4 shadow-xl shadow-blue-950/10 sm:max-w-none">
+      <div className="relative h-14 w-14 shrink-0 rounded-2xl bg-[#05245c] shadow-lg">
+        <div className="absolute left-1/2 top-3 h-5 w-8 -translate-x-1/2 rounded-full bg-white" />
+        <div className="absolute bottom-3 left-1/2 h-6 w-9 -translate-x-1/2 rounded-2xl bg-[#22c55e]" />
+        <div className="absolute left-5 top-5 h-1.5 w-1.5 rounded-full bg-[#05245c]" />
+        <div className="absolute right-5 top-5 h-1.5 w-1.5 rounded-full bg-[#05245c]" />
+      </div>
+      <div className="min-w-0 text-left">
+        <p className="truncate text-xs font-black uppercase tracking-[0.16em] text-[#05245c]">Mascote Orçaly</p>
+        <p className="mt-1 text-sm font-bold leading-6 text-slate-600">Organizando pedidos enquanto humanos inventam planilhas novas.</p>
+      </div>
+    </div>
+  )
+}
+
+export default function HomePage() {
+  const [pedidosMes, setPedidosMes] = useState(40)
+  const [ticketMedio, setTicketMedio] = useState(180)
+  const [taxaPerda, setTaxaPerda] = useState(25)
+
+  const perdaMensal = useMemo(() => pedidosMes * ticketMedio * (taxaPerda / 100), [pedidosMes, ticketMedio, taxaPerda])
+  const perdaAnual = perdaMensal * 12
+
+  return (
+    <main className="w-full overflow-x-hidden bg-white pb-24 text-[#061a36] sm:pb-0" style={{ colorScheme: 'light' }}>
+      <style>{`
+        html, body {
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+
+        @keyframes fadeUpOrcaly {
+          from { opacity: 0; transform: translateY(18px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes floatOrcaly {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+
+        .fade-up-orcaly {
+          animation: fadeUpOrcaly .7s ease-out both;
+        }
+
+        .float-orcaly {
+          animation: floatOrcaly 5.8s ease-in-out infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .fade-up-orcaly,
+          .float-orcaly {
+            animation: none;
+          }
+        }
+      `}</style>
+
+      <header className="sticky top-0 z-50 w-full border-b border-blue-100 bg-white/95 shadow-sm shadow-blue-950/5 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+          <Link href="/" className="min-w-0" aria-label="Página inicial do Orçaly">
+            <img src="/logo-orcaly.png" alt="Orçaly" className="h-10 w-auto max-w-[140px] object-contain sm:h-12 sm:max-w-[180px]" />
+          </Link>
+
+          <nav className="hidden items-center gap-6 text-sm font-black text-[#526b88] lg:flex">
+            <a href="#solucao" className="transition hover:text-[#05245c]">Solução</a>
+            <a href="#recursos" className="transition hover:text-[#05245c]">Recursos</a>
+            <a href="#como-funciona" className="transition hover:text-[#05245c]">Como funciona</a>
+            <a href="#planos" className="transition hover:text-[#05245c]">Planos</a>
+          </nav>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <Link href="/login" className="rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm font-black text-[#05245c] sm:px-4">
+              Entrar
+            </Link>
+            <Link href="/cadastro" className="hidden rounded-2xl bg-[#05245c] px-4 py-2.5 text-sm font-black text-white sm:inline-flex">
+              Começar
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <section className="relative w-full overflow-hidden bg-[#f8fbff]">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-[-260px] h-[480px] w-[480px] -translate-x-1/2 rounded-full bg-blue-100 blur-3xl sm:h-[720px] sm:w-[720px]" />
+          <div className="absolute bottom-[-260px] right-[-220px] h-[420px] w-[420px] rounded-full bg-emerald-100 blur-3xl sm:h-[560px] sm:w-[560px]" />
+        </div>
+
+        <div className="relative mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:px-8 lg:py-20">
+          <div className="fade-up-orcaly min-w-0 text-center lg:text-left">
+            <div className="mx-auto inline-flex max-w-full items-center rounded-full border border-blue-100 bg-white px-3 py-2 shadow-sm lg:mx-0">
+              <span className="mr-2 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+              <span className="truncate text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#05245c] sm:text-xs">
+                Plataforma para pedidos, orçamentos e propostas
+              </span>
+            </div>
+
+            <h1 className="mx-auto mt-5 max-w-4xl break-words text-[2.35rem] font-black leading-[1.03] tracking-[-0.05em] text-[#061a36] sm:text-6xl sm:leading-[0.98] lg:mx-0 lg:text-7xl">
+              Transforme pedidos, orçamentos e propostas em uma operação organizada.
+            </h1>
+
+            <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-[#4f6885] sm:text-xl sm:leading-8 lg:mx-0">
+              O Orçaly ajuda empresas a receber pedidos, gerar orçamentos profissionais, acompanhar propostas e vender com mais controle em um só lugar.
+            </p>
+
+            <div className="mt-7 grid w-full gap-3 sm:mx-auto sm:max-w-lg sm:grid-cols-2 lg:mx-0">
+              <Link href="/cadastro" className="rounded-[1.3rem] bg-[#05245c] px-6 py-4 text-center font-black text-white shadow-xl shadow-blue-950/20">
+                Começar agora
+              </Link>
+              <a href="#como-funciona" className="rounded-[1.3rem] border border-blue-100 bg-white px-6 py-4 text-center font-black text-[#05245c] shadow-lg shadow-blue-950/5">
+                Ver como funciona
+              </a>
+            </div>
+
+            <div className="mt-5 flex flex-wrap justify-center gap-2 text-xs font-black text-[#607895] lg:justify-start">
+              {['Link próprio', 'Propostas com aceite', 'Painel comercial'].map((item) => (
+                <span key={item} className="rounded-full bg-white px-3 py-2 shadow-sm">{item}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="fade-up-orcaly min-w-0">
+            <div className="grid gap-4">
+              <MascoteCard />
+              <DashboardMockup />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="dor" className="w-full overflow-hidden bg-white px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <SectionTitle
+            eyebrow="A dor"
+            title="Pedidos espalhados e orçamentos perdidos custam caro."
+            subtitle="A empresa não perde venda só por falta de cliente. Às vezes perde porque não consegue acompanhar tudo que já chegou."
+          />
+
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {dores.map((item) => (
+              <article key={item.titulo} className="min-w-0 rounded-[1.5rem] border border-blue-100 bg-[#f8fbff] p-5 shadow-lg shadow-blue-950/5 sm:p-7">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-lg font-black text-[#05245c] shadow-sm">!</div>
+                <h3 className="break-words text-xl font-black text-[#071b3a] sm:text-2xl">{item.titulo}</h3>
+                <p className="mt-3 text-sm font-semibold leading-7 text-[#607895] sm:text-base">{item.texto}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="solucao" className="w-full overflow-hidden bg-[#05245c] px-4 py-14 text-white sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <SectionTitle
+            eyebrow="A solução"
+            title="O Orçaly organiza tudo do primeiro pedido até a entrega."
+            subtitle="Site, catálogo, orçamento, proposta, aprovação, pagamento de sinal e produção trabalhando juntos."
+            invert
+          />
+
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {solucoes.map((item) => (
+              <article key={item.titulo} className="min-w-0 rounded-[1.5rem] border border-white/15 bg-white/10 p-5 shadow-lg shadow-black/10 sm:p-7">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-sm font-black text-[#05245c]">âœ“</div>
+                <h3 className="break-words text-xl font-black sm:text-2xl">{item.titulo}</h3>
+                <p className="mt-3 text-sm font-semibold leading-7 text-white/72 sm:text-base">{item.texto}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="mockup" className="w-full overflow-hidden bg-[#f8fbff] px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div className="min-w-0 text-center lg:text-left">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#05245c]">Mockup do painel</p>
+            <h2 className="mt-3 break-words text-[2rem] font-black leading-[1.05] tracking-[-0.045em] text-[#061a36] sm:text-5xl lg:text-6xl">
+              Veja o que entrou, o que foi aprovado e o que precisa sair.
+            </h2>
+            <p className="mt-4 text-base font-semibold leading-7 text-[#607895] sm:text-lg sm:leading-8">
+              A tela principal mostra pedidos, propostas, produção, clientes e oportunidades. Sem caça ao tesouro dentro do WhatsApp.
+            </p>
+          </div>
+
+          <div className="min-w-0">
+            <DashboardMockup />
+          </div>
+        </div>
+      </section>
+
+      <section id="link-proprio" className="w-full overflow-hidden bg-white px-4 py-14 text-center sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-6xl rounded-[1.75rem] border border-blue-100 bg-[#f8fbff] p-5 shadow-xl shadow-blue-950/8 sm:rounded-[2.5rem] sm:p-10">
+          <SectionTitle
+            eyebrow="Link próprio por empresa"
+            title="Cada empresa ganha um endereço profissional para divulgar."
+            subtitle="Use no Instagram, WhatsApp, cartão, QR Code, anúncios e assinatura de e-mail."
+          />
+
+          <div className="mx-auto mt-7 max-w-2xl overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white p-4 text-left shadow-lg shadow-blue-950/5">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#607895]">Exemplo</p>
+            <p className="mt-2 break-all text-xl font-black text-[#05245c] sm:text-3xl">empresa.orcaly.com.br</p>
+            <Link href="/cadastro" className="mt-4 inline-flex w-full justify-center rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white sm:w-auto">
+              Solicitar meu link
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="segmentos" className="w-full overflow-hidden bg-[#f8fbff] px-4 py-14 text-center sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <SectionTitle
+            eyebrow="Funciona para vários segmentos"
+            title="Onde existe pedido, orçamento ou serviço, existe bagunça para organizar."
+          />
+
+          <div className="mt-7 flex max-w-full flex-wrap justify-center gap-2 sm:gap-3">
+            {segmentos.map((segmento) => (
+              <span key={segmento} className="max-w-full rounded-full border border-blue-100 bg-white px-3 py-2 text-xs font-black text-[#05245c] shadow-sm sm:px-5 sm:py-3 sm:text-sm">
+                {segmento}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="simulador" className="w-full overflow-hidden bg-white px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div className="min-w-0 text-center lg:text-left">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#05245c]">Simulador de oportunidade perdida</p>
+            <h2 className="mt-3 break-words text-[2rem] font-black leading-[1.05] tracking-[-0.045em] text-[#061a36] sm:text-5xl lg:text-6xl">
+              Quanto custa perder orçamento por falta de organização?
+            </h2>
+            <p className="mt-4 text-base font-semibold leading-7 text-[#607895] sm:text-lg sm:leading-8">
+              Ajuste os números e veja uma estimativa simples. Não é previsão financeira, é só matemática cutucando a realidade.
+            </p>
+          </div>
+
+          <div className="min-w-0 rounded-[1.5rem] border border-blue-100 bg-[#f8fbff] p-5 shadow-xl shadow-blue-950/8 sm:rounded-[2rem] sm:p-7">
+            <div className="grid gap-5">
+              <label className="grid min-w-0 gap-3">
+                <span className="text-sm font-black text-[#071b3a] sm:text-base">Pedidos/orçamentos por mês: {pedidosMes}</span>
+                <input className="w-full" min={5} max={300} type="range" value={pedidosMes} onChange={(event) => setPedidosMes(Number(event.target.value))} />
+              </label>
+
+              <label className="grid min-w-0 gap-3">
+                <span className="text-sm font-black text-[#071b3a] sm:text-base">Ticket médio: {formatMoney(ticketMedio)}</span>
+                <input className="w-full" min={50} max={2500} step={10} type="range" value={ticketMedio} onChange={(event) => setTicketMedio(Number(event.target.value))} />
+              </label>
+
+              <label className="grid min-w-0 gap-3">
+                <span className="text-sm font-black text-[#071b3a] sm:text-base">Oportunidades perdidas: {taxaPerda}%</span>
+                <input className="w-full" min={5} max={70} type="range" value={taxaPerda} onChange={(event) => setTaxaPerda(Number(event.target.value))} />
+              </label>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="min-w-0 rounded-[1.25rem] bg-white p-4">
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-[#607895]">Perda estimada/mês</p>
+                <p className="mt-2 break-words text-2xl font-black text-[#05245c] sm:text-4xl">{formatMoney(perdaMensal)}</p>
+              </div>
+              <div className="min-w-0 rounded-[1.25rem] bg-[#05245c] p-4 text-white">
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-white/60">Perda estimada/ano</p>
+                <p className="mt-2 break-words text-2xl font-black sm:text-4xl">{formatMoney(perdaAnual)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="antes-depois" className="w-full overflow-hidden bg-[#05245c] px-4 py-14 text-white sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <SectionTitle eyebrow="Antes e depois" title="A diferença aparece no atendimento." invert />
+
+          <div className="mt-8 grid gap-3">
+            {antesDepois.map(([antes, depois]) => (
+              <article key={antes} className="grid min-w-0 gap-3 rounded-[1.25rem] border border-white/15 bg-white/10 p-4 sm:grid-cols-2 sm:p-5">
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-white/45">Antes</p>
+                  <p className="mt-1 break-words font-bold text-white/72">{antes}</p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-200">Depois do Orçaly</p>
+                  <p className="mt-1 break-words font-black text-white">{depois}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="recursos" className="w-full overflow-hidden bg-white px-4 py-14 text-center sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <SectionTitle
+            eyebrow="Recursos principais"
+            title="O que realmente ajuda a vender e operar melhor."
+            subtitle="Sem listar quarenta coisas só para parecer complexo. O mundo já tem imposto para isso."
+          />
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {recursos.map(([titulo, texto]) => (
+              <article key={titulo} className="min-w-0 rounded-[1.5rem] border border-blue-100 bg-[#f8fbff] p-5 text-left shadow-lg shadow-blue-950/5">
+                <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-2xl bg-white text-sm font-black text-[#05245c]">âœ“</div>
+                <h3 className="break-words text-lg font-black text-[#071b3a]">{titulo}</h3>
+                <p className="mt-3 text-sm font-semibold leading-6 text-[#607895]">{texto}</p>
+              </article>
+            ))}
+          </div>
+
+          <p className="mx-auto mt-7 max-w-3xl rounded-[1.25rem] border border-blue-100 bg-[#f8fbff] px-4 py-4 text-sm font-bold leading-7 text-[#526b88] sm:text-base">
+            Evoluindo para automações, pagamentos, recuperação de orçamento e inteligência comercial.
+          </p>
+        </div>
+      </section>
+
+      <section id="como-funciona" className="w-full overflow-hidden bg-[#f8fbff] px-4 py-14 text-center sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <SectionTitle
+            eyebrow="Como funciona"
+            title="Em três passos, a empresa sai do improviso."
+          />
+
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {passos.map(([numero, titulo, texto]) => (
+              <article key={numero} className="min-w-0 rounded-[1.5rem] border border-blue-100 bg-white p-5 text-left shadow-lg shadow-blue-950/5 sm:p-7">
+                <p className="text-4xl font-black text-[#05245c]">{numero}</p>
+                <h3 className="mt-4 break-words text-xl font-black text-[#071b3a] sm:text-2xl">{titulo}</h3>
+                <p className="mt-3 text-sm font-semibold leading-7 text-[#607895] sm:text-base">{texto}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="planos" className="w-full overflow-hidden bg-white px-4 py-14 text-center sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <SectionTitle
+            eyebrow="Planos"
+            title="Comece simples e evolua conforme a operação cresce."
+          />
+
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            {planos.map((plano) => (
+              <article
+                key={plano.nome}
+                className={`min-w-0 rounded-[1.75rem] border p-5 text-left shadow-xl sm:p-7 ${
+                  plano.destaque
+                    ? 'border-[#05245c] bg-[#05245c] text-white shadow-[#05245c]/20'
+                    : 'border-blue-100 bg-[#f8fbff] text-[#071b3a] shadow-blue-950/5'
+                }`}
+              >
+                {plano.destaque && (
+                  <span className="mb-4 inline-flex rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[#05245c]">
+                    Mais escolhido
+                  </span>
+                )}
+
+                <h3 className="text-2xl font-black sm:text-3xl">{plano.nome}</h3>
+                <p className={`mt-2 text-sm font-semibold leading-6 sm:text-base sm:leading-7 ${plano.destaque ? 'text-white/72' : 'text-[#607895]'}`}>
+                  {plano.descricao}
+                </p>
+                <p className="mt-5 text-3xl font-black sm:text-4xl">
+                  {plano.preco}
+                  <span className={`text-base ${plano.destaque ? 'text-white/60' : 'text-[#607895]'}`}>/mês</span>
+                </p>
+
+                <div className="mt-5 grid gap-2.5">
+                  {plano.recursos.map((recurso) => (
+                    <div key={recurso} className={`flex min-w-0 gap-3 rounded-2xl px-3 py-3 text-sm font-black ${plano.destaque ? 'bg-white/10 text-white' : 'bg-white text-[#05245c]'}`}>
+                      <span className="shrink-0">âœ“</span>
+                      <span className="min-w-0 break-words">{recurso}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Link href="/cadastro" className={`mt-6 inline-flex w-full justify-center rounded-2xl px-5 py-4 font-black ${plano.destaque ? 'bg-white text-[#05245c]' : 'bg-[#05245c] text-white'}`}>
+                  Solicitar acesso antecipado
+                </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="w-full overflow-hidden bg-[#f8fbff] px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <SectionTitle eyebrow="FAQ" title="Perguntas frequentes" />
+
+          <div className="mt-8 grid gap-3">
+            {faqs.map(([pergunta, resposta]) => (
+              <details key={pergunta} className="group min-w-0 rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-lg shadow-blue-950/5 sm:p-6">
+                <summary className="flex min-w-0 cursor-pointer list-none items-center justify-between gap-4 text-left text-base font-black text-[#071b3a] sm:text-xl">
+                  <span className="min-w-0 break-words">{pergunta}</span>
+                  <span className="shrink-0 rounded-full bg-[#f5f8ff] px-3 py-1 text-[#05245c] transition group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-4 text-sm font-semibold leading-7 text-[#607895] sm:text-base">{resposta}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="w-full overflow-hidden bg-white px-4 py-14 text-center sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-5xl rounded-[1.75rem] border border-blue-100 bg-[#05245c] p-6 text-white shadow-2xl shadow-blue-950/20 sm:rounded-[2.5rem] sm:p-12">
+          <img src="/icone-orcaly.png" alt="Ícone Orçaly" className="mx-auto h-12 w-12 object-contain sm:h-16 sm:w-16" />
+          <h2 className="mt-5 break-words text-[2rem] font-black leading-[1.05] tracking-[-0.045em] sm:text-5xl lg:text-6xl">
+            Pronto para transformar pedidos em vendas organizadas?
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-base font-semibold leading-7 text-white/75 sm:text-lg sm:leading-8">
+            Comece com uma página própria, receba orçamentos e acompanhe cada oportunidade em um só lugar.
+          </p>
+
+          <div className="mt-7 grid gap-3 sm:mx-auto sm:max-w-lg sm:grid-cols-2">
+            <Link href="/cadastro" className="rounded-[1.25rem] bg-white px-6 py-4 font-black text-[#05245c]">
+              Solicitar acesso antecipado
+            </Link>
+            <a href="#planos" className="rounded-[1.25rem] border border-white/20 bg-white/10 px-6 py-4 font-black text-white">
+              Ver planos
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <footer className="w-full overflow-hidden border-t border-blue-100 bg-white px-4 py-8 text-center">
+        <img src="/logo-orcaly.png" alt="Orçaly" className="mx-auto h-10 w-auto max-w-[160px] object-contain" />
+        <p className="mx-auto mt-4 max-w-2xl text-sm font-bold leading-6 text-[#607895]">
+          Orçaly, pedidos inteligentes, propostas profissionais e operação organizada para empresas que querem vender melhor.
+        </p>
+      </footer>
+
+      <div className="fixed inset-x-0 bottom-0 z-50 w-full border-t border-blue-100 bg-white/96 p-3 shadow-2xl shadow-blue-950/15 backdrop-blur sm:hidden">
+        <div className="mx-auto grid max-w-md grid-cols-2 gap-2">
+          <a href="#como-funciona" className="rounded-2xl border border-blue-100 bg-white px-3 py-3 text-center text-sm font-black text-[#05245c]">
+            Como funciona
+          </a>
+          <Link href="/cadastro" className="rounded-2xl bg-[#05245c] px-3 py-3 text-center text-sm font-black text-white">
+            Começar
+          </Link>
+        </div>
+      </div>
+    </main>
+  )
+}

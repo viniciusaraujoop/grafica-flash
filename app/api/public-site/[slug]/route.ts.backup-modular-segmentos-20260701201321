@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSiteTemplate } from '@/lib/orcaly-site-templates'
-import { getBusinessTypeConfig, getDefaultSetupForBusiness } from '@/lib/business-types'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -24,19 +23,14 @@ function sanitizeProduct(product: any) {
     id: product.id,
     nome: product.nome,
     preco: Number(product.preco || 0),
-    descricao: product.descricao || product.descricao_curta || '',
+    descricao: product.descricao,
     categoria: product.categoria || 'Geral',
-    business_type: product.business_type || null,
     tipo: product.tipo || 'produto',
     unidade: product.unidade || 'unidade',
     imagem_url: product.imagem_url || images[0] || null,
     image_urls: images,
     video_url: product.video_url || null,
     destaque: Boolean(product.destaque),
-    available: product.available !== false,
-    addons: safeArray(product.addons || product.adicionais),
-    variations: safeArray(product.variations || product.variacoes),
-    extras: product.extras || {},
     precificacao: product.precificacao || 'unidade',
     unidade_label: product.unidade_label || product.unidade || 'unidade',
     permite_largura: Boolean(product.permite_largura),
@@ -69,9 +63,6 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Site não encontrado.' }, { status: 404 })
     }
 
-    const business = getBusinessTypeConfig(company.business_type || company.site_template || company.modelo_negocio)
-    const defaults = getDefaultSetupForBusiness(business.id)
-
     const { data: products, error: productsError } = await supabaseAdmin
       .from('products')
       .select('*')
@@ -84,34 +75,21 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
     if (productsError) throw productsError
 
-    const template = getSiteTemplate(company.site_template || company.modelo_negocio || business.id)
+    const template = getSiteTemplate(company.site_template || company.modelo_negocio)
 
     return NextResponse.json({
       company: {
         ...company,
-        business_type: business.id,
-        business_label: business.label,
-        site_headline: company.site_headline || defaults.site_headline,
-        site_subheadline: company.site_subheadline || defaults.site_subheadline,
-        site_cta_text: company.site_cta_text || defaults.site_cta_text,
-        site_marketplace_title: company.site_marketplace_title || defaults.site_marketplace_title,
-        site_marketplace_subtitle: company.site_marketplace_subtitle || defaults.site_marketplace_subtitle,
-        site_cart_button_text: company.site_cart_button_text || defaults.site_cart_button_text,
-        site_checkout_button_text: company.site_checkout_button_text || defaults.site_checkout_button_text,
-        site_empty_catalog_text: company.site_empty_catalog_text || defaults.site_empty_catalog_text,
-        site_features: safeArray(company.site_features).length ? company.site_features : defaults.site_features,
-        site_benefits: safeArray(company.site_benefits).length ? company.site_benefits : defaults.site_benefits,
-        site_faq: safeArray(company.site_faq).length ? company.site_faq : defaults.site_faq,
+        site_features: safeArray(company.site_features).length ? company.site_features : template.features,
+        site_benefits: safeArray(company.site_benefits).length ? company.site_benefits : template.benefits,
+        site_faq: safeArray(company.site_faq).length ? company.site_faq : template.faq,
         site_testimonials: safeArray(company.site_testimonials).length ? company.site_testimonials : template.testimonials,
         site_gallery: safeArray(company.site_gallery).length ? company.site_gallery : template.gallery,
-        site_payment_methods: safeArray(company.site_payment_methods).length ? company.site_payment_methods : defaults.site_payment_methods,
-        site_delivery_options: safeArray(company.site_delivery_options).length ? company.site_delivery_options : defaults.site_delivery_options,
+        site_payment_methods: safeArray(company.site_payment_methods).length ? company.site_payment_methods : template.paymentMethods,
+        site_delivery_options: safeArray(company.site_delivery_options).length ? company.site_delivery_options : template.deliveryOptions,
       },
-      template: {
-        ...template,
-        businessType: business,
-      },
-      products: (products || []).map(sanitizeProduct).filter((product) => product.available !== false),
+      template,
+      products: (products || []).map(sanitizeProduct),
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro ao carregar site.'

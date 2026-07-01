@@ -25,11 +25,6 @@ type ItemCatalogo = {
   imagem_url: string | null
   image_urls?: string[] | null
   video_url?: string | null
-  business_type?: string | null
-  available?: boolean | null
-  addons?: any[] | null
-  variations?: any[] | null
-  extras?: Record<string, any> | null
   company_id: string | null
   created_at: string
   precificacao: string | null
@@ -429,8 +424,6 @@ export default function ProdutosPage() {
         percentual_sinal_produto: cobrarSinalPersonalizado
           ? percentualSinalNumero
           : null,
-        business_type: (empresa as any)?.business_type || 'services',
-        available: true,
       }
 
       if (editandoId) {

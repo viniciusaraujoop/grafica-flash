@@ -1,9 +1,8 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { businessTypes, getBusinessTypeConfig } from '@/lib/business-types'
 import { getAccessTokenClient } from '@/lib/current-company-client'
 
 function parseLines(value: unknown) {
@@ -12,24 +11,7 @@ function parseLines(value: unknown) {
 }
 
 function linesToArray(value: string) {
-  return value.split('\n').map((item) => item.trim()).filter(Boolean).slice(0, 4)
-}
-
-function jsonString(value: unknown, fallback: unknown) {
-  try {
-    return JSON.stringify(value ?? fallback, null, 2)
-  } catch {
-    return JSON.stringify(fallback, null, 2)
-  }
-}
-
-function parseJson(value: string, fallback: any) {
-  try {
-    const parsed = JSON.parse(value || '')
-    return parsed
-  } catch {
-    return fallback
-  }
+  return value.split('\n').map((item) => item.trim()).filter(Boolean)
 }
 
 export default function ProdutoDetalhePage() {
@@ -38,16 +20,11 @@ export default function ProdutoDetalhePage() {
   const [token, setToken] = useState('')
   const [product, setProduct] = useState<any>(null)
   const [imageLines, setImageLines] = useState('')
-  const [addonsText, setAddonsText] = useState('[]')
-  const [variationsText, setVariationsText] = useState('[]')
-  const [extrasText, setExtrasText] = useState('{}')
   const [aiAnswer, setAiAnswer] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-
-  const businessConfig = useMemo(() => getBusinessTypeConfig(product?.business_type), [product?.business_type])
 
   async function load() {
     setLoading(true)
@@ -67,9 +44,6 @@ export default function ProdutoDetalhePage() {
 
       setProduct(payload.product)
       setImageLines(parseLines(payload.product?.image_urls))
-      setAddonsText(jsonString(payload.product?.addons || payload.product?.adicionais, []))
-      setVariationsText(jsonString(payload.product?.variations || payload.product?.variacoes, []))
-      setExtrasText(jsonString(payload.product?.extras, {}))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar produto.')
     }
@@ -91,14 +65,6 @@ export default function ProdutoDetalhePage() {
     setMessage('')
 
     try {
-      const addons = parseJson(addonsText, [])
-      const variations = parseJson(variationsText, [])
-      const extras = parseJson(extrasText, {})
-
-      if (!Array.isArray(addons)) throw new Error('Adicionais precisam ser uma lista JSON.')
-      if (!Array.isArray(variations)) throw new Error('Variações precisam ser uma lista JSON.')
-      if (!extras || typeof extras !== 'object' || Array.isArray(extras)) throw new Error('Extras precisa ser um objeto JSON.')
-
       const response = await fetch(`/api/products/${id}`, {
         method: 'PATCH',
         headers: {
@@ -107,11 +73,7 @@ export default function ProdutoDetalhePage() {
         },
         body: JSON.stringify({
           ...product,
-          available: product.available !== false,
           image_urls: linesToArray(imageLines),
-          addons,
-          variations,
-          extras,
         }),
       })
 
@@ -120,9 +82,6 @@ export default function ProdutoDetalhePage() {
       if (!response.ok) throw new Error(payload.error || 'Erro ao salvar produto.')
 
       setProduct(payload.product)
-      setAddonsText(jsonString(payload.product?.addons, []))
-      setVariationsText(jsonString(payload.product?.variations, []))
-      setExtrasText(jsonString(payload.product?.extras, {}))
       setMessage('Produto atualizado.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar produto.')
@@ -180,16 +139,16 @@ export default function ProdutoDetalhePage() {
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#05245c]">Produto avançado</p>
               <h1 className="mt-2 text-4xl font-black tracking-[-0.05em] sm:text-5xl">{product.nome || 'Produto'}</h1>
               <p className="mt-3 max-w-3xl font-bold leading-7 text-slate-500">
-                Configure preço, categoria, disponibilidade, mídia, variações, adicionais e dados específicos do segmento.
+                Configure preço, categoria, variações, imagens, destaque, promoção e textos comerciais.
               </p>
             </div>
 
             <div className="rounded-[1.5rem] bg-[#05245c] p-5 text-white">
-              <p className="text-sm font-black text-white/60">{businessConfig.productLabel}</p>
+              <p className="text-sm font-black text-white/60">Preço</p>
               <p className="mt-2 text-4xl font-black">
                 {product.preco_sob_consulta ? 'Sob consulta' : Number(product.preco || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
-              <p className="mt-2 text-sm font-bold text-white/70">{businessConfig.label}</p>
+              <p className="mt-2 text-sm font-bold text-white/70">{product.categoria || 'Sem categoria'}</p>
             </div>
           </div>
         </header>
@@ -208,25 +167,22 @@ export default function ProdutoDetalhePage() {
               </label>
 
               <label className="grid gap-2">
-                <span className="text-sm font-black">Tipo de negócio</span>
-                <select value={businessConfig.id} onChange={(event) => update('business_type', event.target.value)} className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none">
-                  {businessTypes.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}
-                </select>
-              </label>
-
-              <label className="grid gap-2">
-                <span className="text-sm font-black">Tipo do item</span>
+                <span className="text-sm font-black">Tipo</span>
                 <select value={product.tipo || 'produto'} onChange={(event) => update('tipo', event.target.value)} className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none">
                   <option value="produto">Produto</option>
                   <option value="servico">Serviço</option>
                   <option value="pacote">Pacote</option>
-                  <option value="cardapio">Item do cardápio</option>
                 </select>
               </label>
 
               <label className="grid gap-2">
                 <span className="text-sm font-black">Categoria</span>
                 <input value={product.categoria || ''} onChange={(event) => update('categoria', event.target.value)} className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none" />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-black">Subcategoria</span>
+                <input value={product.subcategoria || ''} onChange={(event) => update('subcategoria', event.target.value)} className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none" />
               </label>
 
               <label className="grid gap-2">
@@ -260,7 +216,6 @@ export default function ProdutoDetalhePage() {
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 ['ativo', 'Ativo'],
-                ['available', 'Disponível no site'],
                 ['preco_sob_consulta', 'Preço sob consulta'],
                 ['promocao_ativa', 'Promoção ativa'],
                 ['destaque', 'Destacar no site'],
@@ -268,7 +223,7 @@ export default function ProdutoDetalhePage() {
                 ['arquivado', 'Arquivado'],
               ].map(([field, label]) => (
                 <label key={field} className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 font-black">
-                  <input type="checkbox" checked={field === 'available' ? product.available !== false : Boolean(product[field])} onChange={(event) => update(field, event.target.checked)} />
+                  <input type="checkbox" checked={Boolean(product[field])} onChange={(event) => update(field, event.target.checked)} />
                   {label}
                 </label>
               ))}
@@ -282,7 +237,7 @@ export default function ProdutoDetalhePage() {
 
               <label className="grid gap-2">
                 <span className="text-sm font-black">URL do vídeo</span>
-                <input value={product.video_url || ''} onChange={(event) => update('video_url', event.target.value)} placeholder="Vídeo curto do produto, até 30 segundos" className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none" />
+                <input value={product.video_url || ''} onChange={(event) => update('video_url', event.target.value)} className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none" />
               </label>
             </div>
 
@@ -297,32 +252,9 @@ export default function ProdutoDetalhePage() {
             </label>
 
             <label className="mt-5 grid gap-2">
-              <span className="text-sm font-black">Imagens, uma URL por linha — máximo 4</span>
+              <span className="text-sm font-black">Imagens, uma URL por linha</span>
               <textarea value={imageLines} onChange={(event) => setImageLines(event.target.value)} rows={5} className="resize-none rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none" />
             </label>
-
-            <div className="mt-6 rounded-[1.7rem] border border-blue-100 bg-blue-50 p-5">
-              <h3 className="text-xl font-black tracking-[-0.03em]">Campos por segmento</h3>
-              <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
-                Use JSON simples para adicionais, variações e extras. Isso preserva compatibilidade com produtos antigos e libera o Food MVP.
-              </p>
-
-              <label className="mt-5 grid gap-2">
-                <span className="text-sm font-black">Adicionais / addons</span>
-                <textarea value={addonsText} onChange={(event) => setAddonsText(event.target.value)} rows={7} className="resize-none rounded-2xl border border-blue-100 bg-white px-4 py-4 font-mono text-sm font-bold outline-none" />
-                <span className="text-xs font-bold text-slate-500">Exemplo: [{"{"}"nome":"Cheddar","preco":3{"}"}]</span>
-              </label>
-
-              <label className="mt-5 grid gap-2">
-                <span className="text-sm font-black">Variações / variations</span>
-                <textarea value={variationsText} onChange={(event) => setVariationsText(event.target.value)} rows={7} className="resize-none rounded-2xl border border-blue-100 bg-white px-4 py-4 font-mono text-sm font-bold outline-none" />
-              </label>
-
-              <label className="mt-5 grid gap-2">
-                <span className="text-sm font-black">Extras</span>
-                <textarea value={extrasText} onChange={(event) => setExtrasText(event.target.value)} rows={6} className="resize-none rounded-2xl border border-blue-100 bg-white px-4 py-4 font-mono text-sm font-bold outline-none" />
-              </label>
-            </div>
 
             <button onClick={save} disabled={saving} className="mt-5 rounded-2xl bg-[#05245c] px-6 py-4 font-black text-white disabled:opacity-60">
               {saving ? 'Salvando...' : 'Salvar produto'}
@@ -354,7 +286,6 @@ export default function ProdutoDetalhePage() {
                 <div className="p-4">
                   <p className="font-black">{product.nome}</p>
                   <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{product.descricao_curta || product.descricao || 'Sem descrição curta.'}</p>
-                  <p className="mt-3 text-xs font-black uppercase tracking-[0.18em] text-[#05245c]">{product.available === false ? 'Indisponível' : 'Disponível'}</p>
                 </div>
               </div>
             </section>

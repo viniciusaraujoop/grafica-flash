@@ -40,13 +40,6 @@ type QuickLink = {
 
 const quickLinks: QuickLink[] = [
   {
-    title: 'Segmento do negócio',
-    description: 'Escolha Food, Gráfica, Beauty, Serviços e veja módulos recomendados.',
-    href: '/painel/segmento',
-    badge: 'Segmento',
-    group: 'principal',
-  },
-  {
     title: 'Onboarding guiado',
     description: 'Siga os 7 passos para publicar e testar a empresa.',
     href: '/painel/onboarding',

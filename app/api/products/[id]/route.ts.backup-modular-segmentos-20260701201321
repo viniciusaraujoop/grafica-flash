@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
 import { createAuditLog } from '@/lib/orcaly-audit'
-import { normalizeBusinessType } from '@/lib/business-types'
 
 type Context = {
   params: Promise<{ id: string }>
@@ -14,9 +13,7 @@ const allowedFields = [
   'descricao_detalhada',
   'preco',
   'ativo',
-  'available',
   'tipo',
-  'business_type',
   'categoria',
   'subcategoria',
   'preco_sob_consulta',
@@ -30,9 +27,6 @@ const allowedFields = [
   'arquivado',
   'video_url',
   'image_urls',
-  'extras',
-  'variations',
-  'addons',
   'adicionais',
   'variacoes',
   'campos_orcamento',
@@ -56,11 +50,7 @@ async function getAccess(request: NextRequest) {
   return { supabaseAdmin, requester, access }
 }
 
-function ensureArray(value: any) {
-  return Array.isArray(value) ? value : []
-}
-
-function cleanUpdate(body: any, fallbackBusinessType: string) {
+function cleanUpdate(body: any) {
   const update: Record<string, any> = {}
 
   for (const field of allowedFields) {
@@ -72,17 +62,11 @@ function cleanUpdate(body: any, fallbackBusinessType: string) {
   if (update.estoque !== undefined && update.estoque !== null && update.estoque !== '') update.estoque = Number(update.estoque || 0)
   if (update.estoque === '') update.estoque = null
 
-  if (update.business_type !== undefined) update.business_type = normalizeBusinessType(update.business_type || fallbackBusinessType)
-  if (update.available !== undefined) update.available = Boolean(update.available)
-
-  if (update.image_urls !== undefined) update.image_urls = ensureArray(update.image_urls).slice(0, 4)
-  if (update.addons !== undefined) update.addons = ensureArray(update.addons)
-  if (update.variations !== undefined) update.variations = ensureArray(update.variations)
-  if (update.adicionais !== undefined) update.adicionais = ensureArray(update.adicionais)
-  if (update.variacoes !== undefined) update.variacoes = ensureArray(update.variacoes)
-  if (update.campos_orcamento !== undefined) update.campos_orcamento = ensureArray(update.campos_orcamento)
-  if (update.extras !== undefined && (typeof update.extras !== 'object' || Array.isArray(update.extras))) update.extras = {}
-  if (update.configuracoes !== undefined && (typeof update.configuracoes !== 'object' || Array.isArray(update.configuracoes))) update.configuracoes = {}
+  if (update.image_urls !== undefined && !Array.isArray(update.image_urls)) update.image_urls = []
+  if (update.adicionais !== undefined && !Array.isArray(update.adicionais)) update.adicionais = []
+  if (update.variacoes !== undefined && !Array.isArray(update.variacoes)) update.variacoes = []
+  if (update.campos_orcamento !== undefined && !Array.isArray(update.campos_orcamento)) update.campos_orcamento = []
+  if (update.configuracoes !== undefined && typeof update.configuracoes !== 'object') update.configuracoes = {}
 
   update.updated_at = new Date().toISOString()
 
@@ -117,12 +101,8 @@ export async function PATCH(request: NextRequest, context: Context) {
     const result = await getAccess(request)
     if ('error' in result && result.error) return result.error
 
-    if (!result.access!.canProducts) {
-      return NextResponse.json({ error: 'Seu perfil não pode editar produtos.' }, { status: 403 })
-    }
-
     const body = await request.json()
-    const update = cleanUpdate(body, result.access!.company.business_type || 'services')
+    const update = cleanUpdate(body)
 
     const { data, error } = await result.supabaseAdmin
       .from('products')

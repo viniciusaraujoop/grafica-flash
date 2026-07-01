@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { normalizeBusinessType } from '@/lib/business-types'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -33,7 +32,6 @@ const allowedFields = [
   'aceita_cartao',
   'cobrar_sinal',
   'percentual_sinal',
-  'business_type',
 ]
 
 function isUuid(value: unknown) {
@@ -188,7 +186,6 @@ function publicCompany(company: any) {
     aceita_cartao: company.aceita_cartao,
     cobrar_sinal: company.cobrar_sinal,
     percentual_sinal: company.percentual_sinal,
-    business_type: company.business_type || 'services',
   }
 }
 
@@ -335,7 +332,6 @@ export async function PATCH(request: NextRequest) {
     update.aceita_cartao = Boolean(update.aceita_cartao)
     update.cobrar_sinal = Boolean(update.cobrar_sinal)
     update.percentual_sinal = Math.max(0, Math.min(100, Number(update.percentual_sinal || 0)))
-    update.business_type = normalizeBusinessType(update.business_type || company.business_type || 'services')
     update.site_publico_ativo = Boolean(update.site_publico_ativo ?? true)
     update.site_show_store = Boolean(update.site_show_store ?? true)
     update.site_show_about = Boolean(update.site_show_about ?? true)

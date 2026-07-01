@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
-import { notifyNewOrder } from '@/lib/whatsapp-notifications'
 
 function tokenCurto() {
   return crypto.randomUUID().replaceAll('-', '').slice(0, 18)
@@ -56,24 +55,6 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (orderError) throw orderError
-
-    try {
-      await notifyNewOrder(supabaseAdmin, {
-        company: access.company,
-        order: {
-          ...order,
-          produto,
-          itens_resumo: produto,
-          valor_total: valor,
-          preco_estimado: valor,
-        },
-        cliente: { nome, telefone: whatsapp },
-        total: valor,
-        resumo: produto,
-      })
-    } catch (notifyError) {
-      console.error('[Orçaly WhatsApp] Falha ao notificar pedido de balcão:', notifyError)
-    }
 
     const token = tokenCurto()
     const propostaNumero = numeroProposta()

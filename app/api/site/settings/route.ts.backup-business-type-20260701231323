@@ -81,7 +81,6 @@ const allowedFields = [
   'site_business_hours',
   'site_payment_methods',
   'site_delivery_options',
-  'business_type',
 ]
 
 function cleanPayload(input: Record<string, any>) {

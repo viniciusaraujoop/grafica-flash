@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { businessTypes, getBusinessTypeConfig } from '@/lib/business-types'
 
 type Member = {
   id: string
@@ -41,7 +40,6 @@ type Company = {
   aceita_cartao?: boolean | null
   cobrar_sinal?: boolean | null
   percentual_sinal?: number | null
-  business_type?: string | null
 }
 
 type Uf = {
@@ -165,7 +163,6 @@ function getInitialForm(company?: Partial<Company> | null) {
     aceita_cartao: company?.aceita_cartao ?? false,
     cobrar_sinal: company?.cobrar_sinal ?? false,
     percentual_sinal: company?.percentual_sinal ?? 0,
-    business_type: company?.business_type || 'services',
   }
 }
 
@@ -599,28 +596,6 @@ export default function ConfiguracoesPage() {
                   <span className="text-sm font-black text-slate-700">Nome da empresa</span>
                   <input value={form.nome} onChange={(e) => update('nome', e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
                 </label>
-
-                <div className="rounded-[1.5rem] border border-blue-100 bg-blue-50 p-4">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <span className="text-sm font-black text-[#05245c]">Tipo de negócio</span>
-                      <p className="mt-1 text-sm font-bold leading-6 text-slate-500">
-                        Esse tipo de negócio muda textos, sugestões e recursos exibidos no site e painel. Você pode alterar tudo depois.
-                      </p>
-                    </div>
-                    <Link href="/painel/segmento" className="rounded-2xl bg-[#05245c] px-5 py-3 text-center text-sm font-black text-white">
-                      Configurar segmento
-                    </Link>
-                  </div>
-                  <select value={form.business_type || 'services'} onChange={(e) => update('business_type', e.target.value)} className="mt-4 w-full rounded-2xl border border-blue-100 bg-white px-4 py-4 font-bold outline-none focus:border-[#05245c]">
-                    {businessTypes.map((type) => (
-                      <option key={type.id} value={type.id}>{type.label}</option>
-                    ))}
-                  </select>
-                  <p className="mt-3 text-xs font-black uppercase tracking-[0.16em] text-[#05245c]">
-                    Atual: {getBusinessTypeConfig(form.business_type).publicName}
-                  </p>
-                </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="grid gap-2">

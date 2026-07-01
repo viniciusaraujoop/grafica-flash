@@ -84,7 +84,7 @@ async function safeInternalNotification(
       tipo: input.type || 'order',
       titulo: input.title,
       mensagem: input.message,
-      link_url: input.linkUrl || undefined,
+      link_url: input.linkUrl || null,
       payload: {
         order_id: input.orderId || null,
         origem: 'whatsapp_pedidos_status',

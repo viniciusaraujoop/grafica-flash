@@ -168,34 +168,16 @@ export default function PedidosPage() {
     setMessage('')
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const token = sessionData.session?.access_token
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId)
+        .eq('company_id', companyId)
 
-      if (!token) {
-        window.location.href = '/login'
-        return
-      }
-
-      const response = await fetch(`/api/orders/${orderId}`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status,
-          note: 'Status atualizado pela lista de pedidos.',
-        }),
-      })
-
-      const payload = await response.json().catch(() => ({}))
-
-      if (!response.ok) {
-        throw new Error(payload.error || 'Erro ao atualizar status.')
-      }
+      if (updateError) throw updateError
 
       setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status } : order))
-      setMessage(payload.whatsapp?.ok ? 'Status atualizado e cliente avisado no WhatsApp.' : 'Status atualizado.')
+      setMessage('Status atualizado.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao atualizar status.')
     }
