@@ -3,197 +3,134 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { getBusinessTypeConfig, normalizeBusinessType, type BusinessType } from '@/lib/business-types'
 
 type Company = {
   id: string
   nome?: string | null
   slug?: string | null
+  subdomain_slug?: string | null
   logo_url?: string | null
   assinatura_status?: string | null
   assinatura_plano?: string | null
+  assinatura_expira_em?: string | null
   plano?: string | null
   site_publico_ativo?: boolean | null
   site_template?: string | null
+  site_headline?: string | null
+  site_subheadline?: string | null
+  site_cta_text?: string | null
+  business_type?: string | null
   whatsapp?: string | null
   whatsapp_enabled?: boolean | null
+  updated_at?: string | null
+  site_updated_at?: string | null
+}
+
+type OrderRow = {
+  id: string
+  nome?: string | null
+  produto?: string | null
+  status?: string | null
+  valor_total?: number | string | null
+  preco_estimado?: number | string | null
+  created_at?: string | null
+}
+
+type ProductRow = {
+  id: string
+  nome?: string | null
+  categoria?: string | null
+  preco?: number | string | null
+  ativo?: boolean | null
+  available?: boolean | null
+  destaque?: boolean | null
+  imagem_url?: string | null
+  image_urls?: string[] | null
+  video_url?: string | null
+  created_at?: string | null
+}
+
+type ProposalRow = {
+  id: string
+  status?: string | null
+  valor_total?: number | string | null
+  created_at?: string | null
 }
 
 type Metrics = {
   pedidosHoje: number
   pedidosTotal: number
-  propostasTotal: number
-  produtosTotal: number
-  cuponsTotal: number
-  faturamentoEstimado: number
   pedidosPendentes: number
+  pedidosAndamento: number
+  pedidosConcluidos: number
+  faturamentoEstimado: number
+  faturamentoHoje: number
+  propostasTotal: number
+  propostasPendentes: number
+  produtosTotal: number
+  produtosAtivos: number
+  produtosDestaque: number
+  produtosSemFoto: number
+  produtosComVideo: number
+  clientesTotal: number
+  aguardandoArte: number
+  propostasEnviadas: number
+  emProducao: number
+  aguardandoAprovacao: number
+  emPreparo: number
+  prontos: number
+  saiuEntrega: number
+  emAnalise: number
 }
 
-type QuickLinkGroup = 'principal' | 'vendas' | 'site' | 'operacao' | 'gestao'
+type MetricCardData = {
+  title: string
+  value: string | number
+  description: string
+  tone?: 'blue' | 'green' | 'amber' | 'purple' | 'slate'
+}
 
-type QuickLink = {
+type QuickAction = {
   title: string
   description: string
   href: string
   badge?: string
-  group: QuickLinkGroup
 }
 
-const quickLinks: QuickLink[] = [
-  {
-    title: 'Segmento do negócio',
-    description: 'Escolha Food, Gráfica, Beauty, Serviços e veja módulos recomendados.',
-    href: '/painel/segmento',
-    badge: 'Segmento',
-    group: 'principal',
-  },
-  {
-    title: 'Onboarding guiado',
-    description: 'Siga os 7 passos para publicar e testar a empresa.',
-    href: '/painel/onboarding',
-    badge: 'Novo',
-    group: 'principal',
-  },
-  {
-    title: 'Assistente IA',
-    description: 'Crie textos, produtos, campanhas e ideias para o negócio.',
-    href: '/painel/assistente',
-    badge: 'IA',
-    group: 'principal',
-  },
-  {
-    title: 'Notificações',
-    description: 'Alertas do sistema, tarefas, CRM e eventos importantes.',
-    href: '/painel/notificacoes',
-    badge: 'Novo',
-    group: 'principal',
-  },
-  {
-    title: 'Central Operacional',
-    description: 'Modo balcão, QR Code, recorrência, cliente final e IA de orçamento.',
-    href: '/painel/central-operacional',
-    badge: 'Pro',
-    group: 'principal',
-  },
+type ActivityItem = {
+  title: string
+  description: string
+  href: string
+  date?: string | null
+  type: 'pedido' | 'produto' | 'site'
+}
 
-  {
-    title: 'Pedidos',
-    description: 'Acompanhe solicitações recebidas e status do atendimento.',
-    href: '/painel/pedidos',
-    group: 'vendas',
-  },
-  {
-    title: 'Propostas',
-    description: 'Gerencie propostas enviadas, pendentes e aprovadas.',
-    href: '/painel/propostas',
-    group: 'vendas',
-  },
-  {
-    title: 'Orçamento inteligente',
-    description: 'Transforme pedido bagunçado em orçamento organizado.',
-    href: '/painel/orcamento-inteligente',
-    badge: 'IA',
-    group: 'vendas',
-  },
-  {
-    title: 'CRM',
-    description: 'Funil comercial, leads, negociações e clientes recorrentes.',
-    href: '/painel/crm',
-    badge: 'Novo',
-    group: 'vendas',
-  },
-
-  {
-    title: 'Catálogo',
-    description: 'Produtos, serviços, preços, fotos, vídeos e destaque.',
-    href: '/painel/produtos',
-    group: 'site',
-  },
-  {
-    title: 'IA de produtos',
-    description: 'Gere descrições, benefícios e perguntas para catálogo.',
-    href: '/painel/produtos/ia',
-    badge: 'IA',
-    group: 'site',
-  },
-  {
-    title: 'Editor do site',
-    description: 'Templates, cores, capa, seções, SEO, logo e banner.',
-    href: '/painel/site',
-    group: 'site',
-  },
-  {
-    title: 'Cupons',
-    description: 'Crie descontos com validade, pedido mínimo e limite máximo.',
-    href: '/painel/cupons',
-    badge: 'Novo',
-    group: 'site',
-  },
-
-  {
-    title: 'WhatsApp',
-    description: 'Configure atendimento, webhook, IA e notificações.',
-    href: '/painel/whatsapp',
-    badge: 'Novo',
-    group: 'operacao',
-  },
-  {
-    title: 'Produção',
-    description: 'Controle execução, responsáveis, prazos e status.',
-    href: '/painel/producao',
-    group: 'operacao',
-  },
-  {
-    title: 'Tarefas',
-    description: 'Lembretes, responsáveis, prazos e pendências internas.',
-    href: '/painel/tarefas',
-    badge: 'Novo',
-    group: 'operacao',
-  },
-
-  {
-    title: 'Clientes',
-    description: 'Consulte clientes, histórico e oportunidades de retorno.',
-    href: '/painel/clientes',
-    group: 'gestao',
-  },
-  {
-    title: 'Oportunidades',
-    description: 'Acompanhe leads, chances de venda e próximos contatos.',
-    href: '/painel/oportunidades',
-    group: 'gestao',
-  },
-  {
-    title: 'Financeiro',
-    description: 'Veja estimativas, valores, recebimentos e controle básico.',
-    href: '/painel/financeiro',
-    group: 'gestao',
-  },
-  {
-    title: 'Equipe',
-    description: 'Gerencie membros, cargos e permissões.',
-    href: '/painel/configuracoes/equipe',
-    group: 'gestao',
-  },
-  {
-    title: 'Configurações',
-    description: 'Dados da empresa, endereço, WhatsApp e preferências.',
-    href: '/painel/configuracoes',
-    group: 'gestao',
-  },
-  {
-    title: 'Auditoria',
-    description: 'Saúde do sistema, integrações e últimas ações.',
-    href: '/painel/auditoria',
-    badge: 'Admin',
-    group: 'gestao',
-  },
-  {
-    title: 'Assinatura',
-    description: 'Plano atual, renovação e pagamento.',
-    href: '/assinatura',
-    group: 'gestao',
-  },
-]
+const initialMetrics: Metrics = {
+  pedidosHoje: 0,
+  pedidosTotal: 0,
+  pedidosPendentes: 0,
+  pedidosAndamento: 0,
+  pedidosConcluidos: 0,
+  faturamentoEstimado: 0,
+  faturamentoHoje: 0,
+  propostasTotal: 0,
+  propostasPendentes: 0,
+  produtosTotal: 0,
+  produtosAtivos: 0,
+  produtosDestaque: 0,
+  produtosSemFoto: 0,
+  produtosComVideo: 0,
+  clientesTotal: 0,
+  aguardandoArte: 0,
+  propostasEnviadas: 0,
+  emProducao: 0,
+  aguardandoAprovacao: 0,
+  emPreparo: 0,
+  prontos: 0,
+  saiuEntrega: 0,
+  emAnalise: 0,
+}
 
 function moeda(value: number) {
   return Number(value || 0).toLocaleString('pt-BR', {
@@ -202,11 +139,41 @@ function moeda(value: number) {
   })
 }
 
+function formatarData(data?: string | null) {
+  if (!data) return 'sem data definida'
+
+  const date = new Date(data)
+  if (Number.isNaN(date.getTime())) return 'data inválida'
+
+  return new Intl.DateTimeFormat('pt-BR').format(date)
+}
+
+function diasAte(data?: string | null) {
+  if (!data) return null
+  const date = new Date(data)
+  if (Number.isNaN(date.getTime())) return null
+
+  const now = new Date()
+  const diff = date.getTime() - now.getTime()
+
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+}
+
 function planoLabel(value?: string | null) {
   if (value === 'basico') return 'Básico'
+  if (value === 'essencial') return 'Essencial'
   if (value === 'profissional') return 'Profissional'
   if (value === 'premium') return 'Premium'
-  return 'Não definido'
+  return value || 'Não definido'
+}
+
+function statusLabel(value?: string | null) {
+  if (!value) return 'Indefinido'
+  if (value === 'ativa') return 'Ativa'
+  if (value === 'ativo') return 'Ativa'
+  if (value === 'vencida') return 'Vencida'
+  if (value === 'pendente') return 'Pendente'
+  return value
 }
 
 function todayIsoStart() {
@@ -215,109 +182,622 @@ function todayIsoStart() {
   return date.toISOString()
 }
 
-function MetricCard({ title, value, description }: { title: string; value: string | number; description: string }) {
-  return (
-    <article className="rounded-[1.6rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">{title}</p>
-      <p className="mt-3 text-3xl font-black tracking-[-0.05em] text-[#071b3a]">{value}</p>
-      <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{description}</p>
-    </article>
-  )
+function numberValue(value?: number | string | null) {
+  return Number(value || 0)
 }
 
-function ActionCard({ link }: { link: QuickLink }) {
-  return (
-    <Link
-      href={link.href}
-      className="group rounded-[1.6rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5 transition hover:-translate-y-1 hover:border-[#05245c] hover:shadow-2xl hover:shadow-blue-950/10"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-black tracking-[-0.03em] text-[#071b3a]">{link.title}</h3>
-          <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{link.description}</p>
-        </div>
-
-        {link.badge ? (
-          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">
-            {link.badge}
-          </span>
-        ) : null}
-      </div>
-
-      <p className="mt-5 text-sm font-black text-[#05245c]">
-        Abrir →
-      </p>
-    </Link>
-  )
+function statusContains(status: string | null | undefined, terms: string[]) {
+  const normalized = String(status || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  return terms.some((term) => normalized.includes(term))
 }
 
-function SetupProgress({ company, metrics }: { company: Company | null; metrics: Metrics }) {
-  const steps = [
-    Boolean(company?.nome && company?.whatsapp),
-    Boolean(company?.site_template && company?.site_publico_ativo),
-    Boolean(company?.logo_url),
-    metrics.produtosTotal > 0,
-    metrics.cuponsTotal > 0,
-    Boolean(company?.whatsapp_enabled),
-  ]
+function isPendingStatus(status?: string | null) {
+  return statusContains(status, ['recebido', 'pendente', 'analise', 'aguardando'])
+}
 
-  const done = steps.filter(Boolean).length
-  const percent = Math.round((done / steps.length) * 100)
+function isProgressStatus(status?: string | null) {
+  return statusContains(status, ['em preparo', 'preparo', 'producao', 'execucao', 'manutencao', 'reparo', 'andamento'])
+}
 
-  return (
-    <article className="rounded-[1.8rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Setup</p>
-          <h2 className="mt-2 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">Empresa pronta para vender</h2>
-          <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
-            Complete os passos essenciais para deixar o Orçaly funcionando de verdade, não só bonito na tela.
-          </p>
-        </div>
+function isDoneStatus(status?: string | null) {
+  return statusContains(status, ['concluido', 'entregue', 'pronto', 'atendido'])
+}
 
-        <div className="shrink-0 rounded-2xl bg-[#f5f8ff] px-5 py-4 text-center">
-          <p className="text-3xl font-black text-[#05245c]">{percent}%</p>
-          <p className="text-xs font-black text-slate-400">{done}/{steps.length}</p>
-        </div>
-      </div>
+function productHasImage(product: ProductRow) {
+  return Boolean(product.imagem_url || (Array.isArray(product.image_urls) && product.image_urls.length > 0))
+}
 
-      <div className="mt-5 h-3 overflow-hidden rounded-full bg-[#f5f8ff]">
-        <div className="h-full rounded-full bg-[#05245c]" style={{ width: `${percent}%` }} />
-      </div>
+function publicSlug(company: Company | null) {
+  return company?.subdomain_slug || company?.slug || ''
+}
 
-      <Link href="/painel/onboarding" className="mt-5 inline-flex rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white">
-        Abrir onboarding
-      </Link>
-    </article>
-  )
+function publicUrl(company: Company | null) {
+  const slug = publicSlug(company)
+  if (!slug) return ''
+
+  return `https://${slug}.orcaly.com.br`
+}
+
+function internalSiteUrl(company: Company | null) {
+  const slug = publicSlug(company)
+  if (!slug) return '/painel/site'
+
+  return `/site/${slug}`
 }
 
 async function safeCount(table: string, companyId: string) {
   try {
-    const { count } = await supabase
+    const { count, error } = await supabase
       .from(table)
       .select('id', { count: 'exact', head: true })
       .eq('company_id', companyId)
 
+    if (error) return 0
     return count || 0
   } catch {
     return 0
   }
 }
 
-export default function PainelProPage() {
+async function loadOrders(companyId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id, nome, produto, status, valor_total, preco_estimado, created_at')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(500)
+
+    if (error) return []
+    return (data || []) as OrderRow[]
+  } catch {
+    return []
+  }
+}
+
+async function loadProducts(companyId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, nome, categoria, preco, ativo, available, destaque, imagem_url, image_urls, video_url, created_at')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(200)
+
+    if (error) return []
+    return (data || []) as ProductRow[]
+  } catch {
+    return []
+  }
+}
+
+async function loadProposals(companyId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('proposals')
+      .select('id, status, valor_total, created_at')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(200)
+
+    if (error) return []
+    return (data || []) as ProposalRow[]
+  } catch {
+    return []
+  }
+}
+
+function buildMetrics(orders: OrderRow[], products: ProductRow[], proposals: ProposalRow[], clientesTotal: number): Metrics {
+  const start = todayIsoStart()
+  const todayOrders = orders.filter((order) => String(order.created_at || '') >= start)
+
+  const faturamentoEstimado = orders.reduce((acc, order) => {
+    return acc + numberValue(order.valor_total || order.preco_estimado)
+  }, 0)
+
+  const faturamentoHoje = todayOrders.reduce((acc, order) => {
+    return acc + numberValue(order.valor_total || order.preco_estimado)
+  }, 0)
+
+  const produtosAtivos = products.filter((product) => product.available !== false && product.ativo !== false).length
+
+  return {
+    pedidosHoje: todayOrders.length,
+    pedidosTotal: orders.length,
+    pedidosPendentes: orders.filter((order) => isPendingStatus(order.status)).length,
+    pedidosAndamento: orders.filter((order) => isProgressStatus(order.status)).length,
+    pedidosConcluidos: orders.filter((order) => isDoneStatus(order.status)).length,
+    faturamentoEstimado,
+    faturamentoHoje,
+    propostasTotal: proposals.length,
+    propostasPendentes: proposals.filter((proposal) => isPendingStatus(proposal.status)).length,
+    produtosTotal: products.length,
+    produtosAtivos,
+    produtosDestaque: products.filter((product) => Boolean(product.destaque)).length,
+    produtosSemFoto: products.filter((product) => !productHasImage(product)).length,
+    produtosComVideo: products.filter((product) => Boolean(product.video_url)).length,
+    clientesTotal,
+    aguardandoArte: orders.filter((order) => statusContains(order.status, ['aguardando arte', 'arte'])).length,
+    propostasEnviadas: orders.filter((order) => statusContains(order.status, ['proposta enviada'])).length + proposals.length,
+    emProducao: orders.filter((order) => statusContains(order.status, ['producao'])).length,
+    aguardandoAprovacao: orders.filter((order) => statusContains(order.status, ['aguardando aprovacao', 'aprovacao'])).length,
+    emPreparo: orders.filter((order) => statusContains(order.status, ['preparo'])).length,
+    prontos: orders.filter((order) => statusContains(order.status, ['pronto'])).length,
+    saiuEntrega: orders.filter((order) => statusContains(order.status, ['saiu', 'entrega'])).length,
+    emAnalise: orders.filter((order) => statusContains(order.status, ['analise', 'diagnostico'])).length,
+  }
+}
+
+function metricsByBusiness(type: BusinessType, metrics: Metrics): MetricCardData[] {
+  if (type === 'food') {
+    return [
+      { title: 'Pedidos de hoje', value: metrics.pedidosHoje, description: 'Pedidos criados desde meia-noite.', tone: 'blue' },
+      { title: 'Em preparo', value: metrics.emPreparo, description: 'Pedidos que estão em preparo.', tone: 'amber' },
+      { title: 'Prontos/retirada', value: metrics.prontos, description: 'Pedidos marcados como prontos.', tone: 'green' },
+      { title: 'Saiu para entrega', value: metrics.saiuEntrega, description: 'Pedidos com status de entrega.', tone: 'purple' },
+      { title: 'Faturamento do dia', value: moeda(metrics.faturamentoHoje), description: 'Soma estimada dos pedidos de hoje.', tone: 'green' },
+      { title: 'Itens no cardápio', value: metrics.produtosAtivos, description: 'Itens ativos e disponíveis.', tone: 'slate' },
+    ]
+  }
+
+  if (type === 'graphic' || type === 'custom_products') {
+    return [
+      { title: 'Orçamentos recebidos', value: metrics.pedidosTotal, description: 'Solicitações registradas no painel.', tone: 'blue' },
+      { title: 'Aguardando arte', value: metrics.aguardandoArte, description: 'Pedidos que precisam de arquivo/arte.', tone: 'amber' },
+      { title: 'Propostas enviadas', value: metrics.propostasEnviadas, description: 'Propostas e pedidos em proposta.', tone: 'purple' },
+      { title: 'Em produção', value: metrics.emProducao, description: 'Pedidos com etapa de produção.', tone: 'blue' },
+      { title: 'Prontos para entrega', value: metrics.prontos, description: 'Pedidos marcados como prontos.', tone: 'green' },
+      { title: 'Valor em oportunidades', value: moeda(metrics.faturamentoEstimado), description: 'Valor estimado dos pedidos carregados.', tone: 'green' },
+    ]
+  }
+
+  if (type === 'beauty' || type === 'barber') {
+    return [
+      { title: 'Agendamentos solicitados', value: metrics.pedidosTotal, description: 'Solicitações recebidas no painel.', tone: 'blue' },
+      { title: 'Horários confirmados', value: metrics.pedidosAndamento, description: 'Atendimentos em andamento/confirmados.', tone: 'purple' },
+      { title: 'Serviços do dia', value: metrics.pedidosHoje, description: 'Solicitações criadas hoje.', tone: 'amber' },
+      { title: 'Clientes recorrentes', value: metrics.clientesTotal, description: 'Clientes encontrados na base.', tone: 'slate' },
+      { title: 'Receita prevista', value: moeda(metrics.faturamentoEstimado), description: 'Valor estimado dos atendimentos.', tone: 'green' },
+      { title: 'Atendimentos concluídos', value: metrics.pedidosConcluidos, description: 'Status concluído, atendido ou entregue.', tone: 'green' },
+    ]
+  }
+
+  if (type === 'technical_assistance') {
+    return [
+      { title: 'Solicitações recebidas', value: metrics.pedidosTotal, description: 'Ordens ou pedidos registrados.', tone: 'blue' },
+      { title: 'Em análise', value: metrics.emAnalise, description: 'Pedidos em análise ou diagnóstico.', tone: 'amber' },
+      { title: 'Aguardando aprovação', value: metrics.aguardandoAprovacao, description: 'Serviços aguardando retorno do cliente.', tone: 'purple' },
+      { title: 'Em manutenção', value: metrics.pedidosAndamento, description: 'Pedidos em reparo/manutenção.', tone: 'blue' },
+      { title: 'Prontos para retirada', value: metrics.prontos, description: 'Serviços finalizados ou prontos.', tone: 'green' },
+      { title: 'Valor em serviços', value: moeda(metrics.faturamentoEstimado), description: 'Valor estimado dos serviços.', tone: 'green' },
+    ]
+  }
+
+  if (type === 'store') {
+    return [
+      { title: 'Pedidos recebidos', value: metrics.pedidosTotal, description: 'Pedidos registrados na loja.', tone: 'blue' },
+      { title: 'Produtos ativos', value: metrics.produtosAtivos, description: 'Produtos visíveis ou disponíveis.', tone: 'green' },
+      { title: 'Pedidos pendentes', value: metrics.pedidosPendentes, description: 'Pedidos que precisam de atenção.', tone: 'amber' },
+      { title: 'Clientes', value: metrics.clientesTotal, description: 'Clientes encontrados na base.', tone: 'slate' },
+      { title: 'Receita estimada', value: moeda(metrics.faturamentoEstimado), description: 'Soma estimada dos pedidos.', tone: 'green' },
+      { title: 'Itens em destaque', value: metrics.produtosDestaque, description: 'Produtos destacados no catálogo.', tone: 'purple' },
+    ]
+  }
+
+  return [
+    { title: 'Pedidos/orçamentos', value: metrics.pedidosTotal, description: 'Solicitações registradas no painel.', tone: 'blue' },
+    { title: 'Em análise', value: metrics.emAnalise || metrics.pedidosPendentes, description: 'Solicitações aguardando resposta.', tone: 'amber' },
+    { title: 'Propostas enviadas', value: metrics.propostasEnviadas, description: 'Propostas e oportunidades abertas.', tone: 'purple' },
+    { title: 'Em andamento', value: metrics.pedidosAndamento, description: 'Atendimentos em execução.', tone: 'blue' },
+    { title: 'Concluídos', value: metrics.pedidosConcluidos, description: 'Atendimentos finalizados.', tone: 'green' },
+    { title: 'Valor estimado', value: moeda(metrics.faturamentoEstimado), description: 'Soma estimada dos pedidos.', tone: 'green' },
+  ]
+}
+
+function quickActionsByBusiness(type: BusinessType, publicLink: string): QuickAction[] {
+  const common: QuickAction[] = [
+    { title: 'Cadastrar produto/serviço', description: 'Adicione itens para aparecerem no site.', href: '/painel/produtos' },
+    { title: 'Editar site', description: 'Ajuste textos, logo, cores e publicação.', href: '/painel/site' },
+    { title: 'Configurações', description: 'Dados da empresa, WhatsApp e preferências.', href: '/painel/configuracoes' },
+  ]
+
+  const verSite: QuickAction = {
+    title: 'Ver site',
+    description: publicLink ? 'Abra a página pública da empresa.' : 'Configure seu link público no site.',
+    href: publicLink || '/painel/site',
+  }
+
+  if (type === 'food') {
+    return [
+      { title: 'Adicionar item ao cardápio', description: 'Cadastre foto, preço, variações e adicionais.', href: '/painel/produtos', badge: 'Food' },
+      { title: 'Ver pedidos de hoje', description: 'Acompanhe preparo, retirada e entrega.', href: '/painel/pedidos' },
+      { title: 'Configurar entrega', description: 'Use as configurações do site para orientar entrega/retirada.', href: '/painel/site' },
+      { title: 'Editar horários', description: 'Prepare informações de atendimento no site.', href: '/painel/site' },
+      verSite,
+      ...common.slice(2),
+    ]
+  }
+
+  if (type === 'graphic' || type === 'custom_products') {
+    return [
+      { title: 'Novo orçamento', description: 'Acompanhe solicitações recebidas.', href: '/painel/pedidos', badge: 'Gráfica' },
+      { title: 'Ver artes recebidas', description: 'Abra pedidos e arquivos enviados.', href: '/painel/pedidos' },
+      { title: 'Criar proposta', description: 'Transforme pedido em proposta comercial.', href: '/painel/propostas' },
+      { title: 'Atualizar produção', description: 'Controle prazos, responsáveis e status.', href: '/painel/producao' },
+      ...common,
+      verSite,
+    ]
+  }
+
+  if (type === 'beauty' || type === 'barber') {
+    return [
+      { title: 'Cadastrar serviço', description: 'Adicione serviços, valores e descrição.', href: '/painel/produtos', badge: 'Beauty' },
+      { title: 'Abrir agenda', description: 'Use pedidos para acompanhar solicitações de agenda.', href: '/painel/pedidos' },
+      { title: 'Adicionar profissional', description: 'Organize equipe e permissões.', href: '/painel/configuracoes/equipe' },
+      { title: 'Configurar horários', description: 'Informe horários e atendimento no site.', href: '/painel/site' },
+      ...common,
+      verSite,
+    ]
+  }
+
+  if (type === 'technical_assistance') {
+    return [
+      { title: 'Nova solicitação', description: 'Acompanhe defeitos, análise e propostas.', href: '/painel/pedidos', badge: 'Assistência' },
+      { title: 'Ver análises', description: 'Pedidos em diagnóstico ou aprovação.', href: '/painel/pedidos' },
+      { title: 'Atualizar status técnico', description: 'Abra pedidos e mova etapas de atendimento.', href: '/painel/pedidos' },
+      { title: 'Cadastrar serviço', description: 'Liste reparos e serviços técnicos.', href: '/painel/produtos' },
+      ...common,
+    ]
+  }
+
+  return [
+    { title: 'Novo pedido/orçamento', description: 'Acompanhe solicitações recebidas.', href: '/painel/pedidos' },
+    ...common,
+    verSite,
+  ]
+}
+
+function toneClasses(tone: MetricCardData['tone']) {
+  if (tone === 'green') return 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+  if (tone === 'amber') return 'bg-amber-50 text-amber-700 ring-amber-100'
+  if (tone === 'purple') return 'bg-purple-50 text-purple-700 ring-purple-100'
+  if (tone === 'slate') return 'bg-slate-50 text-slate-700 ring-slate-100'
+  return 'bg-blue-50 text-[#05245c] ring-blue-100'
+}
+
+function MetricCard({ metric }: { metric: MetricCardData }) {
+  return (
+    <article className="rounded-[1.7rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-950/10">
+      <div className={`mb-4 inline-flex rounded-2xl px-3 py-2 text-xs font-black uppercase tracking-[0.16em] ring-1 ${toneClasses(metric.tone)}`}>
+        Métrica
+      </div>
+      <p className="text-sm font-black text-slate-500">{metric.title}</p>
+      <p className="mt-3 text-3xl font-black tracking-[-0.05em] text-[#071b3a]">{metric.value}</p>
+      <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{metric.description}</p>
+    </article>
+  )
+}
+
+function QuickActionCard({ action }: { action: QuickAction }) {
+  const external = action.href.startsWith('http')
+
+  const content = (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-black tracking-[-0.03em] text-[#071b3a]">{action.title}</h3>
+          <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{action.description}</p>
+        </div>
+
+        {action.badge ? (
+          <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{action.badge}</span>
+        ) : null}
+      </div>
+      <p className="mt-5 text-sm font-black text-[#05245c]">Abrir →</p>
+    </>
+  )
+
+  const className = 'group rounded-[1.6rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5 transition hover:-translate-y-1 hover:border-[#05245c] hover:shadow-2xl hover:shadow-blue-950/10'
+
+  if (external) {
+    return <a href={action.href} target="_blank" rel="noreferrer" className={className}>{content}</a>
+  }
+
+  return <Link href={action.href} className={className}>{content}</Link>
+}
+
+function ActivationChecklist({ company, metrics, onCopy }: { company: Company | null; metrics: Metrics; onCopy: () => void }) {
+  const siteSlug = publicSlug(company)
+
+  const items = [
+    { label: 'Adicionar logo', done: Boolean(company?.logo_url), href: '/painel/site' },
+    { label: 'Escolher tipo de negócio', done: Boolean(company?.business_type), href: '/painel/segmento' },
+    { label: 'Personalizar site', done: Boolean(company?.site_headline || company?.site_template), href: '/painel/site' },
+    { label: 'Cadastrar primeiro produto/serviço', done: metrics.produtosTotal > 0, href: '/painel/produtos' },
+    { label: 'Testar link público', done: Boolean(siteSlug), href: siteSlug ? internalSiteUrl(company) : '/painel/site' },
+    { label: 'Compartilhar no WhatsApp', done: Boolean(siteSlug && company?.whatsapp), action: onCopy },
+  ]
+
+  const done = items.filter((item) => item.done).length
+  const percent = Math.round((done / items.length) * 100)
+
+  return (
+    <article className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
+      <div className="flex items-start justify-between gap-5">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Complete sua estrutura</p>
+          <h2 className="mt-2 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">Empresa pronta para vender</h2>
+          <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
+            Pequenos passos que deixam a operação pronta para receber clientes com menos improviso.
+          </p>
+        </div>
+
+        <div className="shrink-0 rounded-2xl bg-[#f5f8ff] px-5 py-4 text-center">
+          <p className="text-3xl font-black text-[#05245c]">{percent}%</p>
+          <p className="text-xs font-black text-slate-400">{done}/{items.length}</p>
+        </div>
+      </div>
+
+      <div className="mt-5 h-3 overflow-hidden rounded-full bg-[#f5f8ff]">
+        <div className="h-full rounded-full bg-[#05245c] transition-all" style={{ width: `${percent}%` }} />
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        {items.map((item) => {
+          const body = (
+            <span className="flex items-center gap-3 rounded-2xl border border-blue-50 bg-[#f8fbff] p-4 text-sm font-black text-[#071b3a] transition hover:bg-white">
+              <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs ${item.done ? 'bg-emerald-500 text-white' : 'bg-white text-slate-400 ring-1 ring-blue-100'}`}>
+                {item.done ? '✓' : '•'}
+              </span>
+              {item.label}
+            </span>
+          )
+
+          if (item.action) {
+            return <button key={item.label} type="button" onClick={item.action} className="text-left">{body}</button>
+          }
+
+          return <Link key={item.label} href={item.href || '/painel'}>{body}</Link>
+        })}
+      </div>
+    </article>
+  )
+}
+
+function SitePreview({ company, config, onCopy }: { company: Company | null; config: ReturnType<typeof getBusinessTypeConfig>; onCopy: () => void }) {
+  const link = publicUrl(company)
+  const slug = publicSlug(company)
+  const headline = company?.site_headline || config.siteHeadline || config.siteTitle
+  const subheadline = company?.site_subheadline || config.siteSubheadline || config.siteSubtitle
+  const cta = company?.site_cta_text || config.cta
+
+  return (
+    <article className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-blue-950/5">
+      <div className="bg-[#05245c] p-5 text-white">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-white/55">Prévia do seu site</p>
+            <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">Seu link público</h2>
+          </div>
+
+          {company?.logo_url ? (
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white">
+              <img src={company.logo_url} alt={company.nome || 'Logo'} className="max-h-[78%] max-w-[78%] object-contain" />
+            </span>
+          ) : (
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white text-xl font-black text-[#05245c]">
+              {company?.nome?.slice(0, 1) || 'O'}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="p-5">
+        <div className="rounded-[1.6rem] bg-[#f8fbff] p-5">
+          <p className="break-all text-xs font-black uppercase tracking-[0.16em] text-[#05245c]">
+            {link || 'link ainda não configurado'}
+          </p>
+          <h3 className="mt-3 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">{company?.nome || 'Sua empresa'}</h3>
+          <p className="mt-3 text-xl font-black tracking-[-0.03em] text-[#071b3a]">{headline}</p>
+          <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{subheadline}</p>
+          <button type="button" className="mt-4 rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white">
+            {cta}
+          </button>
+        </div>
+
+        <div className="mt-5 grid gap-2 sm:grid-cols-3">
+          <Link href="/painel/site" className="rounded-2xl bg-[#05245c] px-4 py-3 text-center text-sm font-black text-white">
+            Editar site
+          </Link>
+
+          <a
+            href={slug ? internalSiteUrl(company) : '/painel/site'}
+            target={slug ? '_blank' : undefined}
+            rel={slug ? 'noreferrer' : undefined}
+            className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center text-sm font-black text-[#05245c]"
+          >
+            Ver site
+          </a>
+
+          <button type="button" onClick={onCopy} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-black text-[#05245c]">
+            Copiar link
+          </button>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function ActivityFeed({ activities }: { activities: ActivityItem[] }) {
+  return (
+    <article className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
+      <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Atividade recente</p>
+      <h2 className="mt-2 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">O que aconteceu por último</h2>
+
+      {activities.length ? (
+        <div className="mt-5 grid gap-3">
+          {activities.map((activity) => (
+            <Link key={`${activity.type}-${activity.href}-${activity.title}`} href={activity.href} className="rounded-2xl border border-blue-50 bg-[#f8fbff] p-4 transition hover:bg-white">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-black text-[#071b3a]">{activity.title}</p>
+                  <p className="mt-1 text-sm font-bold leading-6 text-slate-500">{activity.description}</p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#05245c]">{activity.type}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-5 rounded-[1.5rem] bg-[#f8fbff] p-5 text-center">
+          <p className="font-black text-[#071b3a]">Nenhuma atividade recente ainda.</p>
+          <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
+            Cadastre produtos e compartilhe seu link para começar.
+          </p>
+          <Link href="/painel/produtos" className="mt-4 inline-flex rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white">
+            Cadastrar produto
+          </Link>
+        </div>
+      )}
+    </article>
+  )
+}
+
+function OpportunitiesCard({ metrics, type }: { metrics: Metrics; type: BusinessType }) {
+  const label = type === 'food'
+    ? 'Pedidos aguardando preparo'
+    : type === 'graphic'
+      ? 'Orçamentos aguardando resposta'
+      : type === 'technical_assistance'
+        ? 'Solicitações em análise'
+        : 'Oportunidades em aberto'
+
+  const amount = metrics.pedidosPendentes + metrics.propostasPendentes + metrics.emAnalise
+
+  return (
+    <article className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
+      <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Dinheiro parado</p>
+      <h2 className="mt-2 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">{label}</h2>
+
+      <div className="mt-5 rounded-[1.6rem] bg-amber-50 p-5 text-amber-900">
+        <p className="text-4xl font-black tracking-[-0.05em]">{amount}</p>
+        <p className="mt-2 text-sm font-bold leading-6">
+          {amount > 0
+            ? 'Há oportunidades que precisam de atenção para não esfriar atendimento.'
+            : 'Quando você começar a receber pedidos, o Orçaly mostrará aqui oportunidades que precisam de atenção.'}
+        </p>
+      </div>
+
+      <Link href="/painel/pedidos" className="mt-5 inline-flex rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white">
+        Ver pedidos
+      </Link>
+    </article>
+  )
+}
+
+function EmptyStateAlerts({ company, metrics, onCopy }: { company: Company | null; metrics: Metrics; onCopy: () => void }) {
+  const expiresIn = diasAte(company?.assinatura_expira_em)
+  const alerts = [
+    !company?.logo_url
+      ? { title: 'Seu site ainda está sem logo.', action: 'Adicionar logo', href: '/painel/site' }
+      : null,
+    metrics.produtosTotal === 0
+      ? { title: 'Você ainda não cadastrou produtos ou serviços.', action: 'Cadastrar produto', href: '/painel/produtos' }
+      : null,
+    publicSlug(company)
+      ? { title: 'Seu link público já está pronto para compartilhar.', action: 'Copiar link', button: true }
+      : null,
+    typeof expiresIn === 'number' && expiresIn >= 0 && expiresIn <= 7
+      ? { title: `Sua assinatura vence em ${expiresIn} dia(s).`, action: 'Renovar agora', href: '/assinatura' }
+      : null,
+    metrics.pedidosPendentes > 0
+      ? { title: 'Você tem pedidos aguardando resposta.', action: 'Ver pedidos', href: '/painel/pedidos' }
+      : null,
+  ].filter(Boolean) as Array<{ title: string; action: string; href?: string; button?: boolean }>
+
+  if (!alerts.length) return null
+
+  return (
+    <section className="grid gap-3 lg:grid-cols-3">
+      {alerts.slice(0, 3).map((alert) => (
+        <article key={alert.title} className="rounded-[1.5rem] border border-blue-100 bg-white p-4 shadow-lg shadow-blue-950/5">
+          <p className="font-black text-[#071b3a]">{alert.title}</p>
+          {alert.button ? (
+            <button type="button" onClick={onCopy} className="mt-3 rounded-2xl bg-[#05245c] px-4 py-2 text-sm font-black text-white">
+              {alert.action}
+            </button>
+          ) : (
+            <Link href={alert.href || '/painel'} className="mt-3 inline-flex rounded-2xl bg-[#05245c] px-4 py-2 text-sm font-black text-white">
+              {alert.action}
+            </Link>
+          )}
+        </article>
+      ))}
+    </section>
+  )
+}
+
+function buildRecentActivity(orders: OrderRow[], products: ProductRow[], company: Company | null): ActivityItem[] {
+  const orderItems = orders.slice(0, 3).map((order) => ({
+    title: order.nome || 'Pedido recebido',
+    description: `${order.produto || 'Solicitação'}${order.status ? ` · ${order.status}` : ''}`,
+    href: `/painel/pedidos/${order.id}`,
+    date: order.created_at,
+    type: 'pedido' as const,
+  }))
+
+  const productItems = products.slice(0, 2).map((product) => ({
+    title: product.nome || 'Produto cadastrado',
+    description: product.categoria || 'Item do catálogo',
+    href: `/painel/produtos/${product.id}`,
+    date: product.created_at,
+    type: 'produto' as const,
+  }))
+
+  const siteItem = company?.site_updated_at || company?.updated_at
+    ? [{
+      title: 'Site atualizado',
+      description: 'Conteúdo, visual ou configuração da empresa foi atualizado.',
+      href: '/painel/site',
+      date: company.site_updated_at || company.updated_at,
+      type: 'site' as const,
+    }]
+    : []
+
+  return [...orderItems, ...productItems, ...siteItem]
+    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
+    .slice(0, 5)
+}
+
+export default function PainelCommandCenterPage() {
   const [company, setCompany] = useState<Company | null>(null)
-  const [metrics, setMetrics] = useState<Metrics>({
-    pedidosHoje: 0,
-    pedidosTotal: 0,
-    propostasTotal: 0,
-    produtosTotal: 0,
-    cuponsTotal: 0,
-    faturamentoEstimado: 0,
-    pedidosPendentes: 0,
-  })
+  const [metrics, setMetrics] = useState<Metrics>(initialMetrics)
+  const [activities, setActivities] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState('')
+  const [copyMessage, setCopyMessage] = useState('')
+
+  const businessType = normalizeBusinessType(company?.business_type || company?.site_template)
+  const businessConfig = useMemo(() => getBusinessTypeConfig(businessType), [businessType])
+  const publicLink = publicUrl(company)
+  const metricCards = useMemo(() => metricsByBusiness(businessType, metrics), [businessType, metrics])
+  const quickActions = useMemo(() => quickActionsByBusiness(businessType, publicLink), [businessType, publicLink])
+
+  async function copiarLink() {
+    if (!publicLink) {
+      setCopyMessage('Configure o link público no editor do site.')
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(publicLink)
+      setCopyMessage('Link copiado.')
+    } catch {
+      setCopyMessage(publicLink)
+    }
+
+    window.setTimeout(() => setCopyMessage(''), 2500)
+  }
 
   async function loadPanel() {
     setLoading(true)
@@ -346,34 +826,18 @@ export default function PainelProPage() {
       setCompany(currentCompany)
 
       const companyId = currentCompany.id
-      const start = todayIsoStart()
 
-      const [ordersTotalResult, ordersTodayResult, ordersPendingResult] = await Promise.all([
-        supabase.from('orders').select('id, preco_estimado, valor_total, status', { count: 'exact' }).eq('company_id', companyId).limit(1000),
-        supabase.from('orders').select('id', { count: 'exact', head: true }).eq('company_id', companyId).gte('created_at', start),
-        supabase.from('orders').select('id', { count: 'exact', head: true }).eq('company_id', companyId).in('status', ['Recebido', 'Pendente', 'Em análise', 'Aguardando aprovação']),
+      const [orders, products, proposals, customersCount, crmLeadsCount] = await Promise.all([
+        loadOrders(companyId),
+        loadProducts(companyId),
+        loadProposals(companyId),
+        safeCount('customers', companyId),
+        safeCount('crm_leads', companyId),
       ])
 
-      const [propostasTotal, produtosTotal, cuponsTotal] = await Promise.all([
-        safeCount('proposals', companyId),
-        safeCount('products', companyId),
-        safeCount('marketplace_coupons', companyId),
-      ])
-
-      const orders = ordersTotalResult.data || []
-      const faturamento = orders.reduce((acc: number, order: any) => {
-        return acc + Number(order.valor_total || order.preco_estimado || 0)
-      }, 0)
-
-      setMetrics({
-        pedidosHoje: ordersTodayResult.count || 0,
-        pedidosTotal: ordersTotalResult.count || orders.length || 0,
-        propostasTotal,
-        produtosTotal,
-        cuponsTotal,
-        faturamentoEstimado: faturamento,
-        pedidosPendentes: ordersPendingResult.count || 0,
-      })
+      const nextMetrics = buildMetrics(orders, products, proposals, Math.max(customersCount, crmLeadsCount))
+      setMetrics(nextMetrics)
+      setActivities(buildRecentActivity(orders, products, currentCompany))
     } catch (error) {
       setErro(error instanceof Error ? error.message : 'Erro ao carregar painel.')
     }
@@ -385,17 +849,12 @@ export default function PainelProPage() {
     loadPanel()
   }, [])
 
-  const principal = useMemo(() => quickLinks.filter((item) => item.group === 'principal'), [])
-  const vendas = useMemo(() => quickLinks.filter((item) => item.group === 'vendas'), [])
-  const site = useMemo(() => quickLinks.filter((item) => item.group === 'site'), [])
-  const operacao = useMemo(() => quickLinks.filter((item) => item.group === 'operacao'), [])
-  const gestao = useMemo(() => quickLinks.filter((item) => item.group === 'gestao'), [])
-
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4">
-        <div className="rounded-[2rem] bg-white p-8 text-center font-black text-[#071b3a] shadow-xl shadow-blue-950/5">
-          Carregando painel...
+        <div className="rounded-[2rem] bg-white p-8 text-center shadow-xl shadow-blue-950/5">
+          <img src="/logo-orcaly.png" alt="Orçaly" className="mx-auto mb-5 h-12 w-auto" />
+          <p className="font-black text-[#071b3a]">Carregando central da empresa...</p>
         </div>
       </main>
     )
@@ -405,21 +864,23 @@ export default function PainelProPage() {
     <main className="min-h-screen bg-[#f5f8ff] px-4 py-6 text-[#071b3a]">
       <section className="mx-auto max-w-7xl space-y-6">
         <header className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-blue-950/5">
-          <div className="grid gap-6 p-6 lg:grid-cols-[1fr_360px] lg:items-center">
+          <div className="grid gap-6 p-6 lg:grid-cols-[1fr_380px] lg:items-center">
             <div>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-4">
                 {company?.logo_url ? (
-                  <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white shadow-lg ring-1 ring-blue-100">
+                  <span className="grid h-16 w-16 place-items-center rounded-3xl bg-white shadow-lg ring-1 ring-blue-100">
                     <img src={company.logo_url} alt={company.nome || 'Logo'} className="max-h-[78%] max-w-[78%] object-contain" />
                   </span>
                 ) : (
-                  <span className="grid h-14 w-14 place-items-center rounded-2xl bg-[#05245c] text-xl font-black text-white">
+                  <span className="grid h-16 w-16 place-items-center rounded-3xl bg-[#05245c] text-2xl font-black text-white">
                     {company?.nome?.slice(0, 1) || 'O'}
                   </span>
                 )}
 
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-[#05245c]">Painel Orçaly</p>
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-[#05245c]">
+                    {businessConfig.publicName}
+                  </p>
                   <h1 className="mt-1 text-4xl font-black tracking-[-0.06em] sm:text-5xl">
                     {company?.nome || 'Sua empresa'}
                   </h1>
@@ -427,38 +888,36 @@ export default function PainelProPage() {
               </div>
 
               <p className="mt-5 max-w-3xl text-base font-bold leading-7 text-slate-500">
-                Controle pedidos, propostas, catálogo, site, cupons, WhatsApp, produção, CRM, tarefas e IA em uma área mais organizada.
+                O Orçaly entende o segmento da empresa e mostra o painel certo para aquele tipo de negócio.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-2">
                 <span className="rounded-full bg-blue-50 px-4 py-2 text-sm font-black text-[#05245c]">
-                  Plano: {planoLabel(company?.assinatura_plano || company?.plano)}
-                </span>
-                <span className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
-                  Site: {company?.site_publico_ativo ? 'Ativo' : 'Inativo'}
+                  {businessConfig.label}
                 </span>
                 <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-600">
-                  Slug: {company?.slug || 'não definido'}
+                  Plano {planoLabel(company?.assinatura_plano || company?.plano)}
+                </span>
+                <span className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
+                  {statusLabel(company?.assinatura_status)} até {formatarData(company?.assinatura_expira_em)}
                 </span>
               </div>
             </div>
 
             <div className="rounded-[1.7rem] bg-[#05245c] p-5 text-white">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-white/55">Ação rápida</p>
-              <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">Continue configurando</h2>
-              <p className="mt-2 text-sm font-bold leading-6 text-white/70">
-                Comece pelo checklist se ainda estiver montando a operação.
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-white/55">Link público</p>
+              <p className="mt-2 break-all text-xl font-black tracking-[-0.03em]">
+                {publicLink || 'Configure seu link público'}
               </p>
-              <div className="mt-5 grid gap-2">
-                <Link href="/painel/onboarding" className="rounded-2xl bg-white px-5 py-3 text-center text-sm font-black text-[#05245c]">
-                  Abrir onboarding
-                </Link>
-                {company?.slug ? (
-                  <a href={`/site/${company.slug}`} target="_blank" rel="noreferrer" className="rounded-2xl bg-white/10 px-5 py-3 text-center text-sm font-black text-white">
-                    Ver site público
-                  </a>
-                ) : null}
+              <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                <button type="button" onClick={copiarLink} className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#05245c]">
+                  Copiar link
+                </button>
+                <a href={publicSlug(company) ? internalSiteUrl(company) : '/painel/site'} target={publicSlug(company) ? '_blank' : undefined} rel={publicSlug(company) ? 'noreferrer' : undefined} className="rounded-2xl bg-white/10 px-5 py-3 text-center text-sm font-black text-white">
+                  Ver site
+                </a>
               </div>
+              {copyMessage ? <p className="mt-3 text-sm font-bold text-cyan-100">{copyMessage}</p> : null}
             </div>
           </div>
         </header>
@@ -469,66 +928,78 @@ export default function PainelProPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard title="Pedidos hoje" value={metrics.pedidosHoje} description="Pedidos criados desde meia-noite." />
-          <MetricCard title="Pedidos pendentes" value={metrics.pedidosPendentes} description="Demandas que precisam de atenção." />
-          <MetricCard title="Produtos" value={metrics.produtosTotal} description="Itens cadastrados no catálogo." />
-          <MetricCard title="Faturamento estimado" value={moeda(metrics.faturamentoEstimado)} description="Soma estimada dos pedidos carregados." />
-        </div>
+        <EmptyStateAlerts company={company} metrics={metrics} onCopy={copiarLink} />
 
-        <SetupProgress company={company} metrics={metrics} />
-
-        <section className="rounded-[2rem] border border-blue-100 bg-white/70 p-5 shadow-xl shadow-blue-950/5">
-          <div className="mb-5">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Comece por aqui</p>
-            <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">Módulos principais</h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {principal.map((link) => <ActionCard key={link.href} link={link} />)}
-          </div>
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {metricCards.map((metric) => <MetricCard key={metric.title} metric={metric} />)}
         </section>
 
-        <div className="grid gap-6 xl:grid-cols-2">
-          <section className="rounded-[2rem] border border-blue-100 bg-white/70 p-5 shadow-xl shadow-blue-950/5">
-            <div className="mb-5">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Vendas</p>
-              <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">Pedidos, propostas e CRM</h2>
-            </div>
-            <div className="grid gap-4">
-              {vendas.map((link) => <ActionCard key={link.href} link={link} />)}
-            </div>
-          </section>
+        <section className="grid gap-6 xl:grid-cols-[1fr_420px]">
+          <ActivationChecklist company={company} metrics={metrics} onCopy={copiarLink} />
+          <OpportunitiesCard metrics={metrics} type={businessType} />
+        </section>
 
-          <section className="rounded-[2rem] border border-blue-100 bg-white/70 p-5 shadow-xl shadow-blue-950/5">
-            <div className="mb-5">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Site</p>
-              <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">Site, catálogo e cupons</h2>
-            </div>
-            <div className="grid gap-4">
-              {site.map((link) => <ActionCard key={link.href} link={link} />)}
-            </div>
-          </section>
+        <section className="grid gap-6 xl:grid-cols-[1fr_420px]">
+          <div className="rounded-[2rem] border border-blue-100 bg-white/70 p-5 shadow-xl shadow-blue-950/5">
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Ações rápidas</p>
+                <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">O próximo clique mais importante</h2>
+              </div>
 
-          <section className="rounded-[2rem] border border-blue-100 bg-white/70 p-5 shadow-xl shadow-blue-950/5">
-            <div className="mb-5">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Operação</p>
-              <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">Produção, tarefas e atendimento</h2>
+              <Link href="/painel/configuracoes" className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-black text-[#05245c]">
+                Ajustar empresa
+              </Link>
             </div>
-            <div className="grid gap-4">
-              {operacao.map((link) => <ActionCard key={link.href} link={link} />)}
-            </div>
-          </section>
 
-          <section className="rounded-[2rem] border border-blue-100 bg-white/70 p-5 shadow-xl shadow-blue-950/5">
-            <div className="mb-5">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Gestão</p>
-              <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">Clientes, equipe, financeiro e sistema</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {quickActions.map((action) => <QuickActionCard key={`${action.title}-${action.href}`} action={action} />)}
             </div>
-            <div className="grid gap-4">
-              {gestao.map((link) => <ActionCard key={link.href} link={link} />)}
+          </div>
+
+          <SitePreview company={company} config={businessConfig} onCopy={copiarLink} />
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[1fr_420px]">
+          <ActivityFeed activities={activities} />
+
+          <article className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Estados vazios</p>
+            <h2 className="mt-2 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">Comece sem travar</h2>
+
+            <div className="mt-5 grid gap-3">
+              {metrics.produtosTotal === 0 ? (
+                <Link href="/painel/produtos" className="rounded-2xl bg-[#f8fbff] p-4 font-black text-[#071b3a]">
+                  Você ainda não cadastrou produtos ou serviços. <span className="text-[#05245c]">Adicionar produto →</span>
+                </Link>
+              ) : null}
+
+              {metrics.pedidosTotal === 0 ? (
+                <button type="button" onClick={copiarLink} className="rounded-2xl bg-[#f8fbff] p-4 text-left font-black text-[#071b3a]">
+                  Nenhum pedido recebido ainda. <span className="text-[#05245c]">Copiar link público →</span>
+                </button>
+              ) : null}
+
+              {!company?.logo_url ? (
+                <Link href="/painel/site" className="rounded-2xl bg-[#f8fbff] p-4 font-black text-[#071b3a]">
+                  Adicione sua logo para deixar seu site mais profissional. <span className="text-[#05245c]">Adicionar logo →</span>
+                </Link>
+              ) : null}
+
+              {metrics.clientesTotal === 0 ? (
+                <div className="rounded-2xl bg-[#f8fbff] p-4 font-black text-[#071b3a]">
+                  Seus clientes aparecerão aqui quando pedidos e orçamentos forem recebidos.
+                </div>
+              ) : null}
+
+              {metrics.produtosTotal > 0 && metrics.pedidosTotal > 0 && company?.logo_url && metrics.clientesTotal > 0 ? (
+                <div className="rounded-2xl bg-emerald-50 p-4 font-black text-emerald-700">
+                  Sua operação já tem a base principal configurada.
+                </div>
+              ) : null}
             </div>
-          </section>
-        </div>
+          </article>
+        </section>
       </section>
     </main>
   )

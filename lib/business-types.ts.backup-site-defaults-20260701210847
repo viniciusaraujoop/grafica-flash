@@ -389,19 +389,6 @@ export function getDefaultSetupForBusiness(type: unknown) {
   return {
     business_type: config.id,
     site_template: config.id,
-    site_layout: config.id === 'food' ? 'food-menu' : config.id === 'graphic' ? 'budget-showcase' : 'premium',
-    site_cta_text: config.cta,
-    site_marketplace_title: config.id === 'food' ? 'CardÃ¡pio' : config.id === 'beauty' || config.id === 'barber' ? 'ServiÃ§os' : 'CatÃ¡logo',
-    site_marketplace_subtitle: config.id === 'food'
-      ? 'Escolha os itens, monte seu pedido e envie pelo WhatsApp.'
-      : 'Escolha produtos ou serviÃ§os e envie tudo organizado para atendimento.',
-    site_cart_button_text: config.id === 'food' ? 'Adicionar ao pedido' : 'Adicionar',
-    site_checkout_button_text: config.id === 'food' ? 'Enviar pedido' : 'Finalizar pedido',
-    site_empty_catalog_text: config.id === 'food'
-      ? 'O cardÃ¡pio ainda estÃ¡ sendo preparado.'
-      : 'A empresa ainda estÃ¡ preparando o catÃ¡logo.',
-    site_payment_methods: config.id === 'food' ? ['Pix', 'Dinheiro', 'CartÃ£o na entrega'] : ['Pix', 'CartÃ£o', 'A combinar'],
-    site_delivery_options: config.id === 'food' ? ['Retirada', 'Entrega'] : ['Retirada', 'Entrega', 'A combinar'],
     site_headline: config.siteHeadline,
     site_subheadline: config.siteSubheadline,
     site_about_title: `Sobre ${config.publicName}`,

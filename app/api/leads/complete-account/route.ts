@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getDefaultSetupForBusiness, normalizeBusinessType } from '@/lib/business-types'
+import { normalizeSubdomainSlug } from '@/lib/slug'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -11,21 +13,75 @@ const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
 })
 
 function criarSlug(valor: string) {
-  return valor
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 42) || `empresa-${Date.now()}`
+  return normalizeSubdomainSlug(valor) || `empresa-${Date.now()}`
 }
 
 function criarSubdomain(valor: string) {
-  return criarSlug(valor).replace(/[^a-z0-9]/g, '').slice(0, 42)
+  return criarSlug(valor).replace(/[^a-z0-9-]/g, '').slice(0, 42)
 }
 
 function erro(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status })
+}
+
+function safeRawData(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  return value as Record<string, unknown>
+}
+
+function removeEnhancedCompanyFields(payload: Record<string, unknown>) {
+  const copy = { ...payload }
+
+  for (const key of [
+    'business_type',
+    'onboarding_goal',
+    'site_template',
+    'site_headline',
+    'site_subheadline',
+    'site_about_title',
+    'site_about_text',
+    'site_benefits',
+    'site_faq',
+    'site_features',
+    'site_updated_at',
+  ]) {
+    delete copy[key]
+  }
+
+  return copy
+}
+
+async function insertCompany(payload: Record<string, unknown>) {
+  const { data, error } = await supabaseAdmin
+    .from('companies')
+    .insert(payload)
+    .select('id, slug, subdomain_slug')
+    .single()
+
+  if (!error) return data
+
+  const message = String(error.message || '')
+
+  if (
+    message.includes('schema cache') ||
+    message.includes('business_type') ||
+    message.includes('onboarding_goal') ||
+    message.includes('site_headline') ||
+    message.includes('site_features')
+  ) {
+    const fallbackPayload = removeEnhancedCompanyFields(payload)
+
+    const retry = await supabaseAdmin
+      .from('companies')
+      .insert(fallbackPayload)
+      .select('id, slug, subdomain_slug')
+      .single()
+
+    if (retry.error) throw retry.error
+    return retry.data
+  }
+
+  throw error
 }
 
 export async function POST(request: NextRequest) {
@@ -61,6 +117,11 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    const rawData = safeRawData(lead.raw_data)
+    const businessType = normalizeBusinessType(rawData.business_type || lead.modelo_negocio || lead.segmento)
+    const defaultSetup = getDefaultSetupForBusiness(businessType)
+    const onboardingGoal = String(rawData.onboarding_goal || '').trim()
+
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: lead.email,
       password,
@@ -78,13 +139,13 @@ export async function POST(request: NextRequest) {
 
     const userId = authData.user.id
 
-    let slug = lead.slug_sugerido || criarSlug(lead.empresa_nome)
+    let slug = normalizeSubdomainSlug(rawData.subdomain_slug || lead.slug_sugerido || lead.empresa_nome)
     let subdomain = criarSubdomain(slug)
 
     const { data: slugExistente } = await supabaseAdmin
       .from('companies')
       .select('id')
-      .eq('slug', slug)
+      .or(`slug.eq.${slug},subdomain_slug.eq.${subdomain}`)
       .maybeSingle()
 
     if (slugExistente) {
@@ -95,36 +156,47 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     const expira = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
-    const { data: company, error: companyError } = await supabaseAdmin
-      .from('companies')
-      .insert({
-        nome: lead.empresa_nome,
-        slug,
-        subdomain_slug: subdomain,
-        owner_id: userId,
-        email: lead.email,
-        whatsapp: lead.whatsapp,
-        cidade: lead.cidade,
-        estado: lead.estado,
-        segmento: lead.segmento,
-        modelo_negocio: lead.modelo_negocio,
-        modelo_nome: lead.segmento,
-        plano: lead.plano,
-        assinatura_plano: lead.plano,
-        assinatura_status: 'ativa',
-        assinatura_inicio: now.toISOString(),
-        assinatura_expira_em: expira.toISOString(),
-        assinatura_ultimo_pagamento: lead.paid_at || now.toISOString(),
-        ativo: true,
+    const companyPayload: Record<string, unknown> = {
+      nome: lead.empresa_nome,
+      slug,
+      subdomain_slug: subdomain,
+      owner_id: userId,
+      email: lead.email,
+      whatsapp: lead.whatsapp,
+      cidade: lead.cidade,
+      estado: lead.estado,
+      segmento: lead.segmento,
+      modelo_negocio: lead.modelo_negocio,
+      modelo_nome: lead.segmento,
+      plano: lead.plano,
+      assinatura_plano: lead.plano,
+      assinatura_status: 'ativa',
+      assinatura_inicio: now.toISOString(),
+      assinatura_expira_em: expira.toISOString(),
+      assinatura_ultimo_pagamento: lead.paid_at || now.toISOString(),
+      ativo: true,
+      business_type: businessType,
+      onboarding_goal: onboardingGoal || null,
+      site_template: defaultSetup.site_template,
+      site_headline: defaultSetup.site_headline,
+      site_subheadline: defaultSetup.site_subheadline,
+      site_about_title: defaultSetup.site_about_title,
+      site_about_text: defaultSetup.site_about_text,
+      site_benefits: defaultSetup.site_benefits,
+      site_faq: defaultSetup.site_faq,
+      site_features: defaultSetup.site_features,
+      site_updated_at: defaultSetup.site_updated_at,
+    }
+
+    const company = await insertCompany(companyPayload)
+
+    try {
+      await supabaseAdmin.rpc('create_default_site_for_company', {
+        p_company_id: company.id,
       })
-      .select('id, slug, subdomain_slug')
-      .single()
-
-    if (companyError) throw companyError
-
-    await supabaseAdmin.rpc('create_default_site_for_company', {
-      p_company_id: company.id,
-    })
+    } catch (rpcError) {
+      console.error('[Orçaly Cadastro] Falha ao criar site padrão:', rpcError)
+    }
 
     await supabaseAdmin
       .from('signup_leads')

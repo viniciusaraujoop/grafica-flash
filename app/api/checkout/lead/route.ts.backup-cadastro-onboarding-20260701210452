@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getBusinessTypeConfig, getDefaultSetupForBusiness, normalizeBusinessType } from '@/lib/business-types'
-import { getSubdomainSuggestions, normalizeSubdomainSlug, validateSubdomainSlug } from '@/lib/slug'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -22,7 +20,13 @@ const planos: Record<string, { nome: string; valor: number }> = {
 }
 
 function criarSlug(valor: string) {
-  return normalizeSubdomainSlug(valor) || `empresa-${Date.now()}`
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 42) || `empresa-${Date.now()}`
 }
 
 function telefoneLimpo(valor: string) {
@@ -31,18 +35,6 @@ function telefoneLimpo(valor: string) {
 
 function erro(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status })
-}
-
-async function linkDisponivel(slug: string) {
-  const { data, error } = await supabaseAdmin
-    .from('companies')
-    .select('id')
-    .or(`subdomain_slug.eq.${slug},slug.eq.${slug}`)
-    .limit(1)
-
-  if (error) throw error
-
-  return !data || data.length === 0
 }
 
 export async function POST(request: NextRequest) {
@@ -61,52 +53,21 @@ export async function POST(request: NextRequest) {
     const email = String(body.email || '').trim().toLowerCase()
     const whatsapp = telefoneLimpo(String(body.whatsapp || ''))
     const empresa_nome = String(body.empresa_nome || '').trim()
-    const business_type = normalizeBusinessType(body.business_type || body.modelo_negocio || body.segmento)
-    const businessConfig = getBusinessTypeConfig(business_type)
-    const defaultSetup = getDefaultSetupForBusiness(business_type)
-    const segmento = String(body.segmento || businessConfig.label).trim()
-    const modelo_negocio = String(body.modelo_negocio || business_type).trim()
-    const onboarding_goal = String(body.onboarding_goal || '').trim()
+    const segmento = String(body.segmento || '').trim()
+    const modelo_negocio = String(body.modelo_negocio || segmento || 'outros').trim()
     const cidade = String(body.cidade || '').trim()
     const estado = String(body.estado || '').trim().toUpperCase()
     const plano = String(body.plano || 'profissional').trim().toLowerCase()
     const marketing_opt_in = Boolean(body.marketing_opt_in)
 
-    const requestedSubdomain = String(body.subdomain_slug || empresa_nome).trim()
-    const validation = validateSubdomainSlug(requestedSubdomain)
-
     if (!nome_responsavel) return erro('Informe seu nome.')
     if (!email || !email.includes('@')) return erro('Informe um e-mail válido.')
     if (!whatsapp || whatsapp.length < 10) return erro('Informe um WhatsApp válido.')
-    if (!empresa_nome || empresa_nome.length < 2) return erro('Informe o nome da empresa.')
-    if (!cidade) return erro('Escolha a cidade da empresa.')
-    if (!business_type) return erro('Escolha o tipo de negócio.')
-    if (!onboarding_goal) return erro('Escolha o principal objetivo da empresa.')
-    if (!validation.ok) return erro(validation.reason || 'Escolha um link público válido.')
+    if (!empresa_nome) return erro('Informe o nome da empresa.')
     if (!marketing_opt_in) return erro('Para receber lembretes pelo WhatsApp, confirme a autorização.')
 
-    const available = await linkDisponivel(validation.slug)
-
-    if (!available) {
-      return NextResponse.json({
-        error: 'Esse link já está em uso. Tente outro nome.',
-        suggestions: getSubdomainSuggestions(empresa_nome, cidade),
-      }, { status: 409 })
-    }
-
     const planoSelecionado = planos[plano] || planos.profissional
-    const slug_sugerido = validation.slug
-
-    const rawData = {
-      ...body,
-      business_type,
-      onboarding_goal,
-      subdomain_slug: validation.slug,
-      slug_sugerido,
-      segmento,
-      modelo_negocio,
-      default_setup: defaultSetup,
-    }
+    const slug_sugerido = criarSlug(empresa_nome)
 
     const { data: leadExistente } = await supabaseAdmin
       .from('signup_leads')
@@ -136,7 +97,7 @@ export async function POST(request: NextRequest) {
           marketing_opt_in,
           marketing_opt_in_text: 'Autorizo o Orçaly a entrar em contato pelo WhatsApp sobre minha assinatura e meu cadastro.',
           next_followup_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-          raw_data: rawData,
+          raw_data: body,
         })
         .eq('id', leadId)
 
@@ -159,7 +120,7 @@ export async function POST(request: NextRequest) {
           marketing_opt_in,
           marketing_opt_in_text: 'Autorizo o Orçaly a entrar em contato pelo WhatsApp sobre minha assinatura e meu cadastro.',
           next_followup_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-          raw_data: rawData,
+          raw_data: body,
         })
         .select('id')
         .single()
@@ -193,8 +154,6 @@ export async function POST(request: NextRequest) {
         plano,
         email,
         empresa_nome,
-        business_type,
-        subdomain_slug: validation.slug,
       },
     }
 
@@ -215,7 +174,7 @@ export async function POST(request: NextRequest) {
         .update({
           status: 'lead',
           raw_data: {
-            ...rawData,
+            ...body,
             mercado_pago_error: mpData,
           },
         })
@@ -236,7 +195,6 @@ export async function POST(request: NextRequest) {
       ok: true,
       lead_id: leadId,
       checkout_url: mpData.init_point || mpData.sandbox_init_point,
-      subdomain_slug: validation.slug,
     })
   } catch (error) {
     return NextResponse.json(
