@@ -4,22 +4,21 @@ import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import PanelSegmentSidebar from '@/components/painel/PanelSegmentSidebar'
 import PanelSidebar from '@/components/painel/PanelSidebar'
 
 type EmpresaAssinatura = {
   id: string
   nome?: string | null
   slug?: string | null
-  logo_url?: string | null
-  business_type?: string | null
-  site_template?: string | null
   plano?: string | null
   assinatura_plano?: string | null
   assinatura_status: string | null
   assinatura_expira_em: string | null
   assinatura_checkout_url?: string | null
+  logo_url?: string | null
   subdomain_slug?: string | null
+  business_type?: string | null
+  site_template?: string | null
 }
 
 type CompanyCurrentPayload = {

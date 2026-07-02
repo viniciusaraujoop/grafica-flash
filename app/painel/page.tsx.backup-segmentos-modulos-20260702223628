@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getBusinessTypeConfig, normalizeBusinessType, type BusinessType } from '@/lib/business-types'
-import { getQuickActionsForSegment } from '@/lib/segment-modules'
 import { getQuickActionsForBusinessType, knownExistingPanelRoutes } from '@/lib/panel-modules'
 
 type Company = {
@@ -397,8 +396,11 @@ function metricsByBusiness(type: BusinessType, metrics: Metrics): MetricCardData
 }
 
 function quickActionsByBusiness(type: BusinessType, publicLink: string): QuickAction[] {
-  return getQuickActionsForSegment(type, { publicLink }).map((action) => ({
-    title: action.label,
+  return getQuickActionsForBusinessType(type, {
+    publicLink,
+    existingRoutes: knownExistingPanelRoutes,
+  }).map((action) => ({
+    title: action.title,
     description: action.description,
     href: action.href,
     badge: action.badge,

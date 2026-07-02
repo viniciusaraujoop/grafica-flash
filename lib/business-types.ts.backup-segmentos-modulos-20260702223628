@@ -391,16 +391,16 @@ export function getDefaultSetupForBusiness(type: unknown) {
     site_template: config.id,
     site_layout: config.id === 'food' ? 'food-menu' : config.id === 'graphic' ? 'budget-showcase' : 'premium',
     site_cta_text: config.cta,
-    site_marketplace_title: config.id === 'food' ? 'Cardápio' : config.id === 'beauty' || config.id === 'barber' ? 'Serviços' : 'Catálogo',
+    site_marketplace_title: config.id === 'food' ? 'CardÃ¡pio' : config.id === 'beauty' || config.id === 'barber' ? 'ServiÃ§os' : 'CatÃ¡logo',
     site_marketplace_subtitle: config.id === 'food'
       ? 'Escolha os itens, monte seu pedido e envie pelo WhatsApp.'
-      : 'Escolha produtos ou serviços e envie tudo organizado para atendimento.',
+      : 'Escolha produtos ou serviÃ§os e envie tudo organizado para atendimento.',
     site_cart_button_text: config.id === 'food' ? 'Adicionar ao pedido' : 'Adicionar',
     site_checkout_button_text: config.id === 'food' ? 'Enviar pedido' : 'Finalizar pedido',
     site_empty_catalog_text: config.id === 'food'
-      ? 'O cardápio ainda está sendo preparado.'
-      : 'A empresa ainda está preparando o catálogo.',
-    site_payment_methods: config.id === 'food' ? ['Pix', 'Dinheiro', 'Cartão na entrega'] : ['Pix', 'Cartão', 'A combinar'],
+      ? 'O cardÃ¡pio ainda estÃ¡ sendo preparado.'
+      : 'A empresa ainda estÃ¡ preparando o catÃ¡logo.',
+    site_payment_methods: config.id === 'food' ? ['Pix', 'Dinheiro', 'CartÃ£o na entrega'] : ['Pix', 'CartÃ£o', 'A combinar'],
     site_delivery_options: config.id === 'food' ? ['Retirada', 'Entrega'] : ['Retirada', 'Entrega', 'A combinar'],
     site_headline: config.siteHeadline,
     site_subheadline: config.siteSubheadline,
@@ -424,66 +424,66 @@ export function getMenuByBusinessType(type: unknown): BusinessMenuItem[] {
   const config = getBusinessTypeConfig(type)
 
   const common: BusinessMenuItem[] = [
-    { title: 'Dashboard', description: 'Resumo da operação.', href: '/painel' },
-    { title: `${config.orderLabel}s`, description: 'Acompanhe solicitações, status e atendimento.', href: '/painel/pedidos' },
-    { title: `${config.productLabel}s`, description: 'Cadastre itens, fotos, preços e disponibilidade.', href: '/painel/produtos' },
-    { title: 'Clientes', description: 'Histórico, contatos e relacionamento.', href: '/painel/clientes' },
-    { title: 'Site', description: 'Edite página pública, cores, textos e catálogo.', href: '/painel/site' },
-    { title: 'Configurações', description: 'Empresa, recebimentos, equipe e preferências.', href: '/painel/configuracoes' },
-    { title: 'Assinatura', description: 'Plano, renovação e pagamento.', href: '/assinatura' },
+    { title: 'Dashboard', description: 'Resumo da operaÃ§Ã£o.', href: '/painel' },
+    { title: `${config.orderLabel}s`, description: 'Acompanhe solicitaÃ§Ãµes, status e atendimento.', href: '/painel/pedidos' },
+    { title: `${config.productLabel}s`, description: 'Cadastre itens, fotos, preÃ§os e disponibilidade.', href: '/painel/produtos' },
+    { title: 'Clientes', description: 'HistÃ³rico, contatos e relacionamento.', href: '/painel/clientes' },
+    { title: 'Site', description: 'Edite pÃ¡gina pÃºblica, cores, textos e catÃ¡logo.', href: '/painel/site' },
+    { title: 'ConfiguraÃ§Ãµes', description: 'Empresa, recebimentos, equipe e preferÃªncias.', href: '/painel/configuracoes' },
+    { title: 'Assinatura', description: 'Plano, renovaÃ§Ã£o e pagamento.', href: '/assinatura' },
   ]
 
   if (config.id === 'food') {
     return [
       ...common,
-      { title: 'Cardápio', description: 'Itens, categorias, adicionais e disponibilidade.', href: '/painel/produtos', badge: 'Food' },
+      { title: 'CardÃ¡pio', description: 'Itens, categorias, adicionais e disponibilidade.', href: '/painel/produtos', badge: 'Food' },
       { title: 'Pedidos do dia', description: 'Pedidos recebidos para preparo, retirada ou entrega.', href: '/painel/pedidos', badge: 'Food' },
-      { title: 'Entregas', description: 'Módulo de entrega em preparação para este segmento.', href: '/painel/modulos/entregas', prepared: true },
-      { title: 'Horários', description: 'Configure horários de funcionamento.', href: '/painel/modulos/horarios', prepared: true },
-      { title: 'Taxas de entrega', description: 'Configure bairros, taxas e pedido mínimo.', href: '/painel/modulos/taxas-entrega', prepared: true },
+      { title: 'Entregas', description: 'MÃ³dulo de entrega em preparaÃ§Ã£o para este segmento.', href: '/painel/modulos/entregas', prepared: true },
+      { title: 'HorÃ¡rios', description: 'Configure horÃ¡rios de funcionamento.', href: '/painel/modulos/horarios', prepared: true },
+      { title: 'Taxas de entrega', description: 'Configure bairros, taxas e pedido mÃ­nimo.', href: '/painel/modulos/taxas-entrega', prepared: true },
     ]
   }
 
   if (config.id === 'graphic' || config.id === 'custom_products') {
     return [
       ...common,
-      { title: 'Orçamentos', description: 'Receba medidas, quantidades, arquivos e observações.', href: '/painel/pedidos', badge: 'Gráfica' },
+      { title: 'OrÃ§amentos', description: 'Receba medidas, quantidades, arquivos e observaÃ§Ãµes.', href: '/painel/pedidos', badge: 'GrÃ¡fica' },
       { title: 'Artes', description: 'Acompanhe arquivos enviados pelos clientes.', href: '/painel/modulos/artes', prepared: true },
-      { title: 'Produção', description: 'Controle etapas, prazos e responsáveis.', href: '/painel/producao' },
-      { title: 'Aprovação de arte', description: 'Módulo de aprovação em preparação.', href: '/painel/modulos/aprovacao-arte', prepared: true },
+      { title: 'ProduÃ§Ã£o', description: 'Controle etapas, prazos e responsÃ¡veis.', href: '/painel/producao' },
+      { title: 'AprovaÃ§Ã£o de arte', description: 'MÃ³dulo de aprovaÃ§Ã£o em preparaÃ§Ã£o.', href: '/painel/modulos/aprovacao-arte', prepared: true },
     ]
   }
 
   if (config.id === 'beauty' || config.id === 'barber') {
     return [
       ...common,
-      { title: 'Agenda', description: 'Agendamentos em preparação para este segmento.', href: '/painel/modulos/agenda', prepared: true },
-      { title: 'Serviços', description: 'Configure serviços, pacotes, duração e preço.', href: '/painel/produtos' },
-      { title: 'Profissionais', description: 'Equipe e profissionais em preparação.', href: '/painel/modulos/profissionais', prepared: true },
-      { title: 'Horários', description: 'Horários de atendimento em preparação.', href: '/painel/modulos/horarios', prepared: true },
+      { title: 'Agenda', description: 'Agendamentos em preparaÃ§Ã£o para este segmento.', href: '/painel/modulos/agenda', prepared: true },
+      { title: 'ServiÃ§os', description: 'Configure serviÃ§os, pacotes, duraÃ§Ã£o e preÃ§o.', href: '/painel/produtos' },
+      { title: 'Profissionais', description: 'Equipe e profissionais em preparaÃ§Ã£o.', href: '/painel/modulos/profissionais', prepared: true },
+      { title: 'HorÃ¡rios', description: 'HorÃ¡rios de atendimento em preparaÃ§Ã£o.', href: '/painel/modulos/horarios', prepared: true },
     ]
   }
 
   if (config.id === 'technical_assistance') {
     return [
       ...common,
-      { title: 'Ordens de serviço', description: 'Solicitações, defeitos, análise e proposta.', href: '/painel/pedidos', badge: 'Assistência' },
-      { title: 'Diagnósticos', description: 'Módulo de diagnóstico em preparação.', href: '/painel/modulos/diagnosticos', prepared: true },
+      { title: 'Ordens de serviÃ§o', description: 'SolicitaÃ§Ãµes, defeitos, anÃ¡lise e proposta.', href: '/painel/pedidos', badge: 'AssistÃªncia' },
+      { title: 'DiagnÃ³sticos', description: 'MÃ³dulo de diagnÃ³stico em preparaÃ§Ã£o.', href: '/painel/modulos/diagnosticos', prepared: true },
     ]
   }
 
   if (config.id === 'auto') {
     return [
       ...common,
-      { title: 'Orçamentos auto', description: 'Serviços, veículo, análise e status.', href: '/painel/pedidos', badge: 'Auto' },
-      { title: 'Veículos', description: 'Módulo de veículos em preparação.', href: '/painel/modulos/veiculos', prepared: true },
+      { title: 'OrÃ§amentos auto', description: 'ServiÃ§os, veÃ­culo, anÃ¡lise e status.', href: '/painel/pedidos', badge: 'Auto' },
+      { title: 'VeÃ­culos', description: 'MÃ³dulo de veÃ­culos em preparaÃ§Ã£o.', href: '/painel/modulos/veiculos', prepared: true },
     ]
   }
 
   if (config.id === 'store') {
     return [
       ...common,
-      { title: 'Catálogo', description: 'Produtos, variações, fotos e disponibilidade.', href: '/painel/produtos', badge: 'Loja' },
+      { title: 'CatÃ¡logo', description: 'Produtos, variaÃ§Ãµes, fotos e disponibilidade.', href: '/painel/produtos', badge: 'Loja' },
       { title: 'Pedidos da loja', description: 'Pedidos recebidos pela vitrine digital.', href: '/painel/pedidos', badge: 'Loja' },
     ]
   }
@@ -491,8 +491,8 @@ export function getMenuByBusinessType(type: unknown): BusinessMenuItem[] {
   if (config.id === 'events') {
     return [
       ...common,
-      { title: 'Pacotes', description: 'Pacotes, datas e serviços para eventos.', href: '/painel/produtos', badge: 'Eventos' },
-      { title: 'Solicitações', description: 'Pedidos de orçamento para eventos.', href: '/painel/pedidos', badge: 'Eventos' },
+      { title: 'Pacotes', description: 'Pacotes, datas e serviÃ§os para eventos.', href: '/painel/produtos', badge: 'Eventos' },
+      { title: 'SolicitaÃ§Ãµes', description: 'Pedidos de orÃ§amento para eventos.', href: '/painel/pedidos', badge: 'Eventos' },
     ]
   }
 

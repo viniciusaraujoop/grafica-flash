@@ -19,7 +19,10 @@ type EmpresaAssinatura = {
   assinatura_status: string | null
   assinatura_expira_em: string | null
   assinatura_checkout_url?: string | null
+  logo_url?: string | null
   subdomain_slug?: string | null
+  business_type?: string | null
+  site_template?: string | null
 }
 
 type CompanyCurrentPayload = {
