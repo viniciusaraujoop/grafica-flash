@@ -1,0 +1,497 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
+import SitePreview from '@/components/site-builder/SitePreview'
+import { defaultSiteSections, getDefaultSiteSettingsForBusiness, getSiteTemplateByBusinessType, siteTemplates, type SiteSectionConfig } from '@/lib/site-templates'
+import { type PublicSiteCompany, type PublicSiteProduct } from '@/components/public-site/PublicSiteRenderer'
+
+type Tab = 'identidade' | 'hero' | 'secoes' | 'conteudo' | 'catalogo' | 'segmento' | 'preview' | 'publicacao'
+
+const tabs: Array<{ id: Tab; label: string }> = [
+  { id: 'identidade', label: 'Identidade' },
+  { id: 'hero', label: 'Capa / Hero' },
+  { id: 'secoes', label: 'Seções' },
+  { id: 'conteudo', label: 'Conteúdo' },
+  { id: 'catalogo', label: 'Catálogo' },
+  { id: 'segmento', label: 'Segmento' },
+  { id: 'preview', label: 'Prévia' },
+  { id: 'publicacao', label: 'Publicação' },
+]
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? value : []
+}
+
+function toJson(value: unknown) {
+  try {
+    return JSON.stringify(value || [], null, 2)
+  } catch {
+    return '[]'
+  }
+}
+
+function fromJson<T>(value: string, fallback: T): T {
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return fallback
+  }
+}
+
+function publicLink(company: PublicSiteCompany | null) {
+  const slug = company?.subdomain_slug || company?.slug
+  return slug ? `https://${slug}.orcaly.com.br` : ''
+}
+
+function localSitePath(company: PublicSiteCompany | null) {
+  const slug = company?.subdomain_slug || company?.slug
+  return slug ? `/site/${slug}` : '/painel/site'
+}
+
+export default function SiteBuilderPage() {
+  const [tab, setTab] = useState<Tab>('identidade')
+  const [company, setCompany] = useState<PublicSiteCompany | null>(null)
+  const [products, setProducts] = useState<PublicSiteProduct[]>([])
+  const [benefitsText, setBenefitsText] = useState('[]')
+  const [faqText, setFaqText] = useState('[]')
+  const [galleryText, setGalleryText] = useState('[]')
+  const [testimonialsText, setTestimonialsText] = useState('[]')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  const template = useMemo(() => getSiteTemplateByBusinessType(company?.business_type || company?.site_template), [company?.business_type, company?.site_template])
+  const defaults = useMemo(() => getDefaultSiteSettingsForBusiness(company?.business_type || company?.site_template), [company?.business_type, company?.site_template])
+  const siteCompletion = useMemo(() => {
+    const checks = [
+      Boolean(company?.logo_url),
+      Boolean(company?.site_primary_color),
+      Boolean(company?.site_headline),
+      Boolean(company?.site_subheadline),
+      Boolean(company?.whatsapp),
+      products.length > 0,
+      asArray(company?.site_gallery).length > 0,
+      asArray(company?.site_faq).length > 0,
+      Boolean(company?.subdomain_slug || company?.slug),
+    ]
+
+    const done = checks.filter(Boolean).length
+    return Math.round((done / checks.length) * 100)
+  }, [company, products.length])
+
+  function update<K extends keyof PublicSiteCompany>(key: K, value: PublicSiteCompany[K]) {
+    setCompany((current) => ({ ...(current || {}), [key]: value }))
+  }
+
+  async function load() {
+    setLoading(true)
+    setError('')
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+
+      if (!token) {
+        window.location.href = '/login'
+        return
+      }
+
+      const response = await fetch('/api/site/settings', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok) throw new Error(payload.error || 'Erro ao carregar site.')
+
+      const loadedCompany = payload.company as PublicSiteCompany
+      setCompany(loadedCompany)
+      setBenefitsText(toJson(loadedCompany.site_benefits || payload.defaults?.site_benefits || []))
+      setFaqText(toJson(loadedCompany.site_faq || payload.defaults?.site_faq || []))
+      setGalleryText(toJson(loadedCompany.site_gallery || []))
+      setTestimonialsText(toJson(loadedCompany.site_testimonials || []))
+
+      if (loadedCompany.id) {
+        const { data } = await supabase
+          .from('products')
+          .select('*')
+          .eq('company_id', loadedCompany.id)
+          .order('created_at', { ascending: false })
+          .limit(12)
+
+        setProducts((data || []) as PublicSiteProduct[])
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar site.')
+    }
+
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    load()
+  }, [])
+
+  async function save() {
+    if (!company) return
+
+    setSaving(true)
+    setMessage('')
+    setError('')
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+
+      if (!token) throw new Error('Sessão expirada.')
+
+      const payload = {
+        logo_url: company.logo_url || null,
+        business_type: company.business_type || template.businessType,
+        site_template: company.site_template || template.templateId,
+        site_theme: company.site_theme || template.suggestedColors.theme,
+        site_primary_color: company.site_primary_color || template.suggestedColors.primary,
+        site_accent_color: company.site_accent_color || template.suggestedColors.accent,
+        site_headline: company.site_headline || '',
+        site_subheadline: company.site_subheadline || '',
+        site_cta_label: company.site_cta_label || company.site_cta_text || template.ctaLabel,
+        site_about_title: company.site_about_title || '',
+        site_about_text: company.site_about_text || '',
+        site_sections: company.site_sections || template.sections,
+        site_benefits: fromJson(benefitsText, []),
+        site_faq: fromJson(faqText, []),
+        site_gallery: fromJson(galleryText, []),
+        site_testimonials: fromJson(testimonialsText, []),
+      }
+
+      const response = await fetch('/api/site/settings', {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      const result = await response.json().catch(() => ({}))
+
+      if (!response.ok) throw new Error(result.error || 'Erro ao salvar site.')
+
+      setCompany(result.company)
+      setMessage('Site salvo.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar site.')
+    }
+
+    setSaving(false)
+  }
+
+  async function applyTemplate(mode: 'empty' | 'replace') {
+    if (!company) return
+
+    const confirmed = mode === 'empty' || window.confirm('Substituir textos atuais pelo modelo recomendado? Logo e produtos não serão apagados.')
+
+    if (!confirmed) return
+
+    setSaving(true)
+    setMessage('')
+    setError('')
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+
+      if (!token) throw new Error('Sessão expirada.')
+
+      const response = await fetch('/api/site/settings', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          business_type: company.business_type || template.businessType,
+          mode,
+        }),
+      })
+
+      const result = await response.json().catch(() => ({}))
+
+      if (!response.ok) throw new Error(result.error || 'Erro ao aplicar modelo.')
+
+      setCompany(result.company)
+      setBenefitsText(toJson(result.company.site_benefits || result.defaults?.site_benefits || []))
+      setFaqText(toJson(result.company.site_faq || result.defaults?.site_faq || []))
+      setMessage(mode === 'replace' ? 'Modelo aplicado substituindo textos.' : 'Modelo aplicado nos campos vazios.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao aplicar modelo.')
+    }
+
+    setSaving(false)
+  }
+
+  function setSuggestedColors() {
+    update('site_primary_color', template.suggestedColors.primary)
+    update('site_accent_color', template.suggestedColors.accent)
+    update('site_theme', template.suggestedColors.theme)
+  }
+
+  function toggleSection(section: SiteSectionConfig) {
+    const current = Array.isArray(company?.site_sections) ? company?.site_sections as SiteSectionConfig[] : template.sections
+    const next = current.map((item) => item.id === section.id ? { ...item, enabled: !item.enabled } : item)
+    update('site_sections', next)
+  }
+
+  async function copyLink() {
+    const link = publicLink(company)
+    if (!link) return
+    await navigator.clipboard.writeText(link)
+    setMessage('Link copiado.')
+    window.setTimeout(() => setMessage(''), 1800)
+  }
+
+  if (loading) {
+    return <main className="grid min-h-screen place-items-center bg-[#f5f8ff] font-black text-[#05245c]">Carregando editor...</main>
+  }
+
+  if (!company) {
+    return <main className="grid min-h-screen place-items-center bg-[#f5f8ff] font-black text-[#05245c]">Empresa não encontrada.</main>
+  }
+
+  const sections = Array.isArray(company.site_sections) && company.site_sections.length ? company.site_sections as SiteSectionConfig[] : template.sections
+
+  return (
+    <main className="min-h-screen bg-[#f5f8ff] px-4 py-6 text-[#071b3a]">
+      <section className="mx-auto max-w-7xl space-y-6">
+        <header className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
+          <div className="grid gap-5 lg:grid-cols-[1fr_360px] lg:items-end">
+            <div>
+              <Link href="/painel" className="text-sm font-black text-[#05245c]">← Voltar ao painel</Link>
+              <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#05245c]">Construtor inteligente</p>
+              <h1 className="mt-2 text-4xl font-black tracking-[-0.06em] sm:text-5xl">Site pré-pronto premium</h1>
+              <p className="mt-3 max-w-3xl font-bold leading-7 text-slate-500">
+                O usuário não começa do zero. Ele começa com uma estrutura bonita, vendável e adaptada ao negócio dele.
+              </p>
+            </div>
+
+            <div className="rounded-[1.7rem] bg-[#05245c] p-5 text-white">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-white/55">Seu site está</p>
+              <p className="mt-2 text-4xl font-black">{siteCompletion}% completo</p>
+              <div className="mt-4 h-3 rounded-full bg-white/15">
+                <div className="h-3 rounded-full bg-white" style={{ width: `${siteCompletion}%` }} />
+              </div>
+              <p className="mt-3 text-sm font-bold text-white/65">{siteCompletion >= 85 ? 'Site pronto para compartilhar.' : 'Complete os itens principais para publicar com mais confiança.'}</p>
+            </div>
+          </div>
+        </header>
+
+        {message ? <div className="rounded-2xl bg-emerald-50 p-4 font-bold text-emerald-700">{message}</div> : null}
+        {error ? <div className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">{error}</div> : null}
+
+        <div className="grid gap-6 xl:grid-cols-[1fr_520px]">
+          <section className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-xl shadow-blue-950/5 sm:p-6">
+            <div className="flex gap-2 overflow-x-auto rounded-[1.5rem] bg-[#f5f8ff] p-2">
+              {tabs.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setTab(item.id)}
+                  className={`whitespace-nowrap rounded-2xl px-4 py-3 text-sm font-black transition ${
+                    tab === item.id ? 'bg-[#05245c] text-white shadow-lg shadow-blue-950/15' : 'text-slate-500 hover:bg-white hover:text-[#05245c]'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6">
+              {tab === 'identidade' ? (
+                <div className="grid gap-4">
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black">Logo URL</span>
+                    <input value={company.logo_url || ''} onChange={(e) => update('logo_url', e.target.value)} placeholder="https://..." className="rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
+                  </label>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="grid gap-2">
+                      <span className="text-sm font-black">Cor principal</span>
+                      <input value={company.site_primary_color || template.suggestedColors.primary} onChange={(e) => update('site_primary_color', e.target.value)} className="rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
+                    </label>
+                    <label className="grid gap-2">
+                      <span className="text-sm font-black">Cor de destaque</span>
+                      <input value={company.site_accent_color || template.suggestedColors.accent} onChange={(e) => update('site_accent_color', e.target.value)} className="rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
+                    </label>
+                  </div>
+
+                  <button type="button" onClick={setSuggestedColors} className="rounded-2xl bg-blue-50 px-5 py-4 text-left font-black text-[#05245c]">
+                    Aplicar cores sugeridas pelo segmento
+                  </button>
+                </div>
+              ) : null}
+
+              {tab === 'hero' ? (
+                <div className="grid gap-4">
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black">Título principal</span>
+                    <textarea value={company.site_headline || defaults.site_headline} onChange={(e) => update('site_headline', e.target.value)} rows={3} className="resize-none rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black">Subtítulo</span>
+                    <textarea value={company.site_subheadline || defaults.site_subheadline} onChange={(e) => update('site_subheadline', e.target.value)} rows={4} className="resize-none rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black">Texto do botão principal</span>
+                    <input value={company.site_cta_label || company.site_cta_text || defaults.site_cta_label} onChange={(e) => update('site_cta_label', e.target.value)} className="rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
+                  </label>
+                </div>
+              ) : null}
+
+              {tab === 'secoes' ? (
+                <div>
+                  <p className="font-bold leading-7 text-slate-500">Ligue ou desligue blocos do site. No MVP, a ordem vem do modelo do segmento.</p>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    {sections.map((section) => (
+                      <button key={section.id} type="button" onClick={() => toggleSection(section)} className={`rounded-2xl border p-4 text-left font-black transition ${section.enabled ? 'border-[#05245c] bg-blue-50 text-[#05245c]' : 'border-blue-100 bg-white text-slate-500'}`}>
+                        {section.enabled ? '✓ ' : '○ '}
+                        {section.id}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {tab === 'conteudo' ? (
+                <div className="grid gap-4">
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black">Título sobre a empresa</span>
+                    <input value={company.site_about_title || defaults.site_about_title} onChange={(e) => update('site_about_title', e.target.value)} className="rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black">Texto sobre a empresa</span>
+                    <textarea value={company.site_about_text || defaults.site_about_text} onChange={(e) => update('site_about_text', e.target.value)} rows={5} className="resize-none rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black">Benefícios JSON</span>
+                    <textarea value={benefitsText} onChange={(e) => setBenefitsText(e.target.value)} rows={8} className="resize-none rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 font-mono text-sm font-bold outline-none focus:border-[#05245c] focus:bg-white" />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black">FAQ JSON</span>
+                    <textarea value={faqText} onChange={(e) => setFaqText(e.target.value)} rows={8} className="resize-none rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 font-mono text-sm font-bold outline-none focus:border-[#05245c] focus:bg-white" />
+                  </label>
+                </div>
+              ) : null}
+
+              {tab === 'catalogo' ? (
+                <div className="grid gap-4">
+                  <div className="rounded-[1.7rem] bg-[#f8fbff] p-5">
+                    <p className="text-sm font-black text-[#05245c]">Nome da seção</p>
+                    <p className="mt-1 text-2xl font-black">{template.catalogLabel}</p>
+                    <p className="mt-2 text-sm font-bold text-slate-500">Os produtos são carregados da página Produtos/Marketplace.</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {['Mostrar preço', 'Mostrar botão WhatsApp', 'Mostrar vídeo', 'Mostrar selo de destaque', 'Mostrar galeria', 'Mostrar categorias'].map((item) => (
+                      <div key={item} className="rounded-2xl border border-blue-100 bg-white p-4 font-black text-[#05245c]">✓ {item}</div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {tab === 'segmento' ? (
+                <div className="grid gap-4">
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black">Tipo de negócio</span>
+                    <select value={template.businessType} onChange={(e) => update('business_type', e.target.value)} className="rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 font-black outline-none focus:border-[#05245c] focus:bg-white">
+                      {siteTemplates.map((item) => <option key={item.businessType} value={item.businessType}>{item.label}</option>)}
+                    </select>
+                  </label>
+
+                  <div className="rounded-[1.7rem] bg-[#f8fbff] p-5">
+                    <p className="font-black text-[#071b3a]">{template.label}</p>
+                    <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{template.visualStyle}</p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {template.features.map((feature) => (
+                        <span key={feature.title} className="rounded-full bg-white px-3 py-2 text-xs font-black text-[#05245c]">{feature.title}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button type="button" onClick={() => applyTemplate('empty')} disabled={saving} className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white disabled:opacity-60">
+                      Preencher campos vazios
+                    </button>
+                    <button type="button" onClick={() => applyTemplate('replace')} disabled={saving} className="rounded-2xl border border-blue-100 bg-white px-5 py-4 font-black text-[#05245c] disabled:opacity-60">
+                      Substituir textos atuais
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {tab === 'preview' ? (
+                <div>
+                  <SitePreview company={company} products={products} />
+                </div>
+              ) : null}
+
+              {tab === 'publicacao' ? (
+                <div className="grid gap-4">
+                  <div className="rounded-[1.7rem] bg-[#f8fbff] p-5">
+                    <p className="text-sm font-black text-[#05245c]">Link público</p>
+                    <p className="mt-2 break-all text-2xl font-black">{publicLink(company) || 'Configure o slug da empresa'}</p>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <button type="button" onClick={copyLink} className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white">Copiar link</button>
+                    <a href={localSitePath(company)} target="_blank" rel="noreferrer" className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-center font-black text-[#05245c]">Abrir site</a>
+                    <Link href="/painel/produtos" className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-center font-black text-[#05245c]">Editar catálogo</Link>
+                  </div>
+
+                  <div className="rounded-[1.7rem] bg-blue-50 p-5">
+                    <p className="font-black text-[#05245c]">Checklist de qualidade</p>
+                    <div className="mt-3 grid gap-2">
+                      {[
+                        ['Logo adicionada', Boolean(company.logo_url)],
+                        ['Cores configuradas', Boolean(company.site_primary_color)],
+                        ['Título principal definido', Boolean(company.site_headline)],
+                        ['Subtítulo definido', Boolean(company.site_subheadline)],
+                        ['WhatsApp informado', Boolean(company.whatsapp)],
+                        ['Pelo menos 1 produto/serviço', products.length > 0],
+                        ['Galeria adicionada', asArray(company.site_gallery).length > 0],
+                        ['FAQ preenchido', asArray(company.site_faq).length > 0],
+                        ['Link público pronto', Boolean(company.subdomain_slug || company.slug)],
+                      ].map(([label, done]) => (
+                        <p key={String(label)} className="font-bold text-[#071b3a]">{done ? '✓' : '○'} {label}</p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {tab !== 'preview' ? (
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <button type="button" onClick={save} disabled={saving} className="rounded-2xl bg-[#05245c] px-6 py-4 font-black text-white disabled:opacity-60">
+                    {saving ? 'Salvando...' : 'Salvar alterações'}
+                  </button>
+                  <a href={localSitePath(company)} target="_blank" rel="noreferrer" className="rounded-2xl border border-blue-100 bg-white px-6 py-4 font-black text-[#05245c]">
+                    Ver como cliente
+                  </a>
+                </div>
+              ) : null}
+            </div>
+          </section>
+
+          <aside className="sticky top-6 hidden h-fit xl:block">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-black text-[#05245c]">Prévia em tempo real</p>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-500 shadow-sm">{template.label}</span>
+            </div>
+            <SitePreview company={company} products={products} compact />
+          </aside>
+        </div>
+      </section>
+    </main>
+  )
+}

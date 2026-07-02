@@ -1,0 +1,33 @@
+'use client'
+
+import PublicSiteRenderer, { type PublicSiteCompany, type PublicSiteProduct } from '@/components/public-site/PublicSiteRenderer'
+import { getSiteTemplateByBusinessType } from '@/lib/site-templates'
+
+type SitePreviewProps = {
+  company: PublicSiteCompany
+  products?: PublicSiteProduct[]
+  compact?: boolean
+}
+
+export default function SitePreview({ company, products = [], compact = false }: SitePreviewProps) {
+  const template = getSiteTemplateByBusinessType(company.business_type || company.site_template)
+
+  const fakeProducts: PublicSiteProduct[] = template.previewItems.map((item, index) => ({
+    id: `preview-${index}`,
+    nome: item,
+    descricao: 'Item demonstrativo do modelo escolhido.',
+    categoria: template.catalogLabel,
+    preco: index === 0 ? 0 : 49.9 + index * 20,
+    preco_sob_consulta: index === 0,
+    available: true,
+    ativo: true,
+  }))
+
+  return (
+    <div className={compact ? 'h-[720px] overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-blue-950/5' : ''}>
+      <div className={compact ? 'origin-top scale-[0.56] sm:scale-[0.64] lg:scale-[0.58] xl:scale-[0.62]' : ''} style={compact ? { width: '160%' } : undefined}>
+        <PublicSiteRenderer company={company} products={products.length ? products : fakeProducts} />
+      </div>
+    </div>
+  )
+}

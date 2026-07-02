@@ -1,143 +1,131 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSiteTemplate, siteTemplates, templateToCompanyPatch } from '@/lib/orcaly-site-templates'
-import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
+import { assinaturaEstaAtiva, getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
+import { getDefaultSiteSettingsForBusiness, normalizeSectionList, normalizeSiteBusinessType } from '@/lib/site-templates'
 
 const allowedFields = [
-  'nome',
   'logo_url',
-  'whatsapp',
-  'instagram',
-  'cidade',
-  'estado',
-  'marketplace_endereco',
-  'marketplace_mapa_url',
-  'atendimento_horario',
-  'atendimento_observacao',
-  'site_publico_ativo',
   'site_template',
-  'site_layout',
-  'site_art_style',
-  'site_art_variant',
-  'site_font_style',
-  'site_button_style',
-  'site_hero_alignment',
-  'site_hero_style',
-  'site_section_style',
-  'site_product_card_style',
-  'site_nav_variant',
-  'site_corner_style',
-  'site_density',
+  'site_theme',
   'site_primary_color',
   'site_accent_color',
-  'site_background_color',
-  'site_text_color',
-  'site_card_color',
-  'site_badge_text',
   'site_headline',
   'site_subheadline',
-  'site_cta_text',
-  'site_secondary_cta_text',
-  'site_banner_url',
-  'site_whatsapp_message',
+  'site_cta_label',
   'site_about_title',
   'site_about_text',
-  'site_services_title',
-  'site_contact_title',
-  'site_show_store',
-  'site_show_marketplace',
-  'site_show_about',
-  'site_show_contact',
-  'site_show_featured',
-  'site_show_faq',
-  'site_show_testimonials',
-  'site_show_gallery',
-  'site_show_benefits',
-  'site_enable_cart',
-  'site_enable_coupons',
-  'site_show_prices',
-  'site_checkout_mode',
-  'site_marketplace_title',
-  'site_marketplace_subtitle',
-  'site_cart_button_text',
-  'site_checkout_button_text',
-  'site_empty_catalog_text',
-  'site_features',
+  'site_sections',
+  'site_benefits',
   'site_faq',
   'site_testimonials',
   'site_gallery',
-  'site_benefits',
-  'site_custom_sections',
-  'site_hero_highlights',
-  'site_brand_words',
-  'site_trust_title',
-  'site_footer_text',
-  'site_seo_title',
-  'site_seo_description',
-  'site_keywords',
-  'site_promo_title',
-  'site_promo_text',
-  'site_promo_active',
-  'site_promo_button_text',
-  'site_business_hours',
+  'site_features',
   'site_payment_methods',
   'site_delivery_options',
   'business_type',
 ]
 
-function cleanPayload(input: Record<string, any>) {
-  const output: Record<string, any> = {}
+function safeArray(value: unknown) {
+  return Array.isArray(value) ? value : []
+}
 
-  allowedFields.forEach((field) => {
-    if (input[field] !== undefined) output[field] = input[field]
-  })
+function cleanPayload(body: Record<string, unknown>) {
+  const payload: Record<string, unknown> = {}
 
-  output.site_updated_at = new Date().toISOString()
-  return output
+  for (const field of allowedFields) {
+    if (body[field] !== undefined) payload[field] = body[field]
+  }
+
+  if (payload.business_type !== undefined) {
+    payload.business_type = normalizeSiteBusinessType(payload.business_type)
+  }
+
+  if (payload.site_sections !== undefined) {
+    payload.site_sections = normalizeSectionList(payload.site_sections)
+  }
+
+  for (const field of [
+    'site_benefits',
+    'site_faq',
+    'site_testimonials',
+    'site_gallery',
+    'site_features',
+    'site_payment_methods',
+    'site_delivery_options',
+  ]) {
+    if (payload[field] !== undefined) payload[field] = safeArray(payload[field])
+  }
+
+  payload.site_updated_at = new Date().toISOString()
+
+  return payload
+}
+
+async function getAccess(request: NextRequest) {
+  const supabaseAdmin = getSupabaseAdmin()
+  const requester = await getRequester(request, supabaseAdmin)
+
+  if (!requester) {
+    return {
+      supabaseAdmin,
+      response: NextResponse.json({ error: 'Não autorizado.' }, { status: 401 }),
+    }
+  }
+
+  const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
+
+  if (!access.company?.id) {
+    return {
+      supabaseAdmin,
+      response: NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 }),
+    }
+  }
+
+  return { supabaseAdmin, requester, access }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const supabaseAdmin = getSupabaseAdmin()
-    const requester = await getRequester(request, supabaseAdmin)
+    const result = await getAccess(request)
+    if ('response' in result && result.response) return result.response
 
-    if (!requester) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
-
-    const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
-    if (!access.company?.id) return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
+    const company = result.access!.company
+    const defaults = getDefaultSiteSettingsForBusiness(company.business_type || company.site_template)
 
     return NextResponse.json({
-      company: access.company,
-      templates: siteTemplates,
-      currentTemplate: getSiteTemplate(access.company.site_template || access.company.modelo_negocio),
-      permissions: {
-        can_config: access.canConfig,
-        can_manage: access.canManage,
+      company: {
+        ...company,
+        site_sections: normalizeSectionList(company.site_sections, defaults.site_sections),
       },
+      defaults,
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erro ao carregar configurações do site.'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Erro ao carregar configurações do site.' },
+      { status: 500 }
+    )
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabaseAdmin = getSupabaseAdmin()
-    const requester = await getRequester(request, supabaseAdmin)
+    const result = await getAccess(request)
+    if ('response' in result && result.response) return result.response
 
-    if (!requester) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+    if (!assinaturaEstaAtiva(result.access!.company)) {
+      return NextResponse.json({ error: 'Assinatura inativa. Renove para editar o site.' }, { status: 402 })
+    }
 
-    const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
-    if (!access.company?.id) return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
-    if (!access.canManage) return NextResponse.json({ error: 'Seu perfil não pode editar o site.' }, { status: 403 })
+    if (!result.access!.canManage && !result.access!.canConfig) {
+      return NextResponse.json({ error: 'Seu perfil não pode editar o site.' }, { status: 403 })
+    }
 
     const body = await request.json()
-    const update = cleanPayload(body)
+    const payload = cleanPayload(body)
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await result.supabaseAdmin
       .from('companies')
-      .update(update)
-      .eq('id', access.company.id)
+      .update(payload)
+      .eq('id', result.access!.company.id)
       .select('*')
       .single()
 
@@ -145,72 +133,67 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ ok: true, company: data })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erro ao salvar configurações do site.'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Erro ao salvar site.' },
+      { status: 500 }
+    )
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabaseAdmin = getSupabaseAdmin()
-    const requester = await getRequester(request, supabaseAdmin)
+    const result = await getAccess(request)
+    if ('response' in result && result.response) return result.response
 
-    if (!requester) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
-
-    const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
-    if (!access.company?.id) return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
-    if (!access.canManage) return NextResponse.json({ error: 'Seu perfil não pode aplicar template.' }, { status: 403 })
-
-    const body = await request.json()
-    const templateId = String(body.template || body.site_template || '')
-    const template = getSiteTemplate(templateId)
-    const patch = templateToCompanyPatch(templateId)
-
-    const enhancedPatch = {
-      ...patch,
-      site_hero_style: body.site_hero_style || 'premium-showcase',
-      site_art_variant: body.site_art_variant || 'auto',
-      site_section_style: body.site_section_style || 'soft-premium',
-      site_product_card_style: body.site_product_card_style || 'premium',
-      site_nav_variant: body.site_nav_variant || 'clean',
-      site_corner_style: body.site_corner_style || 'rounded',
-      site_density: body.site_density || 'comfortable',
-      site_show_marketplace: true,
-      site_enable_cart: true,
-      site_enable_coupons: true,
-      site_show_prices: true,
-      site_marketplace_title: template.id === 'imobiliaria' ? 'Imóveis em destaque' : template.id === 'alimenticio' ? 'Cardápio e encomendas' : 'Catálogo online',
-      site_marketplace_subtitle: template.id === 'imobiliaria'
-        ? 'Veja opções, escolha o imóvel de interesse e solicite atendimento consultivo.'
-        : template.id === 'alimenticio'
-          ? 'Escolha produtos, monte seu pedido e combine retirada ou entrega.'
-          : 'Escolha produtos, monte seu pedido e envie tudo organizado para atendimento.',
-      site_cart_button_text: template.id === 'imobiliaria' ? 'Tenho interesse' : 'Adicionar',
-      site_checkout_button_text: template.id === 'imobiliaria' ? 'Solicitar atendimento' : 'Finalizar pedido',
-      site_trust_title: template.id === 'imobiliaria' ? 'Atendimento imobiliário com clareza' : 'Por que escolher a gente?',
-      site_brand_words: template.keywords || [],
+    if (!assinaturaEstaAtiva(result.access!.company)) {
+      return NextResponse.json({ error: 'Assinatura inativa. Renove para editar o site.' }, { status: 402 })
     }
 
-    const { data, error } = await supabaseAdmin
+    const body = await request.json()
+    const mode = body.mode === 'replace' ? 'replace' : 'empty'
+    const businessType = normalizeSiteBusinessType(body.business_type || result.access!.company.business_type || 'services')
+    const defaults = getDefaultSiteSettingsForBusiness(businessType)
+    const current = result.access!.company
+
+    const payload: Record<string, unknown> = {
+      business_type: businessType,
+      site_template: defaults.site_template,
+      site_theme: defaults.site_theme,
+      site_primary_color: mode === 'replace' ? defaults.site_primary_color : current.site_primary_color || defaults.site_primary_color,
+      site_accent_color: mode === 'replace' ? defaults.site_accent_color : current.site_accent_color || defaults.site_accent_color,
+      site_sections: mode === 'replace' ? defaults.site_sections : normalizeSectionList(current.site_sections, defaults.site_sections),
+      site_updated_at: new Date().toISOString(),
+    }
+
+    for (const field of [
+      'site_headline',
+      'site_subheadline',
+      'site_cta_label',
+      'site_about_title',
+      'site_about_text',
+      'site_benefits',
+      'site_faq',
+      'site_features',
+      'site_payment_methods',
+      'site_delivery_options',
+    ]) {
+      payload[field] = mode === 'replace' ? defaults[field as keyof typeof defaults] : current[field] || defaults[field as keyof typeof defaults]
+    }
+
+    const { data, error } = await result.supabaseAdmin
       .from('companies')
-      .update({
-        ...enhancedPatch,
-        site_publico_ativo: true,
-        site_updated_at: new Date().toISOString(),
-      })
-      .eq('id', access.company.id)
+      .update(payload)
+      .eq('id', current.id)
       .select('*')
       .single()
 
     if (error) throw error
 
-    return NextResponse.json({
-      ok: true,
-      company: data,
-      template,
-    })
+    return NextResponse.json({ ok: true, company: data, defaults })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erro ao aplicar template.'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Erro ao aplicar modelo.' },
+      { status: 500 }
+    )
   }
 }

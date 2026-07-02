@@ -1,0 +1,1006 @@
+'use client'
+
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useParams } from 'next/navigation'
+
+type Product = {
+  id: string
+  nome: string
+  preco: number
+  descricao?: string
+  categoria?: string
+  imagem_url?: string | null
+  image_urls?: string[]
+  video_url?: string | null
+  destaque?: boolean
+  prazo_medio?: string | null
+}
+
+type CartLine = {
+  product: Product
+  quantidade: number
+}
+
+type Theme = {
+  primary: string
+  accent: string
+  background: string
+  text: string
+  card: string
+}
+
+type Scene = {
+  eyebrow: string
+  title: string
+  subtitle: string
+  primaryLabel: string
+  secondaryLabel: string
+  cards: Array<{ title: string; subtitle: string; meta: string }>
+  stats: Array<{ label: string; value: string }>
+  gradients: string[]
+}
+
+const segmentScenes: Record<string, Scene> = {
+  grafica: {
+    eyebrow: 'Estúdio gráfico digital',
+    title: 'Materiais visuais com apresentação de marca grande',
+    subtitle: 'Uma capa pronta para gráficas, comunicação visual, adesivos, banners e personalizados.',
+    primaryLabel: 'Pedir orçamento',
+    secondaryLabel: 'Ver materiais',
+    cards: [
+      { title: 'Cartão premium', subtitle: 'Acabamento profissional', meta: 'Design + impressão' },
+      { title: 'Banner e lona', subtitle: 'Medidas sob demanda', meta: 'm² inteligente' },
+      { title: 'Adesivos', subtitle: 'Rótulos, vinil e vitrine', meta: 'Corte e aplicação' },
+    ],
+    stats: [
+      { label: 'Pedidos', value: 'Organizados' },
+      { label: 'Arte', value: 'Anexada' },
+      { label: 'Produção', value: 'Acompanhada' },
+    ],
+    gradients: ['#05245c', '#1d4ed8', '#22c55e'],
+  },
+  alimenticio: {
+    eyebrow: 'Cardápio e encomendas',
+    title: 'Sabores, combos e pedidos com experiência de compra bonita',
+    subtitle: 'Para restaurantes, confeitarias, docerias, marmitas, kits e encomendas com retirada ou entrega.',
+    primaryLabel: 'Fazer pedido',
+    secondaryLabel: 'Ver cardápio',
+    cards: [
+      { title: 'Combo da semana', subtitle: 'Oferta montada', meta: 'Mais vendido' },
+      { title: 'Encomendas', subtitle: 'Data e quantidade', meta: 'Agendado' },
+      { title: 'Produtos do dia', subtitle: 'Disponível agora', meta: 'Retirada rápida' },
+    ],
+    stats: [
+      { label: 'Pedidos', value: 'No carrinho' },
+      { label: 'Entrega', value: 'Combinada' },
+      { label: 'Cupom', value: 'Aplicável' },
+    ],
+    gradients: ['#7c2d12', '#ea580c', '#facc15'],
+  },
+  imobiliaria: {
+    eyebrow: 'Vitrine imobiliária',
+    title: 'Imóveis apresentados com confiança e atendimento consultivo',
+    subtitle: 'Para corretores e imobiliárias exibirem imóveis, regiões, visitas e captação de interessados.',
+    primaryLabel: 'Quero atendimento',
+    secondaryLabel: 'Ver imóveis',
+    cards: [
+      { title: 'Casa em destaque', subtitle: 'Fotos e descrição', meta: 'Visita disponível' },
+      { title: 'Apartamento novo', subtitle: 'Perfil familiar', meta: 'Financiável' },
+      { title: 'Terreno premium', subtitle: 'Investimento local', meta: 'Oportunidade' },
+    ],
+    stats: [
+      { label: 'Leads', value: 'Qualificados' },
+      { label: 'Visitas', value: 'Agendadas' },
+      { label: 'Região', value: 'Destacada' },
+    ],
+    gradients: ['#0f172a', '#334155', '#d4af37'],
+  },
+  personalizados: {
+    eyebrow: 'Loja criativa',
+    title: 'Personalizados, brindes e kits com visual de marca premium',
+    subtitle: 'Para camisetas, canecas, lembranças, brindes corporativos e produtos sob demanda.',
+    primaryLabel: 'Personalizar',
+    secondaryLabel: 'Ver ideias',
+    cards: [
+      { title: 'Camisas', subtitle: 'Arte, cor e tamanho', meta: 'Sob medida' },
+      { title: 'Canecas', subtitle: 'Presente personalizado', meta: 'Kit pronto' },
+      { title: 'Brindes', subtitle: 'Empresas e eventos', meta: 'Escala' },
+    ],
+    stats: [
+      { label: 'Briefing', value: 'Guiado' },
+      { label: 'Arte', value: 'Aprovada' },
+      { label: 'Recompra', value: 'Fácil' },
+    ],
+    gradients: ['#581c87', '#9333ea', '#ec4899'],
+  },
+  assistencia: {
+    eyebrow: 'Assistência técnica',
+    title: 'Diagnóstico, reparo e acompanhamento com mais transparência',
+    subtitle: 'Para consertos, manutenção, peças, garantia e atendimento técnico organizado.',
+    primaryLabel: 'Solicitar diagnóstico',
+    secondaryLabel: 'Ver serviços',
+    cards: [
+      { title: 'Celulares', subtitle: 'Tela, bateria e conector', meta: 'Triagem' },
+      { title: 'Notebooks', subtitle: 'Upgrade e manutenção', meta: 'Diagnóstico' },
+      { title: 'Games', subtitle: 'Limpeza e reparos', meta: 'Garantia' },
+    ],
+    stats: [
+      { label: 'Status', value: 'Atualizado' },
+      { label: 'Peças', value: 'Registradas' },
+      { label: 'Prazo', value: 'Claro' },
+    ],
+    gradients: ['#0f3d5e', '#0891b2', '#22d3ee'],
+  },
+  barbearia: {
+    eyebrow: 'Agenda e estilo',
+    title: 'Cortes, combos e atendimento com presença forte',
+    subtitle: 'Para barbearias exibirem serviços, pacotes, profissionais e agendamento pelo WhatsApp.',
+    primaryLabel: 'Agendar horário',
+    secondaryLabel: 'Ver serviços',
+    cards: [
+      { title: 'Corte degradê', subtitle: 'Finalização completa', meta: 'Popular' },
+      { title: 'Barba', subtitle: 'Toalha, navalha e cuidado', meta: 'Clássico' },
+      { title: 'Combo premium', subtitle: 'Corte + barba', meta: 'Mais valor' },
+    ],
+    stats: [
+      { label: 'Agenda', value: 'Rápida' },
+      { label: 'Combo', value: 'Visível' },
+      { label: 'Retorno', value: 'Fácil' },
+    ],
+    gradients: ['#111827', '#92400e', '#f59e0b'],
+  },
+  estetica: {
+    eyebrow: 'Beleza e cuidado',
+    title: 'Procedimentos e pacotes com apresentação delicada e profissional',
+    subtitle: 'Para clínicas, estúdios e profissionais de estética venderem confiança antes do contato.',
+    primaryLabel: 'Agendar avaliação',
+    secondaryLabel: 'Ver procedimentos',
+    cards: [
+      { title: 'Facial', subtitle: 'Cuidados e limpeza', meta: 'Avaliação' },
+      { title: 'Corporal', subtitle: 'Sessões e pacotes', meta: 'Tratamento' },
+      { title: 'Pacote mensal', subtitle: 'Recorrência e retorno', meta: 'Fidelização' },
+    ],
+    stats: [
+      { label: 'Avaliação', value: 'Guiada' },
+      { label: 'Pacotes', value: 'Claros' },
+      { label: 'Confiança', value: 'Alta' },
+    ],
+    gradients: ['#831843', '#db2777', '#f9a8d4'],
+  },
+  oficina: {
+    eyebrow: 'Oficina digital',
+    title: 'Serviços automotivos com orçamento claro e visual confiável',
+    subtitle: 'Para oficinas organizarem revisão, diagnóstico, peças, mão de obra e pedido rápido.',
+    primaryLabel: 'Solicitar orçamento',
+    secondaryLabel: 'Ver serviços',
+    cards: [
+      { title: 'Revisão', subtitle: 'Check-up completo', meta: 'Preventivo' },
+      { title: 'Freios', subtitle: 'Segurança e troca', meta: 'Prioridade' },
+      { title: 'Suspensão', subtitle: 'Diagnóstico técnico', meta: 'Serviço' },
+    ],
+    stats: [
+      { label: 'Veículo', value: 'Identificado' },
+      { label: 'Peças', value: 'Listadas' },
+      { label: 'Status', value: 'Visível' },
+    ],
+    gradients: ['#1f2937', '#dc2626', '#f97316'],
+  },
+  loja: {
+    eyebrow: 'Loja online local',
+    title: 'Produtos, ofertas e pedidos em uma vitrine profissional',
+    subtitle: 'Para lojas locais venderem com catálogo, carrinho, cupons e atendimento rápido.',
+    primaryLabel: 'Comprar agora',
+    secondaryLabel: 'Ver produtos',
+    cards: [
+      { title: 'Produto destaque', subtitle: 'Foto e descrição', meta: 'Oferta' },
+      { title: 'Kit promocional', subtitle: 'Combo pronto', meta: 'Cupom' },
+      { title: 'Retirada local', subtitle: 'Pedido organizado', meta: 'Balcão' },
+    ],
+    stats: [
+      { label: 'Carrinho', value: 'Ativo' },
+      { label: 'Cupom', value: 'Opcional' },
+      { label: 'Pedido', value: 'Direto' },
+    ],
+    gradients: ['#172554', '#2563eb', '#f59e0b'],
+  },
+  servicos: {
+    eyebrow: 'Serviços locais',
+    title: 'Orçamento profissional para serviços sob medida',
+    subtitle: 'Para instalação, manutenção, visitas técnicas, consultorias e serviços locais.',
+    primaryLabel: 'Solicitar orçamento',
+    secondaryLabel: 'Ver serviços',
+    cards: [
+      { title: 'Visita técnica', subtitle: 'Escopo e agenda', meta: 'Avaliação' },
+      { title: 'Instalação', subtitle: 'Serviço local', meta: 'Execução' },
+      { title: 'Manutenção', subtitle: 'Atendimento recorrente', meta: 'Suporte' },
+    ],
+    stats: [
+      { label: 'Briefing', value: 'Completo' },
+      { label: 'Fotos', value: 'Enviadas' },
+      { label: 'Prazo', value: 'Combinado' },
+    ],
+    gradients: ['#064e3b', '#059669', '#10b981'],
+  },
+  vidracaria: {
+    eyebrow: 'Vidros sob medida',
+    title: 'Box, espelhos e instalações com acabamento premium',
+    subtitle: 'Para vidraçarias apresentarem serviços por medida, visita e instalação.',
+    primaryLabel: 'Pedir orçamento',
+    secondaryLabel: 'Ver serviços',
+    cards: [
+      { title: 'Box', subtitle: 'Vidro sob medida', meta: 'Instalação' },
+      { title: 'Espelhos', subtitle: 'Ambientes e acabamento', meta: 'Projeto' },
+      { title: 'Janelas', subtitle: 'Medida e visita', meta: 'Técnico' },
+    ],
+    stats: [
+      { label: 'Medidas', value: 'Guiadas' },
+      { label: 'Fotos', value: 'Anexadas' },
+      { label: 'Instalação', value: 'Agendada' },
+    ],
+    gradients: ['#075985', '#0ea5e9', '#7dd3fc'],
+  },
+  serralheria: {
+    eyebrow: 'Fabricação sob medida',
+    title: 'Portões, grades e estruturas com proposta profissional',
+    subtitle: 'Para serralherias venderem fabricação, instalação, medidas e acabamento.',
+    primaryLabel: 'Solicitar orçamento',
+    secondaryLabel: 'Ver serviços',
+    cards: [
+      { title: 'Portões', subtitle: 'Projetos sob medida', meta: 'Fabricação' },
+      { title: 'Grades', subtitle: 'Segurança e acabamento', meta: 'Instalação' },
+      { title: 'Estruturas', subtitle: 'Solda e montagem', meta: 'Obra' },
+    ],
+    stats: [
+      { label: 'Medidas', value: 'Claras' },
+      { label: 'Material', value: 'Definido' },
+      { label: 'Entrega', value: 'Prevista' },
+    ],
+    gradients: ['#27272a', '#52525b', '#f97316'],
+  },
+  moveis: {
+    eyebrow: 'Ambientes planejados',
+    title: 'Projetos sob medida com percepção de alto valor',
+    subtitle: 'Para marcenarias e móveis planejados apresentarem ambientes, materiais e etapas.',
+    primaryLabel: 'Solicitar projeto',
+    secondaryLabel: 'Ver ambientes',
+    cards: [
+      { title: 'Cozinha', subtitle: 'Projeto funcional', meta: 'Premium' },
+      { title: 'Quarto', subtitle: 'Guarda-roupa e painel', meta: 'Sob medida' },
+      { title: 'Comercial', subtitle: 'Lojas e escritórios', meta: 'Projeto' },
+    ],
+    stats: [
+      { label: 'Medição', value: 'Agendada' },
+      { label: 'Projeto', value: 'Guiado' },
+      { label: 'Instalação', value: 'Planejada' },
+    ],
+    gradients: ['#3f2a1d', '#92400e', '#facc15'],
+  },
+  eventos: {
+    eyebrow: 'Eventos memoráveis',
+    title: 'Pacotes, decoração e serviços com proposta encantadora',
+    subtitle: 'Para festas, eventos, buffet, decoração, locação e experiências sob medida.',
+    primaryLabel: 'Solicitar proposta',
+    secondaryLabel: 'Ver pacotes',
+    cards: [
+      { title: 'Pacote festa', subtitle: 'Itens combinados', meta: 'Completo' },
+      { title: 'Decoração', subtitle: 'Tema e montagem', meta: 'Personalizado' },
+      { title: 'Corporativo', subtitle: 'Empresas e eventos', meta: 'Profissional' },
+    ],
+    stats: [
+      { label: 'Data', value: 'Reservada' },
+      { label: 'Pacote', value: 'Claro' },
+      { label: 'Equipe', value: 'Alinhada' },
+    ],
+    gradients: ['#4c1d95', '#7c3aed', '#facc15'],
+  },
+}
+
+function moeda(value: number) {
+  return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+function cleanPhone(value: string | null | undefined) {
+  return String(value || '').replace(/\D/g, '')
+}
+
+function whatsappLink(phone: string | null | undefined, message: string) {
+  const raw = cleanPhone(phone)
+  const final = raw.startsWith('55') ? raw : `55${raw}`
+  return raw ? `https://wa.me/${final}?text=${encodeURIComponent(message)}` : '#'
+}
+
+function getMedia(product: Product) {
+  const images = Array.isArray(product.image_urls) ? product.image_urls.filter(Boolean).slice(0, 4) : []
+  const fallback = product.imagem_url && !images.includes(product.imagem_url) ? [product.imagem_url] : []
+  return { images: [...fallback, ...images].slice(0, 4), video: product.video_url || null }
+}
+
+function Section({ children, id, className = '' }: { children: ReactNode; id?: string; className?: string }) {
+  return <section id={id} className={`mx-auto max-w-7xl px-4 py-12 sm:py-16 ${className}`}>{children}</section>
+}
+
+function LogoMark({ company, theme, large = false }: { company: any; theme: Theme; large?: boolean }) {
+  const size = large ? 'h-16 w-16 rounded-[1.35rem]' : 'h-12 w-12 rounded-2xl'
+
+  if (company.logo_url) {
+    return (
+      <span className={`${size} grid place-items-center bg-white shadow-lg shadow-black/10 ring-1 ring-black/5`}>
+        <img src={company.logo_url} alt={company.nome} className="max-h-[80%] max-w-[80%] object-contain" />
+      </span>
+    )
+  }
+
+  return (
+    <span className={`${size} grid place-items-center text-xl font-black text-white shadow-lg shadow-black/10`} style={{ background: theme.primary }}>
+      {company.nome?.slice(0, 1) || 'O'}
+    </span>
+  )
+}
+
+function getScene(company: any, template: any) {
+  const key = company.site_template || template?.id || 'servicos'
+  return segmentScenes[key] || segmentScenes.servicos
+}
+
+function PremiumSegmentArt({ company, template, theme, products }: { company: any; template: any; theme: Theme; products: Product[] }) {
+  const scene = getScene(company, template)
+  const firstProducts = products.slice(0, 3)
+  const cardData = firstProducts.length > 0
+    ? firstProducts.map((product) => ({
+        title: product.nome,
+        subtitle: product.categoria || 'Produto',
+        meta: company.site_show_prices === false ? 'Sob consulta' : moeda(product.preco || 0),
+      }))
+    : scene.cards
+
+  return (
+    <div className="relative overflow-hidden rounded-[2.4rem] border border-white/70 bg-white p-3 shadow-2xl shadow-blue-950/15">
+      <div className="rounded-[2rem] border border-black/5 bg-white p-4">
+        <div className="relative min-h-[430px] overflow-hidden rounded-[1.65rem] p-5 sm:p-6" style={{ background: `linear-gradient(135deg, ${scene.gradients[0]}, ${scene.gradients[1]} 54%, ${scene.gradients[2]})` }}>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(255,255,255,0.28),transparent_28%),radial-gradient(circle_at_88%_10%,rgba(255,255,255,0.18),transparent_24%)]" />
+          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl" />
+          <div className="absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+
+          <div className="relative grid min-h-[380px] content-between gap-6 text-white">
+            <div>
+              <div className="inline-flex items-center gap-3 rounded-full bg-white/14 px-3 py-2 backdrop-blur">
+                <LogoMark company={company} theme={theme} />
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-white/65">{scene.eyebrow}</p>
+                  <p className="text-sm font-black text-white">{company.nome || template?.nome || 'Sua empresa'}</p>
+                </div>
+              </div>
+
+              <h3 className="mt-7 max-w-lg text-4xl font-black leading-none tracking-[-0.06em] sm:text-5xl">{scene.title}</h3>
+              <p className="mt-4 max-w-md text-sm font-bold leading-7 text-white/76">{scene.subtitle}</p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-[1fr_0.78fr]">
+              <div className="grid gap-3 sm:grid-cols-3">
+                {cardData.map((card, index) => (
+                  <div key={`${card.title}-${index}`} className="rounded-[1.35rem] border border-white/14 bg-white/16 p-3 backdrop-blur">
+                    <div className="h-20 rounded-[1rem] bg-white/20" />
+                    <p className="mt-3 text-xs font-black">{card.title}</p>
+                    <p className="mt-1 text-[11px] font-bold text-white/62">{card.subtitle}</p>
+                    <p className="mt-3 text-xs font-black text-white">{card.meta}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-[1.35rem] border border-white/16 bg-white/94 p-4 text-slate-950 shadow-xl">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Atendimento</p>
+                <div className="mt-4 space-y-3">
+                  {scene.stats.map((stat) => (
+                    <div key={stat.label} className="flex justify-between gap-3 text-sm font-black">
+                      <span className="text-slate-500">{stat.label}</span>
+                      <span>{stat.value}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-5 rounded-2xl px-4 py-3 text-center text-sm font-black text-white" style={{ background: theme.primary }}>
+                  {company.site_cta_text || scene.primaryLabel}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {(company.site_brand_words || template?.keywords || []).slice(0, 5).map((word: string) => (
+                <span key={word} className="rounded-full border border-white/10 bg-white/12 px-4 py-2 text-xs font-black text-white/78 backdrop-blur">{word}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ProductMedia({ product, theme }: { product: Product; theme: Theme }) {
+  const { images, video } = getMedia(product)
+
+  if (video) {
+    return (
+      <div className="relative h-56 overflow-hidden bg-black">
+        <video src={video} controls muted playsInline preload="metadata" className="h-full w-full object-cover" />
+        <span className="absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-xs font-black text-white backdrop-blur">Vídeo</span>
+      </div>
+    )
+  }
+
+  if (images.length) {
+    return (
+      <div className="relative h-56 overflow-hidden">
+        <img src={images[0]} alt={product.nome} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
+        {images.length > 1 && (
+          <span className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-black shadow-sm">+{images.length - 1} fotos</span>
+        )}
+      </div>
+    )
+  }
+
+  return <div className="h-56" style={{ background: `radial-gradient(circle at 20% 20%, ${theme.accent}99, transparent 35%), linear-gradient(135deg, ${theme.primary}, #020617)` }} />
+}
+
+function BenefitIcon({ theme, index }: { theme: Theme; index: number }) {
+  const shapes = ['rounded-full', 'rounded-2xl rotate-6', 'rounded-xl -rotate-6']
+  return (
+    <span className={`grid h-12 w-12 place-items-center ${shapes[index % shapes.length]}`} style={{ background: `${theme.primary}12`, color: theme.primary }}>
+      <span className="h-5 w-5 rounded-full border-[6px]" style={{ borderColor: theme.accent }} />
+    </span>
+  )
+}
+
+export default function SitePublicoPremiumPage() {
+  const params = useParams<{ slug: string }>()
+  const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug
+
+  const [company, setCompany] = useState<any>(null)
+  const [template, setTemplate] = useState<any>(null)
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [cart, setCart] = useState<CartLine[]>([])
+  const [cartOpen, setCartOpen] = useState(false)
+  const [couponCode, setCouponCode] = useState('')
+  const [coupon, setCoupon] = useState<any>(null)
+  const [couponMessage, setCouponMessage] = useState('')
+  const [cliente, setCliente] = useState({ nome: '', telefone: '', endereco: '', observacoes: '' })
+  const [orderMessage, setOrderMessage] = useState('')
+  const [orderError, setOrderError] = useState('')
+  const [sendingOrder, setSendingOrder] = useState(false)
+
+  async function load() {
+    setLoading(true)
+    setError('')
+    const response = await fetch(`/api/public-site/${slug}`)
+    const payload = await response.json()
+
+    if (!response.ok) {
+      setError(payload.error || 'Site não encontrado.')
+      setLoading(false)
+      return
+    }
+
+    setCompany(payload.company)
+    setTemplate(payload.template)
+    setProducts(payload.products || [])
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    if (slug) load()
+  }, [slug])
+
+  const theme = useMemo<Theme>(() => {
+    const primary = company?.site_primary_color || template?.paleta?.primary || '#05245c'
+    const accent = company?.site_accent_color || template?.paleta?.accent || '#22c55e'
+    const background = company?.site_background_color || template?.paleta?.background || '#f5f8ff'
+    const text = company?.site_text_color || template?.paleta?.text || '#071b3a'
+    const card = company?.site_card_color || template?.paleta?.card || '#ffffff'
+    return { primary, accent, background, text, card }
+  }, [company, template])
+
+  const subtotal = useMemo(() => {
+    return Number(cart.reduce((acc, line) => acc + Number(line.product.preco || 0) * line.quantidade, 0).toFixed(2))
+  }, [cart])
+
+  const desconto = coupon?.discount || 0
+  const total = Math.max(0, Number((subtotal - desconto).toFixed(2)))
+  const cartCount = cart.reduce((acc, line) => acc + line.quantidade, 0)
+
+  function addToCart(product: Product) {
+    if (company?.site_enable_cart === false) {
+      window.location.href = whatsappLink(company.whatsapp, `Olá! Vim pelo site e quero saber sobre: ${product.nome}`)
+      return
+    }
+
+    setCart((current) => {
+      const existing = current.find((line) => line.product.id === product.id)
+
+      if (existing) {
+        return current.map((line) => line.product.id === product.id ? { ...line, quantidade: line.quantidade + 1 } : line)
+      }
+
+      return [...current, { product, quantidade: 1 }]
+    })
+    setCartOpen(true)
+    setCoupon(null)
+    setCouponMessage('')
+  }
+
+  function changeQuantity(productId: string, delta: number) {
+    setCart((current) => current
+      .map((line) => line.product.id === productId ? { ...line, quantidade: Math.max(1, line.quantidade + delta) } : line)
+      .filter((line) => line.quantidade > 0))
+    setCoupon(null)
+    setCouponMessage('')
+  }
+
+  function removeFromCart(productId: string) {
+    setCart((current) => current.filter((line) => line.product.id !== productId))
+    setCoupon(null)
+    setCouponMessage('')
+  }
+
+  async function applyCoupon() {
+    setCoupon(null)
+    setCouponMessage('')
+    setOrderError('')
+
+    if (!company?.id || subtotal <= 0) {
+      setCouponMessage('Adicione produtos ao carrinho antes de usar cupom.')
+      return
+    }
+
+    const response = await fetch('/api/marketplace/coupon', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company_id: company.id, codigo: couponCode, subtotal }),
+    })
+
+    const payload = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      setCouponMessage(payload.error || 'Cupom inválido.')
+      return
+    }
+
+    setCoupon(payload)
+    setCouponMessage(`Cupom aplicado: -${moeda(payload.discount || 0)}`)
+  }
+
+  async function finishOrder() {
+    setOrderError('')
+    setOrderMessage('')
+
+    if (!company?.id) {
+      setOrderError('Empresa não carregada.')
+      return
+    }
+
+    if (!cliente.nome || cleanPhone(cliente.telefone).length < 10) {
+      setOrderError('Informe nome e WhatsApp válido.')
+      return
+    }
+
+    if (cart.length === 0) {
+      setOrderError('Seu carrinho está vazio.')
+      return
+    }
+
+    setSendingOrder(true)
+
+    const response = await fetch('/api/marketplace/order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        company_id: company.id,
+        cliente,
+        coupon_code: coupon?.coupon?.codigo || couponCode,
+        items: cart.map((line) => ({
+          product_id: line.product.id,
+          quantidade: line.quantidade,
+        })),
+        observacoes: cliente.observacoes,
+      }),
+    })
+
+    const payload = await response.json().catch(() => ({}))
+    setSendingOrder(false)
+
+    if (!response.ok) {
+      setOrderError(payload.error || 'Erro ao finalizar pedido.')
+      return
+    }
+
+    setOrderMessage(`Pedido enviado com sucesso. Total: ${moeda(payload.total || total)}.`)
+    setCart([])
+    setCoupon(null)
+    setCouponCode('')
+  }
+
+  if (loading) {
+    return <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff]"><div className="rounded-[2rem] bg-white p-8 font-black shadow-xl">Carregando site...</div></main>
+  }
+
+  if (error || !company) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4">
+        <div className="max-w-lg rounded-[2rem] bg-white p-8 text-center shadow-xl">
+          <h1 className="text-3xl font-black text-[#071b3a]">Site indisponível</h1>
+          <p className="mt-3 font-bold text-red-600">{error}</p>
+        </div>
+      </main>
+    )
+  }
+
+  const scene = getScene(company, template)
+  const message = company.site_whatsapp_message || `Olá! Vim pelo site da ${company.nome} e quero atendimento.`
+  const whats = whatsappLink(company.whatsapp, message)
+  const features = Array.isArray(company.site_features) ? company.site_features : []
+  const benefits = Array.isArray(company.site_benefits) ? company.site_benefits : []
+  const faq = Array.isArray(company.site_faq) ? company.site_faq : []
+  const testimonials = Array.isArray(company.site_testimonials) ? company.site_testimonials : []
+  const gallery = Array.isArray(company.site_gallery) ? company.site_gallery : []
+  const payments = Array.isArray(company.site_payment_methods) ? company.site_payment_methods : []
+  const delivery = Array.isArray(company.site_delivery_options) ? company.site_delivery_options : []
+  const featuredProducts = products.filter((product) => product.destaque).slice(0, 3)
+  const showMarketplace = company.site_show_marketplace !== false && company.site_show_store !== false
+
+  return (
+    <main style={{ background: theme.background, color: theme.text }} className="min-h-screen overflow-hidden">
+      <header className="sticky top-0 z-30 border-b border-black/5 bg-white/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
+          <a href="#" className="flex items-center gap-3">
+            <LogoMark company={company} theme={theme} />
+            <div>
+              <p className="font-black tracking-[-0.02em]">{company.nome}</p>
+              <p className="text-xs font-bold opacity-60">{company.cidade || company.segmento || template?.segmento}</p>
+            </div>
+          </a>
+
+          <nav className="hidden items-center gap-5 text-sm font-black md:flex">
+            <a href="#servicos">Serviços</a>
+            {showMarketplace && <a href="#catalogo">Catálogo</a>}
+            {company.site_show_about !== false && <a href="#sobre">Sobre</a>}
+            <a href="#contato">Contato</a>
+          </nav>
+
+          <div className="flex items-center gap-2">
+            {showMarketplace && company.site_enable_cart !== false && (
+              <button onClick={() => setCartOpen(true)} className="relative rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-black shadow-sm">
+                Carrinho
+                {cartCount > 0 && <span className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full text-xs text-white" style={{ background: theme.primary }}>{cartCount}</span>}
+              </button>
+            )}
+            <a href={whats} className="hidden rounded-2xl px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/10 sm:inline-flex" style={{ background: theme.primary }}>
+              {company.site_cta_text || scene.primaryLabel}
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <Section className="relative">
+        <div className="absolute left-1/2 top-0 -z-0 h-80 w-80 -translate-x-1/2 rounded-full opacity-20 blur-3xl" style={{ background: theme.accent }} />
+        <div className="relative grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+          <div>
+            <div className="inline-flex items-center gap-3 rounded-full border border-black/5 bg-white/90 px-4 py-3 shadow-xl shadow-black/5">
+              <LogoMark company={company} theme={theme} />
+              <p className="text-xs font-black uppercase tracking-[0.22em]" style={{ color: theme.primary }}>
+                {company.site_badge_text || template?.conteudo?.badge || company.segmento || scene.eyebrow}
+              </p>
+            </div>
+
+            <h1 className="mt-8 max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.08em] sm:text-6xl lg:text-7xl">
+              {company.site_headline || template?.conteudo?.headline || company.nome}
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg font-bold leading-8 opacity-70">
+              {company.site_subheadline || template?.conteudo?.subheadline || scene.subtitle}
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a href={whats} className="rounded-2xl px-6 py-4 font-black text-white shadow-xl shadow-black/10" style={{ background: theme.primary }}>
+                {company.site_cta_text || scene.primaryLabel}
+              </a>
+              {showMarketplace && <a href="#catalogo" className="rounded-2xl border border-black/10 bg-white px-6 py-4 font-black shadow-sm" style={{ color: theme.primary }}>
+                {company.site_secondary_cta_text || scene.secondaryLabel}
+              </a>}
+            </div>
+          </div>
+
+          {company.site_banner_url ? (
+            <img src={company.site_banner_url} alt={company.nome} className="min-h-[420px] w-full rounded-[2.5rem] object-cover shadow-2xl shadow-black/15" />
+          ) : (
+            <PremiumSegmentArt company={company} template={template} theme={theme} products={products} />
+          )}
+        </div>
+      </Section>
+
+      {company.site_promo_active && (
+        <Section>
+          <div className="rounded-[2rem] p-6 text-white shadow-xl shadow-black/10 sm:p-8" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})` }}>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-white/70">Oferta em destaque</p>
+            <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]">{company.site_promo_title || 'Promoção especial'}</h2>
+            <p className="mt-3 max-w-3xl font-bold leading-7 text-white/80">{company.site_promo_text}</p>
+            <a href={showMarketplace ? '#catalogo' : whats} className="mt-5 inline-flex rounded-2xl bg-white px-5 py-3 font-black" style={{ color: theme.primary }}>
+              {company.site_promo_button_text || 'Aproveitar oferta'}
+            </a>
+          </div>
+        </Section>
+      )}
+
+      {company.site_show_benefits !== false && benefits.length > 0 && (
+        <Section>
+          <div className="mb-6">
+            <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Diferenciais</p>
+            <h2 className="mt-2 text-4xl font-black tracking-[-0.06em]">{company.site_trust_title || 'Por que escolher a gente?'}</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {benefits.map((item: any, index: number) => (
+              <div key={index} className="group rounded-[1.8rem] border border-black/5 bg-white p-6 shadow-xl shadow-black/5 transition hover:-translate-y-1">
+                <BenefitIcon theme={theme} index={index} />
+                <h3 className="mt-6 text-xl font-black tracking-[-0.03em]">{item.titulo}</h3>
+                <p className="mt-2 font-bold leading-7 opacity-65">{item.texto}</p>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {company.site_show_gallery !== false && gallery.length > 0 && (
+        <Section id="servicos">
+          <div className="mb-6">
+            <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Serviços</p>
+            <h2 className="mt-2 text-4xl font-black tracking-[-0.06em]">{company.site_services_title || 'O que fazemos'}</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {gallery.map((item: any, index: number) => (
+              <article key={index} className="overflow-hidden rounded-[1.9rem] border border-black/5 bg-white shadow-xl shadow-black/5">
+                <div className="relative h-48 overflow-hidden" style={{ background: `radial-gradient(circle at 20% 20%, ${theme.accent}aa, transparent 35%), linear-gradient(135deg, ${theme.primary}, #020617)` }}>
+                  <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/15 p-4 text-white backdrop-blur">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-white/65">{item.tipo || 'serviço'}</p>
+                    <p className="mt-1 text-lg font-black">{item.titulo}</p>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <p className="font-bold leading-7 opacity-65">{item.texto}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {showMarketplace && (
+        <Section id="catalogo">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Catálogo</p>
+              <h2 className="mt-2 text-4xl font-black tracking-[-0.06em]">{company.site_marketplace_title || 'Catálogo online'}</h2>
+              <p className="mt-3 max-w-2xl font-bold leading-7 opacity-65">{company.site_marketplace_subtitle || 'Escolha produtos, monte seu pedido e envie tudo organizado para atendimento.'}</p>
+            </div>
+            {company.site_enable_cart !== false && <button onClick={() => setCartOpen(true)} className="rounded-2xl px-5 py-4 font-black text-white shadow-xl shadow-black/10" style={{ background: theme.primary }}>
+              Ver carrinho ({cartCount})
+            </button>}
+          </div>
+
+          {featuredProducts.length > 0 && (
+            <div className="mb-6 rounded-[2rem] border border-black/5 bg-white p-5 shadow-xl shadow-black/5">
+              <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Destaques</p>
+              <div className="mt-4 grid gap-4 md:grid-cols-3">
+                {featuredProducts.map((product) => (
+                  <button key={product.id} onClick={() => addToCart(product)} className="rounded-[1.5rem] border border-black/5 bg-slate-50 p-4 text-left transition hover:-translate-y-1 hover:bg-white">
+                    <p className="font-black">{product.nome}</p>
+                    <p className="mt-1 text-sm font-bold opacity-55">{product.categoria || 'Produto'}</p>
+                    {company.site_show_prices !== false && <p className="mt-3 text-xl font-black" style={{ color: theme.primary }}>{moeda(product.preco)}</p>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {products.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {products.map((product) => (
+                <article key={product.id} className="overflow-hidden rounded-[1.9rem] border border-black/5 bg-white shadow-xl shadow-black/5">
+                  <ProductMedia product={product} theme={theme} />
+                  <div className="p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.2em] opacity-45">{product.categoria || 'Geral'}</p>
+                        <h3 className="mt-2 text-xl font-black tracking-[-0.03em]">{product.nome}</h3>
+                      </div>
+                      {product.destaque && <span className="rounded-full px-3 py-1 text-xs font-black text-white" style={{ background: theme.accent }}>Destaque</span>}
+                    </div>
+                    {product.descricao && <p className="mt-2 line-clamp-3 font-bold leading-7 opacity-65">{product.descricao}</p>}
+                    <div className="mt-5 flex items-center justify-between gap-3">
+                      <p className="text-2xl font-black" style={{ color: theme.primary }}>{company.site_show_prices === false ? 'Sob consulta' : moeda(product.preco || 0)}</p>
+                      <button onClick={() => addToCart(product)} className="rounded-2xl px-4 py-3 text-sm font-black text-white" style={{ background: theme.primary }}>
+                        {company.site_cart_button_text || (company.site_enable_cart === false ? 'Consultar' : 'Adicionar')}
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[2rem] border border-dashed border-black/10 bg-white p-8 text-center shadow-sm">
+              <h3 className="text-2xl font-black">Catálogo em preparação</h3>
+              <p className="mt-2 font-bold opacity-60">{company.site_empty_catalog_text || 'A empresa ainda está preparando o catálogo.'}</p>
+            </div>
+          )}
+        </Section>
+      )}
+
+      {company.site_show_about !== false && (
+        <Section id="sobre">
+          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Sobre</p>
+              <h2 className="mt-2 text-4xl font-black tracking-[-0.06em]">{company.site_about_title || 'Sobre a empresa'}</h2>
+            </div>
+            <p className="text-lg font-bold leading-9 opacity-70">{company.site_about_text || 'Empresa com atendimento profissional, produtos organizados e orçamento facilitado pelo Orçaly.'}</p>
+          </div>
+
+          {features.length > 0 && (
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {features.map((item: any, index: number) => (
+                <div key={index} className="rounded-[1.6rem] border border-black/5 bg-white p-5 shadow-xl shadow-black/5">
+                  <h3 className="text-lg font-black">{item.titulo}</h3>
+                  <p className="mt-2 font-bold leading-7 opacity-65">{item.texto}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {company.site_show_testimonials !== false && testimonials.length > 0 && (
+        <Section>
+          <div className="mb-6">
+            <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Depoimentos</p>
+            <h2 className="mt-2 text-4xl font-black tracking-[-0.06em]">Confiança antes do contato</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {testimonials.map((item: any, index: number) => (
+              <blockquote key={index} className="rounded-[1.7rem] border border-black/5 bg-white p-6 shadow-xl shadow-black/5">
+                <p className="text-lg font-bold leading-8 opacity-75">“{item.texto}”</p>
+                <footer className="mt-4 font-black" style={{ color: theme.primary }}>{item.nome}</footer>
+              </blockquote>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {company.site_show_faq !== false && faq.length > 0 && (
+        <Section>
+          <div className="mb-6">
+            <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: theme.primary }}>Dúvidas</p>
+            <h2 className="mt-2 text-4xl font-black tracking-[-0.06em]">Perguntas frequentes</h2>
+          </div>
+          <div className="grid gap-3">
+            {faq.map((item: any, index: number) => (
+              <details key={index} className="rounded-[1.3rem] border border-black/5 bg-white p-5 shadow-xl shadow-black/5">
+                <summary className="cursor-pointer font-black">{item.pergunta}</summary>
+                <p className="mt-3 font-bold leading-7 opacity-70">{item.resposta}</p>
+              </details>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      <Section id="contato">
+        <div className="rounded-[2rem] p-7 text-white shadow-2xl shadow-black/20 sm:p-10" style={{ background: `linear-gradient(135deg, ${theme.primary}, #020617)` }}>
+          <p className="text-sm font-black uppercase tracking-[0.2em] text-white/60">Contato</p>
+          <h2 className="mt-2 text-4xl font-black tracking-[-0.06em]">{company.site_contact_title || 'Fale conosco'}</h2>
+          <p className="mt-3 max-w-2xl font-bold leading-8 text-white/70">
+            {company.marketplace_endereco || company.atendimento_horario || company.atendimento_observacao || 'Chame no WhatsApp para tirar dúvidas, pedir orçamento ou combinar detalhes.'}
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {[...payments, ...delivery].slice(0, 8).map((item: string) => (
+              <span key={item} className="rounded-full bg-white/10 px-4 py-2 text-xs font-black text-white/80">{item}</span>
+            ))}
+          </div>
+          <a href={whats} className="mt-7 inline-flex rounded-2xl bg-white px-6 py-4 font-black" style={{ color: theme.primary }}>
+            Chamar no WhatsApp
+          </a>
+        </div>
+      </Section>
+
+      <footer className="border-t border-black/5 bg-white/70 px-4 py-8 text-center text-sm font-bold opacity-60">
+        {company.site_footer_text || `${company.nome} • Site criado com Orçaly`}
+      </footer>
+
+      {cartOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 p-3 backdrop-blur-sm sm:p-5">
+          <div className="ml-auto flex h-full max-w-xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-black/5 p-5">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] opacity-45">Pedido</p>
+                <h3 className="text-2xl font-black tracking-[-0.04em]">Seu carrinho</h3>
+              </div>
+              <button onClick={() => setCartOpen(false)} className="rounded-2xl border border-black/10 px-4 py-3 font-black">Fechar</button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              {cart.length === 0 ? (
+                <div className="rounded-[1.5rem] bg-slate-50 p-6 text-center">
+                  <p className="font-black">Carrinho vazio</p>
+                  <p className="mt-2 text-sm font-bold opacity-60">Adicione produtos do catálogo para continuar.</p>
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {cart.map((line) => (
+                    <div key={line.product.id} className="rounded-[1.5rem] border border-black/5 bg-slate-50 p-4">
+                      <div className="flex justify-between gap-3">
+                        <div>
+                          <p className="font-black">{line.product.nome}</p>
+                          {company.site_show_prices !== false && <p className="mt-1 text-sm font-bold opacity-55">{moeda(line.product.preco)} cada</p>}
+                        </div>
+                        <button onClick={() => removeFromCart(line.product.id)} className="text-sm font-black text-red-600">Remover</button>
+                      </div>
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => changeQuantity(line.product.id, -1)} className="grid h-9 w-9 place-items-center rounded-xl bg-white font-black">-</button>
+                          <span className="w-8 text-center font-black">{line.quantidade}</span>
+                          <button onClick={() => changeQuantity(line.product.id, 1)} className="grid h-9 w-9 place-items-center rounded-xl bg-white font-black">+</button>
+                        </div>
+                        {company.site_show_prices !== false && <p className="font-black" style={{ color: theme.primary }}>{moeda(line.product.preco * line.quantidade)}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {company.site_enable_coupons !== false && company.site_show_prices !== false && (
+                <div className="mt-5 rounded-[1.5rem] border border-black/5 bg-white p-4 shadow-sm">
+                  <p className="font-black">Cupom de desconto</p>
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      value={couponCode}
+                      onChange={(event) => setCouponCode(event.target.value.toUpperCase())}
+                      placeholder="EX: PRIMEIRA10"
+                      className="min-w-0 flex-1 rounded-2xl border border-black/10 px-4 py-3 font-bold outline-none"
+                    />
+                    <button onClick={applyCoupon} className="rounded-2xl px-4 py-3 font-black text-white" style={{ background: theme.primary }}>Aplicar</button>
+                  </div>
+                  {couponMessage && <p className={`mt-2 text-sm font-bold ${coupon ? 'text-emerald-600' : 'text-red-600'}`}>{couponMessage}</p>}
+                </div>
+              )}
+
+              <div className="mt-5 grid gap-3 rounded-[1.5rem] border border-black/5 bg-slate-50 p-4">
+                <input value={cliente.nome} onChange={(event) => setCliente({ ...cliente, nome: event.target.value })} placeholder="Seu nome" className="rounded-2xl border border-black/10 px-4 py-3 font-bold outline-none" />
+                <input value={cliente.telefone} onChange={(event) => setCliente({ ...cliente, telefone: event.target.value })} placeholder="WhatsApp" className="rounded-2xl border border-black/10 px-4 py-3 font-bold outline-none" />
+                <input value={cliente.endereco} onChange={(event) => setCliente({ ...cliente, endereco: event.target.value })} placeholder="Endereço ou bairro, se tiver entrega" className="rounded-2xl border border-black/10 px-4 py-3 font-bold outline-none" />
+                <textarea value={cliente.observacoes} onChange={(event) => setCliente({ ...cliente, observacoes: event.target.value })} placeholder="Observações do pedido" rows={3} className="resize-none rounded-2xl border border-black/10 px-4 py-3 font-bold outline-none" />
+              </div>
+
+              {orderError && <div className="mt-4 rounded-2xl bg-red-50 p-4 font-bold text-red-700">{orderError}</div>}
+              {orderMessage && <div className="mt-4 rounded-2xl bg-emerald-50 p-4 font-bold text-emerald-700">{orderMessage}</div>}
+            </div>
+
+            <div className="border-t border-black/5 p-5">
+              {company.site_show_prices !== false ? (
+                <div className="space-y-2">
+                  <div className="flex justify-between font-bold opacity-65"><span>Subtotal</span><span>{moeda(subtotal)}</span></div>
+                  <div className="flex justify-between font-bold text-emerald-600"><span>Desconto</span><span>-{moeda(desconto)}</span></div>
+                  <div className="flex justify-between text-2xl font-black"><span>Total</span><span>{moeda(total)}</span></div>
+                </div>
+              ) : (
+                <p className="font-bold opacity-65">Os valores serão confirmados no atendimento.</p>
+              )}
+              <button
+                onClick={finishOrder}
+                disabled={sendingOrder || cart.length === 0}
+                className="mt-4 w-full rounded-2xl px-6 py-4 font-black text-white disabled:opacity-60"
+                style={{ background: theme.primary }}
+              >
+                {sendingOrder ? 'Enviando pedido...' : (company.site_checkout_button_text || 'Finalizar pedido')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
+  )
+}

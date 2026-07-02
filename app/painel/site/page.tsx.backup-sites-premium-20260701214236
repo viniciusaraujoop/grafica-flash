@@ -1,0 +1,855 @@
+'use client'
+
+import { FormEvent, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import { siteTemplates } from '@/lib/orcaly-site-templates'
+import { getAccessTokenClient } from '@/lib/current-company-client'
+
+type Tab = 'templates' | 'visual' | 'hero' | 'conteudo' | 'secoes' | 'catalogo' | 'comercial' | 'seo' | 'preview'
+
+function help(title: string, text: string) {
+  return (
+    <div className="mb-2">
+      <p className="text-sm font-black text-[#071b3a]">{title}</p>
+      <p className="mt-1 text-xs font-bold leading-5 text-slate-500">{text}</p>
+    </div>
+  )
+}
+
+function Input({ label, description, value, onChange, placeholder, type = 'text' }: { label: string; description: string; value: any; onChange: (value: string) => void; placeholder?: string; type?: string }) {
+  return (
+    <label className="block">
+      {help(label, description)}
+      <input
+        type={type}
+        value={value || ''}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 font-bold text-[#071b3a] outline-none transition focus:border-[#05245c]"
+      />
+    </label>
+  )
+}
+
+function TextArea({ label, description, value, onChange, rows = 4 }: { label: string; description: string; value: any; onChange: (value: string) => void; rows?: number }) {
+  return (
+    <label className="block">
+      {help(label, description)}
+      <textarea
+        value={value || ''}
+        onChange={(event) => onChange(event.target.value)}
+        rows={rows}
+        className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-4 font-bold leading-7 text-[#071b3a] outline-none transition focus:border-[#05245c]"
+      />
+    </label>
+  )
+}
+
+function Select({ label, description, value, onChange, options }: { label: string; description: string; value: any; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
+  return (
+    <label>
+      {help(label, description)}
+      <select value={value || ''} onChange={(event) => onChange(event.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 font-bold outline-none focus:border-[#05245c]">
+        {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+    </label>
+  )
+}
+
+function Toggle({ checked, label, description, onChange }: { checked: boolean; label: string; description: string; onChange: (value: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`rounded-2xl border p-4 text-left transition ${checked ? 'border-[#05245c] bg-blue-50' : 'border-slate-200 bg-white'}`}
+    >
+      <p className="font-black text-[#071b3a]">{label}</p>
+      <p className="mt-1 text-xs font-bold leading-5 text-slate-500">{description}</p>
+      <p className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-black ${checked ? 'bg-[#05245c] text-white' : 'bg-slate-100 text-slate-500'}`}>
+        {checked ? 'Ativo' : 'Desativado'}
+      </p>
+    </button>
+  )
+}
+
+function TabButton({ active, title, onClick }: { active: boolean; title: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className={`rounded-2xl px-4 py-3 text-left text-sm font-black transition ${active ? 'bg-[#05245c] text-white shadow-xl shadow-blue-950/10' : 'bg-white text-[#071b3a] hover:bg-blue-50'}`}>
+      {title}
+    </button>
+  )
+}
+
+function updateArrayItem(list: any[], index: number, key: string, value: string) {
+  const clone = Array.isArray(list) ? [...list] : []
+  clone[index] = { ...(clone[index] || {}), [key]: value }
+  return clone
+}
+
+
+function ImageUploadField({
+  label,
+  description,
+  value,
+  uploading,
+  onSelectFile,
+  onClear,
+}: {
+  label: string
+  description: string
+  value?: string
+  uploading?: boolean
+  onSelectFile: (file: File | null) => void
+  onClear: () => void
+}) {
+  const inputId = `site-image-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+
+  return (
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
+      {help(label, description)}
+
+      {value ? (
+        <div className="mb-4 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+          <img src={value} alt={label} className="h-44 w-full object-contain p-3" />
+        </div>
+      ) : (
+        <div className="mb-4 grid h-44 place-items-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-center">
+          <div>
+            <p className="font-black text-[#071b3a]">Nenhuma imagem enviada</p>
+            <p className="mt-1 text-xs font-bold text-slate-500">PNG, JPG, WEBP ou GIF até 10MB.</p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <label htmlFor={inputId} className="cursor-pointer rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-950/10">
+          {uploading ? 'Enviando...' : value ? 'Trocar imagem' : 'Escolher da galeria'}
+        </label>
+
+        {value ? (
+          <button type="button" onClick={onClear} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-red-600">
+            Remover
+          </button>
+        ) : null}
+      </div>
+
+      <input
+        id={inputId}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        disabled={uploading}
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0] || null
+          onSelectFile(file)
+          event.currentTarget.value = ''
+        }}
+        className="hidden"
+      />
+    </div>
+  )
+}
+
+function PremiumPreview({ form, company, template }: { form: any; company: any; template: any }) {
+  const primary = form.site_primary_color || template?.paleta?.primary || '#05245c'
+  const accent = form.site_accent_color || template?.paleta?.accent || '#22c55e'
+  const background = form.site_background_color || template?.paleta?.background || '#f5f8ff'
+  const title = form.site_headline || template?.conteudo?.headline || 'Título principal'
+  const subtitle = form.site_subheadline || template?.conteudo?.subheadline || 'Subtítulo do site'
+  const nome = form.nome || company?.nome || 'Sua empresa'
+
+  return (
+    <aside className="hidden xl:block xl:sticky xl:top-6 xl:self-start">
+      <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-2xl shadow-blue-950/10">
+        <div className="border-b border-blue-50 p-4">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Prévia premium</p>
+          <p className="mt-1 text-sm font-bold text-slate-500">A prévia mostra a direção visual do site publicado.</p>
+        </div>
+        <div className="bg-slate-100 p-3">
+          <div className="overflow-hidden rounded-[1.6rem] bg-white text-[10px] shadow-xl" style={{ color: form.site_text_color || '#071b3a' }}>
+            <div className="flex items-center justify-between border-b border-black/5 bg-white/90 p-3">
+              <div className="flex items-center gap-2">
+                {form.logo_url ? (
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+                    <img src={form.logo_url} alt={nome} className="max-h-[78%] max-w-[78%] object-contain" />
+                  </span>
+                ) : (
+                  <span className="grid h-9 w-9 place-items-center rounded-xl font-black text-white" style={{ background: primary }}>{nome.slice(0, 1)}</span>
+                )}
+                <div>
+                  <p className="text-xs font-black">{nome}</p>
+                  <p className="text-[9px] font-bold opacity-50">{form.cidade || template?.segmento || 'Atendimento online'}</p>
+                </div>
+              </div>
+              <span className="rounded-xl px-3 py-2 text-[9px] font-black text-white" style={{ background: primary }}>{form.site_cta_text || 'Atendimento'}</span>
+            </div>
+
+            <div className="p-4" style={{ background }}>
+              <div className="grid gap-3">
+                <div className="rounded-[1.5rem] bg-white p-4 shadow-sm">
+                  <span className="rounded-full px-3 py-1 text-[8px] font-black uppercase tracking-[0.15em] text-white" style={{ background: primary }}>
+                    {form.site_badge_text || template?.conteudo?.badge || 'Site premium'}
+                  </span>
+                  <h3 className="mt-4 text-2xl font-black leading-none tracking-[-0.06em]">{title}</h3>
+                  <p className="mt-3 text-[11px] font-bold leading-5 opacity-65">{subtitle}</p>
+                </div>
+
+                <div className="rounded-[1.5rem] p-4 text-white" style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }}>
+                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/60">Arte por segmento</p>
+                  <p className="mt-2 text-lg font-black tracking-[-0.04em]">{template?.nome || 'Modelo do ramo'}</p>
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    {Array.from({ length: 3 }).map((_, index) => <span key={index} className="h-16 rounded-xl bg-white/18" />)}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {(form.site_benefits || []).slice(0, 3).map((item: any, index: number) => (
+                    <div key={index} className="rounded-2xl bg-white p-3 shadow-sm">
+                      <span className="block h-8 w-8 rounded-xl" style={{ background: `${primary}20` }} />
+                      <p className="mt-2 text-[9px] font-black leading-3">{item.titulo || 'Benefício'}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {form.site_show_marketplace !== false && (
+                  <div className="rounded-[1.5rem] bg-white p-4 shadow-sm">
+                    <p className="text-xs font-black">{form.site_marketplace_title || 'Catálogo online'}</p>
+                    <p className="mt-1 text-[10px] font-bold opacity-55">{form.site_marketplace_subtitle || 'Produtos e pedido organizado.'}</p>
+                    <div className="mt-3 flex gap-2">
+                      <span className="rounded-xl px-3 py-2 text-[9px] font-black text-white" style={{ background: primary }}>{form.site_cart_button_text || 'Adicionar'}</span>
+                      {form.site_enable_coupons !== false && <span className="rounded-xl bg-emerald-50 px-3 py-2 text-[9px] font-black text-emerald-700">Cupom</span>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+export default function PainelSitePremiumTotalPage() {
+  const [tab, setTab] = useState<Tab>('templates')
+  const [token, setToken] = useState('')
+  const [company, setCompany] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+  const [erro, setErro] = useState('')
+  const [selectedTemplate, setSelectedTemplate] = useState('grafica')
+  const [uploadingImage, setUploadingImage] = useState('')
+
+  const [form, setForm] = useState<any>({
+    site_publico_ativo: true,
+    logo_url: '',
+    site_template: 'grafica',
+    site_hero_style: 'premium-showcase',
+    site_art_variant: 'auto',
+    site_section_style: 'soft-premium',
+    site_product_card_style: 'premium',
+    site_nav_variant: 'clean',
+    site_corner_style: 'rounded',
+    site_density: 'comfortable',
+    site_primary_color: '#05245c',
+    site_accent_color: '#22c55e',
+    site_background_color: '#f5f8ff',
+    site_text_color: '#071b3a',
+    site_card_color: '#ffffff',
+    site_badge_text: '',
+    site_headline: '',
+    site_subheadline: '',
+    site_cta_text: 'Pedir orçamento',
+    site_secondary_cta_text: 'Ver catálogo',
+    site_banner_url: '',
+    site_whatsapp_message: '',
+    site_about_title: '',
+    site_about_text: '',
+    site_services_title: '',
+    site_contact_title: '',
+    site_show_marketplace: true,
+    site_show_store: true,
+    site_show_about: true,
+    site_show_contact: true,
+    site_show_featured: true,
+    site_show_faq: true,
+    site_show_testimonials: true,
+    site_show_gallery: true,
+    site_show_benefits: true,
+    site_enable_cart: true,
+    site_enable_coupons: true,
+    site_show_prices: true,
+    site_checkout_mode: 'cart',
+    site_marketplace_title: 'Catálogo online',
+    site_marketplace_subtitle: 'Escolha produtos, monte seu pedido e envie tudo organizado para atendimento.',
+    site_cart_button_text: 'Adicionar',
+    site_checkout_button_text: 'Finalizar pedido',
+    site_empty_catalog_text: 'A empresa ainda está preparando o catálogo.',
+    site_trust_title: 'Por que escolher a gente?',
+    site_features: [],
+    site_benefits: [],
+    site_faq: [],
+    site_testimonials: [],
+    site_gallery: [],
+    site_custom_sections: [],
+    site_brand_words: [],
+    site_seo_title: '',
+    site_seo_description: '',
+    site_keywords: [],
+    site_promo_title: '',
+    site_promo_text: '',
+    site_promo_active: false,
+    site_promo_button_text: 'Aproveitar oferta',
+    site_payment_methods: [],
+    site_delivery_options: [],
+    site_footer_text: '',
+    marketplace_endereco: '',
+    marketplace_mapa_url: '',
+    atendimento_horario: '',
+    atendimento_observacao: '',
+    instagram: '',
+    whatsapp: '',
+    cidade: '',
+    estado: '',
+    slug: '',
+  })
+
+  const templateAtual = useMemo(() => {
+    return siteTemplates.find((template) => template.id === selectedTemplate) || siteTemplates[0]
+  }, [selectedTemplate])
+
+  function update(field: string, value: any) {
+    setForm((current: any) => ({ ...current, [field]: value }))
+  }
+
+  async function uploadSiteImage(field: 'logo_url' | 'site_banner_url', purpose: 'logo' | 'banner', file: File | null) {
+    if (!file) return
+
+    setErro('')
+    setMessage('')
+    setUploadingImage(purpose)
+
+    try {
+      const body = new FormData()
+      body.append('file', file)
+      body.append('purpose', purpose)
+
+      const response = await fetch('/api/site/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body,
+      })
+
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Erro ao enviar imagem.')
+      }
+
+      update(field, payload.url)
+      setMessage(purpose === 'logo' ? 'Logo enviada com sucesso.' : 'Banner enviado com sucesso.')
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Erro ao enviar imagem.')
+    }
+
+    setUploadingImage('')
+  }
+
+  function normalizeSiteSlug(value: string) {
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\\u0300-\\u036f]/g, '')
+      .replace(/ç/g, 'c')
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 45)
+  }
+
+  async function updateSiteSlug() {
+    setErro('')
+    setMessage('')
+
+    const slug = normalizeSiteSlug(form.slug || '')
+
+    if (slug.length < 3) {
+      setErro('O link precisa ter pelo menos 3 caracteres.')
+      return
+    }
+
+    const response = await fetch('/api/site/slug', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ slug }),
+    })
+
+    const payload = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      setErro(payload.error || 'Erro ao atualizar link do site.')
+      return
+    }
+
+    update('slug', payload.slug)
+    setCompany((current: any) => ({ ...(current || {}), slug: payload.slug }))
+    setMessage('Link do site atualizado com sucesso.')
+  }
+
+  async function load() {
+    setLoading(true)
+    setErro('')
+    setMessage('')
+
+    try {
+      const accessToken = await getAccessTokenClient()
+      setToken(accessToken)
+
+      const response = await fetch('/api/site/settings', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+
+      const payload = await response.json()
+
+      if (!response.ok) throw new Error(payload.error || 'Erro ao carregar site.')
+
+      const data = payload.company || {}
+      setCompany(data)
+      setSelectedTemplate(data.site_template || data.modelo_negocio || 'grafica')
+      setForm((current: any) => ({ ...current, ...data }))
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Erro ao carregar configurações.')
+    }
+
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    load()
+  }, [])
+
+  async function save(event?: FormEvent) {
+    event?.preventDefault()
+    setSaving(true)
+    setErro('')
+    setMessage('')
+
+    const response = await fetch('/api/site/settings', {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(form),
+    })
+
+    const payload = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      setErro(payload.error || 'Erro ao salvar site.')
+      setSaving(false)
+      return
+    }
+
+    setCompany(payload.company)
+    setForm((current: any) => ({ ...current, ...payload.company }))
+    setMessage('Site salvo com sucesso.')
+    setSaving(false)
+  }
+
+  async function applyTemplate(templateId: string) {
+    setSaving(true)
+    setErro('')
+    setMessage('')
+
+    const response = await fetch('/api/site/settings', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        template: templateId,
+        site_hero_style: form.site_hero_style,
+        site_art_variant: form.site_art_variant,
+        site_section_style: form.site_section_style,
+        site_product_card_style: form.site_product_card_style,
+      }),
+    })
+
+    const payload = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      setErro(payload.error || 'Erro ao aplicar template.')
+      setSaving(false)
+      return
+    }
+
+    setCompany(payload.company)
+    setForm((current: any) => ({ ...current, ...payload.company }))
+    setSelectedTemplate(templateId)
+    setMessage('Template aplicado com visual premium e configurações de catálogo.')
+    setSaving(false)
+  }
+
+  function addArray(field: string, item: any) {
+    update(field, [...(Array.isArray(form[field]) ? form[field] : []), item])
+  }
+
+  function removeArray(field: string, index: number) {
+    update(field, (Array.isArray(form[field]) ? form[field] : []).filter((_: any, i: number) => i !== index))
+  }
+
+  if (loading) {
+    return <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff]"><div className="rounded-[2rem] bg-white p-8 font-black shadow-xl">Carregando configuração do site...</div></main>
+  }
+
+  return (
+    <main className="min-h-screen overflow-x-hidden bg-[#f5f8ff] px-4 py-6 text-[#071b3a]">
+      <section className="mx-auto max-w-7xl space-y-6">
+        <header className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5 sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <Link href="/painel" className="text-sm font-black text-[#05245c]">← Voltar ao painel</Link>
+              <h1 className="mt-4 text-4xl font-black tracking-[-0.05em] sm:text-5xl">Editor premium do site</h1>
+              <p className="mt-3 max-w-3xl font-bold leading-7 text-slate-500">
+                Controle textos, visual, seções, catálogo, carrinho, cupons e estilo automático por segmento sem ficar preso naquele visual genérico com cara de IA cansada.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {company?.slug && <a href={`/site/${company.slug}`} target="_blank" rel="noreferrer" className="rounded-2xl border border-blue-100 bg-white px-5 py-3 text-sm font-black text-[#05245c]">Abrir site</a>}
+              <Link href="/painel/cupons" className="rounded-2xl border border-blue-100 bg-white px-5 py-3 text-sm font-black text-[#05245c]">Cupons</Link>
+              <button onClick={() => save()} disabled={saving} className="rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white disabled:opacity-60">
+                {saving ? 'Salvando...' : 'Salvar site'}
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {message && <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 font-bold text-emerald-700">{message}</div>}
+        {erro && <div className="rounded-2xl border border-red-100 bg-red-50 p-4 font-bold text-red-700">{erro}</div>}
+
+        <div className="grid gap-6 xl:grid-cols-[250px_1fr_360px]">
+          <aside className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-xl shadow-blue-950/5 xl:sticky xl:top-6 xl:self-start">
+            <div className="mb-4 rounded-[1.5rem] bg-[#f5f8ff] p-4">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Editor</p>
+              <p className="mt-2 text-lg font-black">Controle total</p>
+            </div>
+
+            <div className="grid gap-2">
+              <TabButton active={tab === 'templates'} onClick={() => setTab('templates')} title="Templates" />
+              <TabButton active={tab === 'visual'} onClick={() => setTab('visual')} title="Visual" />
+              <TabButton active={tab === 'hero'} onClick={() => setTab('hero')} title="Capa" />
+              <TabButton active={tab === 'conteudo'} onClick={() => setTab('conteudo')} title="Textos" />
+              <TabButton active={tab === 'secoes'} onClick={() => setTab('secoes')} title="Seções" />
+              <TabButton active={tab === 'catalogo'} onClick={() => setTab('catalogo')} title="Catálogo" />
+              <TabButton active={tab === 'comercial'} onClick={() => setTab('comercial')} title="Comercial" />
+              <TabButton active={tab === 'seo'} onClick={() => setTab('seo')} title="SEO" />
+              <TabButton active={tab === 'preview'} onClick={() => setTab('preview')} title="Prévia" />
+            </div>
+          </aside>
+
+          <form onSubmit={save} className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5 sm:p-6">
+            {tab === 'templates' && (
+              <div className="space-y-6">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Sites pré-prontos</p>
+                  <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]">Escolha o segmento</h2>
+                  <p className="mt-2 max-w-3xl font-bold leading-7 text-slate-500">Cada segmento aplica textos, cores, blocos e arte premium própria. Nada de escrever “real-estate” na tela igual etiqueta esquecida.</p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {siteTemplates.map((template) => (
+                    <button
+                      key={template.id}
+                      type="button"
+                      onClick={() => setSelectedTemplate(template.id)}
+                      className={`rounded-[1.6rem] border p-4 text-left transition hover:-translate-y-1 ${selectedTemplate === template.id ? 'border-[#05245c] bg-blue-50 shadow-xl shadow-blue-950/10' : 'border-slate-200 bg-white'}`}
+                    >
+                      <div className="h-24 rounded-[1.2rem]" style={{ background: `linear-gradient(135deg, ${template.paleta.primary}, ${template.paleta.accent})` }} />
+                      <p className="mt-4 text-lg font-black">{template.nome}</p>
+                      <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{template.descricao}</p>
+                    </button>
+                  ))}
+                </div>
+
+                <button type="button" onClick={() => applyTemplate(selectedTemplate)} disabled={saving} className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white disabled:opacity-60">
+                  Aplicar template selecionado
+                </button>
+              </div>
+            )}
+
+            {tab === 'visual' && (
+              <div className="grid gap-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Aparência</p>
+                  <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]">Identidade visual do site</h2>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <ImageUploadField
+                    label="Logo da empresa"
+                    description="Clique para enviar a logo direto da galeria/arquivo do computador. Ela aparece no topo, capa e rodapé."
+                    value={form.logo_url}
+                    uploading={uploadingImage === 'logo'}
+                    onSelectFile={(file) => uploadSiteImage('logo_url', 'logo', file)}
+                    onClear={() => update('logo_url', '')}
+                  />
+                  <ImageUploadField
+                    label="Banner da capa"
+                    description="Clique para enviar uma imagem de destaque. Se deixar vazio, o Orçaly usa a arte automática do segmento."
+                    value={form.site_banner_url}
+                    uploading={uploadingImage === 'banner'}
+                    onSelectFile={(file) => uploadSiteImage('site_banner_url', 'banner', file)}
+                    onClear={() => update('site_banner_url', '')}
+                  />
+                  <Input label="Cor principal" description="Botões, destaques e blocos fortes." value={form.site_primary_color} onChange={(v) => update('site_primary_color', v)} />
+                  <Input label="Cor de destaque" description="Detalhes, selos e gradientes." value={form.site_accent_color} onChange={(v) => update('site_accent_color', v)} />
+                  <Input label="Cor de fundo" description="Fundo geral do site." value={form.site_background_color} onChange={(v) => update('site_background_color', v)} />
+                  <Input label="Cor do texto" description="Texto principal. Prefira cor escura." value={form.site_text_color} onChange={(v) => update('site_text_color', v)} />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Select label="Estilo da arte automática" description="Controla a arte pré-definida quando não há banner." value={form.site_hero_style} onChange={(v) => update('site_hero_style', v)} options={[
+                    { value: 'premium-showcase', label: 'Vitrine premium' },
+                    { value: 'editorial', label: 'Editorial elegante' },
+                    { value: 'minimal', label: 'Minimalista' },
+                    { value: 'bold', label: 'Impacto forte' },
+                  ]} />
+                  <Select label="Densidade" description="Espaçamento visual do site." value={form.site_density} onChange={(v) => update('site_density', v)} options={[
+                    { value: 'compact', label: 'Compacto' },
+                    { value: 'comfortable', label: 'Confortável' },
+                    { value: 'spacious', label: 'Espaçoso' },
+                  ]} />
+                  <Select label="Estilo dos cards" description="Como produtos e blocos aparecem." value={form.site_product_card_style} onChange={(v) => update('site_product_card_style', v)} options={[
+                    { value: 'premium', label: 'Premium com sombra' },
+                    { value: 'clean', label: 'Limpo' },
+                    { value: 'bordered', label: 'Contornado' },
+                  ]} />
+                  <Select label="Navegação" description="Estilo do topo." value={form.site_nav_variant} onChange={(v) => update('site_nav_variant', v)} options={[
+                    { value: 'clean', label: 'Limpa' },
+                    { value: 'floating', label: 'Flutuante' },
+                    { value: 'solid', label: 'Sólida' },
+                  ]} />
+                </div>
+              </div>
+            )}
+
+            {tab === 'hero' && (
+              <div className="grid gap-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Capa do site</p>
+                  <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]">Primeira impressão</h2>
+                </div>
+
+                <Input label="Selo acima do título" description="Frase curta de posicionamento." value={form.site_badge_text} onChange={(v) => update('site_badge_text', v)} />
+                <Input label="Título principal" description="Promessa central do site." value={form.site_headline} onChange={(v) => update('site_headline', v)} />
+                <TextArea label="Subtítulo" description="Explique o que a empresa faz e como o cliente segue." value={form.site_subheadline} onChange={(v) => update('site_subheadline', v)} />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Input label="Botão principal" description="CTA principal." value={form.site_cta_text} onChange={(v) => update('site_cta_text', v)} />
+                  <Input label="Botão secundário" description="CTA para catálogo ou seção." value={form.site_secondary_cta_text} onChange={(v) => update('site_secondary_cta_text', v)} />
+                </div>
+                <TextArea label="Palavras da marca" description="Separadas por vírgula. Aparecem como etiquetas na arte automática." value={(form.site_brand_words || []).join(', ')} onChange={(v) => update('site_brand_words', v.split(',').map((item) => item.trim()).filter(Boolean))} />
+              </div>
+            )}
+
+            {tab === 'conteudo' && (
+              <div className="grid gap-5">
+                <Input label="Título do Sobre" description="Nome da seção institucional." value={form.site_about_title} onChange={(v) => update('site_about_title', v)} />
+                <TextArea label="Texto do Sobre" description="Conte diferenciais, região, processo e estilo de atendimento." value={form.site_about_text} onChange={(v) => update('site_about_text', v)} />
+                <Input label="Título dos serviços" description="Título da seção de serviços/galeria." value={form.site_services_title} onChange={(v) => update('site_services_title', v)} />
+                <Input label="Título de contato" description="Título da chamada final." value={form.site_contact_title} onChange={(v) => update('site_contact_title', v)} />
+                <TextArea label="Texto do rodapé" description="Texto opcional no final do site." value={form.site_footer_text} onChange={(v) => update('site_footer_text', v)} />
+              </div>
+            )}
+
+            {tab === 'secoes' && (
+              <div className="space-y-6">
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  <Toggle checked={!!form.site_show_benefits} label="Benefícios" description="Mostra diferenciais sem números feios." onChange={(v) => update('site_show_benefits', v)} />
+                  <Toggle checked={!!form.site_show_gallery} label="Serviços/Galeria" description="Mostra blocos visuais do ramo." onChange={(v) => update('site_show_gallery', v)} />
+                  <Toggle checked={!!form.site_show_about} label="Sobre" description="Mostra seção institucional." onChange={(v) => update('site_show_about', v)} />
+                  <Toggle checked={!!form.site_show_faq} label="FAQ" description="Dúvidas frequentes." onChange={(v) => update('site_show_faq', v)} />
+                  <Toggle checked={!!form.site_show_testimonials} label="Depoimentos" description="Prova social." onChange={(v) => update('site_show_testimonials', v)} />
+                  <Toggle checked={!!form.site_promo_active} label="Promoção" description="Faixa promocional." onChange={(v) => update('site_promo_active', v)} />
+                </div>
+
+                <Input label="Título dos diferenciais" description="Ex: Por que escolher a gente?" value={form.site_trust_title} onChange={(v) => update('site_trust_title', v)} />
+
+                {[
+                  ['site_benefits', 'Benefícios', { titulo: '', texto: '' }, ['titulo', 'texto']],
+                  ['site_gallery', 'Serviços / artes do ramo', { titulo: '', texto: '', tipo: '' }, ['titulo', 'texto', 'tipo']],
+                  ['site_faq', 'Perguntas frequentes', { pergunta: '', resposta: '' }, ['pergunta', 'resposta']],
+                  ['site_testimonials', 'Depoimentos', { nome: '', texto: '' }, ['nome', 'texto']],
+                ].map(([field, title, empty, keys]) => (
+                  <div key={field as string} className="rounded-[1.8rem] bg-[#f5f8ff] p-5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-black">{title as string}</h3>
+                      <button type="button" onClick={() => addArray(field as string, empty)} className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-[#05245c]">Adicionar</button>
+                    </div>
+                    <div className="mt-4 grid gap-3">
+                      {(Array.isArray(form[field as string]) ? form[field as string] : []).map((item: any, index: number) => (
+                        <div key={index} className="rounded-2xl bg-white p-4">
+                          <div className="grid gap-3 md:grid-cols-2">
+                            {(keys as string[]).map((key) => (
+                              <input
+                                key={key}
+                                value={String(item[key] || '')}
+                                onChange={(event) => update(field as string, updateArrayItem(form[field as string], index, key, event.target.value))}
+                                placeholder={key}
+                                className="rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none"
+                              />
+                            ))}
+                          </div>
+                          <button type="button" onClick={() => removeArray(field as string, index)} className="mt-3 text-sm font-black text-red-600">Remover</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {tab === 'catalogo' && (
+              <div className="grid gap-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#05245c]">Catálogo e pedido</p>
+                  <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]">Controle do catálogo público</h2>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Toggle checked={form.site_show_marketplace !== false} label="Mostrar catálogo" description="Liga/desliga a seção de produtos." onChange={(v) => update('site_show_marketplace', v)} />
+                  <Toggle checked={form.site_enable_cart !== false} label="Carrinho" description="Cliente monta pedido antes de enviar." onChange={(v) => update('site_enable_cart', v)} />
+                  <Toggle checked={form.site_enable_coupons !== false} label="Cupons" description="Permite aplicar cupom no carrinho." onChange={(v) => update('site_enable_coupons', v)} />
+                  <Toggle checked={form.site_show_prices !== false} label="Mostrar preços" description="Se desligar, produtos ficam sob consulta." onChange={(v) => update('site_show_prices', v)} />
+                </div>
+
+                <Input label="Título do catálogo" description="Ex: Catálogo online, Imóveis em destaque, Cardápio." value={form.site_marketplace_title} onChange={(v) => update('site_marketplace_title', v)} />
+                <TextArea label="Subtítulo do catálogo" description="Explique como o cliente deve usar a seção." value={form.site_marketplace_subtitle} onChange={(v) => update('site_marketplace_subtitle', v)} />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Input label="Botão do produto" description="Ex: Adicionar, Tenho interesse, Consultar." value={form.site_cart_button_text} onChange={(v) => update('site_cart_button_text', v)} />
+                  <Input label="Botão de finalizar" description="Ex: Finalizar pedido, Solicitar atendimento." value={form.site_checkout_button_text} onChange={(v) => update('site_checkout_button_text', v)} />
+                </div>
+                <TextArea label="Texto de catálogo vazio" description="Mensagem quando não há produtos publicados." value={form.site_empty_catalog_text} onChange={(v) => update('site_empty_catalog_text', v)} />
+                <Link href="/painel/cupons" className="inline-flex w-fit rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white">Gerenciar cupons</Link>
+              </div>
+            )}
+
+            {tab === 'comercial' && (
+              <div className="grid gap-5">
+                <div className="rounded-[1.5rem] border border-blue-100 bg-[#f5f8ff] p-5">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-black text-[#071b3a]">Link público do site</p>
+                      <p className="mt-1 text-xs font-bold leading-5 text-slate-500">
+                        Escolha o endereço da empresa. Exemplo: empresa1.orcaly.com.br. Use letras, números e hífen.
+                      </p>
+
+                      <div className="mt-3 flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white sm:flex-row sm:items-center">
+                        <span className="border-b border-slate-100 px-4 py-4 text-sm font-black text-slate-400 sm:border-b-0 sm:border-r">
+                          https://
+                        </span>
+                        <input
+                          value={form.slug || ''}
+                          onChange={(event) => update('slug', normalizeSiteSlug(event.target.value))}
+                          placeholder="empresa1"
+                          className="min-w-0 flex-1 px-4 py-4 font-black text-[#071b3a] outline-none"
+                        />
+                        <span className="border-t border-slate-100 px-4 py-4 text-sm font-black text-slate-400 sm:border-l sm:border-t-0">
+                          .orcaly.com.br
+                        </span>
+                      </div>
+
+                      <p className="mt-2 text-xs font-bold text-slate-500">
+                        Link atual: {form.slug ? `${form.slug}.orcaly.com.br` : 'não definido'}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {form.slug ? (
+                        <a
+                          href={`https://${form.slug}.orcaly.com.br`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-sm font-black text-[#05245c]"
+                        >
+                          Abrir link
+                        </a>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={updateSiteSlug}
+                        className="rounded-2xl bg-[#05245c] px-5 py-4 text-sm font-black text-white"
+                      >
+                        Salvar link
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Input label="WhatsApp" description="Número usado nos botões." value={form.whatsapp} onChange={(v) => update('whatsapp', v)} />
+                  <Input label="Instagram" description="Perfil público." value={form.instagram} onChange={(v) => update('instagram', v)} />
+                  <Input label="Cidade" description="Cidade exibida no topo." value={form.cidade} onChange={(v) => update('cidade', v)} />
+                  <Input label="Estado" description="UF/estado." value={form.estado} onChange={(v) => update('estado', v)} />
+                </div>
+                <TextArea label="Mensagem pronta do WhatsApp" description="Texto aberto quando o cliente chama." value={form.site_whatsapp_message} onChange={(v) => update('site_whatsapp_message', v)} />
+                <Input label="Endereço" description="Ponto físico ou retirada." value={form.marketplace_endereco} onChange={(v) => update('marketplace_endereco', v)} />
+                <Input label="Link do mapa" description="URL do Google Maps." value={form.marketplace_mapa_url} onChange={(v) => update('marketplace_mapa_url', v)} />
+                <Input label="Horário de atendimento" description="Ex: Segunda a sexta, 8h às 18h." value={form.atendimento_horario} onChange={(v) => update('atendimento_horario', v)} />
+                <Input label="Título da promoção" description="Ex: Oferta da semana." value={form.site_promo_title} onChange={(v) => update('site_promo_title', v)} />
+                <TextArea label="Texto da promoção" description="Detalhe benefício, condição e urgência." value={form.site_promo_text} onChange={(v) => update('site_promo_text', v)} />
+              </div>
+            )}
+
+            {tab === 'seo' && (
+              <div className="grid gap-5">
+                <Input label="Título SEO" description="Título para buscadores." value={form.site_seo_title} onChange={(v) => update('site_seo_title', v)} />
+                <TextArea label="Descrição SEO" description="Descrição curta do site." value={form.site_seo_description} onChange={(v) => update('site_seo_description', v)} />
+                <TextArea label="Palavras-chave" description="Separe por vírgula." value={(form.site_keywords || []).join(', ')} onChange={(v) => update('site_keywords', v.split(',').map((item) => item.trim()).filter(Boolean))} />
+              </div>
+            )}
+
+            {tab === 'preview' && (
+              <div className="grid gap-5">
+                <h2 className="text-3xl font-black tracking-[-0.04em]">Resumo do site</h2>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-2xl bg-[#f5f8ff] p-5">
+                    <p className="text-sm font-black text-slate-500">Template</p>
+                    <p className="mt-1 text-xl font-black">{templateAtual.nome}</p>
+                  </div>
+                  <div className="rounded-2xl bg-[#f5f8ff] p-5">
+                    <p className="text-sm font-black text-slate-500">Catálogo</p>
+                    <p className="mt-1 text-xl font-black">{form.site_show_marketplace !== false ? 'Ativo' : 'Oculto'}</p>
+                  </div>
+                  <div className="rounded-2xl bg-[#f5f8ff] p-5">
+                    <p className="text-sm font-black text-slate-500">Carrinho</p>
+                    <p className="mt-1 text-xl font-black">{form.site_enable_cart !== false ? 'Ativo' : 'Desativado'}</p>
+                  </div>
+                  <div className="rounded-2xl bg-[#f5f8ff] p-5">
+                    <p className="text-sm font-black text-slate-500">Cupons</p>
+                    <p className="mt-1 text-xl font-black">{form.site_enable_coupons !== false ? 'Ativo' : 'Desativado'}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8 flex justify-end">
+              <button type="submit" disabled={saving} className="rounded-2xl bg-[#05245c] px-6 py-4 font-black text-white shadow-xl shadow-blue-950/10 disabled:opacity-60">
+                {saving ? 'Salvando...' : 'Salvar alterações'}
+              </button>
+            </div>
+          </form>
+
+          <PremiumPreview form={form} company={company} template={templateAtual} />
+        </div>
+      </section>
+    </main>
+  )
+}

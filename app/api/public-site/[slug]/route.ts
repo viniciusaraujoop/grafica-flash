@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getSiteTemplate } from '@/lib/orcaly-site-templates'
-import { getBusinessTypeConfig, getDefaultSetupForBusiness } from '@/lib/business-types'
+import { getDefaultSiteSettingsForBusiness, getSiteTemplateByBusinessType, normalizeSectionList } from '@/lib/site-templates'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -13,39 +12,27 @@ type RouteContext = {
   params: Promise<{ slug: string }>
 }
 
-function safeArray(value: any) {
+function arr(value: unknown) {
   return Array.isArray(value) ? value : []
 }
 
-function sanitizeProduct(product: any) {
-  const images = Array.isArray(product.image_urls) ? product.image_urls.slice(0, 4) : []
+function productImages(product: Record<string, unknown>) {
+  const imageUrls = Array.isArray(product.image_urls) ? product.image_urls.filter(Boolean).slice(0, 4) : []
+  const legacy = typeof product.imagem_url === 'string' && product.imagem_url ? [product.imagem_url] : []
+  return imageUrls.length ? imageUrls : legacy
+}
+
+function sanitizeProduct(product: Record<string, unknown>) {
+  const images = productImages(product)
 
   return {
-    id: product.id,
-    nome: product.nome,
-    preco: Number(product.preco || 0),
-    descricao: product.descricao || product.descricao_curta || '',
-    categoria: product.categoria || 'Geral',
-    business_type: product.business_type || null,
-    tipo: product.tipo || 'produto',
-    unidade: product.unidade || 'unidade',
-    imagem_url: product.imagem_url || images[0] || null,
+    ...product,
+    imagem_url: typeof product.imagem_url === 'string' ? product.imagem_url : images[0] || null,
     image_urls: images,
-    video_url: product.video_url || null,
-    destaque: Boolean(product.destaque),
     available: product.available !== false,
-    addons: safeArray(product.addons || product.adicionais),
-    variations: safeArray(product.variations || product.variacoes),
-    extras: product.extras || {},
-    precificacao: product.precificacao || 'unidade',
-    unidade_label: product.unidade_label || product.unidade || 'unidade',
-    permite_largura: Boolean(product.permite_largura),
-    permite_altura: Boolean(product.permite_altura),
-    permite_comprimento: Boolean(product.permite_comprimento),
-    permite_quantidade: product.permite_quantidade !== false,
-    valor_minimo: Number(product.valor_minimo || 0),
-    configuracoes: product.configuracoes || {},
-    prazo_medio: product.prazo_medio || null,
+    addons: arr(product.addons),
+    variations: arr(product.variations),
+    extras: product.extras && typeof product.extras === 'object' && !Array.isArray(product.extras) ? product.extras : {},
   }
 }
 
@@ -65,56 +52,53 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
     if (companyError) throw companyError
 
-    if (!company || company.site_publico_ativo === false || company.ativo === false) {
+    if (!company || company.ativo === false || company.site_publico_ativo === false) {
       return NextResponse.json({ error: 'Site não encontrado.' }, { status: 404 })
     }
 
-    const business = getBusinessTypeConfig(company.business_type || company.site_template || company.modelo_negocio)
-    const defaults = getDefaultSetupForBusiness(business.id)
+    const template = getSiteTemplateByBusinessType(company.business_type || company.site_template || company.modelo_negocio)
+    const defaults = getDefaultSiteSettingsForBusiness(template.businessType)
 
-    const { data: products, error: productsError } = await supabaseAdmin
+    const { data: products, error: productError } = await supabaseAdmin
       .from('products')
       .select('*')
       .eq('company_id', company.id)
-      .eq('ativo', true)
-      .or('arquivado.is.null,arquivado.eq.false')
+      .or('ativo.is.null,ativo.eq.true')
       .order('destaque', { ascending: false })
       .order('created_at', { ascending: false })
-      .limit(80)
+      .limit(100)
 
-    if (productsError) throw productsError
+    if (productError) throw productError
 
-    const template = getSiteTemplate(company.site_template || company.modelo_negocio || business.id)
+    const normalizedCompany = {
+      ...company,
+      business_type: company.business_type || template.businessType,
+      site_template: company.site_template || template.templateId,
+      site_theme: company.site_theme || defaults.site_theme,
+      site_primary_color: company.site_primary_color || defaults.site_primary_color,
+      site_accent_color: company.site_accent_color || defaults.site_accent_color,
+      site_headline: company.site_headline || defaults.site_headline,
+      site_subheadline: company.site_subheadline || defaults.site_subheadline,
+      site_cta_label: company.site_cta_label || company.site_cta_text || defaults.site_cta_label,
+      site_about_title: company.site_about_title || defaults.site_about_title,
+      site_about_text: company.site_about_text || defaults.site_about_text,
+      site_sections: normalizeSectionList(company.site_sections, template.sections),
+      site_benefits: arr(company.site_benefits).length ? company.site_benefits : defaults.site_benefits,
+      site_faq: arr(company.site_faq).length ? company.site_faq : defaults.site_faq,
+      site_features: arr(company.site_features).length ? company.site_features : defaults.site_features,
+      site_payment_methods: arr(company.site_payment_methods).length ? company.site_payment_methods : defaults.site_payment_methods,
+      site_delivery_options: arr(company.site_delivery_options).length ? company.site_delivery_options : defaults.site_delivery_options,
+    }
 
     return NextResponse.json({
-      company: {
-        ...company,
-        business_type: business.id,
-        business_label: business.label,
-        site_headline: company.site_headline || defaults.site_headline,
-        site_subheadline: company.site_subheadline || defaults.site_subheadline,
-        site_cta_text: company.site_cta_text || defaults.site_cta_text,
-        site_marketplace_title: company.site_marketplace_title || defaults.site_marketplace_title,
-        site_marketplace_subtitle: company.site_marketplace_subtitle || defaults.site_marketplace_subtitle,
-        site_cart_button_text: company.site_cart_button_text || defaults.site_cart_button_text,
-        site_checkout_button_text: company.site_checkout_button_text || defaults.site_checkout_button_text,
-        site_empty_catalog_text: company.site_empty_catalog_text || defaults.site_empty_catalog_text,
-        site_features: safeArray(company.site_features).length ? company.site_features : defaults.site_features,
-        site_benefits: safeArray(company.site_benefits).length ? company.site_benefits : defaults.site_benefits,
-        site_faq: safeArray(company.site_faq).length ? company.site_faq : defaults.site_faq,
-        site_testimonials: safeArray(company.site_testimonials).length ? company.site_testimonials : template.testimonials,
-        site_gallery: safeArray(company.site_gallery).length ? company.site_gallery : template.gallery,
-        site_payment_methods: safeArray(company.site_payment_methods).length ? company.site_payment_methods : defaults.site_payment_methods,
-        site_delivery_options: safeArray(company.site_delivery_options).length ? company.site_delivery_options : defaults.site_delivery_options,
-      },
-      template: {
-        ...template,
-        businessType: business,
-      },
-      products: (products || []).map(sanitizeProduct).filter((product) => product.available !== false),
+      company: normalizedCompany,
+      products: (products || []).map((item) => sanitizeProduct(item as Record<string, unknown>)),
+      template,
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erro ao carregar site.'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Erro ao carregar site.' },
+      { status: 500 }
+    )
   }
 }
