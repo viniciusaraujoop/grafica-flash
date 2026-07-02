@@ -4,7 +4,6 @@ import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import PanelSidebar from '@/components/painel/PanelSidebar'
 
 type EmpresaAssinatura = {
   id: string
@@ -15,10 +14,6 @@ type EmpresaAssinatura = {
   assinatura_status: string | null
   assinatura_expira_em: string | null
   assinatura_checkout_url?: string | null
-  logo_url?: string | null
-  subdomain_slug?: string | null
-  business_type?: string | null
-  site_template?: string | null
 }
 
 type CompanyCurrentPayload = {
@@ -327,12 +322,5 @@ export default function PainelLayout({ children }: { children: ReactNode }) {
     return <PainelBloqueado payload={payload} />
   }
 
-  return (
-    <div className="min-h-screen bg-[#f5f8ff] lg:grid lg:grid-cols-[292px_minmax(0,1fr)]">
-      <PanelSidebar company={payload.company} />
-      <div className="min-w-0">
-        {children}
-      </div>
-    </div>
-  )
+  return children
 }

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getBusinessTypeConfig, normalizeBusinessType, type BusinessType } from '@/lib/business-types'
-import { getQuickActionsForBusinessType, knownExistingPanelRoutes } from '@/lib/panel-modules'
 
 type Company = {
   id: string
@@ -396,15 +395,66 @@ function metricsByBusiness(type: BusinessType, metrics: Metrics): MetricCardData
 }
 
 function quickActionsByBusiness(type: BusinessType, publicLink: string): QuickAction[] {
-  return getQuickActionsForBusinessType(type, {
-    publicLink,
-    existingRoutes: knownExistingPanelRoutes,
-  }).map((action) => ({
-    title: action.title,
-    description: action.description,
-    href: action.href,
-    badge: action.badge,
-  }))
+  const common: QuickAction[] = [
+    { title: 'Cadastrar produto/serviço', description: 'Adicione itens para aparecerem no site.', href: '/painel/produtos' },
+    { title: 'Editar site', description: 'Ajuste textos, logo, cores e publicação.', href: '/painel/site' },
+    { title: 'Configurações', description: 'Dados da empresa, WhatsApp e preferências.', href: '/painel/configuracoes' },
+  ]
+
+  const verSite: QuickAction = {
+    title: 'Ver site',
+    description: publicLink ? 'Abra a página pública da empresa.' : 'Configure seu link público no site.',
+    href: publicLink || '/painel/site',
+  }
+
+  if (type === 'food') {
+    return [
+      { title: 'Adicionar item ao cardápio', description: 'Cadastre foto, preço, variações e adicionais.', href: '/painel/produtos', badge: 'Food' },
+      { title: 'Ver pedidos de hoje', description: 'Acompanhe preparo, retirada e entrega.', href: '/painel/pedidos' },
+      { title: 'Configurar entrega', description: 'Use as configurações do site para orientar entrega/retirada.', href: '/painel/site' },
+      { title: 'Editar horários', description: 'Prepare informações de atendimento no site.', href: '/painel/site' },
+      verSite,
+      ...common.slice(2),
+    ]
+  }
+
+  if (type === 'graphic' || type === 'custom_products') {
+    return [
+      { title: 'Novo orçamento', description: 'Acompanhe solicitações recebidas.', href: '/painel/pedidos', badge: 'Gráfica' },
+      { title: 'Ver artes recebidas', description: 'Abra pedidos e arquivos enviados.', href: '/painel/pedidos' },
+      { title: 'Criar proposta', description: 'Transforme pedido em proposta comercial.', href: '/painel/propostas' },
+      { title: 'Atualizar produção', description: 'Controle prazos, responsáveis e status.', href: '/painel/producao' },
+      ...common,
+      verSite,
+    ]
+  }
+
+  if (type === 'beauty' || type === 'barber') {
+    return [
+      { title: 'Cadastrar serviço', description: 'Adicione serviços, valores e descrição.', href: '/painel/produtos', badge: 'Beauty' },
+      { title: 'Abrir agenda', description: 'Use pedidos para acompanhar solicitações de agenda.', href: '/painel/pedidos' },
+      { title: 'Adicionar profissional', description: 'Organize equipe e permissões.', href: '/painel/configuracoes/equipe' },
+      { title: 'Configurar horários', description: 'Informe horários e atendimento no site.', href: '/painel/site' },
+      ...common,
+      verSite,
+    ]
+  }
+
+  if (type === 'technical_assistance') {
+    return [
+      { title: 'Nova solicitação', description: 'Acompanhe defeitos, análise e propostas.', href: '/painel/pedidos', badge: 'Assistência' },
+      { title: 'Ver análises', description: 'Pedidos em diagnóstico ou aprovação.', href: '/painel/pedidos' },
+      { title: 'Atualizar status técnico', description: 'Abra pedidos e mova etapas de atendimento.', href: '/painel/pedidos' },
+      { title: 'Cadastrar serviço', description: 'Liste reparos e serviços técnicos.', href: '/painel/produtos' },
+      ...common,
+    ]
+  }
+
+  return [
+    { title: 'Novo pedido/orçamento', description: 'Acompanhe solicitações recebidas.', href: '/painel/pedidos' },
+    ...common,
+    verSite,
+  ]
 }
 
 function toneClasses(tone: MetricCardData['tone']) {
