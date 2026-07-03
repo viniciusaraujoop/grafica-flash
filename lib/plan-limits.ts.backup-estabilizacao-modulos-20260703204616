@@ -1,0 +1,164 @@
+export type NormalizedPlanId = 'basic' | 'intermediate' | 'premium'
+
+export type PlanFeature =
+  | 'site_publico'
+  | 'pedidos_orcamentos'
+  | 'produtos_limitados'
+  | 'whatsapp'
+  | 'configuracao_simples'
+  | 'crm'
+  | 'financeiro_basico'
+  | 'cupons'
+  | 'galeria'
+  | 'video_produtos'
+  | 'propostas'
+  | 'notas_fiscais'
+  | 'producao'
+  | 'relatorios'
+  | 'dominio_proprio'
+  | 'modulos_avancados'
+  | 'permissoes_equipe'
+  | 'seo_open_graph'
+  | 'follow_up'
+  | 'mensagens_whatsapp'
+  | 'historico_logs'
+
+export type PlanLimits = {
+  id: NormalizedPlanId
+  label: string
+  priceLabel: string
+  maxProducts: number | null
+  maxTeamMembers: number
+  features: PlanFeature[]
+}
+
+export const planLimits: Record<NormalizedPlanId, PlanLimits> = {
+  basic: {
+    id: 'basic',
+    label: 'Básico',
+    priceLabel: 'R$ 49,90/mês',
+    maxProducts: 30,
+    maxTeamMembers: 1,
+    features: [
+      'site_publico',
+      'pedidos_orcamentos',
+      'produtos_limitados',
+      'whatsapp',
+      'configuracao_simples',
+    ],
+  },
+  intermediate: {
+    id: 'intermediate',
+    label: 'Profissional',
+    priceLabel: 'R$ 99,90/mês',
+    maxProducts: 150,
+    maxTeamMembers: 3,
+    features: [
+      'site_publico',
+      'pedidos_orcamentos',
+      'produtos_limitados',
+      'whatsapp',
+      'configuracao_simples',
+      'crm',
+      'financeiro_basico',
+      'cupons',
+      'galeria',
+      'video_produtos',
+    ],
+  },
+  premium: {
+    id: 'premium',
+    label: 'Premium',
+    priceLabel: 'R$ 149,90/mês',
+    maxProducts: null,
+    maxTeamMembers: 10,
+    features: [
+      'site_publico',
+      'pedidos_orcamentos',
+      'produtos_limitados',
+      'whatsapp',
+      'configuracao_simples',
+      'crm',
+      'financeiro_basico',
+      'cupons',
+      'galeria',
+      'video_produtos',
+      'propostas',
+      'notas_fiscais',
+      'producao',
+      'relatorios',
+      'dominio_proprio',
+      'modulos_avancados',
+      'permissoes_equipe',
+      'seo_open_graph',
+      'follow_up',
+      'mensagens_whatsapp',
+      'historico_logs',
+    ],
+  },
+}
+
+export const featureLabels: Record<PlanFeature, string> = {
+  site_publico: 'Site público',
+  pedidos_orcamentos: 'Pedidos e orçamentos',
+  produtos_limitados: 'Produtos e serviços',
+  whatsapp: 'WhatsApp',
+  configuracao_simples: 'Configuração simples',
+  crm: 'CRM',
+  financeiro_basico: 'Financeiro básico',
+  cupons: 'Cupons',
+  galeria: 'Galeria',
+  video_produtos: 'Vídeo nos produtos',
+  propostas: 'Propostas comerciais',
+  notas_fiscais: 'Notas fiscais',
+  producao: 'Produção/operação',
+  relatorios: 'Relatórios',
+  dominio_proprio: 'Domínio próprio',
+  modulos_avancados: 'Módulos avançados por segmento',
+  permissoes_equipe: 'Permissões de equipe',
+  seo_open_graph: 'SEO e Open Graph',
+  follow_up: 'Follow-up comercial',
+  mensagens_whatsapp: 'Modelos de mensagens WhatsApp',
+  historico_logs: 'Histórico e logs',
+}
+
+export function normalizePlanId(value: unknown): NormalizedPlanId {
+  if (value === 'premium') return 'premium'
+  if (value === 'profissional' || value === 'intermediate' || value === 'intermediario') return 'intermediate'
+  if (value === 'basico' || value === 'basic' || value === 'essencial') return 'basic'
+  return 'intermediate'
+}
+
+export function getPlanLimits(plan: unknown) {
+  return planLimits[normalizePlanId(plan)]
+}
+
+export function canUseFeature(plan: unknown, feature: PlanFeature) {
+  return getPlanLimits(plan).features.includes(feature)
+}
+
+export function getRequiredPlan(feature: PlanFeature): NormalizedPlanId | null {
+  if (planLimits.basic.features.includes(feature)) return 'basic'
+  if (planLimits.intermediate.features.includes(feature)) return 'intermediate'
+  if (planLimits.premium.features.includes(feature)) return 'premium'
+  return null
+}
+
+export function getUpgradeMessage(feature: PlanFeature) {
+  const required = getRequiredPlan(feature)
+  if (!required) return 'Recurso em preparação.'
+
+  return `Recurso disponível no plano ${planLimits[required].label}.`
+}
+
+export function planCanAccess(requiredPlan: NormalizedPlanId | null | undefined, currentPlan: unknown) {
+  if (!requiredPlan) return true
+
+  const order: Record<NormalizedPlanId, number> = {
+    basic: 1,
+    intermediate: 2,
+    premium: 3,
+  }
+
+  return order[normalizePlanId(currentPlan)] >= order[requiredPlan]
+}

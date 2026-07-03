@@ -397,7 +397,12 @@ function metricsByBusiness(type: BusinessType, metrics: Metrics): MetricCardData
 }
 
 function quickActionsByBusiness(type: BusinessType, publicLink: string): QuickAction[] {
-  return getQuickActionsForBusinessType(type, { publicLink })
+  return getQuickActionsForSegment(type, { publicLink }).map((action) => ({
+    title: action.label,
+    description: action.description,
+    href: action.href,
+    badge: action.badge,
+  }))
 }
 
 function toneClasses(tone: MetricCardData['tone']) {

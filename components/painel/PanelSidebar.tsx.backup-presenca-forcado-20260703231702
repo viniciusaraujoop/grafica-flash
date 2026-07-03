@@ -19,7 +19,7 @@ const groupOrder: PanelModuleGroup[] = [
   'comercial',
   'operacao',
   'financeiro',
-  'presenca_digital',
+  'presenca',
   'relatorios',
   'sistema',
 ]

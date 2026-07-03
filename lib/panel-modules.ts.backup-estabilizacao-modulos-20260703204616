@@ -1,0 +1,1093 @@
+export type BusinessType =
+  | 'services'
+  | 'graphic'
+  | 'food'
+  | 'beauty'
+  | 'barber'
+  | 'technical_assistance'
+  | 'auto'
+  | 'store'
+  | 'events'
+  | 'custom_products'
+
+export type ModuleStatus = 'active' | 'beta' | 'coming_soon'
+export type ModuleGroup =
+  | 'principal'
+  | 'comercial'
+  | 'operacao'
+  | 'financeiro'
+  | 'presenca_digital'
+  | 'relatorios'
+  | 'sistema'
+  | 'administracao'
+
+export type PlanId = 'basic' | 'intermediate' | 'premium'
+
+export type PanelModule = {
+  id: string
+  label: string
+  description: string
+  href: string
+  fallbackHref?: string
+  group: ModuleGroup
+  segments: BusinessType[]
+  status: ModuleStatus
+  requiredPlan: PlanId | null
+  requiresActiveSubscription: boolean
+  iconName: string
+  icon?: string
+  isGlobal?: boolean
+  aliases?: string[]
+  relatedHref?: string
+  futureActions?: string[]
+}
+
+export type PanelQuickAction = {
+  title: string
+  description: string
+  href: string
+  badge?: string
+  requiredPlan?: PlanId | null
+}
+
+
+function resolvePanelModuleIcon(iconName?: string | null) {
+  const icons: Record<string, string> = {
+    'layout-dashboard': 'ðŸ“Š',
+    dashboard: 'ðŸ“Š',
+    inbox: 'ðŸ“¥',
+    package: 'ðŸ“¦',
+    'package-open': 'ðŸ“¦',
+    boxes: 'ðŸ“¦',
+    users: 'ðŸ‘¥',
+    'users-round': 'ðŸ‘¥',
+    'file-text': 'ðŸ“„',
+    'file-check': 'ðŸ§¾',
+    wallet: 'ðŸ’°',
+    receipt: 'ðŸ§¾',
+    banknote: 'ðŸ’µ',
+    'arrow-left-right': 'â†”ï¸',
+    globe: 'ðŸŒ',
+    store: 'ðŸª',
+    'message-circle': 'ðŸ’¬',
+    'bar-chart': 'ðŸ“ˆ',
+    bot: 'ðŸ¤–',
+    bell: 'ðŸ””',
+    settings: 'âš™ï¸',
+    layers: 'ðŸ§©',
+    'credit-card': 'ðŸ’³',
+    'clipboard-list': 'ðŸ“‹',
+    utensils: 'ðŸ½ï¸',
+    'plus-circle': 'âž•',
+    truck: 'ðŸšš',
+    clock: 'ðŸ•’',
+    'map-pin': 'ðŸ“',
+    calculator: 'ðŸ§®',
+    plus: 'âž•',
+    image: 'ðŸ–¼ï¸',
+    'badge-check': 'âœ…',
+    factory: 'ðŸ­',
+    'clipboard-check': 'ðŸ“‹',
+    'search-check': 'ðŸ”Ž',
+    car: 'ðŸš—',
+    wrench: 'ðŸ”§',
+    hammer: 'ðŸ”¨',
+    'user-check': 'âœ…',
+    'shield-check': 'ðŸ›¡ï¸',
+    smartphone: 'ðŸ“±',
+    bug: 'âš ï¸',
+    'scan-search': 'ðŸ”',
+    'settings-2': 'âš™ï¸',
+    calendar: 'ðŸ“…',
+    sparkle: 'âœ¨',
+    gift: 'ðŸŽ',
+    percent: '%',
+    warehouse: 'ðŸ¬',
+    tags: 'ðŸ·ï¸',
+    'calendar-days': 'ðŸ“…',
+    'file-signature': 'ðŸ“',
+    landmark: 'ðŸ›ï¸',
+    'list-checks': 'âœ…',
+    history: 'ðŸ•˜',
+    search: 'ðŸ”Ž',
+    shield: 'ðŸ›¡ï¸',
+  }
+
+  return icons[String(iconName || '').trim()] || 'â€¢'
+}
+
+function withPanelModuleIcons<T extends { iconName?: string | null; icon?: string }>(modules: T[]): Array<T & { icon: string }> {
+  return modules.map((module) => ({
+    ...module,
+    icon: module.icon || resolvePanelModuleIcon(module.iconName),
+  }))
+}
+
+export const moduleGroupLabels: Record<ModuleGroup, string> = {
+  principal: 'Principal',
+  comercial: 'Comercial',
+  operacao: 'OperaÃ§Ã£o',
+  financeiro: 'Financeiro',
+  presenca_digital: 'PresenÃ§a digital',
+  relatorios: 'RelatÃ³rios',
+  sistema: 'Sistema',
+  administracao: 'AdministraÃ§Ã£o',
+}
+
+export const allBusinessTypes: BusinessType[] = [
+  'services',
+  'graphic',
+  'food',
+  'beauty',
+  'barber',
+  'technical_assistance',
+  'auto',
+  'store',
+  'events',
+  'custom_products',
+]
+
+const existingPanelRoutes = new Set([
+  '/painel',
+  '/painel/admin',
+  '/painel/assistente',
+  '/painel/auditoria',
+  '/painel/catalogo',
+  '/painel/central-operacional',
+  '/painel/clientes',
+  '/painel/configuracoes',
+  '/painel/configuracoes/equipe',
+  '/painel/crm',
+  '/painel/cupom',
+  '/painel/cupons',
+  '/painel/financeiro',
+  '/painel/modulos/[module]',
+  '/painel/notificacoes',
+  '/painel/notificacoes/inteligentes',
+  '/painel/onboarding',
+  '/painel/oportunidades',
+  '/painel/orcamento-inteligente',
+  '/painel/orcamento/[id]',
+  '/painel/pedidos',
+  '/painel/pedidos/[id]',
+  '/painel/producao',
+  '/painel/produtos',
+  '/painel/produtos/[id]',
+  '/painel/produtos/ia',
+  '/painel/proposta/[id]',
+  '/painel/propostas',
+  '/painel/segmento',
+  '/painel/segmentos',
+  '/painel/setup',
+  '/painel/site',
+  '/painel/tarefas',
+  '/painel/whatsapp',
+  '/painel/equipe',
+  '/painel/follow-up',
+  '/painel/mensagens',
+  '/painel/relatorios',
+  '/painel/historico',
+  '/painel/notas-fiscais',
+])
+
+function globalSegments(except: BusinessType[] = []) {
+  return allBusinessTypes.filter((segment) => !except.includes(segment))
+}
+
+export const panelModules: PanelModule[] = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    description: 'Visão geral da operação, métricas e ações rápidas.',
+    href: '/painel',
+    group: 'principal',
+    segments: allBusinessTypes,
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: true,
+    iconName: 'layout-dashboard',
+    isGlobal: true,
+  },
+  {
+    id: 'pedidos',
+    label: 'Pedidos',
+    description: 'Pedidos recebidos, status, detalhes e acompanhamento.',
+    href: '/painel/pedidos',
+    group: 'principal',
+    segments: ['food', 'store'],
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: true,
+    iconName: 'inbox',
+    aliases: ['pedidos_dia', 'pedido'],
+  },
+  {
+    id: 'orcamentos',
+    label: 'Orçamentos',
+    description: 'Solicitações, orçamentos, medidas, quantidades e status.',
+    href: '/painel/pedidos',
+    fallbackHref: '/painel/orcamento-inteligente',
+    group: 'principal',
+    segments: ['services', 'graphic', 'custom_products', 'auto', 'technical_assistance', 'events'],
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: true,
+    iconName: 'calculator',
+    aliases: ['orcamento', 'orçamentos', 'solicitacoes'],
+  },
+  {
+    id: 'novo_orcamento',
+    label: 'Novo orçamento',
+    description: 'Crie ou simule orçamento com apoio inteligente.',
+    href: '/painel/orcamentos/novo',
+    fallbackHref: '/painel/orcamento-inteligente',
+    group: 'principal',
+    segments: ['services', 'graphic', 'custom_products', 'auto', 'events'],
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: true,
+    iconName: 'plus-circle',
+  },
+  {
+    id: 'produtos_servicos',
+    label: 'Produtos/Serviços',
+    description: 'Produtos, serviços, fotos, valores e disponibilidade.',
+    href: '/painel/produtos',
+    group: 'principal',
+    segments: globalSegments(['food', 'beauty', 'barber', 'store']),
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: true,
+    iconName: 'package',
+    isGlobal: true,
+    aliases: ['produtos', 'servicos'],
+  },
+  {
+    id: 'cardapio',
+    label: 'Cardápio',
+    description: 'Itens, preços, fotos, adicionais, variações e disponibilidade.',
+    href: '/painel/produtos',
+    group: 'principal',
+    segments: ['food'],
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: true,
+    iconName: 'utensils',
+    aliases: ['produtos_food'],
+  },
+  {
+    id: 'servicos',
+    label: 'Serviços',
+    description: 'Serviços, duração, valores, profissionais e descrição.',
+    href: '/painel/produtos',
+    group: 'principal',
+    segments: ['beauty', 'barber'],
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: true,
+    iconName: 'sparkles',
+  },
+  {
+    id: 'catalogo',
+    label: 'Catálogo',
+    description: 'Catálogo, marketplace e vitrine pública de produtos.',
+    href: '/painel/catalogo',
+    fallbackHref: '/painel/produtos',
+    group: 'presenca_digital',
+    segments: allBusinessTypes,
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: true,
+    iconName: 'store',
+    isGlobal: true,
+    aliases: ['marketplace'],
+  },
+  {
+    id: 'clientes_crm',
+    label: 'Clientes/CRM',
+    description: 'Clientes, leads, histórico, tags, observações e relacionamento.',
+    href: '/painel/crm',
+    fallbackHref: '/painel/clientes',
+    group: 'comercial',
+    segments: allBusinessTypes,
+    status: 'active',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'users',
+    isGlobal: true,
+    aliases: ['crm', 'clientes', 'leads'],
+    futureActions: ['Registrar lead', 'Acompanhar histórico', 'Adicionar observações', 'Criar follow-up', 'Ver valor negociado'],
+  },
+  {
+    id: 'propostas',
+    label: 'Propostas',
+    description: 'Propostas comerciais, status, validade, cliente e envio pelo WhatsApp.',
+    href: '/painel/propostas',
+    group: 'comercial',
+    segments: allBusinessTypes,
+    status: 'active',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'file-text',
+    isGlobal: true,
+    aliases: ['proposta'],
+    futureActions: ['Criar proposta', 'Vincular cliente', 'Adicionar itens', 'Enviar pelo WhatsApp', 'Gerar PDF futuramente'],
+  },
+  {
+    id: 'follow_up',
+    label: 'Follow-up comercial',
+    description: 'Clientes parados, propostas sem retorno e oportunidades que precisam de atenção.',
+    href: '/painel/follow-up',
+    fallbackHref: '/painel/modulos/follow-up',
+    group: 'comercial',
+    segments: allBusinessTypes,
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'phone-call',
+    isGlobal: true,
+    aliases: ['follow-up', 'followup'],
+    relatedHref: '/painel/crm',
+    futureActions: ['Ver orçamentos aguardando resposta', 'Chamar cliente no WhatsApp', 'Agendar retorno', 'Marcar como perdido', 'Ver oportunidades por valor'],
+  },
+  {
+    id: 'cupons',
+    label: 'Cupons',
+    description: 'Promoções, descontos, validade, limite de uso e campanhas comerciais.',
+    href: '/painel/cupons',
+    group: 'comercial',
+    segments: allBusinessTypes,
+    status: 'active',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'badge-percent',
+    isGlobal: true,
+    aliases: ['cupom', 'promocoes'],
+  },
+  {
+    id: 'financeiro',
+    label: 'Financeiro',
+    description: 'Resumo mensal, entradas, saídas, contas e resultado estimado.',
+    href: '/painel/financeiro',
+    group: 'financeiro',
+    segments: allBusinessTypes,
+    status: 'active',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'wallet',
+    isGlobal: true,
+    futureActions: ['Registrar entrada', 'Registrar saída', 'Vincular pedido', 'Vincular cliente', 'Acompanhar pendências'],
+  },
+  {
+    id: 'entradas_saidas',
+    label: 'Entradas e saídas',
+    description: 'Lançamentos financeiros de receita, despesa e movimentação do caixa.',
+    href: '/painel/entradas-saidas',
+    fallbackHref: '/painel/modulos/entradas-saidas',
+    group: 'financeiro',
+    segments: allBusinessTypes,
+    status: 'coming_soon',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'arrow-left-right',
+    isGlobal: true,
+    relatedHref: '/painel/financeiro',
+    futureActions: ['Registrar venda', 'Registrar despesa', 'Vincular cliente', 'Vincular pedido', 'Acompanhar status'],
+  },
+  {
+    id: 'contas_receber',
+    label: 'Contas a receber',
+    description: 'Valores pendentes, vencimentos, recebimentos e previsão de caixa.',
+    href: '/painel/contas-receber',
+    fallbackHref: '/painel/modulos/contas-receber',
+    group: 'financeiro',
+    segments: allBusinessTypes,
+    status: 'coming_soon',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'banknote',
+    isGlobal: true,
+    relatedHref: '/painel/financeiro',
+    futureActions: ['Ver valores pendentes', 'Marcar como recebido', 'Vincular proposta', 'Filtrar por cliente'],
+  },
+  {
+    id: 'contas_pagar',
+    label: 'Contas a pagar',
+    description: 'Despesas, fornecedores, vencimentos, comprovantes e status de pagamento.',
+    href: '/painel/contas-pagar',
+    fallbackHref: '/painel/modulos/contas-pagar',
+    group: 'financeiro',
+    segments: allBusinessTypes,
+    status: 'coming_soon',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'receipt',
+    isGlobal: true,
+    relatedHref: '/painel/financeiro',
+    futureActions: ['Cadastrar conta', 'Marcar como paga', 'Anexar comprovante', 'Organizar por categoria'],
+  },
+  {
+    id: 'notas_fiscais',
+    label: 'Notas fiscais',
+    description: 'Controle de notas emitidas e recebidas, XML, PDF/DANFE e vínculos financeiros.',
+    href: '/painel/notas-fiscais',
+    fallbackHref: '/painel/modulos/notas-fiscais',
+    group: 'financeiro',
+    segments: allBusinessTypes,
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'file-check',
+    isGlobal: true,
+    aliases: ['nf', 'xml', 'danfe', 'notas-fiscais'],
+    relatedHref: '/painel/financeiro',
+    futureActions: ['Upload de XML', 'Upload de PDF/DANFE', 'Cadastro manual', 'Vincular nota a pedido', 'Vincular nota ao cliente', 'Status da nota'],
+  },
+  {
+    id: 'relatorios',
+    label: 'Relatórios',
+    description: 'Pedidos por período, receita estimada, aprovação, clientes e oportunidades.',
+    href: '/painel/relatorios',
+    fallbackHref: '/painel/auditoria',
+    group: 'financeiro',
+    segments: allBusinessTypes,
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'bar-chart',
+    isGlobal: true,
+    relatedHref: '/painel/auditoria',
+    futureActions: ['Pedidos por período', 'Receita estimada', 'Produtos mais pedidos', 'Clientes recorrentes', 'Orçamentos em aberto'],
+  },
+  {
+    id: 'site',
+    label: 'Site',
+    description: 'Editor visual do site, SEO básico, publicação, textos, cores e preview.',
+    href: '/painel/site',
+    group: 'presenca_digital',
+    segments: allBusinessTypes,
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: true,
+    iconName: 'globe',
+    isGlobal: true,
+  },
+  {
+    id: 'mensagens',
+    label: 'Modelos de mensagens',
+    description: 'Modelos de WhatsApp por segmento para copiar e enviar mais rápido.',
+    href: '/painel/mensagens',
+    fallbackHref: '/painel/modulos/mensagens',
+    group: 'presenca_digital',
+    segments: allBusinessTypes,
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'message-circle',
+    isGlobal: true,
+    relatedHref: '/painel/whatsapp',
+    futureActions: ['Copiar mensagens prontas', 'Abrir WhatsApp com texto', 'Modelos por status', 'Modelos por segmento'],
+  },
+  {
+    id: 'notificacoes',
+    label: 'Notificações',
+    description: 'Alertas internos de pedidos, propostas, site, assinatura e financeiro.',
+    href: '/painel/notificacoes',
+    group: 'sistema',
+    segments: allBusinessTypes,
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: true,
+    iconName: 'bell',
+    isGlobal: true,
+  },
+  {
+    id: 'historico',
+    label: 'Histórico e logs',
+    description: 'Linha do tempo de alterações, status, pedidos, site, propostas e pagamentos.',
+    href: '/painel/historico',
+    fallbackHref: '/painel/modulos/historico',
+    group: 'sistema',
+    segments: allBusinessTypes,
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'history',
+    isGlobal: true,
+    relatedHref: '/painel/auditoria',
+    futureActions: ['Produto editado', 'Pedido criado', 'Status alterado', 'Site atualizado', 'Proposta enviada', 'Pagamento registrado'],
+  },
+  {
+    id: 'configuracoes',
+    label: 'Configurações',
+    description: 'Dados da empresa, equipe, permissões, WhatsApp e ajustes do sistema.',
+    href: '/painel/configuracoes',
+    group: 'sistema',
+    segments: allBusinessTypes,
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: true,
+    iconName: 'settings',
+    isGlobal: true,
+  },
+  {
+    id: 'equipe',
+    label: 'Equipe e permissões',
+    description: 'Perfis, funções, permissões e acesso da equipe.',
+    href: '/painel/equipe',
+    fallbackHref: '/painel/configuracoes/equipe',
+    group: 'sistema',
+    segments: allBusinessTypes,
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'user-cog',
+    isGlobal: true,
+    relatedHref: '/painel/configuracoes/equipe',
+    futureActions: ['Dono', 'Administrador', 'Atendente', 'Financeiro', 'Produção', 'Visualizador'],
+  },
+  {
+    id: 'assinatura',
+    label: 'Assinatura',
+    description: 'Plano, renovação, upgrade e acesso aos recursos.',
+    href: '/assinatura',
+    group: 'sistema',
+    segments: allBusinessTypes,
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: false,
+    iconName: 'credit-card',
+    isGlobal: true,
+  },
+
+  // Administração Orçaly
+  {
+    id: 'admin_master',
+    label: 'Admin master',
+    description: 'Empresas, usuários, pagamentos, planos, suporte, scanner e logs do Orçaly.',
+    href: '/painel/admin',
+    fallbackHref: '/admin',
+    group: 'administracao',
+    segments: allBusinessTypes,
+    status: 'active',
+    requiredPlan: null,
+    requiresActiveSubscription: false,
+    iconName: 'shield',
+    aliases: ['admin', 'admin-master'],
+    futureActions: ['Ver empresas', 'Ver usuários', 'Alterar plano manualmente', 'Ver pagamentos', 'Ver logs', 'Dar suporte'],
+  },
+  {
+    id: 'planos',
+    label: 'Planos e limites',
+    description: 'Recursos por plano, limites, upgrade e mensagens de bloqueio visual.',
+    href: '/painel/modulos/planos',
+    group: 'administracao',
+    segments: allBusinessTypes,
+    status: 'coming_soon',
+    requiredPlan: null,
+    requiresActiveSubscription: false,
+    iconName: 'sliders',
+    aliases: ['plans', 'plan-limits'],
+    relatedHref: '/assinatura',
+    futureActions: ['Ver recursos por plano', 'Entender limites', 'Mostrar upgrade', 'Não alterar checkout atual'],
+  },
+
+  // Segmentos específicos
+  {
+    id: 'artes_recebidas',
+    label: 'Artes recebidas',
+    description: 'Arquivos enviados pelos clientes, vínculo com orçamento e aprovação.',
+    href: '/painel/artes',
+    fallbackHref: '/painel/modulos/artes-recebidas',
+    group: 'operacao',
+    segments: ['graphic', 'custom_products'],
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'image',
+    relatedHref: '/painel/pedidos',
+    futureActions: ['Ver arquivos enviados', 'Aprovar ou reprovar arte', 'Solicitar correção', 'Vincular arte ao orçamento', 'Baixar arquivos'],
+  },
+  {
+    id: 'aprovacao_arte',
+    label: 'Aprovação de arte',
+    description: 'Aprove, reprove, solicite ajustes e registre aprovação do cliente.',
+    href: '/painel/aprovacao-arte',
+    fallbackHref: '/painel/modulos/aprovacao-arte',
+    group: 'operacao',
+    segments: ['graphic', 'custom_products'],
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'badge-check',
+    relatedHref: '/painel/producao',
+    futureActions: ['Enviar para aprovação', 'Registrar aprovado', 'Solicitar correção', 'Histórico de versões'],
+  },
+  {
+    id: 'producao',
+    label: 'Produção',
+    description: 'Etapas, status, prazos, responsáveis e conclusão da operação.',
+    href: '/painel/producao',
+    group: 'operacao',
+    segments: ['graphic', 'custom_products', 'technical_assistance', 'auto'],
+    status: 'active',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'factory',
+  },
+  {
+    id: 'entregas',
+    label: 'Entregas',
+    description: 'Entregas, retirada, regiões, status e vínculo com pedidos.',
+    href: '/painel/entregas',
+    fallbackHref: '/painel/modulos/entregas',
+    group: 'operacao',
+    segments: ['food', 'store'],
+    status: 'coming_soon',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'truck',
+    relatedHref: '/painel/pedidos',
+    futureActions: ['Registrar entrega', 'Definir status', 'Vincular pedido', 'Acompanhar retirada'],
+  },
+  {
+    id: 'horarios',
+    label: 'Horários',
+    description: 'Horários de funcionamento, atendimento, agenda e retirada.',
+    href: '/painel/horarios',
+    fallbackHref: '/painel/modulos/horarios',
+    group: 'operacao',
+    segments: ['food', 'beauty', 'barber'],
+    status: 'coming_soon',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'clock',
+    relatedHref: '/painel/site',
+    futureActions: ['Configurar dias', 'Definir horários', 'Marcar indisponibilidade', 'Exibir no site'],
+  },
+  {
+    id: 'taxas_entrega',
+    label: 'Taxas de entrega',
+    description: 'Regiões, valores, pedido mínimo e regras de entrega.',
+    href: '/painel/taxas-entrega',
+    fallbackHref: '/painel/modulos/taxas-entrega',
+    group: 'operacao',
+    segments: ['food', 'store'],
+    status: 'coming_soon',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'map-pin',
+    relatedHref: '/painel/site',
+    futureActions: ['Cadastrar região', 'Definir taxa', 'Valor mínimo', 'Prazo estimado'],
+  },
+  {
+    id: 'ordens_servico',
+    label: 'Ordens de serviço',
+    description: 'OS, diagnóstico, peças, mão de obra, status e garantia.',
+    href: '/painel/ordens-servico',
+    fallbackHref: '/painel/modulos/ordens-servico',
+    group: 'operacao',
+    segments: ['auto', 'technical_assistance'],
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'clipboard-check',
+    relatedHref: '/painel/pedidos',
+    futureActions: ['Criar OS', 'Vincular cliente', 'Adicionar veículo/equipamento', 'Registrar diagnóstico', 'Informar peças e mão de obra', 'Acompanhar status'],
+  },
+  {
+    id: 'analises',
+    label: 'Análises',
+    description: 'Diagnóstico técnico, orçamento, aprovação e observações.',
+    href: '/painel/analises',
+    fallbackHref: '/painel/modulos/analises',
+    group: 'operacao',
+    segments: ['auto', 'technical_assistance'],
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'search-check',
+    relatedHref: '/painel/pedidos',
+    futureActions: ['Registrar diagnóstico', 'Adicionar observações', 'Solicitar aprovação', 'Vincular orçamento'],
+  },
+  {
+    id: 'equipamentos',
+    label: 'Equipamentos/Veículos',
+    description: 'Veículo, aparelho, placa, modelo, número de série e histórico.',
+    href: '/painel/equipamentos',
+    fallbackHref: '/painel/modulos/equipamentos',
+    group: 'operacao',
+    segments: ['auto', 'technical_assistance'],
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'car',
+    relatedHref: '/painel/clientes',
+    futureActions: ['Cadastrar veículo/equipamento', 'Vincular cliente', 'Registrar placa/modelo', 'Ver histórico'],
+  },
+  {
+    id: 'agenda',
+    label: 'Agenda',
+    description: 'Agendamentos, horários, confirmação e atendimento.',
+    href: '/painel/agenda',
+    fallbackHref: '/painel/modulos/agenda',
+    group: 'operacao',
+    segments: ['beauty', 'barber'],
+    status: 'coming_soon',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'calendar',
+    relatedHref: '/painel/pedidos',
+    futureActions: ['Criar agendamento', 'Confirmar horário', 'Remarcar cliente', 'Ver agenda do dia'],
+  },
+  {
+    id: 'profissionais',
+    label: 'Profissionais',
+    description: 'Equipe, profissionais, permissões e horários vinculados.',
+    href: '/painel/profissionais',
+    fallbackHref: '/painel/configuracoes/equipe',
+    group: 'operacao',
+    segments: ['beauty', 'barber'],
+    status: 'active',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'users-round',
+    relatedHref: '/painel/configuracoes/equipe',
+  },
+  {
+    id: 'contratos',
+    label: 'Contratos',
+    description: 'Contratos, termos, anexos e aceite do cliente.',
+    href: '/painel/contratos',
+    fallbackHref: '/painel/modulos/contratos',
+    group: 'comercial',
+    segments: ['events'],
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'file-signature',
+    relatedHref: '/painel/propostas',
+    futureActions: ['Criar contrato', 'Anexar documento', 'Registrar aceite', 'Vincular proposta'],
+  },
+  {
+    id: 'checklist_evento',
+    label: 'Checklist do evento',
+    description: 'Itens, responsáveis, prazos e conclusão da preparação.',
+    href: '/painel/checklist-evento',
+    fallbackHref: '/painel/modulos/checklist-evento',
+    group: 'operacao',
+    segments: ['events'],
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'list-checks',
+    relatedHref: '/painel/tarefas',
+    futureActions: ['Criar checklist', 'Delegar tarefa', 'Definir prazo', 'Marcar como concluído'],
+  },
+  {
+    id: 'produtos_destaque',
+    label: 'Produtos em destaque',
+    description: 'Destaques, mais vendidos, promoção, novo, sob consulta e indisponível.',
+    href: '/painel/produtos',
+    fallbackHref: '/painel/modulos/produtos-destaque',
+    group: 'presenca_digital',
+    segments: ['store', 'food', 'graphic', 'custom_products'],
+    status: 'beta',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'star',
+    relatedHref: '/painel/produtos',
+    futureActions: ['Destacar produto', 'Marcar promoção', 'Mostrar selo no site', 'Filtrar itens em destaque'],
+  },
+  {
+    id: 'depoimentos',
+    label: 'Depoimentos e avaliações',
+    description: 'Comentários, notas, clientes e exibição no site público.',
+    href: '/painel/modulos/depoimentos',
+    group: 'presenca_digital',
+    segments: allBusinessTypes,
+    status: 'coming_soon',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'message-square-quote',
+    isGlobal: true,
+    relatedHref: '/painel/site',
+    futureActions: ['Adicionar depoimento', 'Definir nota', 'Mostrar no site', 'Ocultar avaliação'],
+  },
+  {
+    id: 'seo',
+    label: 'SEO e compartilhamento',
+    description: 'Título, descrição, imagem Open Graph e prévia de compartilhamento.',
+    href: '/painel/modulos/seo',
+    group: 'presenca_digital',
+    segments: allBusinessTypes,
+    status: 'coming_soon',
+    requiredPlan: 'premium',
+    requiresActiveSubscription: true,
+    iconName: 'search',
+    isGlobal: true,
+    relatedHref: '/painel/site',
+    futureActions: ['Título da página', 'Descrição', 'Imagem de compartilhamento', 'Open Graph', 'Twitter card'],
+  },
+]
+
+export function normalizeBusinessTypeForModules(value: unknown): BusinessType {
+  const normalized = String(value || 'services')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9_]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+
+  const aliases: Record<string, BusinessType> = {
+    servicos: 'services',
+    servicos_gerais: 'services',
+    services: 'services',
+    grafica: 'graphic',
+    graphic: 'graphic',
+    alimenticio: 'food',
+    food: 'food',
+    restaurante: 'food',
+    lanchonete: 'food',
+    beleza: 'beauty',
+    estetica: 'beauty',
+    beauty: 'beauty',
+    barbearia: 'barber',
+    barber: 'barber',
+    assistencia: 'technical_assistance',
+    assistencia_tecnica: 'technical_assistance',
+    technical_assistance: 'technical_assistance',
+    oficina: 'auto',
+    auto: 'auto',
+    automotivo: 'auto',
+    loja: 'store',
+    comercio: 'store',
+    store: 'store',
+    eventos: 'events',
+    events: 'events',
+    personalizados: 'custom_products',
+    custom_products: 'custom_products',
+  }
+
+  return aliases[normalized] || 'services'
+}
+
+function isRouteAvailable(href: string) {
+  if (href.startsWith('http')) return true
+  if (href.startsWith('/painel/modulos/')) return true
+  return existingPanelRoutes.has(href)
+}
+
+export function getSafeModuleHref(module: PanelModule) {
+  if (isRouteAvailable(module.href)) return module.href
+  if (module.fallbackHref && isRouteAvailable(module.fallbackHref)) return module.fallbackHref
+  return `/painel/modulos/${module.id.replace(/_/g, '-')}`
+}
+
+export function getModuleById(id: string) {
+  const normalized = id.replace(/-/g, '_')
+
+  return withPanelModuleIcons(panelModules.find((module) => {
+    const aliases = module.aliases || []
+    return module.id === id || module.id === normalized || aliases.includes(id) || aliases.includes(normalized)
+  }))
+}
+
+export function getModulesForBusinessType(businessType: unknown) {
+  const normalized = normalizeBusinessTypeForModules(businessType)
+
+  return panelModules
+    .filter((module) => module.isGlobal || module.segments.includes(normalized))
+    .map((module) => ({ ...module, href: getSafeModuleHref(module) }))
+}
+
+export function getModulesByGroup(businessType: unknown) {
+  const groupOrder: ModuleGroup[] = [
+    'principal',
+    'comercial',
+    'operacao',
+    'financeiro',
+    'presenca_digital',
+    'sistema',
+    'administracao',
+  ]
+
+  const modules = getModulesForBusinessType(businessType)
+
+  return groupOrder
+    .map((group) => ({
+      group,
+      label: moduleGroupLabels[group],
+      modules: modules.filter((module) => module.group === group),
+    }))
+    .filter((group) => group.modules.length > 0)
+}
+
+function quick(id: string, title?: string, description?: string, badge?: string): PanelQuickAction | null {
+  const module = getModuleById(id)
+  if (!module) return null
+
+  return {
+    title: title || module.label,
+    description: description || module.description,
+    href: getSafeModuleHref(module),
+    badge,
+    requiredPlan: module.requiredPlan,
+  }
+}
+
+function unique(actions: Array<PanelQuickAction | null>) {
+  const labels = new Set<string>()
+  const result: PanelQuickAction[] = []
+
+  for (const action of actions) {
+    if (!action) continue
+    if (labels.has(action.title)) continue
+    labels.add(action.title)
+    result.push(action)
+  }
+
+  return result
+}
+
+export function getQuickActionsForBusinessType(
+  businessType: unknown,
+  options: { publicLink?: string } = {}
+): PanelQuickAction[] {
+  const type = normalizeBusinessTypeForModules(businessType)
+
+  const viewSite: PanelQuickAction = {
+    title: 'Ver site',
+    description: options.publicLink ? 'Abra a página pública da empresa.' : 'Configure seu link público no site.',
+    href: options.publicLink || '/painel/site',
+  }
+
+  if (type === 'food') {
+    return unique([
+      quick('cardapio', 'Adicionar item ao cardápio', 'Cadastre foto, preço, variações e adicionais.', 'Food'),
+      quick('pedidos', 'Ver pedidos de hoje', 'Acompanhe preparo, retirada e entrega.'),
+      quick('entregas', 'Configurar entrega', 'Organize entrega, retirada e status.'),
+      quick('horarios', 'Editar horários', 'Configure funcionamento e atendimento.'),
+      quick('cupons', 'Cadastrar cupom', 'Crie promoções para pedidos.'),
+      quick('entradas_saidas', 'Registrar venda', 'Registre entrada financeira.'),
+      quick('financeiro', 'Cadastrar despesa', 'Acompanhe gastos e resultado.'),
+      quick('clientes_crm', 'Ver clientes', 'Veja histórico e relacionamento.'),
+      quick('notas_fiscais', 'Cadastrar nota fiscal', 'Organize XML, PDF e documentos.'),
+      viewSite,
+    ])
+  }
+
+  if (type === 'graphic' || type === 'custom_products') {
+    return unique([
+      quick('novo_orcamento', 'Novo orçamento', 'Crie ou simule orçamento com apoio inteligente.', 'Gráfica'),
+      quick('artes_recebidas', 'Ver artes recebidas', 'Gerencie arquivos enviados pelos clientes.'),
+      quick('aprovacao_arte', 'Aprovação de arte', 'Aprove, reprove ou solicite correções.'),
+      quick('producao', 'Abrir produção', 'Controle prazos, responsáveis e status.'),
+      quick('propostas', 'Criar proposta', 'Transforme orçamento em proposta comercial.'),
+      quick('produtos_servicos', 'Cadastrar produto gráfico', 'Cadastre materiais, serviços e valores.'),
+      quick('cupons', 'Cadastrar cupom', 'Crie descontos e campanhas.'),
+      quick('clientes_crm', 'Ver CRM', 'Acompanhe clientes, leads e follow-up.'),
+      quick('entradas_saidas', 'Registrar entrada', 'Registre recebimento ou sinal.'),
+      quick('notas_fiscais', 'Cadastrar nota fiscal', 'Organize notas e documentos.'),
+      viewSite,
+    ])
+  }
+
+  if (type === 'auto') {
+    return unique([
+      quick('ordens_servico', 'Nova ordem de serviço', 'Crie OS para análise, execução e entrega.', 'Auto'),
+      quick('analises', 'Ver análises', 'Acompanhe diagnóstico e aprovação.'),
+      quick('equipamentos', 'Cadastrar equipamento/veículo', 'Registre placa, modelo ou equipamento.'),
+      quick('entradas_saidas', 'Registrar entrada', 'Registre recebimentos e despesas.'),
+      quick('notas_fiscais', 'Cadastrar nota fiscal', 'Organize documentos fiscais.'),
+      quick('clientes_crm', 'Ver clientes', 'Acesse histórico do cliente.'),
+      viewSite,
+    ])
+  }
+
+  if (type === 'technical_assistance') {
+    return unique([
+      quick('orcamentos', 'Nova solicitação', 'Acompanhe defeitos, fotos e análise.', 'Assistência'),
+      quick('analises', 'Ver análises', 'Gerencie diagnóstico e aprovação.'),
+      quick('equipamentos', 'Cadastrar aparelho', 'Registre marca, modelo e número de série.'),
+      quick('producao', 'Atualizar manutenção', 'Acompanhe execução e teste final.'),
+      quick('entradas_saidas', 'Registrar peça/despesa', 'Registre custo ou lançamento financeiro.'),
+      quick('notas_fiscais', 'Cadastrar nota fiscal', 'Organize notas emitidas e recebidas.'),
+      viewSite,
+    ])
+  }
+
+  if (type === 'beauty' || type === 'barber') {
+    return unique([
+      quick('agenda', 'Novo agendamento', 'Organize horários e atendimentos.', 'Beauty'),
+      quick('servicos', 'Cadastrar serviço', 'Adicione serviços, valores e duração.'),
+      quick('profissionais', 'Adicionar profissional', 'Organize equipe e permissões.'),
+      quick('horarios', 'Configurar horários', 'Defina funcionamento e agenda.'),
+      quick('cupons', 'Cadastrar cupom', 'Crie promoções para pacotes e serviços.'),
+      quick('entradas_saidas', 'Registrar entrada', 'Registre recebimentos.'),
+      quick('financeiro', 'Cadastrar despesa', 'Acompanhe custos e comissões.'),
+      quick('site', 'Editar site', 'Ajuste sua página profissional.'),
+      viewSite,
+    ])
+  }
+
+  if (type === 'store') {
+    return unique([
+      quick('produtos_servicos', 'Cadastrar produto', 'Adicione fotos, preço e variações.', 'Loja'),
+      quick('pedidos', 'Ver pedidos', 'Acompanhe pedidos recebidos.'),
+      quick('entradas_saidas', 'Registrar venda', 'Registre entrada financeira.'),
+      quick('financeiro', 'Cadastrar despesa', 'Acompanhe custos e resultado.'),
+      quick('clientes_crm', 'Ver clientes', 'Acesse clientes e histórico.'),
+      quick('notas_fiscais', 'Cadastrar nota fiscal', 'Organize documentos fiscais.'),
+      viewSite,
+    ])
+  }
+
+  if (type === 'events') {
+    return unique([
+      quick('orcamentos', 'Nova solicitação', 'Receba informações do evento.', 'Eventos'),
+      quick('propostas', 'Criar proposta', 'Envie proposta para o cliente.'),
+      quick('contratos', 'Contrato do evento', 'Prepare documentos e aceite.'),
+      quick('financeiro', 'Financeiro', 'Veja receitas, sinal e despesas.'),
+      quick('notas_fiscais', 'Cadastrar nota fiscal', 'Organize documentos fiscais.'),
+      quick('clientes_crm', 'Ver clientes', 'Acompanhe clientes e histórico.'),
+      viewSite,
+    ])
+  }
+
+  return unique([
+    quick('orcamentos', 'Novo pedido/orçamento', 'Acompanhe solicitações recebidas.'),
+    quick('propostas', 'Criar proposta', 'Envie propostas comerciais.'),
+    quick('clientes_crm', 'Ver CRM', 'Acompanhe clientes e follow-up.'),
+    quick('financeiro', 'Financeiro', 'Controle entradas e saídas.'),
+    quick('notas_fiscais', 'Notas fiscais', 'Organize notas e documentos.'),
+    quick('site', 'Editar site', 'Configure sua página pública.'),
+    viewSite,
+  ])
+}
+
+//
+// Compatibilidade com componentes existentes do painel
+// MantÃ©m o visual aprovado sem obrigar troca da sidebar.
+//
+export type PanelModuleGroup = ModuleGroup
+export const panelGroupLabels = moduleGroupLabels as Record<PanelModuleGroup, string>
+export function getPanelModulesForBusinessType(businessType: unknown) {
+  if (typeof getModulesForBusinessType === 'function') {
+    return withPanelModuleIcons(getModulesForBusinessType(businessType))
+  }
+
+  return withPanelModuleIcons(panelModules.filter((module) => {
+    if (module.status === 'hidden') return false
+    if (module.isGlobal) return true
+    return module.segments?.includes(businessType as never)
+  }))
+}
+//
+// Compatibilidade com pÃ¡ginas existentes do painel.
+// MantÃ©m o nome esperado por app/painel/page.tsx.
+//
+
+export const knownExistingPanelRoutes = existingPanelRoutes

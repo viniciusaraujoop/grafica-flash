@@ -1,0 +1,73 @@
+import Link from 'next/link'
+import PanelModuleShell, { PanelEmptyState } from '@/components/painel/PanelModuleShell'
+import { getModuleById, getSafeModuleHref } from '@/lib/panel-modules'
+import { getUpgradeMessage } from '@/lib/plan-limits'
+
+type PageProps = {
+  params: Promise<{ module: string }>
+}
+
+function statusLabel(status?: string) {
+  if (status === 'active') return 'Disponível'
+  if (status === 'beta') return 'Beta'
+  if (status === 'coming_soon') return 'Em preparação'
+  return 'Em breve'
+}
+
+function fallbackLabel(value: string) {
+  return value
+    .replace(/-/g, ' ')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+export default async function ModulePlaceholderPage({ params }: PageProps) {
+  const { module } = await params
+  const found = getModuleById(module)
+
+  const title = found?.label || fallbackLabel(module)
+  const description = found?.description || 'Este módulo está preparado para entrar no painel do Orçaly sem quebrar rotas existentes.'
+  const status = statusLabel(found?.status)
+  const relatedHref = found?.relatedHref || (found ? getSafeModuleHref(found) : '/painel')
+  const futureActions = found?.futureActions?.length
+    ? found.futureActions
+    : ['Centralizar dados do módulo', 'Vincular clientes e pedidos', 'Acompanhar status', 'Gerar histórico de operação']
+
+  return (
+    <PanelModuleShell
+      eyebrow="Módulo do painel"
+      title={title}
+      description={description}
+      status={found?.requiredPlan ? getUpgradeMessage(found.requiredPlan === 'intermediate' ? 'crm' : found.requiredPlan === 'premium' ? 'relatorios' : 'site_publico') : status}
+      actions={[
+        { label: 'Voltar ao painel', href: '/painel' },
+        { label: 'Módulo relacionado', href: relatedHref, primary: true },
+      ]}
+      metrics={[
+        { label: 'Status', value: status, description: 'Estado atual deste módulo.' },
+        { label: 'Plano', value: found?.requiredPlan === 'premium' ? 'Premium' : found?.requiredPlan === 'intermediate' ? 'Profissional' : 'Todos', description: 'Plano sugerido para acesso ao recurso.' },
+        { label: 'Integração', value: found?.requiresActiveSubscription === false ? 'Livre' : 'Assinatura', description: 'Respeita a regra atual do painel.' },
+      ]}
+    >
+      <section className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
+          <h2 className="text-2xl font-black tracking-[-0.04em]">O que este módulo permitirá fazer</h2>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {futureActions.map((item) => (
+              <div key={item} className="rounded-2xl border border-blue-100 bg-[#f8fbff] p-4 font-bold leading-6 text-slate-600">
+                ✓ {item}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <PanelEmptyState
+          title="Sem 404, sem gambiarra"
+          description="Se a página real ainda não existe, o Orçaly mostra este placeholder seguro. Nada de mandar tudo para pedidos só para esconder rota faltando."
+          actionLabel="Ver painel"
+          actionHref="/painel"
+        />
+      </section>
+    </PanelModuleShell>
+  )
+}
