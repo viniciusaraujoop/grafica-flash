@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import { getSiteTemplateByBusinessType, normalizeSectionList, type SiteSectionId } from '@/lib/site-templates'
-import PremiumCatalog from '@/components/public-site/PremiumCatalog'
 
 export type PublicSiteCompany = {
   id?: string
@@ -81,7 +80,7 @@ function normalizeTextItems(
   const custom = asArray<TextItem>(value)
     .map((item) => ({
       title: item.title || item.titulo || '',
-      text: item.text || item.texto || '',
+      text: item.text || item.text || '',
     }))
     .filter((item) => item.title || item.text)
 
@@ -355,16 +354,36 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
 
     if (id === 'catalog') {
       return (
-        <PremiumCatalog
-          company={company}
-          products={products}
-          businessType={businessType}
-          primaryColor={primary}
-          accentColor={accent}
-          fallbackTitle={template.catalogLabel}
-          fallbackText={businessType === 'food' ? 'Escolha seus itens e chame no WhatsApp para confirmar o pedido.' : 'Veja opções, detalhes e chame no WhatsApp para continuar.'}
-          ctaLabel={cta}
-        />
+        <SectionShell id="catalogo">
+          <TitleBlock
+            eyebrow={template.catalogLabel}
+            title={template.catalogLabel}
+            text={businessType === 'food' ? 'Escolha seus itens e chame no WhatsApp para confirmar o pedido.' : 'Veja opções, detalhes e chame no WhatsApp para continuar.'}
+          />
+
+          {categories.length ? (
+            <div className="mx-auto mt-8 flex max-w-6xl flex-wrap justify-center gap-2">
+              {categories.map((category) => (
+                <span key={category} className="rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-black" style={{ color: primary }}>
+                  {category}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="mx-auto mt-9 grid max-w-7xl gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {activeProducts.length ? activeProducts.map((product) => (
+              <ProductCard key={product.id} product={product} company={company} catalogAction={cta} businessType={businessType} />
+            )) : template.previewItems.map((item, index) => (
+              <article key={item} className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+                <div className="grid h-44 place-items-center rounded-[1.5rem] bg-slate-100 text-4xl">✨</div>
+                <h3 className="mt-5 text-2xl font-black tracking-[-0.04em]">{item}</h3>
+                <p className="mt-2 text-sm font-bold text-slate-500">Item demonstrativo do modelo {template.label}.</p>
+                <p className="mt-4 text-xl font-black" style={{ color: primary }}>{index === 0 ? 'Sob consulta' : 'A configurar'}</p>
+              </article>
+            ))}
+          </div>
+        </SectionShell>
       )
     }
 
