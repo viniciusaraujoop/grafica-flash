@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PublicSiteCompany, PublicSiteProduct } from '@/components/public-site/PublicSiteRenderer'
 import {
   getPrimaryProductImage,
@@ -22,6 +22,7 @@ type FoodCartItem = {
   localId: string
   productId: string
   productName: string
+  category?: string
   quantity: number
   unitPrice: number
   variation: FoodOption | null
@@ -51,6 +52,19 @@ type SubmitResult = {
   paymentLabel: string
   pixPayload?: string
   whatsapp?: string | null
+}
+
+type CouponState = {
+  code: string
+  appliedCode: string
+  applying: boolean
+  type: 'percentage' | 'fixed' | 'free_delivery'
+  value: number
+  maxDiscount: number | null
+  discountAmount: number
+  deliveryDiscount: number
+  message: string
+  error: string
 }
 
 type FoodProduct = PublicSiteProduct & {
@@ -117,6 +131,19 @@ const emptyCheckout: CheckoutState = {
   needsChange: false,
   changeFor: '',
   notes: '',
+}
+
+const emptyCoupon: CouponState = {
+  code: '',
+  appliedCode: '',
+  applying: false,
+  type: 'percentage',
+  value: 0,
+  maxDiscount: null,
+  discountAmount: 0,
+  deliveryDiscount: 0,
+  message: '',
+  error: '',
 }
 
 const paymentLabels: Record<string, string> = {
@@ -307,6 +334,7 @@ function ProductConfigurator({
     onAdd({
       productId: product.id,
       productName: product.nome || 'Item do cardápio',
+      category: getCategory(product),
       quantity: Math.max(1, quantity),
       unitPrice: getProductPriceNumber(product),
       variation: selectedVariation,
@@ -414,6 +442,7 @@ export default function FoodMarketplaceCatalog({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<SubmitResult | null>(null)
+  const [coupon, setCoupon] = useState<CouponState>(emptyCoupon)
   const cartIdRef = useRef(0)
 
   const deliveryZones = asArray<FoodDeliveryZone>((company as any).delivery_zones).filter((zone) => zone.is_active !== false)
@@ -435,19 +464,45 @@ export default function FoodMarketplaceCatalog({
 
   const cartSubtotal = useMemo(() => Number(cart.reduce((acc, item) => acc + item.subtotal, 0).toFixed(2)), [cart])
   const selectedZone = deliveryZones.find((zone) => zone.id === checkout.deliveryZoneId) || null
-  const deliveryFee = checkout.deliveryType === 'delivery' && selectedZone ? numberFrom(selectedZone.fee) : 0
+  const deliveryFeeBase = checkout.deliveryType === 'delivery' && selectedZone ? numberFrom(selectedZone.fee) : 0
   const selectedPayment = paymentMethods.find((method) => method.id === checkout.paymentMethodId) || null
-  const total = Number((cartSubtotal + deliveryFee).toFixed(2))
+  const couponProductDiscount = useMemo(() => {
+    if (!coupon.appliedCode || coupon.type === 'free_delivery') return 0
+
+    const rawDiscount = coupon.type === 'fixed'
+      ? coupon.value
+      : cartSubtotal * (coupon.value / 100)
+    const cappedDiscount = coupon.maxDiscount && coupon.maxDiscount > 0 ? Math.min(rawDiscount, coupon.maxDiscount) : rawDiscount
+
+    return Math.min(cartSubtotal, Math.max(0, Number(cappedDiscount.toFixed(2))))
+  }, [cartSubtotal, coupon.appliedCode, coupon.maxDiscount, coupon.type, coupon.value])
+  const couponDeliveryDiscount = coupon.appliedCode && coupon.type === 'free_delivery' ? deliveryFeeBase : 0
+  const deliveryFee = Math.max(0, Number((deliveryFeeBase - couponDeliveryDiscount).toFixed(2)))
+  const totalDiscount = Number((couponProductDiscount + couponDeliveryDiscount).toFixed(2))
+  const total = Number(Math.max(0, cartSubtotal + deliveryFeeBase - totalDiscount).toFixed(2))
   const minimumOrder = selectedZone ? numberFrom(selectedZone.minimum_order) : 0
   const minimumMissing = checkout.deliveryType === 'delivery' && minimumOrder > 0 && cartSubtotal < minimumOrder
 
+  useEffect(() => {
+    if (!cart.length && coupon.appliedCode) setCoupon(emptyCoupon)
+  }, [cart.length, coupon.appliedCode])
+
+  function clearAppliedCoupon(message = '') {
+    setCoupon({ ...emptyCoupon, message })
+  }
+
   function updateCheckout(field: keyof CheckoutState, value: string | boolean) {
     setCheckout((current) => ({ ...current, [field]: value }))
+
+    if (field === 'deliveryType' || field === 'deliveryZoneId') {
+      clearAppliedCoupon('Cupom removido porque a entrega foi alterada.')
+    }
   }
 
   function addToCart(item: Omit<FoodCartItem, 'localId'>) {
     cartIdRef.current += 1
     setCart((current) => [...current, { ...item, localId: `${item.productId}-${cartIdRef.current}` }])
+    clearAppliedCoupon('Cupom removido porque o carrinho mudou.')
     setResult(null)
     setError('')
   }
@@ -458,10 +513,76 @@ export default function FoodMarketplaceCatalog({
       const unit = item.unitPrice + Number(item.variation?.price || 0) + item.addons.reduce((acc, addon) => acc + Number(addon.price || 0), 0)
       return { ...item, quantity: Math.max(1, quantity), subtotal: Number((unit * Math.max(1, quantity)).toFixed(2)) }
     }))
+    clearAppliedCoupon('Cupom removido porque o carrinho mudou.')
   }
 
   function removeItem(localId: string) {
     setCart((current) => current.filter((item) => item.localId !== localId))
+    clearAppliedCoupon('Cupom removido porque o carrinho mudou.')
+  }
+
+  async function applyCoupon() {
+    const code = coupon.code.trim()
+
+    if (!company.id) {
+      setCoupon((current) => ({ ...current, error: 'Empresa não carregada.' }))
+      return
+    }
+
+    if (!cart.length) {
+      setCoupon((current) => ({ ...current, error: 'Adicione itens antes de aplicar cupom.' }))
+      return
+    }
+
+    if (!code) {
+      setCoupon((current) => ({ ...current, error: 'Digite seu cupom.' }))
+      return
+    }
+
+    setCoupon((current) => ({ ...current, applying: true, error: '', message: '' }))
+
+    try {
+      const response = await fetch('/api/marketplace/coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company_id: company.id,
+          slug: company.slug || company.subdomain_slug,
+          code,
+          subtotal: cartSubtotal,
+          delivery_fee: deliveryFeeBase,
+          items: cart.map((item) => ({ product_id: item.productId, categoria: item.category })),
+        }),
+      })
+
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Cupom inválido.')
+
+      const normalizedType = payload.coupon?.tipo === 'free_delivery' ? 'free_delivery' : payload.coupon?.tipo === 'fixed' ? 'fixed' : 'percentage'
+
+      setCoupon({
+        code,
+        appliedCode: payload.coupon?.codigo || code.toUpperCase(),
+        applying: false,
+        type: normalizedType,
+        value: Number(payload.coupon?.valor || 0),
+        maxDiscount: payload.coupon?.valor_maximo_desconto === null || payload.coupon?.valor_maximo_desconto === undefined ? null : Number(payload.coupon.valor_maximo_desconto || 0),
+        discountAmount: Number(payload.discount_amount || 0),
+        deliveryDiscount: Number(payload.delivery_discount || 0),
+        message: payload.message || 'Cupom aplicado com sucesso.',
+        error: '',
+      })
+    } catch (err) {
+      setCoupon((current) => ({
+        ...current,
+        appliedCode: '',
+        applying: false,
+        discountAmount: 0,
+        deliveryDiscount: 0,
+        message: '',
+        error: err instanceof Error ? err.message : 'Cupom inválido.',
+      }))
+    }
   }
 
   function validateCheckout() {
@@ -509,6 +630,7 @@ export default function FoodMarketplaceCatalog({
           payment_method_id: checkout.paymentMethodId || null,
           change_for: checkout.needsChange ? numberFrom(checkout.changeFor) : null,
           observacoes: checkout.notes,
+          coupon_code: coupon.appliedCode || null,
           cliente: {
             nome: checkout.customerName,
             telefone: checkout.customerPhone,
@@ -539,6 +661,7 @@ export default function FoodMarketplaceCatalog({
       })
       setCart([])
       setCheckout(emptyCheckout)
+      setCoupon(emptyCoupon)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao finalizar pedido.')
     } finally {
@@ -712,9 +835,26 @@ export default function FoodMarketplaceCatalog({
               <textarea value={checkout.notes} onChange={(event) => updateCheckout('notes', event.target.value)} placeholder="Observações do pedido" className="min-h-20 rounded-2xl border border-blue-100 px-4 py-3 text-sm font-bold outline-none focus:border-[#05245c]" />
             </div>
 
+            <div className="rounded-[1.5rem] border border-blue-100 bg-white p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Cupom</p>
+              <div className="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row">
+                <input value={coupon.code} onChange={(event) => setCoupon((current) => ({ ...current, code: event.target.value.toUpperCase(), error: '', message: '' }))} placeholder="Digite seu cupom" className="min-w-0 flex-1 rounded-2xl border border-blue-100 px-4 py-3 text-sm font-black uppercase outline-none focus:border-[#05245c]" />
+                {coupon.appliedCode ? (
+                  <button type="button" onClick={() => setCoupon(emptyCoupon)} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-black text-red-600">Remover</button>
+                ) : (
+                  <button type="button" onClick={applyCoupon} disabled={coupon.applying || !cart.length} className="rounded-2xl px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!coupon.applying && cart.length ? { background: primaryColor } : undefined}>{coupon.applying ? 'Aplicando...' : 'Aplicar'}</button>
+                )}
+              </div>
+              {coupon.appliedCode ? <p className="mt-3 rounded-2xl bg-emerald-50 p-3 text-sm font-bold text-emerald-700">{coupon.message || `Cupom ${coupon.appliedCode} aplicado.`}</p> : null}
+              {!coupon.appliedCode && coupon.message ? <p className="mt-3 rounded-2xl bg-blue-50 p-3 text-sm font-bold text-[#05245c]">{coupon.message}</p> : null}
+              {coupon.error ? <p className="mt-3 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{coupon.error}</p> : null}
+            </div>
+
             <div className="rounded-[1.5rem] border border-blue-100 bg-[#f8fbff] p-4 text-sm font-bold text-slate-600">
               <div className="flex justify-between"><span>Subtotal</span><span>{money(cartSubtotal)}</span></div>
-              <div className="mt-2 flex justify-between"><span>Taxa</span><span>{money(deliveryFee)}</span></div>
+              <div className="mt-2 flex justify-between"><span>Taxa de entrega</span><span>{money(deliveryFeeBase)}</span></div>
+              {couponDeliveryDiscount > 0 ? <div className="mt-2 flex justify-between text-slate-500"><span>Taxa cobrada</span><span>{money(deliveryFee)}</span></div> : null}
+              {totalDiscount > 0 ? <div className="mt-2 flex justify-between text-emerald-700"><span>Cupom {coupon.appliedCode ? `(${coupon.appliedCode})` : ''}</span><span>-{money(totalDiscount)}</span></div> : null}
               {minimumMissing ? <p className="mt-3 rounded-2xl bg-amber-50 p-3 text-amber-700">Pedido mínimo desta região: {money(minimumOrder)}.</p> : null}
               <div className="mt-4 flex justify-between border-t border-blue-100 pt-4 text-xl font-black text-[#071b3a]"><span>Total</span><span>{money(total)}</span></div>
             </div>

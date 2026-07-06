@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 'use client'
 
 import { FormEvent, useEffect, useMemo, useState } from 'react'
@@ -9,6 +10,8 @@ type Coupon = {
   codigo: string
   descricao?: string | null
   tipo: 'percentual' | 'fixo'
+  coupon_type?: 'percentage' | 'fixed' | 'free_delivery' | null
+  free_delivery?: boolean | null
   valor: number
   valor_minimo_pedido?: number | null
   valor_maximo_desconto?: number | null
@@ -130,7 +133,7 @@ export default function CuponsPage() {
         body: JSON.stringify({
           ...form,
           codigo: normalizeCode(form.codigo),
-          valor: Number(form.valor || 0),
+          valor: form.tipo === 'frete_gratis' ? 0 : Number(form.valor || 0),
           valor_minimo_pedido: Number(form.valor_minimo_pedido || 0),
           valor_maximo_desconto: form.valor_maximo_desconto === '' ? null : Number(form.valor_maximo_desconto || 0),
           usage_limit: form.usage_limit === '' ? null : Number(form.usage_limit || 0),
@@ -192,7 +195,7 @@ export default function CuponsPage() {
             <div>
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#05245c]">Marketplace</p>
               <h1 className="mt-2 text-4xl font-black tracking-[-0.05em] sm:text-5xl">Cupons</h1>
-              <p className="mt-3 max-w-3xl font-bold leading-7 text-slate-500">Crie cupons com valor fixo ou percentual, validade, pedido mínimo, limite máximo de desconto e limite de uso.</p>
+              <p className="mt-3 max-w-3xl font-bold leading-7 text-slate-500">Crie cupons percentuais, de valor fixo ou frete grátis, com validade, pedido mínimo, limite máximo de desconto e limite de uso.</p>
             </div>
             <button onClick={loadCoupons} className="rounded-2xl bg-[#05245c] px-5 py-4 text-sm font-black text-white">Atualizar</button>
           </div>
@@ -222,8 +225,8 @@ export default function CuponsPage() {
                   <label className="grid gap-2"><span className="text-sm font-black">Código</span><input value={form.codigo} onChange={(event) => updateForm('codigo', normalizeCode(event.target.value))} placeholder="PROMO10" className="rounded-2xl border border-slate-200 px-4 py-4 font-black uppercase outline-none focus:border-[#05245c]" /></label>
                   <label className="grid gap-2"><span className="text-sm font-black">Descrição</span><input value={form.descricao} onChange={(event) => updateForm('descricao', event.target.value)} placeholder="Ex: desconto de lançamento" className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none focus:border-[#05245c]" /></label>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="grid gap-2"><span className="text-sm font-black">Tipo</span><select value={form.tipo} onChange={(event) => updateForm('tipo', event.target.value)} className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none focus:border-[#05245c]"><option value="percentual">Percentual</option><option value="fixo">Valor fixo</option></select></label>
-                    <label className="grid gap-2"><span className="text-sm font-black">Valor</span><input type="number" min="0" step="0.01" value={form.valor} onChange={(event) => updateForm('valor', event.target.value)} placeholder={form.tipo === 'percentual' ? '10' : '20'} className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none focus:border-[#05245c]" /></label>
+                    <label className="grid gap-2"><span className="text-sm font-black">Tipo</span><select value={form.tipo} onChange={(event) => updateForm('tipo', event.target.value)} className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none focus:border-[#05245c]"><option value="percentual">Percentual</option><option value="fixo">Valor fixo</option><option value="frete_gratis">Frete grátis</option></select></label>
+                    <label className="grid gap-2"><span className="text-sm font-black">Valor</span><input type="number" min="0" step="0.01" value={form.valor} onChange={(event) => updateForm('valor', event.target.value)} disabled={form.tipo === 'frete_gratis'} placeholder={form.tipo === 'frete_gratis' ? 'Zera a taxa' : form.tipo === 'percentual' ? '10' : '20'} className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none focus:border-[#05245c]" /></label>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="grid gap-2"><span className="text-sm font-black">Pedido mínimo</span><input type="number" min="0" step="0.01" value={form.valor_minimo_pedido} onChange={(event) => updateForm('valor_minimo_pedido', event.target.value)} placeholder="0" className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none focus:border-[#05245c]" /></label>
@@ -248,7 +251,7 @@ export default function CuponsPage() {
                     <article key={coupon.id} className="rounded-[1.7rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div>
-                          <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{coupon.tipo === 'percentual' ? `${coupon.valor}%` : moeda(coupon.valor)}</span><span className={`rounded-full px-3 py-1 text-xs font-black ${coupon.ativo ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{coupon.ativo ? 'Ativo' : 'Inativo'}</span></div>
+                          <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{coupon.free_delivery || coupon.coupon_type === 'free_delivery' ? 'Frete grátis' : coupon.tipo === 'percentual' ? `${coupon.valor}%` : moeda(coupon.valor)}</span><span className={`rounded-full px-3 py-1 text-xs font-black ${coupon.ativo ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{coupon.ativo ? 'Ativo' : 'Inativo'}</span></div>
                           <h3 className="mt-4 text-3xl font-black tracking-[-0.06em]">{coupon.codigo}</h3>
                           <p className="mt-2 font-bold leading-7 text-slate-500">{coupon.descricao || 'Sem descrição.'}</p>
                           <div className="mt-4 grid gap-2 text-sm font-bold text-slate-500 sm:grid-cols-2"><p><span className="text-slate-400">Pedido mínimo:</span> {moeda(coupon.valor_minimo_pedido)}</p><p><span className="text-slate-400">Máximo desconto:</span> {coupon.valor_maximo_desconto ? moeda(coupon.valor_maximo_desconto) : 'Sem limite'}</p><p><span className="text-slate-400">Início:</span> {formatDate(coupon.starts_at)}</p><p><span className="text-slate-400">Fim:</span> {formatDate(coupon.ends_at)}</p><p><span className="text-slate-400">Uso:</span> {coupon.used_count || 0}{coupon.usage_limit ? `/${coupon.usage_limit}` : ''}</p><p><span className="text-slate-400">Criado:</span> {formatDate(coupon.created_at)}</p></div>

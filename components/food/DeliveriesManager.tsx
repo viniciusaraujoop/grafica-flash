@@ -400,6 +400,25 @@ export default function DeliveriesManager() {
     ...statusOptions,
   ]
 
+  function renderDeliveryActions(delivery: Delivery, compact = false) {
+    const baseClass = compact ? 'rounded-xl px-3 py-2 text-xs font-black' : buttonSecondary
+
+    return (
+      <div className={compact ? 'grid grid-cols-2 gap-2' : 'grid min-w-[220px] grid-cols-2 gap-2'}>
+        {delivery.order_id ? (
+          <Link href={`/painel/pedidos/${delivery.order_id}`} className={compact ? `${baseClass} border border-blue-100 bg-white text-center text-[#05245c]` : buttonSecondary}>Ver pedido</Link>
+        ) : null}
+        <button type="button" onClick={() => { setEditingId(delivery.id); setForm(formFromDelivery(delivery)); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className={compact ? `${baseClass} border border-blue-100 bg-white text-[#05245c]` : buttonSecondary}>Editar</button>
+        <button type="button" onClick={() => changeStatus(delivery, 'preparing')} className={compact ? `${baseClass} border border-blue-100 bg-white text-[#05245c]` : buttonSecondary}>Em preparo</button>
+        <button type="button" onClick={() => changeStatus(delivery, 'ready_for_delivery')} className={compact ? `${baseClass} border border-blue-100 bg-white text-[#05245c]` : buttonSecondary}>Pronto</button>
+        <button type="button" onClick={() => changeStatus(delivery, 'out_for_delivery')} className={compact ? `${baseClass} border border-blue-100 bg-white text-[#05245c]` : buttonSecondary}>Saiu</button>
+        <button type="button" onClick={() => changeStatus(delivery, 'delivered')} className={compact ? `${baseClass} border border-blue-100 bg-white text-[#05245c]` : buttonSecondary}>Entregue</button>
+        <button type="button" onClick={() => changeStatus(delivery, 'canceled')} className={compact ? `${baseClass} bg-red-50 text-red-700` : buttonDanger}>Cancelar</button>
+        <button type="button" onClick={() => deleteDelivery(delivery)} className={compact ? `${baseClass} bg-red-50 text-red-700` : buttonDanger}>Excluir</button>
+      </div>
+    )
+  }
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#f5f8ff] px-4 py-6 text-[#071b3a]">
       <section className="mx-auto max-w-7xl min-w-0 space-y-6">
@@ -408,10 +427,14 @@ export default function DeliveriesManager() {
           <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#05245c]">Operação Food</p>
-              <h1 className="mt-2 text-4xl font-black tracking-[-0.05em] sm:text-5xl">Entregas</h1>
+              <h1 className="mt-2 text-4xl font-black tracking-[-0.05em] sm:text-5xl">🚚 Entregas</h1>
               <p className="mt-3 max-w-3xl font-bold leading-7 text-slate-500">Acompanhe pedidos para entrega, status, endereço, taxa e forma de pagamento.</p>
             </div>
-            <button type="button" onClick={() => loadData()} className={buttonPrimary}>Atualizar</button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <a href="#nova-entrega" className={buttonSecondary}>Nova entrega manual</a>
+              <button type="button" onClick={() => loadData()} className={buttonPrimary}>Atualizar lista</button>
+              <Link href="/painel/pedidos" className={buttonSecondary}>Ver pedidos</Link>
+            </div>
           </div>
         </header>
 
@@ -447,10 +470,10 @@ export default function DeliveriesManager() {
             </section>
 
             <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-              <form onSubmit={saveDelivery} className={`${panelClass} min-w-0 overflow-hidden`}>
+              <form id="nova-entrega" onSubmit={saveDelivery} className={`${panelClass} min-w-0 overflow-hidden`}>
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-black tracking-[-0.04em]">{editingId ? 'Editar entrega' : 'Nova entrega'}</h2>
+                    <h2 className="text-2xl font-black tracking-[-0.04em]">{editingId ? 'Editar entrega' : 'Nova entrega manual'}</h2>
                     <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Crie manualmente ou vincule um pedido existente.</p>
                   </div>
                   {editingId ? <button type="button" onClick={resetForm} className={buttonSecondary}>Cancelar</button> : null}
@@ -480,51 +503,81 @@ export default function DeliveriesManager() {
                 </div>
               </form>
 
-              <section className="min-w-0 space-y-4">
+              <section className="min-w-0 space-y-4 overflow-hidden">
                 {visibleDeliveries.length === 0 ? (
                   <EmptyState title="Nenhuma entrega registrada." description="Crie uma entrega manual ou vincule um pedido para acompanhar preparo, saída e conclusão." />
                 ) : (
-                  visibleDeliveries.map((delivery) => {
-                    const zone = delivery.delivery_zone_id ? zoneMap.get(delivery.delivery_zone_id) : null
-                    const payment = delivery.payment_method_id ? paymentMap.get(delivery.payment_method_id) : null
-                    const order = delivery.order_id ? orderMap.get(delivery.order_id) : null
+                  <>
+                    <div className="hidden min-w-0 overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-blue-950/5 xl:block">
+                      <div className="overflow-x-auto">
+                        <table className="min-w-[1080px] w-full text-left text-sm">
+                          <thead className="bg-[#f5f8ff] text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                            <tr>
+                              <th className="px-5 py-4">Pedido</th>
+                              <th className="px-5 py-4">Cliente</th>
+                              <th className="px-5 py-4">Telefone</th>
+                              <th className="px-5 py-4">Bairro/região</th>
+                              <th className="px-5 py-4">Taxa</th>
+                              <th className="px-5 py-4">Pagamento</th>
+                              <th className="px-5 py-4">Status</th>
+                              <th className="px-5 py-4">Criado em</th>
+                              <th className="px-5 py-4">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-blue-50">
+                            {visibleDeliveries.map((delivery) => {
+                              const zone = delivery.delivery_zone_id ? zoneMap.get(delivery.delivery_zone_id) : null
+                              const payment = delivery.payment_method_id ? paymentMap.get(delivery.payment_method_id) : null
+                              const order = delivery.order_id ? orderMap.get(delivery.order_id) : null
 
-                    return (
-                      <article key={delivery.id} className={`${cardClass} min-w-0 overflow-hidden`}>
-                        <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                          <div className="min-w-0 flex-1">
+                              return (
+                                <tr key={delivery.id} className="align-top">
+                                  <td className="max-w-[190px] px-5 py-5 font-bold text-slate-500">{order ? orderLabel(order) : delivery.order_id ? 'Pedido vinculado' : 'Manual'}</td>
+                                  <td className="px-5 py-5 font-black text-[#071b3a]">{delivery.customer_name || 'Cliente sem nome'}</td>
+                                  <td className="px-5 py-5 font-bold text-slate-500">{delivery.customer_phone || 'Não informado'}</td>
+                                  <td className="px-5 py-5 font-bold text-slate-500">{zone?.name || delivery.neighborhood || 'Não informada'}</td>
+                                  <td className="px-5 py-5 font-black text-[#05245c]">{money(delivery.delivery_fee)}</td>
+                                  <td className="px-5 py-5 font-bold text-slate-500">{payment?.name || 'Não informado'}</td>
+                                  <td className="px-5 py-5">{statusBadge(delivery.status)}</td>
+                                  <td className="px-5 py-5 font-bold text-slate-500">{formatDateTime(delivery.created_at)}</td>
+                                  <td className="px-5 py-5">{renderDeliveryActions(delivery)}</td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div className="grid min-w-0 gap-4 xl:hidden">
+                      {visibleDeliveries.map((delivery) => {
+                        const zone = delivery.delivery_zone_id ? zoneMap.get(delivery.delivery_zone_id) : null
+                        const payment = delivery.payment_method_id ? paymentMap.get(delivery.payment_method_id) : null
+                        const order = delivery.order_id ? orderMap.get(delivery.order_id) : null
+
+                        return (
+                          <article key={delivery.id} className={`${cardClass} min-w-0 overflow-hidden`}>
                             <div className="flex flex-wrap items-center gap-2">
                               {statusBadge(delivery.status)}
                               <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{money(delivery.delivery_fee)}</span>
                               {order ? <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">Pedido vinculado</span> : null}
                             </div>
-                            <h3 className="mt-4 text-2xl font-black tracking-[-0.04em]">{delivery.customer_name || 'Cliente sem nome'}</h3>
-                            <div className="mt-4 grid min-w-0 gap-3 text-sm font-bold text-slate-500 md:grid-cols-2">
+                            <h3 className="mt-4 break-words text-2xl font-black tracking-[-0.04em]">{delivery.customer_name || 'Cliente sem nome'}</h3>
+                            <div className="mt-4 grid min-w-0 gap-3 text-sm font-bold text-slate-500">
                               <p><span className="text-slate-400">Pedido:</span> {order ? orderLabel(order) : delivery.order_id ? 'Pedido vinculado' : 'Manual'}</p>
                               <p><span className="text-slate-400">Telefone:</span> {delivery.customer_phone || 'Não informado'}</p>
                               <p className="min-w-0 break-words"><span className="text-slate-400">Endereço:</span> {delivery.address || 'Não informado'}</p>
-                              <p><span className="text-slate-400">Região:</span> {zone?.name || delivery.neighborhood || 'Não informada'}</p>
-                              <p><span className="text-slate-400">Taxa:</span> {money(delivery.delivery_fee)}</p>
+                              <p><span className="text-slate-400">Bairro:</span> {zone?.name || delivery.neighborhood || 'Não informado'}</p>
                               <p><span className="text-slate-400">Pagamento:</span> {payment?.name || 'Não informado'}</p>
-                              <p><span className="text-slate-400">Previsão:</span> {formatDateTime(delivery.estimated_delivery_at)}</p>
                               <p><span className="text-slate-400">Criada:</span> {formatDateTime(delivery.created_at)}</p>
                             </div>
                             {delivery.notes ? <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm font-bold leading-6 text-slate-500">{delivery.notes}</p> : null}
-                          </div>
-
-                          <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 xl:w-[300px] xl:grid-cols-1">
-                            <button type="button" onClick={() => changeStatus(delivery, 'preparing')} className={buttonSecondary}>Em preparo</button>
-                            <button type="button" onClick={() => changeStatus(delivery, 'ready_for_delivery')} className={buttonSecondary}>Marcar pronto</button>
-                            <button type="button" onClick={() => changeStatus(delivery, 'out_for_delivery')} className={buttonSecondary}>Saiu para entrega</button>
-                            <button type="button" onClick={() => changeStatus(delivery, 'delivered')} className={buttonSecondary}>Marcar entregue</button>
-                            <button type="button" onClick={() => changeStatus(delivery, 'canceled')} className={buttonDanger}>Cancelar</button>
-                            <button type="button" onClick={() => { setEditingId(delivery.id); setForm(formFromDelivery(delivery)); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className={buttonSecondary}>Editar</button>
-                            <button type="button" onClick={() => deleteDelivery(delivery)} className={buttonDanger}>Excluir</button>
-                          </div>
-                        </div>
-                      </article>
-                    )
-                  })
+                            <div className="mt-4">{renderDeliveryActions(delivery, true)}</div>
+                          </article>
+                        )
+                      })}
+                    </div>
+                  </>
                 )}
               </section>
             </section>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
 
@@ -33,7 +34,15 @@ export async function PATCH(request: NextRequest, context: Context) {
 
     if (body.ativo !== undefined) update.ativo = Boolean(body.ativo)
     if (body.descricao !== undefined) update.descricao = body.descricao || null
-    if (body.valor !== undefined) update.valor = Number(body.valor || 0)
+    if (body.tipo !== undefined || body.coupon_type !== undefined) {
+      const tipoEntrada = String(body.tipo || body.coupon_type || '').toLowerCase()
+      const cupomFreteGratis = ['frete_gratis', 'free_delivery', 'frete-gratis'].includes(tipoEntrada)
+      update.tipo = cupomFreteGratis ? 'fixo' : body.tipo === 'fixo' ? 'fixo' : body.tipo === 'percentual' ? 'percentual' : update.tipo
+      update.coupon_type = cupomFreteGratis ? 'free_delivery' : update.tipo === 'fixo' ? 'fixed' : 'percentage'
+      update.free_delivery = cupomFreteGratis
+      if (cupomFreteGratis) update.valor = 0
+    }
+    if (body.valor !== undefined) update.valor = update.free_delivery ? 0 : Number(body.valor || 0)
     if (body.valor_minimo_pedido !== undefined) update.valor_minimo_pedido = Number(body.valor_minimo_pedido || 0)
     if (body.valor_maximo_desconto !== undefined) update.valor_maximo_desconto = body.valor_maximo_desconto === '' || body.valor_maximo_desconto === null ? null : Number(body.valor_maximo_desconto || 0)
     if (body.starts_at !== undefined) update.starts_at = body.starts_at ? new Date(String(body.starts_at)).toISOString() : null

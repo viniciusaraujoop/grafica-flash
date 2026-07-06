@@ -278,43 +278,104 @@ function calculateItem(product: any, item: CartItemInput) {
   }
 }
 
-function validateCoupon(coupon: any, subtotal: number) {
+function normalizeCouponType(coupon: any) {
+  const raw = String(coupon?.coupon_type || coupon?.discount_type || coupon?.tipo_desconto || coupon?.tipo || '')
+    .trim()
+    .toLowerCase()
+
+  if (coupon?.free_delivery === true) return 'free_delivery'
+  if (['free_delivery', 'frete_gratis', 'frete-gratis', 'free-delivery'].includes(raw)) return 'free_delivery'
+  if (['fixed', 'fixo', 'valor_fixo', 'valor-fixo'].includes(raw)) return 'fixed'
+  return 'percentage'
+}
+
+function couponArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean)
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      if (Array.isArray(parsed)) return parsed.map((item) => String(item).trim()).filter(Boolean)
+    } catch {}
+
+    return value.split(',').map((item) => item.trim()).filter(Boolean)
+  }
+
+  return []
+}
+
+function validateCouponRestrictions(coupon: any, orderItems: OrderItemCalc[]) {
+  const allowedProducts = couponArray(coupon?.allowed_product_ids || coupon?.product_ids || coupon?.produtos_ids)
+  const allowedCategories = couponArray(coupon?.allowed_categories || coupon?.category_names || coupon?.categorias)
+
+  if (allowedProducts.length) {
+    const ids = new Set(orderItems.map((item) => String(item.product.id || '').trim()).filter(Boolean))
+    if (!allowedProducts.some((id) => ids.has(id))) return 'Cupom não permitido para os itens deste carrinho.'
+  }
+
+  if (allowedCategories.length) {
+    const categories = new Set(orderItems.map((item) => String(item.product.categoria || item.product.category || '').trim().toLowerCase()).filter(Boolean))
+    if (!allowedCategories.some((category) => categories.has(category.toLowerCase()))) return 'Cupom não permitido para as categorias deste carrinho.'
+  }
+
+  return ''
+}
+
+function validateCoupon(coupon: any, subtotal: number, deliveryFee: number, orderItems: OrderItemCalc[]) {
   const now = new Date()
 
-  if (!coupon || coupon.ativo === false) return { valid: false, reason: 'Cupom inválido ou inativo.' }
+  if (!coupon || coupon.ativo === false || coupon.is_active === false) return { valid: false, reason: 'Cupom inválido ou inativo.' }
   if (coupon.starts_at && new Date(coupon.starts_at) > now) return { valid: false, reason: 'Cupom ainda não está disponível.' }
   if (coupon.ends_at && new Date(coupon.ends_at) < now) return { valid: false, reason: 'Cupom expirado.' }
   if (coupon.usage_limit && Number(coupon.used_count || 0) >= Number(coupon.usage_limit)) return { valid: false, reason: 'Cupom atingiu o limite de uso.' }
 
-  const minOrder = money(coupon.valor_minimo_pedido)
+  const restrictionError = validateCouponRestrictions(coupon, orderItems)
+  if (restrictionError) return { valid: false, reason: restrictionError }
+
+  const minOrder = money(coupon.valor_minimo_pedido || coupon.minimum_order)
   if (minOrder > 0 && subtotal < minOrder) {
     return { valid: false, reason: 'Pedido abaixo do valor mínimo do cupom.' }
   }
 
-  const value = money(coupon.valor)
+  const type = normalizeCouponType(coupon)
+  const value = money(coupon.valor || coupon.value)
   const maxDiscount = coupon.valor_maximo_desconto === null || coupon.valor_maximo_desconto === undefined
     ? null
     : money(coupon.valor_maximo_desconto)
 
-  let discount = coupon.tipo === 'fixo' ? value : subtotal * (value / 100)
+  let discount = 0
+  let deliveryDiscount = 0
 
-  if (maxDiscount !== null && maxDiscount > 0) {
+  if (type === 'free_delivery') {
+    if (deliveryFee <= 0) return { valid: false, reason: 'Cupom de frete grátis exige uma entrega com taxa.' }
+    deliveryDiscount = deliveryFee
+  } else if (type === 'fixed') {
+    discount = value
+  } else {
+    discount = subtotal * (value / 100)
+  }
+
+  if (maxDiscount !== null && maxDiscount > 0 && type !== 'free_delivery') {
     discount = Math.min(discount, maxDiscount)
   }
 
   discount = Math.min(subtotal, Math.max(0, Number(discount.toFixed(2))))
+  deliveryDiscount = Math.min(deliveryFee, Math.max(0, Number(deliveryDiscount.toFixed(2))))
+  const totalDiscount = Number((discount + deliveryDiscount).toFixed(2))
 
   return {
-    valid: discount > 0,
-    reason: discount > 0 ? '' : 'Cupom não gerou desconto.',
+    valid: totalDiscount > 0,
+    reason: totalDiscount > 0 ? '' : 'Cupom não gerou desconto.',
     discount,
+    deliveryDiscount,
+    totalDiscount,
+    type,
   }
 }
 
-async function getCouponDiscount(companyId: string, code: string, subtotal: number) {
+async function getCouponDiscount(companyId: string, code: string, subtotal: number, deliveryFee: number, orderItems: OrderItemCalc[]) {
   const normalized = normalizeCode(code)
 
-  if (!normalized) return { coupon: null, discount: 0, error: '' }
+  if (!normalized) return { coupon: null, discount: 0, deliveryDiscount: 0, totalDiscount: 0, error: '', type: '' }
 
   const { data: coupon, error } = await supabaseAdmin
     .from('marketplace_coupons')
@@ -325,13 +386,20 @@ async function getCouponDiscount(companyId: string, code: string, subtotal: numb
 
   if (error) throw error
 
-  const validation = validateCoupon(coupon, subtotal)
+  const validation = validateCoupon(coupon, subtotal, deliveryFee, orderItems)
 
   if (!validation.valid) {
-    return { coupon: null, discount: 0, error: validation.reason || 'Cupom inválido.' }
+    return { coupon: null, discount: 0, deliveryDiscount: 0, totalDiscount: 0, error: validation.reason || 'Cupom inválido.', type: '' }
   }
 
-  return { coupon, discount: Number(validation.discount || 0), error: '' }
+  return {
+    coupon,
+    discount: Number(validation.discount || 0),
+    deliveryDiscount: Number(validation.deliveryDiscount || 0),
+    totalDiscount: Number(validation.totalDiscount || 0),
+    error: '',
+    type: validation.type || normalizeCouponType(coupon),
+  }
 }
 
 function paymentStatusFromMethod(method: any) {
@@ -454,14 +522,6 @@ export async function POST(request: NextRequest) {
     }
 
     const subtotal = Number(orderItems.reduce((acc, item) => acc + item.calc.subtotal, 0).toFixed(2))
-    const couponResult = await getCouponDiscount(companyId, couponCode, subtotal)
-
-    if (couponCode && couponResult.error) {
-      return NextResponse.json({ error: couponResult.error }, { status: 400 })
-    }
-
-    const valorDesconto = Number((couponResult.discount || 0).toFixed(2))
-    const subtotalAfterDiscount = Number(Math.max(0, subtotal - valorDesconto).toFixed(2))
     const deliveryType = foodOrder ? (body.delivery_type === 'pickup' ? 'pickup' : 'delivery') : String(body.delivery_type || 'pickup')
 
     let deliveryZone: any = null
@@ -486,7 +546,7 @@ export async function POST(request: NextRequest) {
       if (!zone) return NextResponse.json({ error: 'Região de entrega inválida para esta empresa.' }, { status: 400 })
 
       const minimumOrder = money(zone.minimum_order)
-      if (minimumOrder > 0 && subtotalAfterDiscount < minimumOrder) {
+      if (minimumOrder > 0 && subtotal < minimumOrder) {
         return NextResponse.json({ error: `Pedido mínimo para ${zone.name} é ${minimumOrder.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}.` }, { status: 400 })
       }
 
@@ -523,7 +583,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const total = Number(Math.max(0, subtotalAfterDiscount + deliveryFee).toFixed(2))
+    const couponResult = await getCouponDiscount(companyId, couponCode, subtotal, deliveryFee, orderItems)
+
+    if (couponCode && couponResult.error) {
+      return NextResponse.json({ error: couponResult.error }, { status: 400 })
+    }
+
+    const valorDescontoProdutos = Number((couponResult.discount || 0).toFixed(2))
+    const valorDescontoEntrega = Number((couponResult.deliveryDiscount || 0).toFixed(2))
+    const valorDesconto = Number((valorDescontoProdutos + valorDescontoEntrega).toFixed(2))
+    const subtotalAfterDiscount = Number(Math.max(0, subtotal - valorDescontoProdutos).toFixed(2))
+    const deliveryFeeOriginal = deliveryFee
+    const deliveryFeeCharged = Number(Math.max(0, deliveryFeeOriginal - valorDescontoEntrega).toFixed(2))
+    const total = Number(Math.max(0, subtotalAfterDiscount + deliveryFeeCharged).toFixed(2))
     const percentualSinal = company.cobrar_sinal ? Math.max(0, Number(company.percentual_sinal || 0)) : 0
     const valorSinal = percentualSinal > 0 ? Number((total * percentualSinal / 100).toFixed(2)) : 0
     const valorPix = valorSinal > 0 ? valorSinal : total
@@ -578,7 +650,7 @@ export async function POST(request: NextRequest) {
         subtotal,
         total_amount: total,
         delivery_type: deliveryType,
-        delivery_fee: deliveryFee,
+        delivery_fee: deliveryFeeCharged,
         delivery_zone_id: deliveryZone?.id || null,
         payment_method_id: selectedPaymentMethod?.id || null,
         payment_status: paymentStatus,
@@ -602,8 +674,12 @@ export async function POST(request: NextRequest) {
           cliente,
           subtotal,
           valor_desconto: valorDesconto,
+          valor_desconto_produtos: valorDescontoProdutos,
+          valor_desconto_entrega: valorDescontoEntrega,
           delivery_type: deliveryType,
-          delivery_fee: deliveryFee,
+          delivery_fee: deliveryFeeCharged,
+          delivery_fee_original: deliveryFeeOriginal,
+          delivery_discount: valorDescontoEntrega,
           total_final: total,
           payment_method: selectedPaymentMethod ? {
             id: selectedPaymentMethod.id,
@@ -613,14 +689,16 @@ export async function POST(request: NextRequest) {
           delivery_zone: deliveryZone ? {
             id: deliveryZone.id,
             name: deliveryZone.name,
-            fee: deliveryFee,
+            fee: deliveryFeeCharged,
           } : null,
           cupom: couponResult.coupon
             ? {
                 id: couponResult.coupon.id,
                 codigo: couponResult.coupon.codigo,
-                tipo: couponResult.coupon.tipo,
+                tipo: couponResult.type || couponResult.coupon.coupon_type || couponResult.coupon.tipo,
                 valor: couponResult.coupon.valor,
+                desconto_produtos: valorDescontoProdutos,
+                desconto_entrega: valorDescontoEntrega,
               }
             : null,
           pix: pixPayload
@@ -712,7 +790,7 @@ export async function POST(request: NextRequest) {
           address,
           neighborhood: neighborhood || deliveryZone?.name || null,
           delivery_zone_id: deliveryZone?.id || null,
-          delivery_fee: deliveryFee,
+          delivery_fee: deliveryFeeCharged,
           payment_method_id: selectedPaymentMethod?.id || null,
           status: 'waiting_preparation',
           notes: body.observacoes || cliente.observacoes || null,
@@ -759,8 +837,11 @@ export async function POST(request: NextRequest) {
       order_id: order.id,
       total_original: subtotal,
       valor_desconto: valorDesconto,
+      valor_desconto_produtos: valorDescontoProdutos,
+      valor_desconto_entrega: valorDescontoEntrega,
       subtotal: subtotalAfterDiscount,
-      delivery_fee: deliveryFee,
+      delivery_fee_original: deliveryFeeOriginal,
+      delivery_fee: deliveryFeeCharged,
       total,
       valor_sinal: valorSinal,
       valor_pix: valorPix,

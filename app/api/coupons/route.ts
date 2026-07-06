@@ -75,14 +75,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'O cupom precisa ter pelo menos 3 caracteres.' }, { status: 400 })
     }
 
-    const tipo = body.tipo === 'fixo' ? 'fixo' : 'percentual'
-    const valor = toNumber(body.valor, 0)
+    const tipoEntrada = String(body.tipo || body.coupon_type || '').toLowerCase()
+    const cupomFreteGratis = ['frete_gratis', 'free_delivery', 'frete-gratis'].includes(tipoEntrada)
+    const tipo = cupomFreteGratis ? 'fixo' : body.tipo === 'fixo' ? 'fixo' : 'percentual'
+    const coupon_type = cupomFreteGratis ? 'free_delivery' : tipo === 'fixo' ? 'fixed' : 'percentage'
+    const valor = cupomFreteGratis ? 0 : toNumber(body.valor, 0)
 
-    if (valor <= 0) {
+    if (!cupomFreteGratis && valor <= 0) {
       return NextResponse.json({ error: 'Informe um valor de desconto maior que zero.' }, { status: 400 })
     }
 
-    if (tipo === 'percentual' && valor > 100) {
+    if (!cupomFreteGratis && tipo === 'percentual' && valor > 100) {
       return NextResponse.json({ error: 'Cupom percentual não pode passar de 100%.' }, { status: 400 })
     }
 
@@ -92,6 +95,8 @@ export async function POST(request: NextRequest) {
       codigo_normalizado: codigo,
       descricao: body.descricao || null,
       tipo,
+      coupon_type,
+      free_delivery: cupomFreteGratis,
       valor,
       valor_minimo_pedido: toNumber(body.valor_minimo_pedido, 0),
       valor_maximo_desconto: body.valor_maximo_desconto === '' || body.valor_maximo_desconto === null || body.valor_maximo_desconto === undefined ? null : toNumber(body.valor_maximo_desconto, 0),
