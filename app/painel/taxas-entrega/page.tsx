@@ -1,6 +1,5 @@
-import OperationModulePage from '@/components/painel/OperationModulePage'
-import { operationPages } from '@/lib/operation-pages'
+import DeliveryZonesManager from '@/components/food/DeliveryZonesManager'
 
 export default function TaxasEntregaPage() {
-  return <OperationModulePage definition={operationPages['taxas-entrega']} />
+  return <DeliveryZonesManager />
 }

@@ -136,6 +136,10 @@ const existingPanelRoutes = new Set([
   '/painel/setup',
   '/painel/site',
   '/painel/tarefas',
+  '/painel/formas-pagamento',
+  '/painel/taxas-entrega',
+  '/painel/horarios',
+  '/painel/entregas',
   '/painel/whatsapp',
   '/assinatura',
 ])
@@ -580,7 +584,7 @@ export const segmentModules: SegmentModule[] = [
     fallbackHref: '/painel/modulos/entregas',
     group: 'operacao',
     segments: ['food', 'store'],
-    status: 'coming_soon',
+    status: 'active',
     iconName: 'truck',
     requiresActiveSubscription: true,
     relatedHref: '/painel/pedidos',
@@ -594,7 +598,7 @@ export const segmentModules: SegmentModule[] = [
     fallbackHref: '/painel/modulos/horarios',
     group: 'operacao',
     segments: ['food', 'beauty', 'barber'],
-    status: 'coming_soon',
+    status: 'active',
     iconName: 'clock',
     requiresActiveSubscription: true,
     relatedHref: '/painel/site',
@@ -608,7 +612,7 @@ export const segmentModules: SegmentModule[] = [
     fallbackHref: '/painel/modulos/taxas-entrega',
     group: 'operacao',
     segments: ['food', 'store'],
-    status: 'coming_soon',
+    status: 'active',
     iconName: 'map-pin',
     requiresActiveSubscription: true,
     relatedHref: '/painel/site',
@@ -622,7 +626,7 @@ export const segmentModules: SegmentModule[] = [
     fallbackHref: '/painel/modulos/formas-pagamento',
     group: 'financeiro',
     segments: ['food', 'store', 'services', 'graphic', 'custom_products'],
-    status: 'coming_soon',
+    status: 'active',
     iconName: 'credit-card',
     requiresActiveSubscription: true,
     relatedHref: '/painel/financeiro',
@@ -1150,9 +1154,9 @@ export function getModulesForSegment(segment: unknown) {
   const normalized = normalizeSegment(segment)
 
   return segmentModules
-    .filter((module) => module.status !== 'hidden')
-    .filter((module) => module.isGlobal || module.segments.includes(normalized))
-    .map((module) => ({ ...module, href: getSafeModuleHref(module) }))
+    .filter((moduleItem) => moduleItem.status !== 'hidden')
+    .filter((moduleItem) => moduleItem.isGlobal || moduleItem.segments.includes(normalized))
+    .map((moduleItem) => ({ ...moduleItem, href: getSafeModuleHref(moduleItem) }))
 }
 
 export function getModulesByGroupForSegment(segment: unknown) {
@@ -1168,15 +1172,15 @@ export function getModulesByGroupForSegment(segment: unknown) {
 }
 
 function quick(id: string, label?: string, description?: string): SegmentQuickAction | null {
-  const module = getModuleById(id)
-  if (!module) return null
+  const moduleInfo = getModuleById(id)
+  if (!moduleInfo) return null
 
   return {
-    id: module.id,
-    label: label || module.label,
-    description: description || module.description,
-    href: getSafeModuleHref(module),
-    badge: module.badge,
+    id: moduleInfo.id,
+    label: label || moduleInfo.label,
+    description: description || moduleInfo.description,
+    href: getSafeModuleHref(moduleInfo),
+    badge: moduleInfo.badge,
   }
 }
 

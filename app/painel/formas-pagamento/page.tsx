@@ -1,5 +1,5 @@
-import PanelPlaceholderPage from '@/components/painel/PanelPlaceholderPage'
+import PaymentMethodsManager from '@/components/food/PaymentMethodsManager'
 
-export default function Page() {
-  return <PanelPlaceholderPage moduleId="formas_pagamento" />
+export default function FormasPagamentoPage() {
+  return <PaymentMethodsManager />
 }

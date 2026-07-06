@@ -83,7 +83,7 @@ const labelsByType: Record<CatalogBusinessType, CatalogLabels> = {
   food: {
     catalogTitle: 'Cardápio',
     itemLabel: 'Item',
-    actionLabel: 'Pedir pelo WhatsApp',
+    actionLabel: 'Adicionar ao carrinho',
     emptyTitle: 'Cadastre seu primeiro item do cardápio.',
     emptyText: 'Seu cardápio ainda está sendo preparado. Entre em contato pelo WhatsApp para saber mais.',
     featuredTitle: 'Destaques do cardápio',

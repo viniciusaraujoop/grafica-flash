@@ -29,7 +29,12 @@ export default function PublicSiteClient({ slug }: PublicSiteClientProps) {
           throw new Error(payload.error || 'Site não encontrado.')
         }
 
-        setCompany(payload.company)
+        setCompany({
+          ...(payload.company || {}),
+          delivery_zones: Array.isArray(payload.delivery_zones) ? payload.delivery_zones : [],
+          payment_methods: Array.isArray(payload.payment_methods) ? payload.payment_methods : [],
+          business_hours: Array.isArray(payload.business_hours) ? payload.business_hours : [],
+        })
         setProducts(Array.isArray(payload.products) ? payload.products : [])
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar site.')

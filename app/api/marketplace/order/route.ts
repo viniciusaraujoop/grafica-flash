@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { generatePixPayload, sanitizeTxid } from '@/lib/pix'
@@ -18,6 +19,38 @@ type CartItemInput = {
   respostas?: Record<string, any>
   opcoes_selecionadas?: Record<string, string>
   observacoes?: string
+  selected_variation?: any
+  variation?: any
+  selected_addons?: any[]
+  addons?: any[]
+}
+
+type OrderItemCalc = {
+  product: any
+  input: CartItemInput
+  calc: {
+    quantidade: number
+    preco: number
+    subtotalBase: number
+    ajustes: number
+    subtotal: number
+    largura: number
+    altura: number
+    comprimento: number
+    areaM2: number
+    detalhes: string
+    opcoes: any[]
+    variation: FoodOption | null
+    addons: FoodOption[]
+    unitPrice: number
+  }
+}
+
+type FoodOption = {
+  id: string
+  name: string
+  price: number
+  raw?: unknown
 }
 
 function cleanPhone(value: string) {
@@ -33,6 +66,104 @@ function normalizeCode(value: unknown) {
     .trim()
     .toUpperCase()
     .replace(/\s+/g, '')
+}
+
+function isFoodOrder(body: any, company: any) {
+  const raw = String(body.segment || body.business_type || company?.business_type || company?.modelo_negocio || '').toLowerCase()
+  return ['food', 'alimenticio', 'restaurante', 'lanchonete', 'delivery'].includes(raw)
+}
+
+function asArray<T = any>(value: unknown): T[] {
+  return Array.isArray(value) ? value as T[] : []
+}
+
+function numberFrom(value: unknown) {
+  const numeric = Number(String(value ?? '').replace(',', '.'))
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function optionName(option: any) {
+  return String(option?.name || option?.nome || option?.title || option?.titulo || option?.label || '').trim()
+}
+
+function optionId(option: any, fallback: string) {
+  return String(option?.id || option?.value || option?.slug || optionName(option) || fallback)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+}
+
+function optionPrice(option: any) {
+  return numberFrom(option?.price ?? option?.preco ?? option?.valor ?? option?.ajuste_valor ?? option?.price_delta ?? 0)
+}
+
+function normalizeOptions(value: unknown, prefix: string): FoodOption[] {
+  return asArray<any>(value)
+    .flatMap((item, index) => {
+      if (Array.isArray(item?.valores)) {
+        return item.valores.map((value: any, valueIndex: number) => ({
+          id: `${optionId(item, `${prefix}_${index}`)}_${optionId(value, `${valueIndex}`)}`,
+          name: `${optionName(item) || 'Opção'}: ${optionName(value) || `Item ${valueIndex + 1}`}`,
+          price: optionPrice(value),
+          raw: value,
+        }))
+      }
+
+      return [{
+        id: optionId(item, `${prefix}_${index}`),
+        name: optionName(item) || `Opção ${index + 1}`,
+        price: optionPrice(item),
+        raw: item,
+      }]
+    })
+    .filter((option) => option.name)
+}
+
+function getExtras(product: any) {
+  return product?.extras && typeof product.extras === 'object' && !Array.isArray(product.extras) ? product.extras : {}
+}
+
+function getConfig(product: any) {
+  return product?.configuracoes && typeof product.configuracoes === 'object' && !Array.isArray(product.configuracoes) ? product.configuracoes : {}
+}
+
+function getProductVariations(product: any) {
+  const extras = getExtras(product)
+  const config = getConfig(product)
+
+  return [
+    ...normalizeOptions(product?.variations, 'variation'),
+    ...normalizeOptions(product?.variacoes, 'variation'),
+    ...normalizeOptions(extras.variations, 'variation'),
+    ...normalizeOptions(extras.variacoes, 'variation'),
+    ...normalizeOptions(config.variations, 'variation'),
+    ...normalizeOptions(config.variacoes, 'variation'),
+    ...normalizeOptions(config.opcoes, 'variation'),
+  ].filter((option, index, list) => list.findIndex((item) => item.id === option.id && item.name === option.name) === index)
+}
+
+function getProductAddons(product: any) {
+  const extras = getExtras(product)
+  const config = getConfig(product)
+
+  return [
+    ...normalizeOptions(product?.addons, 'addon'),
+    ...normalizeOptions(product?.adicionais, 'addon'),
+    ...normalizeOptions(extras.addons, 'addon'),
+    ...normalizeOptions(extras.adicionais, 'addon'),
+    ...normalizeOptions(config.addons, 'addon'),
+    ...normalizeOptions(config.adicionais, 'addon'),
+  ].filter((option, index, list) => list.findIndex((item) => item.id === option.id && item.name === option.name) === index)
+}
+
+function findOption(options: FoodOption[], input: any) {
+  if (!input) return null
+  const wantedId = String(input.id || input.value || '').trim().toLowerCase()
+  const wantedName = optionName(input).toLowerCase()
+
+  return options.find((option) => {
+    return (wantedId && option.id.toLowerCase() === wantedId) || (wantedName && option.name.toLowerCase() === wantedName)
+  }) || null
 }
 
 function selectedOptions(product: any, selections: Record<string, string> = {}) {
@@ -96,7 +227,26 @@ function calculateItem(product: any, item: CartItemInput) {
     }
   })
 
-  let subtotal = subtotalBase + ajustes
+  const variations = getProductVariations(product)
+  const addons = getProductAddons(product)
+  const variationInput = item.selected_variation || item.variation
+  const selectedVariation = findOption(variations, variationInput)
+  const addonInputs = asArray<any>(item.selected_addons || item.addons)
+  const selectedAddons = addonInputs.map((addon) => findOption(addons, addon)).filter(Boolean) as FoodOption[]
+
+  if (variationInput && !selectedVariation) {
+    throw new Error(`Variação inválida para ${product.nome || 'produto'}.`)
+  }
+
+  if (addonInputs.length !== selectedAddons.length) {
+    throw new Error(`Adicional inválido para ${product.nome || 'produto'}.`)
+  }
+
+  const variationPrice = Number(selectedVariation?.price || 0) * quantidade
+  const addonsPrice = selectedAddons.reduce((acc, addon) => acc + Number(addon.price || 0), 0) * quantidade
+  ajustes += variationPrice + addonsPrice
+
+  let subtotal = Number((subtotalBase + ajustes).toFixed(2))
 
   if (valorMinimo > 0 && subtotal < valorMinimo) {
     subtotal = valorMinimo
@@ -106,6 +256,9 @@ function calculateItem(product: any, item: CartItemInput) {
   if (opcoes.length > 0) {
     detalhes += ` • opções: ${opcoes.map((o) => `${o.group_nome}: ${o.value_nome}`).join(', ')}`
   }
+
+  if (selectedVariation) detalhes += ` • variação: ${selectedVariation.name}`
+  if (selectedAddons.length) detalhes += ` • adicionais: ${selectedAddons.map((addon) => addon.name).join(', ')}`
 
   return {
     quantidade,
@@ -119,6 +272,9 @@ function calculateItem(product: any, item: CartItemInput) {
     areaM2,
     detalhes,
     opcoes,
+    variation: selectedVariation,
+    addons: selectedAddons,
+    unitPrice: Number(((subtotalBase + ajustes) / quantidade).toFixed(2)),
   }
 }
 
@@ -178,16 +334,52 @@ async function getCouponDiscount(companyId: string, code: string, subtotal: numb
   return { coupon, discount: Number(validation.discount || 0), error: '' }
 }
 
+function paymentStatusFromMethod(method: any) {
+  const type = String(method?.type || '').toLowerCase()
+  if (type === 'pix') return 'waiting_confirmation'
+  if (type === 'online') return 'pending'
+  if (type === 'cash' || type === 'delivery_card' || type === 'debit_card' || type === 'credit_card') return 'pending'
+  return 'pending'
+}
+
+function paymentLabel(method: any) {
+  const labels: Record<string, string> = {
+    cash: 'Dinheiro',
+    pix: 'Pix',
+    debit_card: 'Cartão de débito',
+    credit_card: 'Cartão de crédito',
+    delivery_card: 'Cartão na entrega',
+    online: 'Link de pagamento',
+    other: 'Outro',
+  }
+
+  if (!method) return 'Combinar pelo WhatsApp'
+  return method.name || labels[String(method.type || '').toLowerCase()] || 'A combinar'
+}
+
+async function rollbackOrder(companyId: string, orderId: string | null) {
+  if (!orderId) return
+
+  await supabaseAdmin.from('deliveries').delete().eq('order_id', orderId).eq('company_id', companyId)
+  await supabaseAdmin.from('order_payments').delete().eq('order_id', orderId).eq('company_id', companyId)
+  await supabaseAdmin.from('order_items').delete().eq('order_id', orderId).eq('company_id', companyId)
+  await supabaseAdmin.from('orders').delete().eq('id', orderId).eq('company_id', companyId)
+}
+
 export async function POST(request: NextRequest) {
+  let createdOrderId: string | null = null
+  let companyIdForRollback = ''
+
   try {
     const body = await request.json()
 
-    const companyId = String(body.company_id || '')
+    const requestedCompanyId = String(body.company_id || '')
+    const slug = String(body.slug || '').trim()
     const cliente = body.cliente || {}
     const items = Array.isArray(body.items) ? itemsSanitize(body.items) : []
     const couponCode = normalizeCode(body.coupon_code || body.cupom_codigo || body.codigo_cupom)
 
-    if (!companyId) {
+    if (!requestedCompanyId && !slug) {
       return NextResponse.json({ error: 'Empresa não informada.' }, { status: 400 })
     }
 
@@ -199,12 +391,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Carrinho vazio.' }, { status: 400 })
     }
 
-    const { data: company, error: companyError } = await supabaseAdmin
+    let companyQuery = supabaseAdmin
       .from('companies')
       .select(`
         id,
         nome,
         slug,
+        subdomain_slug,
         whatsapp,
         pix_key,
         pix_nome,
@@ -212,11 +405,16 @@ export async function POST(request: NextRequest) {
         aceita_pix,
         cobrar_sinal,
         percentual_sinal,
+        business_type,
         modelo_negocio,
         modelo_perguntas
       `)
-      .eq('id', companyId)
-      .maybeSingle()
+
+    companyQuery = requestedCompanyId
+      ? companyQuery.eq('id', requestedCompanyId)
+      : companyQuery.or(`slug.eq.${slug},subdomain_slug.eq.${slug}`)
+
+    const { data: company, error: companyError } = await companyQuery.maybeSingle()
 
     if (companyError) throw companyError
 
@@ -224,54 +422,118 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     }
 
-    const ids = items.map((item: CartItemInput) => item.product_id)
+    const companyId = company.id
+    companyIdForRollback = companyId
+    const foodOrder = isFoodOrder(body, company)
+    const ids = Array.from(new Set(items.map((item: CartItemInput) => item.product_id)))
 
     const { data: products, error: productsError } = await supabaseAdmin
       .from('products')
       .select('*')
       .eq('company_id', companyId)
       .in('id', ids)
-      .eq('ativo', true)
 
     if (productsError) throw productsError
 
     const productMap = new Map((products || []).map((product: any) => [product.id, product]))
-    const orderItems: any[] = []
+    const orderItems: OrderItemCalc[] = []
 
     for (const item of items) {
       const product = productMap.get(item.product_id)
-      if (!product) continue
+
+      if (!product || product.ativo === false || product.available === false) {
+        return NextResponse.json({ error: 'Produto inválido ou indisponível no carrinho.' }, { status: 400 })
+      }
+
+      if (foodOrder && (product.preco_sob_consulta || money(product.preco) <= 0)) {
+        return NextResponse.json({ error: `${product.nome || 'Produto'} está sob consulta e não pode ir para checkout Food.` }, { status: 400 })
+      }
 
       const calc = calculateItem(product, item)
-
-      orderItems.push({
-        product,
-        input: item,
-        calc,
-      })
+      orderItems.push({ product, input: item, calc })
     }
 
-    if (orderItems.length === 0) {
-      return NextResponse.json({ error: 'Nenhum produto válido no carrinho.' }, { status: 400 })
-    }
-
-    const totalOriginal = Number(orderItems.reduce((acc, item) => acc + item.calc.subtotal, 0).toFixed(2))
-    const couponResult = await getCouponDiscount(companyId, couponCode, totalOriginal)
+    const subtotal = Number(orderItems.reduce((acc, item) => acc + item.calc.subtotal, 0).toFixed(2))
+    const couponResult = await getCouponDiscount(companyId, couponCode, subtotal)
 
     if (couponCode && couponResult.error) {
       return NextResponse.json({ error: couponResult.error }, { status: 400 })
     }
 
     const valorDesconto = Number((couponResult.discount || 0).toFixed(2))
-    const total = Number(Math.max(0, totalOriginal - valorDesconto).toFixed(2))
+    const subtotalAfterDiscount = Number(Math.max(0, subtotal - valorDesconto).toFixed(2))
+    const deliveryType = foodOrder ? (body.delivery_type === 'pickup' ? 'pickup' : 'delivery') : String(body.delivery_type || 'pickup')
+
+    let deliveryZone: any = null
+    let deliveryFee = 0
+
+    if (foodOrder && deliveryType === 'delivery') {
+      const deliveryZoneId = String(body.delivery_zone_id || '')
+
+      if (!deliveryZoneId) {
+        return NextResponse.json({ error: 'Escolha a região de entrega.' }, { status: 400 })
+      }
+
+      const { data: zone, error: zoneError } = await supabaseAdmin
+        .from('delivery_zones')
+        .select('id, name, fee, minimum_order, estimated_time_min, estimated_time_max, is_active')
+        .eq('id', deliveryZoneId)
+        .eq('company_id', companyId)
+        .eq('is_active', true)
+        .maybeSingle()
+
+      if (zoneError) throw zoneError
+      if (!zone) return NextResponse.json({ error: 'Região de entrega inválida para esta empresa.' }, { status: 400 })
+
+      const minimumOrder = money(zone.minimum_order)
+      if (minimumOrder > 0 && subtotalAfterDiscount < minimumOrder) {
+        return NextResponse.json({ error: `Pedido mínimo para ${zone.name} é ${minimumOrder.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}.` }, { status: 400 })
+      }
+
+      deliveryZone = zone
+      deliveryFee = money(zone.fee)
+    }
+
+    let selectedPaymentMethod: any = null
+    const paymentMethodId = String(body.payment_method_id || '')
+
+    if (paymentMethodId) {
+      const { data: method, error: methodError } = await supabaseAdmin
+        .from('payment_methods')
+        .select('*')
+        .eq('id', paymentMethodId)
+        .eq('company_id', companyId)
+        .eq('is_active', true)
+        .maybeSingle()
+
+      if (methodError) throw methodError
+      if (!method) return NextResponse.json({ error: 'Forma de pagamento inválida para esta empresa.' }, { status: 400 })
+      selectedPaymentMethod = method
+    } else if (foodOrder) {
+      const { data: anyMethod, error: anyMethodError } = await supabaseAdmin
+        .from('payment_methods')
+        .select('id')
+        .eq('company_id', companyId)
+        .eq('is_active', true)
+        .limit(1)
+
+      if (anyMethodError) throw anyMethodError
+      if (Array.isArray(anyMethod) && anyMethod.length > 0) {
+        return NextResponse.json({ error: 'Escolha a forma de pagamento.' }, { status: 400 })
+      }
+    }
+
+    const total = Number(Math.max(0, subtotalAfterDiscount + deliveryFee).toFixed(2))
     const percentualSinal = company.cobrar_sinal ? Math.max(0, Number(company.percentual_sinal || 0)) : 0
     const valorSinal = percentualSinal > 0 ? Number((total * percentualSinal / 100).toFixed(2)) : 0
     const valorPix = valorSinal > 0 ? valorSinal : total
     const telefone = cleanPhone(cliente.telefone)
     const resumo = orderItems.map((item) => `${item.calc.quantidade}x ${item.product.nome}`).join(', ')
+    const paymentName = paymentLabel(selectedPaymentMethod)
+    const paymentStatus = paymentStatusFromMethod(selectedPaymentMethod)
     const txid = sanitizeTxid(`ORC${Date.now().toString().slice(-10)}`)
 
-    const pixPayload = company.aceita_pix !== false && company.pix_key
+    const pixPayload = selectedPaymentMethod?.type === 'pix' && company.aceita_pix !== false && company.pix_key
       ? generatePixPayload({
           key: company.pix_key,
           merchantName: company.pix_nome || company.nome || 'ORCALY',
@@ -281,6 +543,23 @@ export async function POST(request: NextRequest) {
           description: `Pedido ${company.nome}`.slice(0, 60),
         })
       : ''
+
+    const address = String(cliente.endereco || body.address || '').trim()
+    const neighborhood = String(cliente.bairro || cliente.neighborhood || deliveryZone?.name || '').trim()
+    const complement = String(cliente.complemento || body.complement || '').trim()
+    const referencePoint = String(cliente.referencia || body.reference_point || '').trim()
+    const changeFor = body.change_for !== null && body.change_for !== undefined ? numberFrom(body.change_for) : null
+    const itemsSnapshot = orderItems.map((item) => ({
+      product_id: item.product.id,
+      product_name: item.product.nome,
+      quantity: item.calc.quantidade,
+      unit_price: item.calc.unitPrice,
+      base_price: item.calc.preco,
+      variation: item.calc.variation,
+      addons: item.calc.addons,
+      notes: item.input.observacoes || '',
+      subtotal: item.calc.subtotal,
+    }))
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
@@ -293,23 +572,49 @@ export async function POST(request: NextRequest) {
         observacoes: body.observacoes || cliente.observacoes || null,
         status: 'Recebido',
         preco_estimado: total,
-        valor_total_original: totalOriginal,
+        valor_total_original: subtotal,
         valor_desconto: valorDesconto,
         valor_total: total,
+        subtotal,
+        total_amount: total,
+        delivery_type: deliveryType,
+        delivery_fee: deliveryFee,
+        delivery_zone_id: deliveryZone?.id || null,
+        payment_method_id: selectedPaymentMethod?.id || null,
+        payment_status: paymentStatus,
         valor_sinal: valorSinal,
         percentual_sinal: percentualSinal,
         cupom_id: couponResult.coupon?.id || null,
         cupom_codigo: couponResult.coupon?.codigo || null,
-        forma_pagamento: pixPayload ? 'PIX' : 'A combinar',
+        forma_pagamento: pixPayload ? 'PIX' : paymentName,
+        address: address || null,
+        endereco_entrega: address || null,
+        neighborhood: neighborhood || null,
+        complement: complement || null,
+        reference_point: referencePoint || null,
+        change_for: changeFor,
+        items_snapshot: itemsSnapshot,
         itens_resumo: resumo,
         cliente_empresa: cliente.empresa || null,
-        marketplace_origem: 'marketplace',
+        marketplace_origem: foodOrder ? 'marketplace_food' : 'marketplace',
         dados_inteligentes: {
-          origem: 'marketplace_premium_cupons',
+          origem: foodOrder ? 'marketplace_food_checkout' : 'marketplace_premium_cupons',
           cliente,
-          total_original: totalOriginal,
+          subtotal,
           valor_desconto: valorDesconto,
+          delivery_type: deliveryType,
+          delivery_fee: deliveryFee,
           total_final: total,
+          payment_method: selectedPaymentMethod ? {
+            id: selectedPaymentMethod.id,
+            name: selectedPaymentMethod.name,
+            type: selectedPaymentMethod.type,
+          } : null,
+          delivery_zone: deliveryZone ? {
+            id: deliveryZone.id,
+            name: deliveryZone.name,
+            fee: deliveryFee,
+          } : null,
           cupom: couponResult.coupon
             ? {
                 id: couponResult.coupon.id,
@@ -326,23 +631,27 @@ export async function POST(request: NextRequest) {
               }
             : null,
           perguntas_gerais: body.respostas_gerais || {},
-          endereco: cliente.endereco || null,
+          items: itemsSnapshot,
         },
       })
       .select('id')
       .single()
 
     if (orderError) throw orderError
+    createdOrderId = order.id
 
     const itemsToInsert = orderItems.map((item) => ({
       order_id: order.id,
       company_id: companyId,
       product_id: item.product.id,
       nome: item.product.nome,
+      product_name: item.product.nome,
       tipo: item.product.tipo || 'produto',
       unidade: item.product.unidade || 'unidade',
       quantidade: item.calc.quantidade,
-      preco_unitario: item.calc.preco,
+      quantity: item.calc.quantidade,
+      preco_unitario: item.calc.unitPrice,
+      unit_price: item.calc.unitPrice,
       subtotal: item.calc.subtotal,
       largura: item.calc.largura || null,
       altura: item.calc.altura || null,
@@ -350,10 +659,15 @@ export async function POST(request: NextRequest) {
       area_m2: item.calc.areaM2 || null,
       precificacao: item.product.precificacao || 'unidade',
       detalhes_calculo: item.calc.detalhes,
+      variation: item.calc.variation || {},
+      addons: item.calc.addons || [],
+      notes: item.input.observacoes || null,
       respostas: {
         ...(item.input.respostas || {}),
         observacoes: item.input.observacoes || null,
         opcoes: item.calc.opcoes,
+        variation: item.calc.variation,
+        addons: item.calc.addons,
         ajustes: item.calc.ajustes,
       },
     }))
@@ -364,6 +678,50 @@ export async function POST(request: NextRequest) {
 
     if (itemsError) throw itemsError
 
+    const paymentAmount = valorSinal > 0 ? valorSinal : total
+    const { error: paymentError } = await supabaseAdmin
+      .from('order_payments')
+      .insert({
+        company_id: companyId,
+        order_id: order.id,
+        payment_method_id: selectedPaymentMethod?.id || null,
+        type: valorSinal > 0 ? 'signal' : 'full',
+        status: paymentStatus,
+        amount: paymentAmount,
+        paid_amount: 0,
+        remaining_amount: total,
+        provider: selectedPaymentMethod?.type === 'online' ? 'manual_online' : selectedPaymentMethod?.type || 'manual',
+        provider_payment_id: pixPayload ? txid : null,
+        notes: paymentName,
+      })
+
+    if (paymentError) throw paymentError
+
+    if (foodOrder && deliveryType === 'delivery') {
+      const estimatedDeliveryAt = deliveryZone?.estimated_time_max
+        ? new Date(Date.now() + Number(deliveryZone.estimated_time_max) * 60000).toISOString()
+        : null
+
+      const { error: deliveryError } = await supabaseAdmin
+        .from('deliveries')
+        .insert({
+          company_id: companyId,
+          order_id: order.id,
+          customer_name: String(cliente.nome).trim(),
+          customer_phone: telefone,
+          address,
+          neighborhood: neighborhood || deliveryZone?.name || null,
+          delivery_zone_id: deliveryZone?.id || null,
+          delivery_fee: deliveryFee,
+          payment_method_id: selectedPaymentMethod?.id || null,
+          status: 'waiting_preparation',
+          notes: body.observacoes || cliente.observacoes || null,
+          estimated_delivery_at: estimatedDeliveryAt,
+        })
+
+      if (deliveryError) throw deliveryError
+    }
+
     if (couponResult.coupon?.id) {
       await supabaseAdmin
         .from('marketplace_coupons')
@@ -372,6 +730,7 @@ export async function POST(request: NextRequest) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', couponResult.coupon.id)
+        .eq('company_id', companyId)
     }
 
     try {
@@ -398,19 +757,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       order_id: order.id,
-      total_original: totalOriginal,
+      total_original: subtotal,
       valor_desconto: valorDesconto,
+      subtotal: subtotalAfterDiscount,
+      delivery_fee: deliveryFee,
       total,
       valor_sinal: valorSinal,
       valor_pix: valorPix,
       cupom_codigo: couponResult.coupon?.codigo || null,
-      forma_pagamento: pixPayload ? 'PIX' : 'A combinar',
+      forma_pagamento: pixPayload ? 'PIX' : paymentName,
+      payment_status: paymentStatus,
       pix_payload: pixPayload,
       txid,
       resumo,
       whatsapp: company.whatsapp || null,
     })
   } catch (error) {
+    await rollbackOrder(companyIdForRollback, createdOrderId)
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro ao criar pedido.' },
       { status: 500 }
@@ -421,12 +785,14 @@ export async function POST(request: NextRequest) {
 function itemsSanitize(items: any[]): CartItemInput[] {
   return items.map((item) => ({
     product_id: String(item.product_id || ''),
-    quantidade: Number(item.quantidade || 1),
+    quantidade: Number(item.quantidade || item.quantity || 1),
     largura: item.largura ? Number(item.largura) : undefined,
     altura: item.altura ? Number(item.altura) : undefined,
     comprimento: item.comprimento ? Number(item.comprimento) : undefined,
     respostas: item.respostas || {},
     opcoes_selecionadas: item.opcoes_selecionadas || {},
-    observacoes: item.observacoes || '',
+    observacoes: item.observacoes || item.notes || '',
+    selected_variation: item.selected_variation || item.variation || null,
+    selected_addons: Array.isArray(item.selected_addons) ? item.selected_addons : Array.isArray(item.addons) ? item.addons : [],
   })).filter((item) => item.product_id)
 }

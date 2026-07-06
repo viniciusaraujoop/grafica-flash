@@ -688,7 +688,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     relatedHref: '/painel/pedidos',
     group: 'operacao',
     segments: ['food', 'store'],
-    status: 'coming_soon',
+    status: 'active',
     requiredPlan: 'intermediate',
     requiresActiveSubscription: true,
     iconName: 'entregas',
@@ -705,7 +705,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     relatedHref: '/painel/site',
     group: 'operacao',
     segments: ['food', 'beauty', 'barber'],
-    status: 'coming_soon',
+    status: 'active',
     requiredPlan: 'intermediate',
     requiresActiveSubscription: true,
     iconName: 'horarios',
@@ -722,7 +722,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     relatedHref: '/painel/site',
     group: 'operacao',
     segments: ['food', 'store'],
-    status: 'coming_soon',
+    status: 'active',
     requiredPlan: 'intermediate',
     requiresActiveSubscription: true,
     iconName: 'taxas_entrega',
@@ -739,7 +739,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     relatedHref: '/painel/configuracoes',
     group: 'operacao',
     segments: ['food', 'store'],
-    status: 'coming_soon',
+    status: 'active',
     requiredPlan: 'intermediate',
     requiresActiveSubscription: true,
     iconName: 'formas_pagamento',
@@ -1226,9 +1226,9 @@ export const panelModules: PanelModule[] = modules.map(makeModule)
 export function getModuleById(id: string) {
   const normalized = id.replace(/-/g, '_')
 
-  return panelModules.find((module) => {
-    if (module.id === id || module.id === normalized) return true
-    return module.aliases?.some((alias) => alias === id || alias === normalized || alias.replace(/-/g, '_') === normalized) || false
+  return panelModules.find((moduleItem) => {
+    if (moduleItem.id === id || moduleItem.id === normalized) return true
+    return moduleItem.aliases?.some((alias) => alias === id || alias === normalized || alias.replace(/-/g, '_') === normalized) || false
   })
 }
 
@@ -1241,26 +1241,26 @@ export function getSafeModuleHref(module: Pick<PanelModule, 'href' | 'fallbackHr
 
 export function getGlobalModules() {
   return panelModules
-    .filter((module) => module.status !== 'hidden' && module.isGlobal)
-    .map((module) => ({ ...module, href: getSafeModuleHref(module) }))
+    .filter((moduleItem) => moduleItem.status !== 'hidden' && moduleItem.isGlobal)
+    .map((moduleItem) => ({ ...moduleItem, href: getSafeModuleHref(moduleItem) }))
 }
 
 export function getOperationalModulesForBusinessType(businessType: unknown) {
   const segment = normalizeBusinessType(businessType)
 
   return panelModules
-    .filter((module) => module.status !== 'hidden')
-    .filter((module) => Boolean(module.isOperational) && module.segments.includes(segment))
-    .map((module) => ({ ...module, href: getSafeModuleHref(module) }))
+    .filter((moduleItem) => moduleItem.status !== 'hidden')
+    .filter((moduleItem) => Boolean(moduleItem.isOperational) && moduleItem.segments.includes(segment))
+    .map((moduleItem) => ({ ...moduleItem, href: getSafeModuleHref(moduleItem) }))
 }
 
 export function getModulesForBusinessType(businessType: unknown) {
   const segment = normalizeBusinessType(businessType)
 
   return panelModules
-    .filter((module) => module.status !== 'hidden')
-    .filter((module) => module.isGlobal || module.segments.includes(segment))
-    .map((module) => ({ ...module, href: getSafeModuleHref(module) }))
+    .filter((moduleItem) => moduleItem.status !== 'hidden')
+    .filter((moduleItem) => moduleItem.isGlobal || moduleItem.segments.includes(segment))
+    .map((moduleItem) => ({ ...moduleItem, href: getSafeModuleHref(moduleItem) }))
 }
 
 export function getPanelModulesForBusinessType(businessType: unknown) {
@@ -1288,18 +1288,18 @@ export function getModulesByGroupForBusinessType(businessType: unknown) {
 }
 
 function actionFromModule(id: string, label?: string, description?: string): PanelQuickAction | null {
-  const module = getModuleById(id)
-  if (!module) return null
+  const moduleInfo = getModuleById(id)
+  if (!moduleInfo) return null
 
-  const actionLabel = label || module.label
+  const actionLabel = label || moduleInfo.label
 
   return {
-    id: module.id,
+    id: moduleInfo.id,
     label: actionLabel,
     title: actionLabel,
-    description: description || module.description,
-    href: getSafeModuleHref(module),
-    badge: module.badge,
+    description: description || moduleInfo.description,
+    href: getSafeModuleHref(moduleInfo),
+    badge: moduleInfo.badge,
   }
 }
 

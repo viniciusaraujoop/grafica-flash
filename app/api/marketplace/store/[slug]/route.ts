@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -132,6 +133,26 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
     if (productError) throw productError
 
+    const [zonesResult, paymentMethodsResult, businessHoursResult] = await Promise.all([
+      supabaseAdmin
+        .from('delivery_zones')
+        .select('id, name, fee, minimum_order, estimated_time_min, estimated_time_max, is_active, notes')
+        .eq('company_id', company.id)
+        .eq('is_active', true)
+        .order('name', { ascending: true }),
+      supabaseAdmin
+        .from('payment_methods')
+        .select('id, name, type, is_active, requires_change, allow_delivery_payment, allow_online_payment, instructions')
+        .eq('company_id', company.id)
+        .eq('is_active', true)
+        .order('name', { ascending: true }),
+      supabaseAdmin
+        .from('business_hours')
+        .select('weekday, is_open, open_time, close_time, break_start, break_end, closed_message')
+        .eq('company_id', company.id)
+        .order('weekday', { ascending: true }),
+    ])
+
     const modelo = company.modelo_negocio || 'outros'
     const perguntas = Array.isArray(company.modelo_perguntas) && company.modelo_perguntas.length > 0
       ? company.modelo_perguntas
@@ -151,6 +172,9 @@ export async function GET(_request: NextRequest, context: RouteContext) {
         site_accent_color: company.site_accent_color || '#22c55e',
       },
       products: (products || []).map(sanitizeProduct),
+      delivery_zones: zonesResult.error ? [] : zonesResult.data || [],
+      payment_methods: paymentMethodsResult.error ? [] : paymentMethodsResult.data || [],
+      business_hours: businessHoursResult.error ? [] : businessHoursResult.data || [],
     })
   } catch (error) {
     return NextResponse.json(

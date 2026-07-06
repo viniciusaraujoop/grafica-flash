@@ -30,6 +30,9 @@ export type PublicSiteCompany = {
   site_features?: unknown
   site_payment_methods?: unknown
   site_delivery_options?: unknown
+  delivery_zones?: unknown
+  payment_methods?: unknown
+  business_hours?: unknown
 }
 
 export type PublicSiteProduct = {
@@ -362,7 +365,7 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
           primaryColor={primary}
           accentColor={accent}
           fallbackTitle={template.catalogLabel}
-          fallbackText={businessType === 'food' ? 'Escolha seus itens e chame no WhatsApp para confirmar o pedido.' : 'Veja opções, detalhes e chame no WhatsApp para continuar.'}
+          fallbackText={businessType === 'food' ? 'Escolha seus itens, configure adicionais, selecione entrega ou retirada, forma de pagamento e finalize o pedido pelo marketplace.' : 'Veja opções, detalhes e chame no WhatsApp para continuar.'}
           ctaLabel={cta}
         />
       )

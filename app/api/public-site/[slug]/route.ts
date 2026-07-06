@@ -70,6 +70,26 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
     if (productError) throw productError
 
+    const [zonesResult, paymentMethodsResult, businessHoursResult] = await Promise.all([
+      supabaseAdmin
+        .from('delivery_zones')
+        .select('id, name, fee, minimum_order, estimated_time_min, estimated_time_max, is_active, notes')
+        .eq('company_id', company.id)
+        .eq('is_active', true)
+        .order('name', { ascending: true }),
+      supabaseAdmin
+        .from('payment_methods')
+        .select('id, name, type, is_active, requires_change, allow_delivery_payment, allow_online_payment, instructions')
+        .eq('company_id', company.id)
+        .eq('is_active', true)
+        .order('name', { ascending: true }),
+      supabaseAdmin
+        .from('business_hours')
+        .select('weekday, is_open, open_time, close_time, break_start, break_end, closed_message')
+        .eq('company_id', company.id)
+        .order('weekday', { ascending: true }),
+    ])
+
     const normalizedCompany = {
       ...company,
       business_type: company.business_type || template.businessType,
@@ -93,6 +113,9 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     return NextResponse.json({
       company: normalizedCompany,
       products: (products || []).map((item) => sanitizeProduct(item as Record<string, unknown>)),
+      delivery_zones: zonesResult.error ? [] : zonesResult.data || [],
+      payment_methods: paymentMethodsResult.error ? [] : paymentMethodsResult.data || [],
+      business_hours: businessHoursResult.error ? [] : businessHoursResult.data || [],
       template,
     })
   } catch (error) {

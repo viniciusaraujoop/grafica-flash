@@ -1,6 +1,5 @@
-import OperationModulePage from '@/components/painel/OperationModulePage'
-import { operationPages } from '@/lib/operation-pages'
+import BusinessHoursManager from '@/components/food/BusinessHoursManager'
 
 export default function HorariosPage() {
-  return <OperationModulePage definition={operationPages['horarios']} />
+  return <BusinessHoursManager />
 }

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import type { PublicSiteCompany, PublicSiteProduct } from '@/components/public-site/PublicSiteRenderer'
+import FoodMarketplaceCatalog from '@/components/public-site/FoodMarketplaceCatalog'
 import { getCatalogLabels, getFallbackCatalogCategories, normalizeCatalogBusinessType } from '@/lib/catalog-labels'
 import {
   getCommercialBadges,
@@ -321,6 +322,7 @@ export default function PremiumCatalog({
   fallbackText,
 }: PremiumCatalogProps) {
   const normalizedType = normalizeCatalogBusinessType(businessType || company.business_type || company.site_template)
+
   const labels = getCatalogLabels(normalizedType)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('Todos')
@@ -362,6 +364,19 @@ export default function PremiumCatalog({
   const actionLabel = labels.actionLabel
   const title = labels.catalogTitle || fallbackTitle
   const text = fallbackText || 'Veja opções, detalhes e chame no WhatsApp para continuar.'
+
+  if (normalizedType === 'food') {
+    return (
+      <FoodMarketplaceCatalog
+        company={company}
+        products={products}
+        primaryColor={primaryColor}
+        accentColor={accentColor}
+        fallbackTitle={fallbackTitle}
+        fallbackText={fallbackText}
+      />
+    )
+  }
 
   return (
     <section id="catalogo" className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
