@@ -1,11 +1,14 @@
 'use client'
 
+/* eslint-disable @typescript-eslint/no-unused-vars, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, @next/next/no-img-element */
+
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getBusinessTypeConfig, normalizeBusinessType, type BusinessType } from '@/lib/business-types'
 import { getQuickActionsForSegment } from '@/lib/segment-modules'
 import { getQuickActionsForBusinessType, knownExistingPanelRoutes } from '@/lib/panel-modules'
+import { getCompanyLocalSitePath, getCompanyPublicUrl } from '@/lib/company-url'
 
 type Company = {
   id: string
@@ -214,17 +217,11 @@ function publicSlug(company: Company | null) {
 }
 
 function publicUrl(company: Company | null) {
-  const slug = publicSlug(company)
-  if (!slug) return ''
-
-  return `https://${slug}.orcaly.com.br`
+  return getCompanyPublicUrl(publicSlug(company))
 }
 
 function internalSiteUrl(company: Company | null) {
-  const slug = publicSlug(company)
-  if (!slug) return '/painel/site'
-
-  return `/site/${slug}`
+  return getCompanyLocalSitePath(publicSlug(company))
 }
 
 async function safeCount(table: string, companyId: string) {

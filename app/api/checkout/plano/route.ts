@@ -1,32 +1,40 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-type PlanoId = 'basico' | 'profissional' | 'premium'
+type PlanoId = "basico" | "profissional" | "premium";
+type PaymentMode = "pix_avulso" | "checkout_pro";
 
-const planos: Record<PlanoId, { nome: string; valor: number; descricao: string }> = {
+const planos: Record<
+  PlanoId,
+  { nome: string; valor: number; descricao: string }
+> = {
   basico: {
-    nome: 'Básico',
+    nome: "Básico",
     valor: 49.9,
-    descricao: 'Catálogo, página pública, formulário de orçamento e painel de pedidos.',
+    descricao:
+      "Catálogo, página pública, formulário de orçamento e painel de pedidos.",
   },
   profissional: {
-    nome: 'Profissional',
+    nome: "Profissional",
     valor: 99.9,
-    descricao: 'Catálogo completo, propostas profissionais, status e relatórios.',
+    descricao:
+      "Catálogo completo, propostas profissionais, status e relatórios.",
   },
   premium: {
-    nome: 'Premium',
+    nome: "Premium",
     valor: 149.9,
-    descricao: 'Automações, recuperação de orçamento e recursos inteligentes.',
+    descricao: "Automações, recuperação de orçamento e recursos inteligentes.",
   },
-}
+};
 
 function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY ausente.')
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY ausente.",
+    );
   }
 
   return createClient(supabaseUrl, serviceRoleKey, {
@@ -34,210 +42,274 @@ function getSupabaseAdmin() {
       persistSession: false,
       autoRefreshToken: false,
     },
-  })
+  });
 }
 
 function normalizarPlano(value: unknown): PlanoId {
-  if (value === 'basico' || value === 'profissional' || value === 'premium') return value
-  return 'profissional'
+  if (value === "basico" || value === "profissional" || value === "premium")
+    return value;
+  return "profissional";
+}
+
+function normalizarPaymentMode(value: unknown): PaymentMode {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  if (
+    normalized === "pix" ||
+    normalized === "pix_avulso" ||
+    normalized === "pix_mensal" ||
+    normalized === "avulso"
+  ) {
+    return "pix_avulso";
+  }
+
+  return "checkout_pro";
+}
+
+function getPreferencePaymentMethods(paymentMode: PaymentMode) {
+  if (paymentMode !== "pix_avulso") return undefined;
+
+  return {
+    default_payment_method_id: "pix",
+    installments: 1,
+    excluded_payment_types: [
+      { id: "credit_card" },
+      { id: "debit_card" },
+      { id: "ticket" },
+      { id: "atm" },
+    ],
+  };
 }
 
 function assinaturaEstaAtiva(company: any | null) {
-  if (!company) return false
-  if (company.assinatura_status !== 'ativa') return false
-  if (!company.assinatura_expira_em) return true
+  if (!company) return false;
+  if (company.assinatura_status !== "ativa") return false;
+  if (!company.assinatura_expira_em) return true;
 
-  const expiraEm = new Date(company.assinatura_expira_em)
+  const expiraEm = new Date(company.assinatura_expira_em);
 
-  if (Number.isNaN(expiraEm.getTime())) return false
+  if (Number.isNaN(expiraEm.getTime())) return false;
 
-  return expiraEm > new Date()
+  return expiraEm > new Date();
 }
 
 function isUuid(value: unknown) {
-  return typeof value === 'string'
-    && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(value)
+  return (
+    typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(value)
+  );
 }
 
 function getSafeHttpsSiteUrl(request: NextRequest) {
   const candidates = [
     process.env.NEXT_PUBLIC_SITE_URL,
-    request.headers.get('origin'),
-    'https://orcaly.com.br',
-  ].filter(Boolean) as string[]
+    request.headers.get("origin"),
+    "https://orcaly.com.br",
+  ].filter(Boolean) as string[];
 
   for (const candidate of candidates) {
-    const clean = candidate.replace(/\/$/, '')
+    const clean = candidate.replace(/\/$/, "");
 
     if (
-      clean.startsWith('https://') &&
-      !clean.includes('localhost') &&
-      !clean.includes('127.0.0.1')
+      clean.startsWith("https://") &&
+      !clean.includes("localhost") &&
+      !clean.includes("127.0.0.1")
     ) {
-      return clean
+      return clean;
     }
   }
 
-  return 'https://orcaly.com.br'
+  return "https://orcaly.com.br";
 }
 
-async function getRequester(request: NextRequest, supabaseAdmin: ReturnType<typeof getSupabaseAdmin>) {
-  const auth = request.headers.get('authorization') || ''
-  const token = auth.replace('Bearer ', '').trim()
+async function getRequester(
+  request: NextRequest,
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+) {
+  const auth = request.headers.get("authorization") || "";
+  const token = auth.replace("Bearer ", "").trim();
 
-  if (!token) return null
+  if (!token) return null;
 
-  const { data, error } = await supabaseAdmin.auth.getUser(token)
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
 
-  if (error || !data.user) return null
-  return data.user
+  if (error || !data.user) return null;
+  return data.user;
 }
 
 async function getCompany(
   request: NextRequest,
   body: any,
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
 ) {
-  const requester = await getRequester(request, supabaseAdmin)
+  const requester = await getRequester(request, supabaseAdmin);
 
   if (requester?.id) {
     const { data: ownerCompany, error: ownerError } = await supabaseAdmin
-      .from('companies')
-      .select('*')
+      .from("companies")
+      .select("*")
       .or(`owner_id.eq.${requester.id},tester_id.eq.${requester.id}`)
       .limit(1)
-      .maybeSingle()
+      .maybeSingle();
 
-    if (ownerError) throw ownerError
-    if (ownerCompany?.id) return { company: ownerCompany, requester, canManage: true }
+    if (ownerError) throw ownerError;
+    if (ownerCompany?.id)
+      return { company: ownerCompany, requester, canManage: true };
 
     try {
       const { data: member } = await supabaseAdmin
-        .from('company_members')
-        .select('company_id,cargo,status')
-        .eq('user_id', requester.id)
-        .eq('status', 'ativo')
+        .from("company_members")
+        .select("company_id,cargo,status")
+        .eq("user_id", requester.id)
+        .eq("status", "ativo")
         .limit(1)
-        .maybeSingle()
+        .maybeSingle();
 
       if (member?.company_id) {
-        const { data: memberCompany, error: memberCompanyError } = await supabaseAdmin
-          .from('companies')
-          .select('*')
-          .eq('id', member.company_id)
-          .maybeSingle()
+        const { data: memberCompany, error: memberCompanyError } =
+          await supabaseAdmin
+            .from("companies")
+            .select("*")
+            .eq("id", member.company_id)
+            .maybeSingle();
 
-        if (memberCompanyError) throw memberCompanyError
+        if (memberCompanyError) throw memberCompanyError;
 
-        const role = String(member.cargo || '').toLowerCase()
-        const canManage = ['dono', 'gerente', 'admin', 'super_admin'].includes(role)
+        const role = String(member.cargo || "").toLowerCase();
+        const canManage = ["dono", "gerente", "admin", "super_admin"].includes(
+          role,
+        );
 
-        return { company: memberCompany, requester, canManage }
+        return { company: memberCompany, requester, canManage };
       }
     } catch {
       // Mantém fallback por companyId se a tabela de equipe estiver diferente.
     }
   }
 
-  const bodyCompanyId = String(body.companyId || body.company_id || '').trim()
+  const bodyCompanyId = String(body.companyId || body.company_id || "").trim();
 
   if (isUuid(bodyCompanyId)) {
     const { data: company, error } = await supabaseAdmin
-      .from('companies')
-      .select('*')
-      .eq('id', bodyCompanyId)
-      .maybeSingle()
+      .from("companies")
+      .select("*")
+      .eq("id", bodyCompanyId)
+      .maybeSingle();
 
-    if (error) throw error
-    if (company?.id) return { company, requester, canManage: true }
+    if (error) throw error;
+    if (company?.id) return { company, requester, canManage: true };
   }
 
-  return { company: null, requester, canManage: false }
+  return { company: null, requester, canManage: false };
 }
 
 export async function GET(request: NextRequest) {
   return NextResponse.json({
     ok: true,
-    route: '/api/checkout/plano',
+    route: "/api/checkout/plano",
     mercadoPagoConfigured: Boolean(process.env.MERCADO_PAGO_ACCESS_TOKEN),
     siteUrl: getSafeHttpsSiteUrl(request),
-    note: 'Use POST para criar checkout.',
-  })
+    note: "Use POST para criar checkout.",
+  });
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const mpToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
+    const mpToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
 
     if (!mpToken) {
       return NextResponse.json(
-        { error: 'MERCADO_PAGO_ACCESS_TOKEN não configurado na Vercel ou no .env.local.' },
-        { status: 500 }
-      )
+        {
+          error:
+            "MERCADO_PAGO_ACCESS_TOKEN não configurado na Vercel ou no .env.local.",
+        },
+        { status: 500 },
+      );
     }
 
-    const body = await request.json().catch(() => ({}))
-    const supabaseAdmin = getSupabaseAdmin()
-    const access = await getCompany(request, body, supabaseAdmin)
+    const body = await request.json().catch(() => ({}));
+    const supabaseAdmin = getSupabaseAdmin();
+    const access = await getCompany(request, body, supabaseAdmin);
 
     if (!access.company?.id) {
       return NextResponse.json(
-        { error: 'Empresa não encontrada para gerar assinatura.' },
-        { status: 404 }
-      )
+        { error: "Empresa não encontrada para gerar assinatura." },
+        { status: 404 },
+      );
     }
 
     if (!access.canManage) {
       return NextResponse.json(
-        { error: 'Usuário sem permissão para renovar ou alterar plano.' },
-        { status: 403 }
-      )
+        { error: "Usuário sem permissão para renovar ou alterar plano." },
+        { status: 403 },
+      );
     }
 
-    const planoId = normalizarPlano(body.plano || access.company.assinatura_plano || access.company.plano)
-    const plano = planos[planoId]
-    const email = String(body.email || access.company.email || access.requester?.email || '').trim().toLowerCase()
+    const planoId = normalizarPlano(
+      body.plano || access.company.assinatura_plano || access.company.plano,
+    );
+    const paymentMode = normalizarPaymentMode(
+      body.payment_mode || body.paymentMode || body.metodoPagamento,
+    );
+    const plano = planos[planoId];
+    const email = String(
+      body.email || access.company.email || access.requester?.email || "",
+    )
+      .trim()
+      .toLowerCase();
 
-    if (!email || !email.includes('@')) {
+    if (!email || !email.includes("@")) {
       return NextResponse.json(
-        { error: 'E-mail válido obrigatório para gerar checkout.' },
-        { status: 400 }
-      )
+        { error: "E-mail válido obrigatório para gerar checkout." },
+        { status: 400 },
+      );
     }
 
-    const nomeEmpresa = String(body.nomeEmpresa || body.nome_empresa || access.company.nome || 'Empresa').trim()
-    const siteUrl = getSafeHttpsSiteUrl(request)
+    const nomeEmpresa = String(
+      body.nomeEmpresa || body.nome_empresa || access.company.nome || "Empresa",
+    ).trim();
+    const siteUrl = getSafeHttpsSiteUrl(request);
 
     const { data: payment, error: paymentError } = await supabaseAdmin
-      .from('plan_payments')
+      .from("plan_payments")
       .insert({
         company_id: access.company.id,
         plano: planoId,
         valor: plano.valor,
-        status: 'pendente',
+        status:
+          paymentMode === "pix_avulso" ? "pix_checkout_gerado" : "pendente",
+        tipo: paymentMode,
+        payment_method: paymentMode === "pix_avulso" ? "pix" : "checkout_pro",
         email,
         nome_empresa: nomeEmpresa,
         raw_payment: {
-          origem: body.origem || 'assinatura',
+          origem: body.origem || "assinatura",
+          payment_mode: paymentMode,
           created_by: access.requester?.id || null,
           site_url_usada: siteUrl,
         },
       })
-      .select('id')
-      .single()
+      .select("id")
+      .single();
 
     if (paymentError || !payment?.id) {
       return NextResponse.json(
-        { error: paymentError?.message || 'Erro ao registrar pagamento em plan_payments.' },
-        { status: 500 }
-      )
+        {
+          error:
+            paymentError?.message ||
+            "Erro ao registrar pagamento em plan_payments.",
+        },
+        { status: 500 },
+      );
     }
 
     const backUrls = {
       success: `${siteUrl}/assinatura?assinatura=retorno&status=success`,
       failure: `${siteUrl}/assinatura?assinatura=retorno&status=failure`,
       pending: `${siteUrl}/assinatura?assinatura=retorno&status=pending`,
-    }
+    };
 
     const preferencePayload = {
       items: [
@@ -246,7 +318,7 @@ export async function POST(request: NextRequest) {
           title: `Plano ${plano.nome} - Orçaly`,
           description: plano.descricao,
           quantity: 1,
-          currency_id: 'BRL',
+          currency_id: "BRL",
           unit_price: plano.valor,
         },
       ],
@@ -259,76 +331,89 @@ export async function POST(request: NextRequest) {
         payment_id: payment.id,
         company_id: access.company.id,
         plano: planoId,
+        payment_mode: paymentMode,
+        payment_method: paymentMode === "pix_avulso" ? "pix" : "checkout_pro",
       },
       back_urls: backUrls,
       notification_url: `${siteUrl}/api/mercado-pago/webhook`,
-      statement_descriptor: 'ORCALY',
-    }
+      statement_descriptor: "ORCALY",
+      payment_methods: getPreferencePaymentMethods(paymentMode),
+    };
 
-    const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${mpToken}`,
-        'Content-Type': 'application/json',
+    const mpResponse = await fetch(
+      "https://api.mercadopago.com/checkout/preferences",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${mpToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(preferencePayload),
       },
-      body: JSON.stringify(preferencePayload),
-    })
+    );
 
-    const mpData = await mpResponse.json().catch(() => ({}))
+    const mpData = await mpResponse.json().catch(() => ({}));
 
     if (!mpResponse.ok) {
       await supabaseAdmin
-        .from('plan_payments')
+        .from("plan_payments")
         .update({
-          status: 'erro',
+          status: "erro",
           raw_payment: {
             mercado_pago_error: mpData,
             request_payload: preferencePayload,
           },
           updated_at: new Date().toISOString(),
         })
-        .eq('id', payment.id)
+        .eq("id", payment.id);
 
       return NextResponse.json(
         {
-          error: mpData.message || mpData.error || 'Erro do Mercado Pago ao criar preferência.',
+          error:
+            mpData.message ||
+            mpData.error ||
+            "Erro do Mercado Pago ao criar preferência.",
           details: mpData,
           request_back_urls: backUrls,
         },
-        { status: 500 }
-      )
+        { status: 500 },
+      );
     }
 
-    const checkoutUrl = mpData.init_point || mpData.sandbox_init_point || null
+    const checkoutUrl = mpData.init_point || mpData.sandbox_init_point || null;
 
     await supabaseAdmin
-      .from('plan_payments')
+      .from("plan_payments")
       .update({
-        status: checkoutUrl ? 'checkout_gerado' : 'pendente',
+        status: checkoutUrl ? "checkout_gerado" : "pendente",
         mercado_pago_preference_id: mpData.id || null,
         checkout_url: checkoutUrl,
         raw_payment: {
           mercado_pago: mpData,
           request_back_urls: backUrls,
+          payment_mode: paymentMode,
         },
         updated_at: new Date().toISOString(),
       })
-      .eq('id', payment.id)
+      .eq("id", payment.id);
 
-    const empresaAindaAtiva = assinaturaEstaAtiva(access.company)
+    const empresaAindaAtiva = assinaturaEstaAtiva(access.company);
 
     await supabaseAdmin
-      .from('companies')
+      .from("companies")
       .update({
         plano: planoId,
         assinatura_plano: planoId,
         // Gerar um checkout não deve derrubar uma empresa que ainda está no prazo.
         // Se já venceu, fica pendente e o painel entra em modo bloqueado.
-        assinatura_status: empresaAindaAtiva ? 'ativa' : 'pendente',
+        assinatura_status: empresaAindaAtiva ? "ativa" : "pendente",
+        assinatura_auto_recorrente: false,
+        assinatura_forma_pagamento_preferida:
+          paymentMode === "pix_avulso" ? "pix_avulso" : "checkout_pro",
         assinatura_checkout_url: checkoutUrl,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', access.company.id)
+      .eq("id", access.company.id);
 
     return NextResponse.json({
       ok: true,
@@ -341,9 +426,14 @@ export async function POST(request: NextRequest) {
       init_point: mpData.init_point || null,
       sandbox_init_point: mpData.sandbox_init_point || null,
       back_urls: backUrls,
-    })
+      payment_mode: paymentMode,
+      payment_method: paymentMode === "pix_avulso" ? "pix" : "checkout_pro",
+    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erro inesperado ao gerar checkout.'
-    return NextResponse.json({ error: message }, { status: 500 })
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Erro inesperado ao gerar checkout.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

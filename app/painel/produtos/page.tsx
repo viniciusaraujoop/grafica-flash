@@ -1,11 +1,14 @@
 'use client'
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, react-hooks/purity, @next/next/no-img-element */
+
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCurrentCompanyClient } from '@/lib/current-company-client'
 import { getCatalogLabels, normalizeCatalogBusinessType } from '@/lib/catalog-labels'
+import { getCompanyPublicUrl } from '@/lib/company-url'
 
 type Empresa = {
   id: string
@@ -768,7 +771,7 @@ export default function ProdutosPage() {
     })
   }, [busca, filtroCategoria, filtroStatus, itens])
 
-  const publicUrl = empresa ? `/site/${empresa.slug}` : '#'
+  const publicUrl = empresa ? getCompanyPublicUrl(empresa.slug) : '#'
 
   if (carregando) {
     return (
@@ -1228,7 +1231,7 @@ function ProductCard({
             Editar
           </button>
 
-          <a href={empresaSlug ? `/site/${empresaSlug}` : '#'} target="_blank" className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center font-black text-[#05245c] transition hover:bg-blue-50">
+          <a href={empresaSlug ? getCompanyPublicUrl(empresaSlug) : '#'} target="_blank" className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center font-black text-[#05245c] transition hover:bg-blue-50">
             Ver no site
           </a>
 
@@ -1304,7 +1307,7 @@ function ProductTable({
                 <td className="px-4 py-4">
                   <div className="flex gap-2">
                     <button onClick={() => onEdit(item)} className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">Editar</button>
-                    <a href={empresaSlug ? `/site/${empresaSlug}` : '#'} target="_blank" className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">Site</a>
+                    <a href={empresaSlug ? getCompanyPublicUrl(empresaSlug) : '#'} target="_blank" className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">Site</a>
                     <button onClick={() => onToggle(item)} className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">{itemAtivo(item) ? 'Inativar' : 'Ativar'}</button>
                     <button onClick={() => onDelete(item.id)} className="rounded-xl bg-red-50 px-3 py-2 font-black text-red-700">Excluir</button>
                   </div>

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import PanelSegmentSidebar from '@/components/painel/PanelSegmentSidebar'
 import PanelSidebar from '@/components/painel/PanelSidebar'
+import { getCompanyPublicHost } from '@/lib/company-url'
 
 type EmpresaAssinatura = {
   id: string
@@ -126,7 +127,7 @@ function PainelBloqueado({ payload }: { payload: CompanyCurrentPayload }) {
             <div className="rounded-3xl border border-blue-50 bg-[#f8fbff] p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Empresa</p>
               <p className="mt-2 text-xl font-black text-[#071b3a]">{empresa?.nome || 'Empresa Orçaly'}</p>
-              <p className="mt-1 text-sm font-bold text-slate-500">{empresa?.slug ? `${empresa.slug}.orcaly.com.br` : 'subdomínio não definido'}</p>
+              <p className="mt-1 text-sm font-bold text-slate-500">{getCompanyPublicHost(empresa?.subdomain_slug || empresa?.slug) || 'subdomínio não definido'}</p>
             </div>
 
             <div className="rounded-3xl border border-blue-50 bg-[#f8fbff] p-5">

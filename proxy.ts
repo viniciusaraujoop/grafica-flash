@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { applySecurityHeaders, isReservedSubdomain } from './lib/orcaly-security'
+import { getRootDomain } from './lib/company-url'
 
 function cleanHost(host: string) {
   return host.split(':')[0].toLowerCase()
 }
 
-function getRootDomain() {
-  return (process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'orcaly.com.br').toLowerCase()
-}
 
 function getSubdomain(hostname: string, rootDomain: string) {
   const host = cleanHost(hostname)

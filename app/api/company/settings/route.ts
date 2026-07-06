@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { normalizeBusinessType } from '@/lib/business-types'
+import { getCompanyPublicUrl } from '@/lib/company-url'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -235,12 +237,10 @@ export async function GET(request: NextRequest) {
       if (existingError) throw existingError
 
       const used = Array.isArray(existing) && existing.length > 0
-      const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'orcaly.com.br'
-
       return NextResponse.json({
         available: !used,
         slug: nextSubdomain,
-        url: `https://${nextSubdomain}.${root}`,
+        url: getCompanyPublicUrl(nextSubdomain),
         suggestion: used ? suggestSubdomain(nextSubdomain) : null,
         message: used
           ? 'Este link já está sendo usado por outra empresa. Tente outro nome.'

@@ -52,6 +52,7 @@ type SubmitResult = {
   paymentLabel: string
   pixPayload?: string
   whatsapp?: string | null
+  checkoutUrl?: string | null
 }
 
 type CouponState = {
@@ -652,13 +653,43 @@ export default function FoodMarketplaceCatalog({
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Erro ao finalizar pedido.')
 
-      setResult({
-        orderId: payload.order_id,
-        total: Number(payload.total || total),
-        paymentLabel: payload.forma_pagamento || selectedPayment?.name || 'A combinar',
-        pixPayload: payload.pix_payload || '',
-        whatsapp: payload.whatsapp || company.whatsapp || null,
-      })
+      if (selectedPayment?.type === 'online') {
+        const paymentResponse = await fetch('/api/marketplace/payments/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            company_id: company.id,
+            order_id: payload.order_id,
+          }),
+        })
+
+        const paymentPayload = await paymentResponse.json().catch(() => ({}))
+        if (!paymentResponse.ok) throw new Error(paymentPayload.error || 'Pedido criado, mas não foi possível abrir o pagamento online.')
+
+        setResult({
+          orderId: payload.order_id,
+          total: Number(payload.total || total),
+          paymentLabel: 'Mercado Pago Checkout Pro',
+          pixPayload: '',
+          whatsapp: payload.whatsapp || company.whatsapp || null,
+          checkoutUrl: paymentPayload.checkout_url || paymentPayload.init_point || paymentPayload.sandbox_init_point || null,
+        })
+
+        const checkoutUrl = paymentPayload.checkout_url || paymentPayload.init_point || paymentPayload.sandbox_init_point
+        if (checkoutUrl) {
+          window.location.href = checkoutUrl
+          return
+        }
+      } else {
+        setResult({
+          orderId: payload.order_id,
+          total: Number(payload.total || total),
+          paymentLabel: payload.forma_pagamento || selectedPayment?.name || 'A combinar',
+          pixPayload: payload.pix_payload || '',
+          whatsapp: payload.whatsapp || company.whatsapp || null,
+          checkoutUrl: null,
+        })
+      }
       setCart([])
       setCheckout(emptyCheckout)
       setCoupon(emptyCoupon)
@@ -828,6 +859,10 @@ export default function FoodMarketplaceCatalog({
                 </div>
               ) : null}
 
+              {selectedPayment?.type === 'online' && !((company as any).marketplace_payment_online_enabled) ? (
+                <div className="rounded-2xl bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-700">Pagamento online depende da conexão Mercado Pago da empresa. Se não estiver conectado, escolha outra forma.</div>
+              ) : null}
+
               {selectedPayment?.type === 'pix' && selectedPayment.instructions ? (
                 <div className="rounded-2xl bg-emerald-50 p-4 text-sm font-bold leading-6 text-emerald-700">{selectedPayment.instructions}</div>
               ) : null}
@@ -863,6 +898,7 @@ export default function FoodMarketplaceCatalog({
             {result ? (
               <div className="rounded-2xl bg-emerald-50 p-4 text-sm font-bold leading-6 text-emerald-700">
                 Pedido criado com sucesso. Total: {money(result.total)}. Pagamento: {result.paymentLabel}.
+                {result.checkoutUrl ? <a href={result.checkoutUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-xl bg-[#05245c] px-4 py-3 text-sm font-black text-white">Abrir pagamento online</a> : null}
                 {result.pixPayload ? <textarea readOnly value={result.pixPayload} className="mt-3 min-h-20 w-full rounded-xl border border-emerald-100 bg-white p-3 text-xs text-slate-600" /> : null}
               </div>
             ) : null}

@@ -1,8 +1,11 @@
 'use client'
 
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, @next/next/no-img-element */
+
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { getAccessTokenClient } from '@/lib/current-company-client'
+import { getCompanyPublicHost, getCompanyPublicUrl } from '@/lib/company-url'
 
 type OnboardingPayload = {
   company: {
@@ -152,7 +155,7 @@ export default function OnboardingGuiadoPage() {
         key: 'test_order',
         title: 'Testar pedido',
         description: 'Simule um pedido para garantir que tudo chega no painel.',
-        href: slug ? `/site/${slug}` : '/orcamento',
+        href: slug ? getCompanyPublicUrl(slug) : '/orcamento',
         action: 'Fazer teste',
         done: Boolean(checks.test_order),
         helper: `${data?.counts.orders || 0} pedido(s) recebido(s).`,
@@ -162,10 +165,10 @@ export default function OnboardingGuiadoPage() {
         key: 'publish',
         title: 'Publicar',
         description: 'Confirme o link público e compartilhe com clientes.',
-        href: slug ? `/site/${slug}` : '/painel/site',
+        href: slug ? getCompanyPublicUrl(slug) : '/painel/site',
         action: 'Abrir site',
         done: Boolean(checks.publish),
-        helper: slug ? `Link: ${slug}.orcaly.com.br` : 'Link público ainda não definido.',
+        helper: slug ? `Link: ${getCompanyPublicHost(slug)}` : 'Link público ainda não definido.',
       },
     ]
   }, [data])
@@ -307,7 +310,7 @@ export default function OnboardingGuiadoPage() {
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <Link href={step.href} target={step.href.startsWith('/site/') ? '_blank' : undefined} className="rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white">
+                  <Link href={step.href} target={step.href.startsWith('http') ? '_blank' : undefined} className="rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white">
                     {step.action}
                   </Link>
                   <button

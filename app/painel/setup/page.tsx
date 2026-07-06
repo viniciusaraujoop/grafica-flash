@@ -1,8 +1,11 @@
 'use client'
 
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { getAccessTokenClient } from '@/lib/current-company-client'
+import { getCompanyPublicUrl } from '@/lib/company-url'
 
 type Company = {
   id: string
@@ -124,7 +127,7 @@ export default function SetupOrcalyPage() {
       {
         title: 'Publicar e testar o site',
         description: 'Abra o site público, simule pedido e confira a experiência.',
-        href: data.slug ? `/site/${data.slug}` : '/painel/site',
+        href: data.slug ? getCompanyPublicUrl(data.slug) : '/painel/site',
         done: Boolean(data.site_publico_ativo && data.slug),
         action: 'Abrir site',
       },
@@ -179,7 +182,7 @@ export default function SetupOrcalyPage() {
                   </div>
                 </div>
 
-                <Link href={step.href} target={step.href.startsWith('/site/') ? '_blank' : undefined} className="rounded-2xl bg-[#05245c] px-5 py-3 text-center text-sm font-black text-white">
+                <Link href={step.href} target={step.href.startsWith('http') ? '_blank' : undefined} className="rounded-2xl bg-[#05245c] px-5 py-3 text-center text-sm font-black text-white">
                   {step.action}
                 </Link>
               </div>

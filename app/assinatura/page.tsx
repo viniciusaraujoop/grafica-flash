@@ -1,165 +1,192 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
-type PlanoId = 'basico' | 'profissional' | 'premium'
+type PlanoId = "basico" | "profissional" | "premium";
+type PaymentMode = "pix_avulso" | "cartao_recorrente";
 
 type Plano = {
-  id: PlanoId
-  nome: string
-  preco: number
-  descricao: string
-}
+  id: PlanoId;
+  nome: string;
+  preco: number;
+  descricao: string;
+};
 
 const planos: Plano[] = [
   {
-    id: 'basico',
-    nome: 'Básico',
+    id: "basico",
+    nome: "Básico",
     preco: 49.9,
-    descricao: 'Catálogo, página pública, formulário de orçamento e painel de pedidos.',
+    descricao:
+      "Catálogo, página pública, formulário de orçamento e painel de pedidos.",
   },
   {
-    id: 'profissional',
-    nome: 'Profissional',
+    id: "profissional",
+    nome: "Profissional",
     preco: 99.9,
-    descricao: 'Catálogo completo, propostas profissionais, status e relatórios.',
+    descricao:
+      "Catálogo completo, propostas profissionais, status e relatórios.",
   },
   {
-    id: 'premium',
-    nome: 'Premium',
+    id: "premium",
+    nome: "Premium",
     preco: 149.9,
-    descricao: 'Automações, recuperação de orçamento e recursos inteligentes.',
+    descricao: "Automações, recuperação de orçamento e recursos inteligentes.",
   },
-]
+];
 
 type Empresa = {
-  id: string
-  nome?: string | null
-  email?: string | null
-  plano?: string | null
-  assinatura_plano?: string | null
-  assinatura_status?: string | null
-  assinatura_expira_em?: string | null
-}
+  id: string;
+  nome?: string | null;
+  email?: string | null;
+  plano?: string | null;
+  assinatura_plano?: string | null;
+  assinatura_status?: string | null;
+  assinatura_expira_em?: string | null;
+};
 
 function formatMoney(value: number) {
-  return value.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 }
 
 function normalizarPlano(value: unknown): PlanoId {
-  if (value === 'basico' || value === 'profissional' || value === 'premium') return value
-  return 'profissional'
+  if (value === "basico" || value === "profissional" || value === "premium")
+    return value;
+  return "profissional";
 }
 
 function getMensagemErro(payload: any) {
-  if (!payload) return 'Erro desconhecido.'
-  if (typeof payload.error === 'string') return payload.error
-  if (typeof payload.message === 'string') return payload.message
-  if (typeof payload.details?.message === 'string') return payload.details.message
-  return 'Não foi possível gerar o checkout.'
+  if (!payload) return "Erro desconhecido.";
+  if (typeof payload.error === "string") return payload.error;
+  if (typeof payload.message === "string") return payload.message;
+  if (typeof payload.details?.message === "string")
+    return payload.details.message;
+  return "Não foi possível gerar o checkout.";
 }
 
 export default function AssinaturaPage() {
-  const router = useRouter()
+  const router = useRouter();
 
-  const [empresa, setEmpresa] = useState<Empresa | null>(null)
-  const [emailUsuario, setEmailUsuario] = useState('')
-  const [accessToken, setAccessToken] = useState('')
-  const [planoSelecionado, setPlanoSelecionado] = useState<PlanoId>('profissional')
-  const [carregando, setCarregando] = useState(true)
-  const [processando, setProcessando] = useState(false)
-  const [erro, setErro] = useState('')
-  const [mensagem, setMensagem] = useState('')
+  const [empresa, setEmpresa] = useState<Empresa | null>(null);
+  const [emailUsuario, setEmailUsuario] = useState("");
+  const [accessToken, setAccessToken] = useState("");
+  const [planoSelecionado, setPlanoSelecionado] =
+    useState<PlanoId>("profissional");
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>("pix_avulso");
+  const [carregando, setCarregando] = useState(true);
+  const [processando, setProcessando] = useState(false);
+  const [erro, setErro] = useState("");
+  const [mensagem, setMensagem] = useState("");
 
-  const planoAtual = planos.find((plano) => plano.id === planoSelecionado) || planos[1]
+  const planoAtual =
+    planos.find((plano) => plano.id === planoSelecionado) || planos[1];
 
   async function carregarEmpresa() {
-    setCarregando(true)
-    setErro('')
-    setMensagem('')
+    setCarregando(true);
+    setErro("");
+    setMensagem("");
 
-    const { data: sessionData } = await supabase.auth.getSession()
-    const session = sessionData.session
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData.session;
 
     if (!session?.access_token || !session.user) {
-      router.push('/login')
-      return
+      router.push("/login");
+      return;
     }
 
-    setAccessToken(session.access_token)
-    setEmailUsuario(session.user.email || '')
+    setAccessToken(session.access_token);
+    setEmailUsuario(session.user.email || "");
 
     try {
-      const response = await fetch('/api/company/current', {
-        method: 'GET',
+      const response = await fetch("/api/company/current", {
+        method: "GET",
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
-      })
+      });
 
-      const payload = await response.json().catch(() => ({}))
+      const payload = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(payload.error || 'Erro ao carregar empresa atual.')
+        throw new Error(payload.error || "Erro ao carregar empresa atual.");
       }
 
       if (!payload.company?.id) {
-        throw new Error('Empresa não encontrada para esta conta.')
+        throw new Error("Empresa não encontrada para esta conta.");
       }
 
-      setEmpresa(payload.company)
-      setPlanoSelecionado(normalizarPlano(payload.company.assinatura_plano || payload.company.plano))
+      setEmpresa(payload.company);
+      setPlanoSelecionado(
+        normalizarPlano(
+          payload.company.assinatura_plano || payload.company.plano,
+        ),
+      );
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Erro ao carregar empresa.')
+      setErro(
+        error instanceof Error ? error.message : "Erro ao carregar empresa.",
+      );
     }
 
-    setCarregando(false)
+    setCarregando(false);
   }
 
   async function renovarOuAlterarPlano() {
-    if (processando) return
+    if (processando) return;
 
-    setErro('')
-    setMensagem('')
+    setErro("");
+    setMensagem("");
 
     if (!empresa?.id) {
-      setErro('Empresa não carregada. Atualize a página e tente novamente.')
-      return
+      setErro("Empresa não carregada. Atualize a página e tente novamente.");
+      return;
     }
 
     if (!accessToken) {
-      setErro('Sessão não encontrada. Faça login novamente.')
-      return
+      setErro("Sessão não encontrada. Faça login novamente.");
+      return;
     }
 
-    setProcessando(true)
-    setMensagem('Gerando checkout do Mercado Pago...')
+    setProcessando(true);
+    setMensagem(
+      paymentMode === "pix_avulso"
+        ? "Gerando pagamento Pix avulso pelo Mercado Pago..."
+        : "Gerando assinatura automática no cartão pelo Mercado Pago...",
+    );
 
     try {
-      const response = await fetch('/api/checkout/plano', {
-        method: 'POST',
+      const endpoint =
+        paymentMode === "cartao_recorrente"
+          ? "/api/company/subscription"
+          : "/api/checkout/plano";
+
+      const response = await fetch(endpoint, {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          action: "create",
           plano: planoSelecionado,
           companyId: empresa.id,
           email: empresa.email || emailUsuario,
-          nomeEmpresa: empresa.nome || 'Empresa',
-          origem: 'assinatura_page',
+          nomeEmpresa: empresa.nome || "Empresa",
+          origem: "assinatura_page",
+          payment_mode: paymentMode,
+          paymentMode,
+          metodoPagamento: paymentMode,
         }),
-      })
+      });
 
-      const payload = await response.json().catch(() => ({}))
+      const payload = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(getMensagemErro(payload))
+        throw new Error(getMensagemErro(payload));
       }
 
       const checkoutUrl =
@@ -167,25 +194,33 @@ export default function AssinaturaPage() {
         payload.checkoutUrl ||
         payload.init_point ||
         payload.sandbox_init_point ||
-        payload.url
+        payload.url;
 
       if (!checkoutUrl) {
-        throw new Error('Checkout criado sem link de pagamento. Verifique a resposta do Mercado Pago.')
+        throw new Error(
+          "Checkout criado sem link de pagamento. Verifique a resposta do Mercado Pago.",
+        );
       }
 
-      setMensagem('Checkout gerado. Redirecionando...')
-      window.location.href = checkoutUrl
+      setMensagem(
+        paymentMode === "pix_avulso"
+          ? "Pix gerado. Redirecionando para pagamento..."
+          : "Assinatura criada. Redirecionando para o cartão recorrente...",
+      );
+      window.location.href = checkoutUrl;
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Erro ao gerar pagamento.')
-      setMensagem('')
-      setProcessando(false)
+      setErro(
+        error instanceof Error ? error.message : "Erro ao gerar pagamento.",
+      );
+      setMensagem("");
+      setProcessando(false);
     }
   }
 
   useEffect(() => {
-    carregarEmpresa()
+    carregarEmpresa();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   if (carregando) {
     return (
@@ -194,13 +229,15 @@ export default function AssinaturaPage() {
           <p className="font-black">Carregando assinatura...</p>
         </section>
       </main>
-    )
+    );
   }
 
   return (
     <main className="min-h-screen bg-[#151816] px-4 py-8 text-[#f0e7d8]">
       <section className="mx-auto max-w-4xl rounded-[2rem] border border-blue-900/70 bg-[#181b1a] p-6 shadow-2xl shadow-black/30 sm:p-8">
-        <p className="text-sm font-black uppercase tracking-[0.35em] text-[#f0e7d8]">Planos</p>
+        <p className="text-sm font-black uppercase tracking-[0.35em] text-[#f0e7d8]">
+          Planos
+        </p>
         <h1 className="mt-3 text-4xl font-black tracking-[-0.05em] text-[#f0e7d8]">
           Selecione o plano da empresa
         </h1>
@@ -225,7 +262,7 @@ export default function AssinaturaPage() {
 
         <div className="mt-7 grid gap-4">
           {planos.map((plano) => {
-            const selected = planoSelecionado === plano.id
+            const selected = planoSelecionado === plano.id;
 
             return (
               <button
@@ -235,14 +272,18 @@ export default function AssinaturaPage() {
                 disabled={processando}
                 className={`rounded-2xl border p-5 text-left transition ${
                   selected
-                    ? 'border-blue-700 bg-[#171f22]'
-                    : 'border-[#746f67] bg-transparent hover:border-blue-700'
+                    ? "border-blue-700 bg-[#171f22]"
+                    : "border-[#746f67] bg-transparent hover:border-blue-700"
                 } disabled:cursor-not-allowed disabled:opacity-70`}
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xl font-black text-[#f0e7d8]">{plano.nome}</p>
-                    <p className="mt-2 text-sm font-black leading-6 text-[#d4c8b7]">{plano.descricao}</p>
+                    <p className="text-xl font-black text-[#f0e7d8]">
+                      {plano.nome}
+                    </p>
+                    <p className="mt-2 text-sm font-black leading-6 text-[#d4c8b7]">
+                      {plano.descricao}
+                    </p>
                   </div>
 
                   <p className="shrink-0 text-2xl font-black text-[#f0e7d8]">
@@ -250,18 +291,74 @@ export default function AssinaturaPage() {
                   </p>
                 </div>
               </button>
-            )
+            );
           })}
+        </div>
+
+        <div className="mt-7 rounded-2xl border border-blue-900/70 bg-[#111514] p-5">
+          <p className="text-sm font-black uppercase tracking-[0.25em] text-[#d4c8b7]">
+            Forma de pagamento
+          </p>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setPaymentMode("pix_avulso")}
+              disabled={processando}
+              className={`rounded-2xl border p-5 text-left transition ${
+                paymentMode === "pix_avulso"
+                  ? "border-emerald-500 bg-emerald-950/30"
+                  : "border-[#746f67] bg-transparent hover:border-emerald-600"
+              } disabled:cursor-not-allowed disabled:opacity-70`}
+            >
+              <p className="text-lg font-black text-[#f0e7d8]">
+                Pix mensal avulso
+              </p>
+              <p className="mt-2 text-sm font-bold leading-6 text-[#d4c8b7]">
+                O cliente paga o mês por Pix. Após confirmação do Mercado Pago,
+                o plano é ativado/renovado por 30 dias.
+              </p>
+              <p className="mt-3 rounded-full bg-emerald-950/60 px-3 py-2 text-xs font-black text-emerald-100">
+                Sem renovação automática
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPaymentMode("cartao_recorrente")}
+              disabled={processando}
+              className={`rounded-2xl border p-5 text-left transition ${
+                paymentMode === "cartao_recorrente"
+                  ? "border-blue-600 bg-blue-950/30"
+                  : "border-[#746f67] bg-transparent hover:border-blue-700"
+              } disabled:cursor-not-allowed disabled:opacity-70`}
+            >
+              <p className="text-lg font-black text-[#f0e7d8]">
+                Cartão recorrente
+              </p>
+              <p className="mt-2 text-sm font-bold leading-6 text-[#d4c8b7]">
+                Cria uma assinatura automática pelo Mercado Pago. Ideal para
+                quem quer não lembrar de pagar todo mês, luxo raríssimo.
+              </p>
+              <p className="mt-3 rounded-full bg-blue-950/60 px-3 py-2 text-xs font-black text-blue-100">
+                Renovação automática
+              </p>
+            </button>
+          </div>
         </div>
 
         <div className="mt-7 rounded-2xl border border-blue-800 bg-[#171f22] p-6">
           <p className="text-sm font-black text-[#d4c8b7]">Plano selecionado</p>
-          <h2 className="mt-2 text-3xl font-black text-[#f0e7d8]">{planoAtual.nome}</h2>
+          <h2 className="mt-2 text-3xl font-black text-[#f0e7d8]">
+            {planoAtual.nome}
+          </h2>
           <p className="mt-2 text-4xl font-black text-[#f0e7d8]">
             {formatMoney(planoAtual.preco)}/mês
           </p>
           <p className="mt-4 text-sm font-black leading-7 text-[#d4c8b7]">
-            O pagamento será processado pelo Mercado Pago. Após aprovação, o webhook atualiza a assinatura da empresa.
+            {paymentMode === "pix_avulso"
+              ? "Pagamento avulso por Pix. Após aprovação, o webhook renova a empresa por mais 30 dias."
+              : "Pagamento recorrente no cartão. Após autorização, o Mercado Pago cobra automaticamente os próximos ciclos."}
           </p>
         </div>
 
@@ -271,7 +368,11 @@ export default function AssinaturaPage() {
           disabled={processando || !empresa?.id}
           className="mt-7 w-full rounded-2xl bg-[#062766] px-6 py-5 text-center font-black text-white transition hover:bg-[#07317f] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {processando ? 'Gerando pagamento...' : 'Renovar / alterar plano'}
+          {processando
+            ? "Gerando pagamento..."
+            : paymentMode === "pix_avulso"
+              ? "Pagar mês avulso com Pix"
+              : "Ativar cartão recorrente"}
         </button>
 
         <button
@@ -284,5 +385,5 @@ export default function AssinaturaPage() {
         </button>
       </section>
     </main>
-  )
+  );
 }

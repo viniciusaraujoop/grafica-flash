@@ -70,7 +70,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
     if (productError) throw productError
 
-    const [zonesResult, paymentMethodsResult, businessHoursResult] = await Promise.all([
+    const [zonesResult, paymentMethodsResult, businessHoursResult, paymentSettingsResult] = await Promise.all([
       supabaseAdmin
         .from('delivery_zones')
         .select('id, name, fee, minimum_order, estimated_time_min, estimated_time_max, is_active, notes')
@@ -88,6 +88,12 @@ export async function GET(_request: NextRequest, context: RouteContext) {
         .select('weekday, is_open, open_time, close_time, break_start, break_end, closed_message')
         .eq('company_id', company.id)
         .order('weekday', { ascending: true }),
+      supabaseAdmin
+        .from('marketplace_payment_settings')
+        .select('id,onboarding_status,is_active')
+        .eq('company_id', company.id)
+        .eq('provider', 'mercado_pago')
+        .maybeSingle(),
     ])
 
     const normalizedCompany = {
@@ -108,6 +114,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       site_features: arr(company.site_features).length ? company.site_features : defaults.site_features,
       site_payment_methods: arr(company.site_payment_methods).length ? company.site_payment_methods : defaults.site_payment_methods,
       site_delivery_options: arr(company.site_delivery_options).length ? company.site_delivery_options : defaults.site_delivery_options,
+      marketplace_payment_online_enabled: !paymentSettingsResult.error && paymentSettingsResult.data?.is_active === true && paymentSettingsResult.data?.onboarding_status === 'connected',
     }
 
     return NextResponse.json({

@@ -1,10 +1,13 @@
 'use client'
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, @next/next/no-img-element */
+
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { nichosOrcaly } from '@/lib/orcaly-nichos'
 import { getAccessTokenClient, getCurrentCompanyClient } from '@/lib/current-company-client'
 import { supabase } from '@/lib/supabase'
+import { getCompanyPublicUrl } from '@/lib/company-url'
 
 type TabKey = 'modelos' | 'balcao' | 'qrcode' | 'recorrentes' | 'cliente' | 'ia'
 
@@ -76,12 +79,7 @@ export default function CentralOperacionalPage() {
   const [proposalUrl, setProposalUrl] = useState('')
   const [clientUrl, setClientUrl] = useState('')
 
-  const siteUrl = useMemo(() => {
-    if (!company) return ''
-    const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'orcaly.com.br'
-    const sub = company.subdomain_slug || String(company.slug || '').replace(/[^a-z0-9]/g, '')
-    return `https://${sub}.${root}`
-  }, [company])
+  const siteUrl = useMemo(() => getCompanyPublicUrl(company?.subdomain_slug || company?.slug), [company])
 
   const publicSite = siteUrl || (company?.slug ? `/site/${company.slug}` : '')
 

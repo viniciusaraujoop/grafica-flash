@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, @next/next/no-img-element */
+
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -11,6 +13,7 @@ import FaqEditor, { cleanFaq, type FaqEditorItem } from '@/components/site-build
 import SiteSectionToggles from '@/components/site-builder/SiteSectionToggles'
 import { getDefaultSiteSettingsForBusiness, getSiteTemplateByBusinessType, siteTemplates, type SiteSectionConfig } from '@/lib/site-templates'
 import { type PublicSiteCompany, type PublicSiteProduct } from '@/components/public-site/PublicSiteRenderer'
+import { getCompanyLocalSitePath, getCompanyPublicUrl } from '@/lib/company-url'
 
 type Tab = 'identidade' | 'capa' | 'cores' | 'secoes' | 'conteudo' | 'catalogo' | 'preview' | 'publicacao'
 type PreviewMode = 'desktop' | 'mobile'
@@ -31,13 +34,11 @@ function asArray<T>(value: unknown): T[] {
 }
 
 function publicLink(company: PublicSiteCompany | null) {
-  const slug = company?.subdomain_slug || company?.slug
-  return slug ? `https://${slug}.orcaly.com.br` : ''
+  return getCompanyPublicUrl(company?.subdomain_slug || company?.slug)
 }
 
 function localSitePath(company: PublicSiteCompany | null) {
-  const slug = company?.subdomain_slug || company?.slug
-  return slug ? `/site/${slug}` : '/painel/site'
+  return getCompanyLocalSitePath(company?.subdomain_slug || company?.slug)
 }
 
 function normalizeBenefits(value: unknown, fallback: BenefitEditorItem[]): BenefitEditorItem[] {

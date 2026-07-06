@@ -52,7 +52,7 @@ const typeOptions: Array<{ value: PaymentMethodType; label: string }> = [
   { value: 'debit_card', label: 'Cartão de débito' },
   { value: 'credit_card', label: 'Cartão de crédito' },
   { value: 'delivery_card', label: 'Cartão na entrega' },
-  { value: 'online', label: 'Link de pagamento' },
+  { value: 'online', label: 'Link externo' },
   { value: 'other', label: 'Outro' },
 ]
 
@@ -281,7 +281,7 @@ export default function PaymentMethodsManager() {
               <article className={cardClass}><p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Total</p><p className="mt-3 text-3xl font-black">{stats.total}</p><p className="mt-2 text-sm font-bold text-slate-500">Formas cadastradas.</p></article>
               <article className={cardClass}><p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Ativas</p><p className="mt-3 text-3xl font-black">{stats.active}</p><p className="mt-2 text-sm font-bold text-slate-500">Disponíveis para uso.</p></article>
               <article className={cardClass}><p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Na entrega</p><p className="mt-3 text-3xl font-black">{stats.delivery}</p><p className="mt-2 text-sm font-bold text-slate-500">Aceitam pagamento presencial.</p></article>
-              <article className={cardClass}><p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Online</p><p className="mt-3 text-3xl font-black">{stats.online}</p><p className="mt-2 text-sm font-bold text-slate-500">Aceitam pagamento online.</p></article>
+              <article className={cardClass}><p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Online</p><p className="mt-3 text-3xl font-black">{stats.online}</p><p className="mt-2 text-sm font-bold text-slate-500">Links externos ou combinados.</p></article>
             </section>
 
             <section className="grid gap-6 xl:grid-cols-[420px_1fr]">
@@ -289,7 +289,7 @@ export default function PaymentMethodsManager() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-black tracking-[-0.04em]">{editingId ? 'Editar forma' : 'Nova forma'}</h2>
-                    <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Defina tipo, instruções e disponibilidade para entrega ou pagamento online.</p>
+                    <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Defina tipo, instruções e disponibilidade para pagamento na entrega ou link externo.</p>
                   </div>
                   {editingId ? <button type="button" onClick={resetForm} className={buttonSecondary}>Cancelar</button> : null}
                 </div>
@@ -301,7 +301,7 @@ export default function PaymentMethodsManager() {
                   <div className="grid gap-3">
                     <label className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 font-black"><input type="checkbox" checked={form.is_active} onChange={(event) => updateForm('is_active', event.target.checked)} />Ativo</label>
                     <label className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 font-black"><input type="checkbox" checked={form.allow_delivery_payment} onChange={(event) => updateForm('allow_delivery_payment', event.target.checked)} />Aceita pagamento na entrega</label>
-                    <label className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 font-black"><input type="checkbox" checked={form.allow_online_payment} onChange={(event) => updateForm('allow_online_payment', event.target.checked)} />Aceita pagamento online</label>
+                    <label className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 font-black"><input type="checkbox" checked={form.allow_online_payment} onChange={(event) => updateForm('allow_online_payment', event.target.checked)} />Aceita link externo</label>
                     <label className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 font-black"><input type="checkbox" checked={form.requires_change} onChange={(event) => updateForm('requires_change', event.target.checked)} />Precisa de troco</label>
                   </div>
                   <button type="submit" disabled={saving} className={buttonPrimary}>{saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Cadastrar forma'}</button>
@@ -320,7 +320,7 @@ export default function PaymentMethodsManager() {
                             <StatusBadge active={method.is_active !== false} />
                             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{labelForType(method.type)}</span>
                             {method.allow_delivery_payment !== false ? <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">Na entrega</span> : null}
-                            {method.allow_online_payment ? <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">Online</span> : null}
+                            {method.allow_online_payment ? <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">Link externo</span> : null}
                             {method.requires_change ? <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">Troco</span> : null}
                           </div>
                           <h3 className="mt-4 text-2xl font-black tracking-[-0.04em]">{method.name}</h3>
@@ -328,7 +328,7 @@ export default function PaymentMethodsManager() {
                             <p><span className="text-slate-400">Tipo:</span> {labelForType(method.type)}</p>
                             <p><span className="text-slate-400">Status:</span> {method.is_active !== false ? 'Ativo' : 'Inativo'}</p>
                             <p><span className="text-slate-400">Pagamento na entrega:</span> {method.allow_delivery_payment !== false ? 'Sim' : 'Não'}</p>
-                            <p><span className="text-slate-400">Pagamento online:</span> {method.allow_online_payment ? 'Sim' : 'Não'}</p>
+                            <p><span className="text-slate-400">Link externo:</span> {method.allow_online_payment ? 'Sim' : 'Não'}</p>
                           </div>
                           {method.instructions ? <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm font-bold leading-6 text-slate-500">{method.instructions}</p> : null}
                         </div>

@@ -132,6 +132,9 @@ export const knownExistingPanelRoutes: string[] = [
   '/painel/orcamento/[id]',
   '/painel/pedidos',
   '/painel/pedidos/[id]',
+  '/painel/pagamentos',
+  '/painel/pagamentos/configuracao',
+  '/painel/pagamentos/vendas',
   '/painel/producao',
   '/painel/produtos',
   '/painel/produtos/[id]',
@@ -287,7 +290,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
   {
     id: 'produtos_servicos',
     emoji: '📦',
-    label: 'Produtos/Serviços',
+    label: 'Produtos / Serviços',
     description: 'Gestão dos itens cadastrados: fotos, vídeo, preço, categoria e disponibilidade.',
     href: '/painel/produtos',
     group: 'principal',
@@ -303,7 +306,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
   {
     id: 'catalogo',
     emoji: '🛒',
-    label: 'Catálogo/Marketplace',
+    label: 'Catálogo / Marketplace',
     description: 'Vitrine comercial dos produtos e serviços, usando a mesma base visual nova.',
     href: '/painel/catalogo',
     fallbackHref: '/painel/produtos',
@@ -334,6 +337,22 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     aliases: ['pedidos_orcamentos', 'solicitacoes'],
   },
   {
+    id: 'pagamentos_marketplace',
+    emoji: '💳',
+    label: 'Pagamentos',
+    description: 'Acompanhe Pix e cartão online recebidos pelo site.',
+    href: '/painel/pagamentos',
+    group: 'financeiro',
+    segments: allSegments,
+    status: 'active',
+    requiredPlan: 'intermediate',
+    requiresActiveSubscription: true,
+    iconName: 'pagamentos',
+    isGlobal: true,
+    aliases: ['pagamentos', 'mercado_pago', 'split', 'vendas_online'],
+    futureActions: ['Conectar Mercado Pago', 'Ver vendas online', 'Acompanhar status'],
+  },
+  {
     id: 'clientes_crm',
     emoji: '👥',
     label: 'Clientes/CRM',
@@ -352,14 +371,14 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
   },
   {
     id: 'follow_up',
-    emoji: '💬',
-    label: 'Follow-up Comercial',
+    emoji: '🔁',
+    label: 'Follow-up',
     description: 'Clientes, propostas e oportunidades que precisam de retorno.',
     href: '/painel/follow-up',
     relatedHref: '/painel/crm',
     group: 'comercial',
     segments: allSegments,
-    status: 'beta',
+    status: 'active',
     requiredPlan: 'intermediate',
     requiresActiveSubscription: true,
     iconName: 'follow_up',
@@ -425,7 +444,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     relatedHref: '/painel/financeiro',
     group: 'financeiro',
     segments: allSegments,
-    status: 'active',
+    status: 'hidden',
     requiredPlan: 'intermediate',
     requiresActiveSubscription: true,
     iconName: 'entradas_saidas',
@@ -442,7 +461,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     relatedHref: '/painel/financeiro',
     group: 'financeiro',
     segments: allSegments,
-    status: 'active',
+    status: 'hidden',
     requiredPlan: 'intermediate',
     requiresActiveSubscription: true,
     iconName: 'contas_receber',
@@ -459,7 +478,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     relatedHref: '/painel/financeiro',
     group: 'financeiro',
     segments: allSegments,
-    status: 'active',
+    status: 'hidden',
     requiredPlan: 'intermediate',
     requiresActiveSubscription: true,
     iconName: 'contas_pagar',
@@ -476,7 +495,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     relatedHref: '/painel/financeiro',
     group: 'financeiro',
     segments: allSegments,
-    status: 'active',
+    status: 'hidden',
     requiredPlan: 'premium',
     requiresActiveSubscription: true,
     iconName: 'notas_fiscais',
@@ -493,7 +512,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     relatedHref: '/painel/financeiro',
     group: 'financeiro',
     segments: allSegments,
-    status: 'active',
+    status: 'hidden',
     requiredPlan: 'intermediate',
     requiresActiveSubscription: true,
     iconName: 'materiais',
@@ -744,7 +763,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     requiresActiveSubscription: true,
     iconName: 'formas_pagamento',
     isOperational: true,
-    futureActions: ['Configurar Pix', 'Adicionar dinheiro/cartão', 'Definir regras por entrega', 'Exibir no checkout'],
+    futureActions: ['Configurar Pix manual', 'Adicionar dinheiro/cartão', 'Definir instruções', 'Exibir no checkout'],
   },
 
   // Auto / oficina
@@ -1256,11 +1275,29 @@ export function getOperationalModulesForBusinessType(businessType: unknown) {
 
 export function getModulesForBusinessType(businessType: unknown) {
   const segment = normalizeBusinessType(businessType)
-
-  return panelModules
+  const selected = panelModules
     .filter((moduleItem) => moduleItem.status !== 'hidden')
     .filter((moduleItem) => moduleItem.isGlobal || moduleItem.segments.includes(segment))
     .map((moduleItem) => ({ ...moduleItem, href: getSafeModuleHref(moduleItem) }))
+
+  const byHref = new Map<string, PanelModule>()
+
+  for (const moduleItem of selected) {
+    const existing = byHref.get(moduleItem.href)
+    if (!existing) {
+      byHref.set(moduleItem.href, moduleItem)
+      continue
+    }
+
+    const moduleIsSegmentSpecific = !moduleItem.isGlobal && moduleItem.segments.includes(segment)
+    const existingIsGlobal = Boolean(existing.isGlobal)
+
+    if (moduleIsSegmentSpecific && existingIsGlobal) {
+      byHref.set(moduleItem.href, moduleItem)
+    }
+  }
+
+  return Array.from(byHref.values())
 }
 
 export function getPanelModulesForBusinessType(businessType: unknown) {

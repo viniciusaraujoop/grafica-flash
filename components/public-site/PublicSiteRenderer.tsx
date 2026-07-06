@@ -33,6 +33,7 @@ export type PublicSiteCompany = {
   delivery_zones?: unknown
   payment_methods?: unknown
   business_hours?: unknown
+  marketplace_payment_online_enabled?: boolean | null
 }
 
 export type PublicSiteProduct = {

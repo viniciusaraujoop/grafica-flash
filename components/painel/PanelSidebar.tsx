@@ -20,7 +20,6 @@ const groupOrder: PanelModuleGroup[] = [
   'operacao',
   'financeiro',
   'presenca_digital',
-  'relatorios',
   'sistema',
 ]
 
@@ -112,7 +111,7 @@ function SidebarGroups({ pathname, modules }: { pathname: string; modules: Retur
   return (
     <nav className="space-y-5">
       {groupOrder.map((group) => {
-        const items = modules.filter((module) => module.group === group)
+        const items = modules.filter((module) => module.group === group && module.status === 'active')
         if (!items.length) return null
 
         return (

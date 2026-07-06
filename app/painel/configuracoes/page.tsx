@@ -1,8 +1,11 @@
 'use client'
 
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, react-hooks/purity, @next/next/no-img-element */
+
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { businessTypes, getBusinessTypeConfig } from '@/lib/business-types'
+import { getCompanyPublicUrl, getRootDomain, normalizeCompanySlug } from '@/lib/company-url'
 
 type Member = {
   id: string
@@ -199,16 +202,12 @@ export default function ConfiguracoesPage() {
   })
 
   const activeMembers = useMemo(() => members.filter((member) => member.status === 'ativo'), [members])
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'orcaly.com.br'
+  const rootDomain = getRootDomain()
 
-  const siteUrl = useMemo(() => {
-    if (!company?.slug) return ''
-    const sub = normalizeSubdomain(company.subdomain_slug || company.slug || company.nome || '')
-    return `https://${sub}.${rootDomain}`
-  }, [company, rootDomain])
+  const siteUrl = useMemo(() => getCompanyPublicUrl(company?.subdomain_slug || company?.slug || company?.nome), [company])
 
-  const previewSubdomain = normalizeSubdomain(form.subdomain_slug || company?.subdomain_slug || company?.slug || company?.nome || '')
-  const previewSiteUrl = previewSubdomain ? `https://${previewSubdomain}.${rootDomain}` : siteUrl
+  const previewSubdomain = normalizeCompanySlug(form.subdomain_slug || company?.subdomain_slug || company?.slug || company?.nome || '')
+  const previewSiteUrl = previewSubdomain ? getCompanyPublicUrl(previewSubdomain) : siteUrl
 
   function update(campo: string, valor: any) {
     setForm((atual) => ({ ...atual, [campo]: valor }))
@@ -690,86 +689,36 @@ export default function ConfiguracoesPage() {
         {tab === 'recebimento' && (
           <div className="grid gap-5 lg:grid-cols-[1fr_0.8fr]">
             <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Recebimento</p>
-              <h2 className="mt-2 text-2xl font-black">PIX e pagamento</h2>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Recebimentos</p>
+              <h2 className="mt-2 text-2xl font-black">Pagamentos e recebimentos</h2>
+              <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-slate-500">
+                As formas aceitas na entrega ficam em uma tela própria. Pix e cartão online via Mercado Pago ficam na área de pagamentos, sem duplicar configuração dentro das preferências da empresa.
+              </p>
 
-              <div className="mt-6 grid gap-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="grid gap-2">
-                    <span className="text-sm font-black text-slate-700">Tipo da chave</span>
-                    <select value={form.pix_tipo} onChange={(e) => update('pix_tipo', e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white">
-                      <option value="telefone">Telefone</option>
-                      <option value="email">E-mail</option>
-                      <option value="cpf">CPF</option>
-                      <option value="cnpj">CNPJ</option>
-                      <option value="aleatoria">Chave aleatória</option>
-                    </select>
-                  </label>
-
-                  <label className="grid gap-2">
-                    <span className="text-sm font-black text-slate-700">Chave PIX</span>
-                    <input value={form.pix_key} onChange={(e) => update('pix_key', e.target.value)} placeholder="Digite a chave PIX" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
-                  </label>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="grid gap-2">
-                    <span className="text-sm font-black text-slate-700">Nome do recebedor</span>
-                    <input value={form.pix_nome} onChange={(e) => update('pix_nome', e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
-                  </label>
-
-                  <label className="grid gap-2">
-                    <span className="text-sm font-black text-slate-700">Cidade do recebedor</span>
-                    <input value={form.pix_cidade} onChange={(e) => update('pix_cidade', e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
-                  </label>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <label className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 font-black">
-                    <input type="checkbox" checked={form.aceita_pix} onChange={(e) => update('aceita_pix', e.target.checked)} />
-                    Aceita PIX
-                  </label>
-
-                  <label className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 font-black">
-                    <input type="checkbox" checked={form.aceita_cartao} onChange={(e) => update('aceita_cartao', e.target.checked)} />
-                    Aceita cartão
-                  </label>
-
-                  <label className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 font-black">
-                    <input type="checkbox" checked={form.cobrar_sinal} onChange={(e) => update('cobrar_sinal', e.target.checked)} />
-                    Cobra sinal
-                  </label>
-                </div>
-
-                <label className="grid gap-2">
-                  <span className="text-sm font-black text-slate-700">Percentual de sinal</span>
-                  <input type="number" min={0} max={100} value={form.percentual_sinal} onChange={(e) => update('percentual_sinal', e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none focus:border-[#05245c] focus:bg-white" />
-                </label>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <Link href="/painel/pagamentos/configuracao" className="rounded-[1.4rem] border border-blue-100 bg-[#05245c] p-5 text-white shadow-lg shadow-blue-950/15">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-white/60">Online</p>
+                  <h3 className="mt-2 text-xl font-black">Pagamentos e recebimentos</h3>
+                  <p className="mt-2 text-sm font-bold leading-6 text-white/75">Conecte Mercado Pago para receber Pix e cartão pelo site.</p>
+                </Link>
+                <Link href="/painel/formas-pagamento" className="rounded-[1.4rem] border border-blue-100 bg-[#f8fbff] p-5 text-[#071b3a]">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Operacional</p>
+                  <h3 className="mt-2 text-xl font-black">Formas de pagamento</h3>
+                  <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Configure Pix manual, dinheiro, cartão na entrega e instruções para o cliente.</p>
+                </Link>
               </div>
             </section>
 
             <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Prévia</p>
-              <h2 className="mt-2 text-2xl font-black">Como ficará para pagamento</h2>
-
-              <div className="mt-6 rounded-[1.5rem] bg-[#05245c] p-5 text-white">
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-white/60">PIX</p>
-                <p className="mt-3 break-all text-2xl font-black">{form.pix_key || 'Sua chave PIX'}</p>
-                <p className="mt-3 font-bold text-white/75">{form.pix_nome || 'Nome do recebedor'} • {form.pix_cidade || 'Cidade'}</p>
-              </div>
-
-              <div className="mt-4 grid gap-3">
-                <div className="rounded-2xl bg-blue-50 p-4 font-bold text-[#05245c]">
-                  {form.cobrar_sinal ? `Sinal configurado: ${form.percentual_sinal || 0}%` : 'Sinal desativado'}
-                </div>
-                <div className="rounded-2xl bg-emerald-50 p-4 font-bold text-emerald-700">
-                  {form.aceita_pix ? 'PIX ativo' : 'PIX desativado'}
-                </div>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Separação correta</p>
+              <div className="mt-5 grid gap-3 text-sm font-bold leading-6 text-slate-600">
+                <div className="rounded-2xl bg-blue-50 p-4 text-[#05245c]">Mercado Pago processa Pix/cartão online do site.</div>
+                <div className="rounded-2xl bg-emerald-50 p-4 text-emerald-700">Formas de pagamento controlam o que a loja aceita no pedido.</div>
+                <div className="rounded-2xl bg-amber-50 p-4 text-amber-700">Configurações guarda dados da empresa, site e equipe. Nada de duplicar Pix por aqui.</div>
               </div>
             </section>
           </div>
         )}
-
         {tab === 'site' && (
           <div className="grid gap-5 lg:grid-cols-[1fr_0.8fr]">
             <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">

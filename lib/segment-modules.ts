@@ -437,7 +437,7 @@ export const segmentModules: SegmentModule[] = [
   },
   {
     id: 'catalogo',
-    label: 'Catálogo/Marketplace',
+    label: 'Catálogo / Marketplace',
     description: 'Vitrine, catálogo, cardápio e produtos exibidos para o cliente.',
     href: '/painel/catalogo',
     fallbackHref: '/painel/produtos',
@@ -621,7 +621,7 @@ export const segmentModules: SegmentModule[] = [
   {
     id: 'formas_pagamento',
     label: 'Formas de pagamento',
-    description: 'Pix, dinheiro, cartão, sinal e regras por pedido.',
+    description: 'Pix manual, dinheiro, cartão na entrega e instruções operacionais.',
     href: '/painel/formas-pagamento',
     fallbackHref: '/painel/modulos/formas-pagamento',
     group: 'financeiro',
@@ -630,7 +630,7 @@ export const segmentModules: SegmentModule[] = [
     iconName: 'credit-card',
     requiresActiveSubscription: true,
     relatedHref: '/painel/financeiro',
-    futureActions: ['Ativar Pix', 'Informar cartão', 'Cobrar sinal', 'Regras por pedido'],
+    futureActions: ['Ativar Pix manual', 'Informar cartão local', 'Salvar instruções', 'Exibir no checkout'],
   },
 
   // Gráfica e personalizados
