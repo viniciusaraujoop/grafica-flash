@@ -73,6 +73,11 @@ function isFoodOrder(body: any, company: any) {
   return ['food', 'alimenticio', 'restaurante', 'lanchonete', 'delivery'].includes(raw)
 }
 
+function isLogisticsOrder(body: any, company: any) {
+  const raw = String(body.segment || body.business_type || company?.business_type || company?.modelo_negocio || '').toLowerCase()
+  return ['food', 'alimenticio', 'restaurante', 'lanchonete', 'delivery', 'store', 'loja', 'comercio', 'comércio'].includes(raw)
+}
+
 function asArray<T = any>(value: unknown): T[] {
   return Array.isArray(value) ? value as T[] : []
 }
@@ -493,6 +498,7 @@ export async function POST(request: NextRequest) {
     const companyId = company.id
     companyIdForRollback = companyId
     const foodOrder = isFoodOrder(body, company)
+    const logisticsOrder = isLogisticsOrder(body, company)
     const ids = Array.from(new Set(items.map((item: CartItemInput) => item.product_id)))
 
     const { data: products, error: productsError } = await supabaseAdmin
@@ -522,12 +528,12 @@ export async function POST(request: NextRequest) {
     }
 
     const subtotal = Number(orderItems.reduce((acc, item) => acc + item.calc.subtotal, 0).toFixed(2))
-    const deliveryType = foodOrder ? (body.delivery_type === 'pickup' ? 'pickup' : 'delivery') : String(body.delivery_type || 'pickup')
+    const deliveryType = logisticsOrder ? (body.delivery_type === 'delivery' ? 'delivery' : 'pickup') : String(body.delivery_type || 'pickup')
 
     let deliveryZone: any = null
     let deliveryFee = 0
 
-    if (foodOrder && deliveryType === 'delivery') {
+    if (logisticsOrder && deliveryType === 'delivery') {
       const deliveryZoneId = String(body.delivery_zone_id || '')
 
       if (!deliveryZoneId) {
@@ -569,7 +575,7 @@ export async function POST(request: NextRequest) {
       if (methodError) throw methodError
       if (!method) return NextResponse.json({ error: 'Forma de pagamento inválida para esta empresa.' }, { status: 400 })
       selectedPaymentMethod = method
-    } else if (foodOrder) {
+    } else if (logisticsOrder) {
       const { data: anyMethod, error: anyMethodError } = await supabaseAdmin
         .from('payment_methods')
         .select('id')
@@ -668,9 +674,9 @@ export async function POST(request: NextRequest) {
         items_snapshot: itemsSnapshot,
         itens_resumo: resumo,
         cliente_empresa: cliente.empresa || null,
-        marketplace_origem: foodOrder ? 'marketplace_food' : 'marketplace',
+        marketplace_origem: foodOrder ? 'marketplace_food' : logisticsOrder ? 'marketplace_store' : 'marketplace',
         dados_inteligentes: {
-          origem: foodOrder ? 'marketplace_food_checkout' : 'marketplace_premium_cupons',
+          origem: foodOrder ? 'marketplace_food_checkout' : logisticsOrder ? 'marketplace_store_checkout' : 'marketplace_segment_request',
           cliente,
           subtotal,
           valor_desconto: valorDesconto,
@@ -775,7 +781,7 @@ export async function POST(request: NextRequest) {
 
     if (paymentError) throw paymentError
 
-    if (foodOrder && deliveryType === 'delivery') {
+    if (logisticsOrder && deliveryType === 'delivery') {
       const estimatedDeliveryAt = deliveryZone?.estimated_time_max
         ? new Date(Date.now() + Number(deliveryZone.estimated_time_max) * 60000).toISOString()
         : null

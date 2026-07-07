@@ -15,16 +15,18 @@ import { getDefaultSiteSettingsForBusiness, getSiteTemplateByBusinessType, siteT
 import { type PublicSiteCompany, type PublicSiteProduct } from '@/components/public-site/PublicSiteRenderer'
 import { getCompanyLocalSitePath, getCompanyPublicUrl } from '@/lib/company-url'
 
-type Tab = 'identidade' | 'capa' | 'cores' | 'secoes' | 'conteudo' | 'catalogo' | 'preview' | 'publicacao'
+type Tab = 'identidade' | 'segmento' | 'capa' | 'cores' | 'secoes' | 'conteudo' | 'catalogo' | 'checkout' | 'preview' | 'publicacao'
 type PreviewMode = 'desktop' | 'mobile'
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: 'identidade', label: 'Identidade' },
+  { id: 'segmento', label: 'Segmento' },
   { id: 'capa', label: 'Capa' },
   { id: 'cores', label: 'Cores' },
   { id: 'secoes', label: 'Seções' },
   { id: 'conteudo', label: 'Conteúdo' },
   { id: 'catalogo', label: 'Catálogo' },
+  { id: 'checkout', label: 'Checkout' },
   { id: 'preview', label: 'Prévia' },
   { id: 'publicacao', label: 'Publicação' },
 ]
@@ -436,6 +438,42 @@ export default function SiteBuilderPage() {
                 </div>
               ) : null}
 
+
+              {tab === 'segmento' ? (
+                <div className="grid gap-5">
+                  <div className="rounded-[1.7rem] border border-blue-100 bg-[#f8fbff] p-5">
+                    <p className="text-sm font-black text-[#05245c]">Experiência do site por segmento</p>
+                    <h3 className="mt-2 text-3xl font-black tracking-[-0.05em]">{template.label}</h3>
+                    <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
+                      O segmento define textos, cards, fluxo do catálogo, formulário de solicitação e checkout exibido para o cliente.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {[
+                      { title: 'Food', text: 'Cardápio, carrinho, adicionais, cupom, entrega/retirada e pagamento.' },
+                      { title: 'Loja / Comércio', text: 'Vitrine de produtos, carrinho simples, cupom e pedido estruturado.' },
+                      { title: 'Gráfica / Personalizados', text: 'Orçamento com medidas, quantidade, briefing e observações.' },
+                      { title: 'Beauty / Barbearia', text: 'Serviços, preferência de horário, cupom e solicitação/agendamento.' },
+                      { title: 'Auto / Assistência', text: 'Diagnóstico, dados do veículo/aparelho, defeito e análise técnica.' },
+                      { title: 'Eventos / Serviços', text: 'Pacotes, datas, prazo, local e proposta estruturada.' },
+                    ].map((item) => (
+                      <article key={item.title} className="rounded-[1.5rem] border border-blue-100 bg-white p-5 shadow-lg shadow-blue-950/5">
+                        <p className="font-black text-[#071b3a]">{item.title}</p>
+                        <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{item.text}</p>
+                      </article>
+                    ))}
+                  </div>
+
+                  <div className="rounded-[1.7rem] bg-blue-50 p-5">
+                    <p className="font-black text-[#05245c]">Trocar segmento</p>
+                    <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
+                      Se trocar o segmento, use “Preencher apenas campos vazios” na aba Capa para aplicar textos e seções recomendadas sem apagar o que já foi configurado.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
               {tab === 'capa' ? (
                 <div className="grid gap-5">
                   <div className="rounded-[1.7rem] border border-blue-100 bg-[#f8fbff] p-5">
@@ -540,7 +578,9 @@ export default function SiteBuilderPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     {[
                       'Mostrar preço quando existir',
-                      'Mostrar botão WhatsApp',
+                      'WhatsApp como apoio',
+                      'Cupom no checkout',
+                      'Pedido real no painel',
                       'Mostrar vídeo do produto',
                       'Mostrar selo de destaque',
                       'Mostrar categorias',
@@ -555,6 +595,43 @@ export default function SiteBuilderPage() {
                   <Link href="/painel/produtos" className="rounded-2xl bg-[#05245c] px-5 py-4 text-center font-black text-white">
                     Editar produtos e serviços
                   </Link>
+                </div>
+              ) : null}
+
+
+              {tab === 'checkout' ? (
+                <div className="grid gap-5">
+                  <div className="rounded-[1.7rem] border border-blue-100 bg-[#f8fbff] p-5">
+                    <p className="text-sm font-black text-[#05245c]">Marketplace e finalização</p>
+                    <h3 className="mt-2 text-3xl font-black tracking-[-0.05em]">Carrinho, cupom, pagamento e pedido real</h3>
+                    <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
+                      As funções aparecem no site conforme o segmento e as configurações operacionais da empresa.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {[
+                      { title: 'Carrinho e pedido real', text: template.businessType === 'food' ? 'Food usa carrinho completo com adicionais e variações.' : 'Demais segmentos usam solicitação estruturada ou carrinho simples quando aplicável.', href: '/painel/produtos' },
+                      { title: 'Cupons', text: 'Cupons ativos são validados no checkout e recalculados no servidor.', href: '/painel/cupons' },
+                      { title: 'Taxas de entrega', text: 'Food e Loja podem usar regiões, pedido mínimo e taxa automática.', href: '/painel/taxas-entrega' },
+                      { title: 'Formas de pagamento', text: 'Pix manual, dinheiro, cartão local e link ficam na central de pagamentos.', href: '/painel/pagamentos?tab=formas' },
+                      { title: 'Mercado Pago', text: 'Se conectado, o checkout exibe Pix/cartão online com status automático.', href: '/painel/pagamentos?tab=mercado-pago' },
+                      { title: 'Horários', text: 'Food pode exibir aberto/fechado com base na operação configurada.', href: '/painel/horarios' },
+                    ].map((item) => (
+                      <Link key={item.title} href={item.href} className="rounded-[1.5rem] border border-blue-100 bg-white p-5 shadow-lg shadow-blue-950/5 transition hover:-translate-y-0.5 hover:shadow-xl">
+                        <p className="font-black text-[#071b3a]">{item.title}</p>
+                        <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{item.text}</p>
+                        <span className="mt-4 inline-flex rounded-2xl bg-[#05245c] px-4 py-2 text-sm font-black text-white">Configurar</span>
+                      </Link>
+                    ))}
+                  </div>
+
+                  <div className="rounded-[1.7rem] bg-emerald-50 p-5 text-emerald-800">
+                    <p className="font-black">WhatsApp continua como apoio</p>
+                    <p className="mt-2 text-sm font-bold leading-6">
+                      O cliente pode tirar dúvidas pelo WhatsApp, mas o site agora prioriza checkout, solicitação estruturada e pedido salvo no painel.
+                    </p>
+                  </div>
                 </div>
               ) : null}
 

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import type { PublicSiteCompany, PublicSiteProduct } from '@/components/public-site/PublicSiteRenderer'
 import FoodMarketplaceCatalog from '@/components/public-site/FoodMarketplaceCatalog'
+import SegmentMarketplaceCatalog from '@/components/public-site/SegmentMarketplaceCatalog'
 import { getCatalogLabels, getFallbackCatalogCategories, normalizeCatalogBusinessType } from '@/lib/catalog-labels'
 import {
   getCommercialBadges,
@@ -379,177 +380,14 @@ export default function PremiumCatalog({
   }
 
   return (
-    <section id="catalogo" className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
-          <div className="text-center lg:text-left">
-            <p className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: primaryColor }}>
-              {title}
-            </p>
-            <h2 className="mt-3 text-4xl font-black leading-[1.05] tracking-[-0.055em] text-[#071b3a] sm:text-6xl">
-              Uma vitrine clara para escolher sem adivinhar
-            </h2>
-            <p className="mt-4 max-w-3xl text-base font-bold leading-8 text-slate-500 lg:mx-0">
-              {text}
-            </p>
-          </div>
-
-          <div className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-xl shadow-blue-950/5">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Catálogo</p>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-2xl bg-[#f5f8ff] p-3">
-                <p className="text-2xl font-black text-[#05245c]">{safeProducts.length}</p>
-                <p className="text-[11px] font-black text-slate-400">Itens</p>
-              </div>
-              <div className="rounded-2xl bg-[#f5f8ff] p-3">
-                <p className="text-2xl font-black text-[#05245c]">{realCategories.length}</p>
-                <p className="text-[11px] font-black text-slate-400">Categorias</p>
-              </div>
-              <div className="rounded-2xl bg-[#f5f8ff] p-3">
-                <p className="text-2xl font-black text-[#05245c]">{featuredProducts.length}</p>
-                <p className="text-[11px] font-black text-slate-400">Destaques</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {featuredProducts.length ? (
-          <div className="mt-10 rounded-[2.4rem] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/8 sm:p-5">
-            <div className="flex flex-col justify-between gap-3 p-2 sm:flex-row sm:items-end">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em]" style={{ color: primaryColor }}>{labels.featuredTitle}</p>
-                <h3 className="mt-1 text-3xl font-black tracking-[-0.05em] text-[#071b3a]">Escolhas rápidas para o cliente</h3>
-                <p className="mt-2 max-w-2xl text-sm font-bold leading-6 text-slate-500">{labels.featuredText}</p>
-              </div>
-              <span className="rounded-full bg-amber-50 px-4 py-2 text-sm font-black text-amber-700">Destaques</span>
-            </div>
-
-            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {featuredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  company={company}
-                  primaryColor={primaryColor}
-                  actionLabel={actionLabel}
-                  onOpen={() => setSelected(product)}
-                />
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        <div className="mt-8 rounded-[2rem] border border-blue-100 bg-white p-4 shadow-xl shadow-blue-950/5">
-          <div className="grid gap-3 lg:grid-cols-[1fr_220px]">
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={`Buscar ${labels.itemLabel.toLowerCase()} por nome, descrição ou categoria...`}
-              className="rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 text-sm font-bold outline-none transition focus:border-[#05245c]"
-            />
-            <select
-              value={sort}
-              onChange={(event) => setSort(event.target.value as SortKey)}
-              className="rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-4 text-sm font-black text-[#05245c] outline-none"
-            >
-              <option value="destaques">Destaques primeiro</option>
-              <option value="recentes">Mais recentes</option>
-              <option value="az">Nome A-Z</option>
-              <option value="menor_preco">Menor preço</option>
-              <option value="maior_preco">Maior preço</option>
-              <option value="disponiveis">Disponíveis primeiro</option>
-            </select>
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {filterLabels.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setFilter(item.id)}
-                className={`rounded-full px-4 py-2 text-sm font-black transition ${filter === item.id ? 'text-white' : 'border border-blue-100 bg-white text-[#05245c]'}`}
-                style={filter === item.id ? { background: primaryColor } : undefined}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setCategory('Todos')}
-              className={`rounded-full px-4 py-2 text-sm font-black transition ${category === 'Todos' ? 'text-white' : 'border border-blue-100 bg-white text-[#05245c]'}`}
-              style={category === 'Todos' ? { background: accentColor } : undefined}
-            >
-              Todos
-            </button>
-            {suggestedCategories.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setCategory(item)}
-                className={`rounded-full px-4 py-2 text-sm font-black transition ${category === item ? 'text-white' : 'border border-blue-100 bg-white text-[#05245c]'}`}
-                style={category === item ? { background: accentColor } : undefined}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-
-          {!realCategories.length && safeProducts.length ? (
-            <p className="mt-3 text-xs font-bold text-slate-400">
-              Categorias sugeridas por segmento. Cadastre categorias nos itens para ativar filtros reais.
-            </p>
-          ) : null}
-        </div>
-
-        {safeProducts.length ? (
-          filteredProducts.length ? (
-            <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  company={company}
-                  primaryColor={primaryColor}
-                  actionLabel={actionLabel}
-                  onOpen={() => setSelected(product)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="mt-8 rounded-[2rem] border border-blue-100 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
-              <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-blue-50 text-3xl">🔎</div>
-              <h3 className="mt-4 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">Nenhum item encontrado.</h3>
-              <p className="mx-auto mt-2 max-w-xl font-bold leading-7 text-slate-500">
-                Ajuste a busca ou os filtros para ver outros itens do catálogo.
-              </p>
-            </div>
-          )
-        ) : (
-          <div className="mt-8 rounded-[2.4rem] border border-blue-100 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
-            <div className="mx-auto grid h-20 w-20 place-items-center rounded-[1.8rem] bg-blue-50 text-4xl">✨</div>
-            <h3 className="mt-5 text-3xl font-black tracking-[-0.05em] text-[#071b3a]">{labels.emptyTitle}</h3>
-            <p className="mx-auto mt-3 max-w-2xl font-bold leading-8 text-slate-500">
-              {labels.emptyText}
-            </p>
-            <a href={whatsappLink(company, `Olá, quero saber mais sobre ${company.nome || 'a empresa'}.`)} target="_blank" rel="noreferrer" className="mt-6 inline-flex rounded-2xl px-6 py-4 font-black text-white" style={{ background: primaryColor }}>
-              Falar pelo WhatsApp
-            </a>
-          </div>
-        )}
-      </div>
-
-      {selected ? (
-        <ProductDetailModal
-          product={selected}
-          company={company}
-          actionLabel={actionLabel}
-          primaryColor={primaryColor}
-          onClose={() => setSelected(null)}
-        />
-      ) : null}
-    </section>
+    <SegmentMarketplaceCatalog
+      company={company}
+      products={products}
+      businessType={normalizedType}
+      primaryColor={primaryColor}
+      accentColor={accentColor}
+      fallbackTitle={fallbackTitle}
+      fallbackText={fallbackText}
+    />
   )
 }

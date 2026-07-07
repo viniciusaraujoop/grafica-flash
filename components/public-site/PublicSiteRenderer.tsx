@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { getSiteTemplateByBusinessType, normalizeSectionList, type SiteSectionId } from '@/lib/site-templates'
 import PremiumCatalog from '@/components/public-site/PremiumCatalog'
+import { SegmentHeroPanel, SegmentProcessBand } from '@/components/public-site/SegmentHeroPanel'
 
 export type PublicSiteCompany = {
   id?: string
@@ -310,31 +311,7 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
               </div>
             </div>
 
-            <div className="rounded-[2.3rem] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/10">
-              <div className="rounded-[1.8rem] p-5 text-white" style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }}>
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-white/60">Página oficial</p>
-                    <h2 className="mt-1 text-2xl font-black tracking-[-0.04em]">{company.nome || 'Empresa'}</h2>
-                  </div>
-                  {company.logo_url ? (
-                    <span className="grid h-16 w-16 place-items-center rounded-3xl bg-white">
-                      <img src={company.logo_url} alt={company.nome || 'Logo'} className="max-h-[78%] max-w-[78%] object-contain" />
-                    </span>
-                  ) : (
-                    <span className="grid h-16 w-16 place-items-center rounded-3xl bg-white text-2xl font-black" style={{ color: primary }}>
-                      {(company.nome || 'O').slice(0, 1)}
-                    </span>
-                  )}
-                </div>
-
-                <div className="mt-8 grid gap-3">
-                  {template.previewItems.map((item) => (
-                    <div key={item} className="rounded-2xl bg-white/12 p-4 font-black">{item}</div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <SegmentHeroPanel company={company} businessType={businessType} primaryColor={primary} accentColor={accent} />
           </div>
         </section>
       )
@@ -366,7 +343,7 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
           primaryColor={primary}
           accentColor={accent}
           fallbackTitle={template.catalogLabel}
-          fallbackText={businessType === 'food' ? 'Escolha seus itens, configure adicionais, selecione entrega ou retirada, forma de pagamento e finalize o pedido pelo marketplace.' : 'Veja opções, detalhes e chame no WhatsApp para continuar.'}
+          fallbackText={businessType === 'food' ? 'Escolha seus itens, configure adicionais, selecione entrega ou retirada, forma de pagamento e finalize o pedido pelo marketplace.' : 'Escolha itens ou serviços, aplique cupom quando disponível, informe seus dados e envie uma solicitação registrada no painel.'}
           ctaLabel={cta}
         />
       )
@@ -421,15 +398,19 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
       return (
         <SectionShell>
           <TitleBlock eyebrow="Informações úteis" title={titleMap[id] || 'Como funciona'} />
-          <div className="mx-auto mt-9 grid max-w-6xl gap-4 md:grid-cols-3">
-            {items.slice(0, 6).map((item, index) => (
-              <article key={`${item}-${index}`} className="rounded-[1.8rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-                <span className="grid h-11 w-11 place-items-center rounded-2xl text-sm font-black text-white" style={{ background: accent }}>{index + 1}</span>
-                <h3 className="mt-4 text-xl font-black tracking-[-0.03em]">{item}</h3>
-                <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Informação preparada para este tipo de negócio.</p>
-              </article>
-            ))}
-          </div>
+          {id === 'process' ? (
+            <SegmentProcessBand businessType={businessType} primaryColor={primary} />
+          ) : (
+            <div className="mx-auto mt-9 grid max-w-6xl gap-4 md:grid-cols-3">
+              {items.slice(0, 6).map((item, index) => (
+                <article key={`${item}-${index}`} className="rounded-[1.8rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
+                  <span className="grid h-11 w-11 place-items-center rounded-2xl text-sm font-black text-white" style={{ background: accent }}>{index + 1}</span>
+                  <h3 className="mt-4 text-xl font-black tracking-[-0.03em]">{item}</h3>
+                  <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Informação preparada para este tipo de negócio.</p>
+                </article>
+              ))}
+            </div>
+          )}
         </SectionShell>
       )
     }
@@ -457,7 +438,7 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
             <p className="text-xs font-black uppercase tracking-[0.2em] text-white/55">Contato</p>
             <h2 className="mt-3 text-4xl font-black tracking-[-0.055em] sm:text-6xl">Pronto para continuar?</h2>
             <p className="mx-auto mt-4 max-w-2xl font-bold leading-8 text-white/75">
-              Chame pelo WhatsApp e continue o atendimento com a equipe.
+              Envie sua solicitação pelo site ou tire dúvidas pelo WhatsApp com a equipe.
             </p>
             <a href={whatsapp} target="_blank" rel="noreferrer" className="mt-7 inline-flex rounded-2xl bg-white px-6 py-4 font-black" style={{ color: primary }}>
               Chamar no WhatsApp
