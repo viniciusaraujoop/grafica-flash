@@ -89,17 +89,6 @@ type FoodDeliveryZone = {
   notes?: string | null
 }
 
-type FoodPaymentMethod = {
-  id: string
-  name: string
-  type: string
-  is_active?: boolean | null
-  requires_change?: boolean | null
-  allow_delivery_payment?: boolean | null
-  allow_online_payment?: boolean | null
-  instructions?: string | null
-}
-
 type BusinessHour = {
   weekday: number
   is_open?: boolean | null
@@ -145,16 +134,6 @@ const emptyCoupon: CouponState = {
   deliveryDiscount: 0,
   message: '',
   error: '',
-}
-
-const paymentLabels: Record<string, string> = {
-  cash: 'Dinheiro',
-  pix: 'Pix',
-  debit_card: 'Cartão de débito',
-  credit_card: 'Cartão de crédito',
-  delivery_card: 'Cartão na entrega',
-  online: 'Link de pagamento',
-  other: 'Outro',
 }
 
 function asArray<T = any>(value: unknown): T[] {
@@ -447,7 +426,7 @@ export default function FoodMarketplaceCatalog({
   const cartIdRef = useRef(0)
 
   const deliveryZones = asArray<FoodDeliveryZone>((company as any).delivery_zones).filter((zone) => zone.is_active !== false)
-  const paymentMethods = asArray<FoodPaymentMethod>((company as any).payment_methods).filter((method) => method.is_active !== false)
+  const mercadoPagoConnected = (company as any).marketplace_payment_online_enabled === true
   const businessHours = asArray<BusinessHour>((company as any).business_hours)
   const openStatus = useMemo(() => getOpenStatus(businessHours), [businessHours])
 
@@ -466,7 +445,6 @@ export default function FoodMarketplaceCatalog({
   const cartSubtotal = useMemo(() => Number(cart.reduce((acc, item) => acc + item.subtotal, 0).toFixed(2)), [cart])
   const selectedZone = deliveryZones.find((zone) => zone.id === checkout.deliveryZoneId) || null
   const deliveryFeeBase = checkout.deliveryType === 'delivery' && selectedZone ? numberFrom(selectedZone.fee) : 0
-  const selectedPayment = paymentMethods.find((method) => method.id === checkout.paymentMethodId) || null
   const couponProductDiscount = useMemo(() => {
     if (!coupon.appliedCode || coupon.type === 'free_delivery') return 0
 
@@ -599,8 +577,7 @@ export default function FoodMarketplaceCatalog({
       if (minimumMissing) return `Pedido mínimo para ${selectedZone?.name || 'esta região'} é ${money(minimumOrder)}.`
     }
 
-    if (paymentMethods.length && !checkout.paymentMethodId) return 'Escolha a forma de pagamento.'
-    if (selectedPayment?.type === 'cash' && checkout.needsChange && numberFrom(checkout.changeFor) <= total) return 'Informe um valor de troco maior que o total.'
+    if (!mercadoPagoConnected) return 'Esta loja ainda não ativou pagamentos online. Fale com a loja para concluir o pedido.'
 
     return ''
   }
@@ -628,7 +605,9 @@ export default function FoodMarketplaceCatalog({
           business_type: 'food',
           delivery_type: checkout.deliveryType,
           delivery_zone_id: checkout.deliveryType === 'delivery' ? checkout.deliveryZoneId : null,
-          payment_method_id: checkout.paymentMethodId || null,
+          payment_method_id: null,
+          payment_provider: 'mercado_pago',
+          force_mercado_pago: true,
           change_for: checkout.needsChange ? numberFrom(checkout.changeFor) : null,
           observacoes: checkout.notes,
           coupon_code: coupon.appliedCode || null,
@@ -653,7 +632,7 @@ export default function FoodMarketplaceCatalog({
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Erro ao finalizar pedido.')
 
-      if (selectedPayment?.type === 'online') {
+      if (mercadoPagoConnected) {
         const paymentResponse = await fetch('/api/marketplace/payments/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -680,15 +659,6 @@ export default function FoodMarketplaceCatalog({
           window.location.href = checkoutUrl
           return
         }
-      } else {
-        setResult({
-          orderId: payload.order_id,
-          total: Number(payload.total || total),
-          paymentLabel: payload.forma_pagamento || selectedPayment?.name || 'A combinar',
-          pixPayload: payload.pix_payload || '',
-          whatsapp: payload.whatsapp || company.whatsapp || null,
-          checkoutUrl: null,
-        })
       }
       setCart([])
       setCheckout(emptyCheckout)
@@ -841,31 +811,10 @@ export default function FoodMarketplaceCatalog({
                 <div className="rounded-2xl bg-emerald-50 p-4 text-sm font-bold leading-6 text-emerald-700">Retirada selecionada. Nenhuma taxa de entrega será aplicada.</div>
               )}
 
-              {paymentMethods.length ? (
-                <select value={checkout.paymentMethodId} onChange={(event) => updateCheckout('paymentMethodId', event.target.value)} className="rounded-2xl border border-blue-100 px-4 py-3 text-sm font-bold outline-none focus:border-[#05245c]">
-                  <option value="">Escolha forma de pagamento</option>
-                  {paymentMethods.map((method) => <option key={method.id} value={method.id}>{method.name || paymentLabels[method.type] || 'Pagamento'}</option>)}
-                </select>
-              ) : (
-                <div className="rounded-2xl bg-blue-50 p-4 text-sm font-bold leading-6 text-[#05245c]">Nenhuma forma cadastrada. O pedido será salvo como “Combinar pelo WhatsApp”.</div>
-              )}
-
-              {selectedPayment?.type === 'cash' ? (
-                <div className="grid gap-2 rounded-2xl border border-blue-100 p-3">
-                  <label className="flex items-center gap-2 text-sm font-black text-slate-600">
-                    <input type="checkbox" checked={checkout.needsChange} onChange={(event) => updateCheckout('needsChange', event.target.checked)} /> Precisa de troco?
-                  </label>
-                  {checkout.needsChange ? <input value={checkout.changeFor} onChange={(event) => updateCheckout('changeFor', event.target.value)} placeholder="Troco para quanto?" className="rounded-xl border border-blue-100 px-3 py-2 text-sm font-bold outline-none" /> : null}
-                </div>
-              ) : null}
-
-              {selectedPayment?.type === 'online' && !((company as any).marketplace_payment_online_enabled) ? (
-                <div className="rounded-2xl bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-700">Pagamento online depende da conexão Mercado Pago da empresa. Se não estiver conectado, escolha outra forma.</div>
-              ) : null}
-
-              {selectedPayment?.type === 'pix' && selectedPayment.instructions ? (
-                <div className="rounded-2xl bg-emerald-50 p-4 text-sm font-bold leading-6 text-emerald-700">{selectedPayment.instructions}</div>
-              ) : null}
+              <div className={`rounded-[1.4rem] border p-4 text-sm font-bold leading-6 ${mercadoPagoConnected ? 'border-emerald-100 bg-emerald-50 text-emerald-700' : 'border-amber-100 bg-amber-50 text-amber-700'}`}>
+                <p className="font-black">{mercadoPagoConnected ? 'Pagamento seguro via Mercado Pago' : 'Pagamentos online indisponíveis'}</p>
+                <p className="mt-1">{mercadoPagoConnected ? 'Pague com Pix, cartão de crédito ou débito no Checkout Pro. O pedido fica pendente até a confirmação do Mercado Pago.' : 'Esta loja ainda não ativou pagamentos online. Fale com a loja pelo WhatsApp para combinar o atendimento.'}</p>
+              </div>
 
               <textarea value={checkout.notes} onChange={(event) => updateCheckout('notes', event.target.value)} placeholder="Observações do pedido" className="min-h-20 rounded-2xl border border-blue-100 px-4 py-3 text-sm font-bold outline-none focus:border-[#05245c]" />
             </div>
@@ -904,7 +853,7 @@ export default function FoodMarketplaceCatalog({
             ) : null}
 
             <button type="button" onClick={submitOrder} disabled={submitting || !cart.length} className="w-full rounded-2xl px-5 py-4 font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!submitting && cart.length ? { background: primaryColor } : undefined}>
-              {submitting ? 'Finalizando...' : 'Finalizar pedido'}
+              {submitting ? 'Redirecionando...' : mercadoPagoConnected ? 'Finalizar e pagar' : 'Pagamento online indisponível'}
             </button>
           </div>
         </aside>

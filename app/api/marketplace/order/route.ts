@@ -499,6 +499,22 @@ export async function POST(request: NextRequest) {
     companyIdForRollback = companyId
     const foodOrder = isFoodOrder(body, company)
     const logisticsOrder = isLogisticsOrder(body, company)
+    const forceMercadoPago = body.force_mercado_pago === true || String(body.payment_provider || '').toLowerCase() === 'mercado_pago'
+
+    if (forceMercadoPago) {
+      const { data: onlineSetting, error: onlineSettingError } = await supabaseAdmin
+        .from('marketplace_payment_settings')
+        .select('id,is_active,onboarding_status')
+        .eq('company_id', companyId)
+        .eq('provider', 'mercado_pago')
+        .eq('is_active', true)
+        .maybeSingle()
+
+      if (onlineSettingError) throw onlineSettingError
+      if (!onlineSetting || onlineSetting.onboarding_status !== 'connected') {
+        return NextResponse.json({ error: 'A loja ainda não ativou pagamentos online.' }, { status: 400 })
+      }
+    }
     const ids = Array.from(new Set(items.map((item: CartItemInput) => item.product_id)))
 
     const { data: products, error: productsError } = await supabaseAdmin
@@ -575,7 +591,7 @@ export async function POST(request: NextRequest) {
       if (methodError) throw methodError
       if (!method) return NextResponse.json({ error: 'Forma de pagamento inválida para esta empresa.' }, { status: 400 })
       selectedPaymentMethod = method
-    } else if (logisticsOrder) {
+    } else if (logisticsOrder && !forceMercadoPago) {
       const { data: anyMethod, error: anyMethodError } = await supabaseAdmin
         .from('payment_methods')
         .select('id')
@@ -607,8 +623,8 @@ export async function POST(request: NextRequest) {
     const valorPix = valorSinal > 0 ? valorSinal : total
     const telefone = cleanPhone(cliente.telefone)
     const resumo = orderItems.map((item) => `${item.calc.quantidade}x ${item.product.nome}`).join(', ')
-    const paymentName = paymentLabel(selectedPaymentMethod)
-    const paymentStatus = paymentStatusFromMethod(selectedPaymentMethod)
+    const paymentName = forceMercadoPago ? 'Mercado Pago' : paymentLabel(selectedPaymentMethod)
+    const paymentStatus = forceMercadoPago ? 'pending' : paymentStatusFromMethod(selectedPaymentMethod)
     const txid = sanitizeTxid(`ORC${Date.now().toString().slice(-10)}`)
 
     const pixPayload = selectedPaymentMethod?.type === 'pix' && company.aceita_pix !== false && company.pix_key
@@ -664,7 +680,8 @@ export async function POST(request: NextRequest) {
         percentual_sinal: percentualSinal,
         cupom_id: couponResult.coupon?.id || null,
         cupom_codigo: couponResult.coupon?.codigo || null,
-        forma_pagamento: pixPayload ? 'PIX' : paymentName,
+        forma_pagamento: forceMercadoPago ? 'Mercado Pago' : pixPayload ? 'PIX' : paymentName,
+        payment_provider: forceMercadoPago ? 'mercado_pago' : null,
         address: address || null,
         endereco_entrega: address || null,
         neighborhood: neighborhood || null,
@@ -687,11 +704,13 @@ export async function POST(request: NextRequest) {
           delivery_fee_original: deliveryFeeOriginal,
           delivery_discount: valorDescontoEntrega,
           total_final: total,
-          payment_method: selectedPaymentMethod ? {
-            id: selectedPaymentMethod.id,
-            name: selectedPaymentMethod.name,
-            type: selectedPaymentMethod.type,
-          } : null,
+          payment_method: forceMercadoPago
+            ? { id: null, name: 'Mercado Pago', type: 'mercado_pago' }
+            : selectedPaymentMethod ? {
+                id: selectedPaymentMethod.id,
+                name: selectedPaymentMethod.name,
+                type: selectedPaymentMethod.type,
+              } : null,
           delivery_zone: deliveryZone ? {
             id: deliveryZone.id,
             name: deliveryZone.name,
@@ -774,7 +793,7 @@ export async function POST(request: NextRequest) {
         amount: paymentAmount,
         paid_amount: 0,
         remaining_amount: total,
-        provider: selectedPaymentMethod?.type === 'online' ? 'manual_online' : selectedPaymentMethod?.type || 'manual',
+        provider: forceMercadoPago ? 'mercado_pago' : selectedPaymentMethod?.type === 'online' ? 'manual_online' : selectedPaymentMethod?.type || 'manual',
         provider_payment_id: pixPayload ? txid : null,
         notes: paymentName,
       })
@@ -852,7 +871,7 @@ export async function POST(request: NextRequest) {
       valor_sinal: valorSinal,
       valor_pix: valorPix,
       cupom_codigo: couponResult.coupon?.codigo || null,
-      forma_pagamento: pixPayload ? 'PIX' : paymentName,
+      forma_pagamento: forceMercadoPago ? 'Mercado Pago' : pixPayload ? 'PIX' : paymentName,
       payment_status: paymentStatus,
       pix_payload: pixPayload,
       txid,

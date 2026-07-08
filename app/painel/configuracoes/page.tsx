@@ -89,7 +89,6 @@ const ufs: Uf[] = [
 
 const tabs = [
   { id: 'empresa', label: 'Empresa' },
-  { id: 'recebimento', label: 'Recebimento' },
   { id: 'site', label: 'Site' },
   { id: 'equipe', label: 'Equipe' },
 ]
@@ -540,7 +539,7 @@ export default function ConfiguracoesPage() {
                 <Link href="/painel" className="text-sm font-black text-[#05245c]">← Voltar ao painel</Link>
                 <h1 className="mt-3 text-4xl font-black tracking-[-0.04em] text-[#071b3a] sm:text-5xl">Configurações</h1>
                 <p className="mt-2 max-w-2xl font-bold leading-7 text-slate-500">
-                  Controle empresa, recebimentos, site e equipe sem mandar UUID undefined para o banco, uma evolução importante para a humanidade.
+Controle dados da empresa, site e equipe. Pagamentos ficam no menu próprio para evitar duplicação.
                 </p>
               </div>
 
@@ -561,7 +560,7 @@ export default function ConfiguracoesPage() {
             </div>
 
             <div className="relative mt-6 flex flex-col gap-3 sm:flex-row">
-              <a href={siteUrl || '/site/grafica-flash'} target="_blank" rel="noreferrer" className="rounded-2xl bg-[#05245c] px-5 py-3 text-center font-black text-white">Abrir site</a>
+              <a href={siteUrl || '#'} target="_blank" rel="noreferrer" className="rounded-2xl bg-[#05245c] px-5 py-3 text-center font-black text-white">Abrir site</a>
               <button type="button" onClick={() => copiar(siteUrl)} className="rounded-2xl border border-blue-100 bg-white px-5 py-3 font-black text-[#05245c]">Copiar link</button>
               <Link href="/painel/site" className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-center font-black text-[#05245c]">Configurar site avançado</Link>
               <Link href="/painel/catalogo" className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-center font-black text-[#05245c]">Catálogo</Link>
@@ -686,39 +685,6 @@ export default function ConfiguracoesPage() {
           </div>
         )}
 
-        {tab === 'recebimento' && (
-          <div className="grid gap-5 lg:grid-cols-[1fr_0.8fr]">
-            <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Recebimentos</p>
-              <h2 className="mt-2 text-2xl font-black">Pagamentos e recebimentos</h2>
-              <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-slate-500">
-                As formas aceitas na entrega ficam em uma tela própria. Pix e cartão online via Mercado Pago ficam na área de pagamentos, sem duplicar configuração dentro das preferências da empresa.
-              </p>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <Link href="/painel/pagamentos/configuracao" className="rounded-[1.4rem] border border-blue-100 bg-[#05245c] p-5 text-white shadow-lg shadow-blue-950/15">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-white/60">Online</p>
-                  <h3 className="mt-2 text-xl font-black">Pagamentos e recebimentos</h3>
-                  <p className="mt-2 text-sm font-bold leading-6 text-white/75">Conecte Mercado Pago para receber Pix e cartão pelo site.</p>
-                </Link>
-                <Link href="/painel/formas-pagamento" className="rounded-[1.4rem] border border-blue-100 bg-[#f8fbff] p-5 text-[#071b3a]">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Operacional</p>
-                  <h3 className="mt-2 text-xl font-black">Formas de pagamento</h3>
-                  <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Configure Pix manual, dinheiro, cartão na entrega e instruções para o cliente.</p>
-                </Link>
-              </div>
-            </section>
-
-            <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">Separação correta</p>
-              <div className="mt-5 grid gap-3 text-sm font-bold leading-6 text-slate-600">
-                <div className="rounded-2xl bg-blue-50 p-4 text-[#05245c]">Mercado Pago processa Pix/cartão online do site.</div>
-                <div className="rounded-2xl bg-emerald-50 p-4 text-emerald-700">Formas de pagamento controlam o que a loja aceita no pedido.</div>
-                <div className="rounded-2xl bg-amber-50 p-4 text-amber-700">Configurações guarda dados da empresa, site e equipe. Nada de duplicar Pix por aqui.</div>
-              </div>
-            </section>
-          </div>
-        )}
         {tab === 'site' && (
           <div className="grid gap-5 lg:grid-cols-[1fr_0.8fr]">
             <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
@@ -827,7 +793,7 @@ export default function ConfiguracoesPage() {
               <div className="mt-6 grid gap-3">
                 <Link href="/painel/site" className="rounded-2xl bg-[#05245c] px-5 py-4 text-center font-black text-white">Abrir editor completo do site</Link>
                 <Link href="/painel/catalogo" className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-center font-black text-[#05245c]">Configurar catálogo</Link>
-                <a href={siteUrl || '/site/grafica-flash'} target="_blank" rel="noreferrer" className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-center font-black text-[#05245c]">Ver site público</a>
+                <a href={siteUrl || '#'} target="_blank" rel="noreferrer" className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-center font-black text-[#05245c]">Ver site público</a>
               </div>
             </section>
           </div>

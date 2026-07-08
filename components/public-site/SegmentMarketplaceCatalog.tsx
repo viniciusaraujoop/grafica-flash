@@ -66,17 +66,6 @@ type DeliveryZone = {
   is_active?: boolean | null
 }
 
-type PaymentMethod = {
-  id: string
-  name: string
-  type: string
-  is_active?: boolean | null
-  allow_delivery_payment?: boolean | null
-  allow_online_payment?: boolean | null
-  requires_change?: boolean | null
-  instructions?: string | null
-}
-
 type SegmentMarketplaceCatalogProps = {
   company: PublicSiteCompany
   products: PublicSiteProduct[]
@@ -112,16 +101,6 @@ const initialCoupon: CouponState = {
   deliveryDiscount: 0,
   message: '',
   error: '',
-}
-
-const paymentTypeLabels: Record<string, string> = {
-  cash: 'Dinheiro',
-  pix: 'Pix manual',
-  debit_card: 'Cartão de débito',
-  credit_card: 'Cartão de crédito',
-  delivery_card: 'Cartão na entrega',
-  online: 'Pix/cartão online',
-  other: 'Outro',
 }
 
 const segmentFields: Record<CatalogBusinessType, Array<{ key: string; label: string; placeholder: string; rows?: number }>> = {
@@ -262,7 +241,7 @@ export default function SegmentMarketplaceCatalog({
   const localIdRef = useRef(0)
 
   const deliveryZones = asArray<DeliveryZone>((company as any).delivery_zones).filter((zone) => zone.is_active !== false)
-  const paymentMethods = asArray<PaymentMethod>((company as any).payment_methods).filter((method) => method.is_active !== false)
+  const mercadoPagoConnected = company.marketplace_payment_online_enabled === true
 
   const safeProducts = useMemo(() => products.filter((product) => product.ativo !== false), [products])
   const categories = useMemo(() => {
@@ -280,7 +259,6 @@ export default function SegmentMarketplaceCatalog({
   }, [category, safeProducts, search])
 
   const selectedZone = deliveryZones.find((zone) => zone.id === checkout.deliveryZoneId) || null
-  const selectedPayment = paymentMethods.find((method) => method.id === checkout.paymentMethodId) || null
   const subtotal = useMemo(() => Number(cart.reduce((acc, item) => acc + item.subtotal, 0).toFixed(2)), [cart])
   const deliveryFeeBase = checkout.deliveryType === 'delivery' && selectedZone ? numberFrom(selectedZone.fee) : 0
   const productDiscount = coupon.appliedCode && coupon.type !== 'free_delivery'
@@ -292,7 +270,7 @@ export default function SegmentMarketplaceCatalog({
   const total = Number(Math.max(0, subtotal + deliveryFeeBase - totalDiscount).toFixed(2))
   const checkoutTitle = getSegmentCheckoutTitle(normalizedType)
   const logisticsEnabled = shouldUseDelivery(normalizedType)
-  const onlineEnabled = company.marketplace_payment_online_enabled === true && paymentMethods.some((method) => method.type === 'online')
+  const onlineEnabled = mercadoPagoConnected
 
   function updateCheckout(field: keyof CheckoutState, value: string) {
     setCheckout((current) => ({ ...current, [field]: value }))
@@ -397,7 +375,7 @@ export default function SegmentMarketplaceCatalog({
       if (minimum > 0 && subtotal < minimum) return `Pedido mínimo para ${selectedZone?.name || 'esta região'} é ${money(minimum)}.`
     }
 
-    if (paymentMethods.length && !checkout.paymentMethodId) return 'Escolha uma forma de pagamento.'
+    if (isStoreLike(normalizedType) && !mercadoPagoConnected) return 'Esta loja ainda não ativou pagamentos online. Fale com a loja para concluir.'
     return ''
   }
 
@@ -423,7 +401,9 @@ export default function SegmentMarketplaceCatalog({
           business_type: normalizedType,
           delivery_type: logisticsEnabled ? checkout.deliveryType : 'pickup',
           delivery_zone_id: logisticsEnabled && checkout.deliveryType === 'delivery' ? checkout.deliveryZoneId : null,
-          payment_method_id: checkout.paymentMethodId || null,
+          payment_method_id: null,
+          payment_provider: mercadoPagoConnected ? 'mercado_pago' : 'manual_request',
+          force_mercado_pago: mercadoPagoConnected,
           coupon_code: coupon.appliedCode || null,
           observacoes: checkout.notes,
           cliente: {
@@ -451,7 +431,7 @@ export default function SegmentMarketplaceCatalog({
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Erro ao enviar solicitação.')
 
-      if (selectedPayment?.type === 'online') {
+      if (mercadoPagoConnected && isStoreLike(normalizedType)) {
         const paymentResponse = await fetch('/api/marketplace/payments/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -623,17 +603,14 @@ export default function SegmentMarketplaceCatalog({
               </div>
             ) : null}
 
-            {paymentMethods.length ? (
-              <select value={checkout.paymentMethodId} onChange={(event) => updateCheckout('paymentMethodId', event.target.value)} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-black text-[#05245c] outline-none">
-                <option value="">Forma de pagamento</option>
-                {paymentMethods.map((method) => <option key={method.id} value={method.id}>{method.name} • {paymentTypeLabels[method.type] || method.type}</option>)}
-              </select>
+            {isStoreLike(normalizedType) ? (
+              <div className={`rounded-[1.4rem] border p-4 text-sm font-bold leading-6 ${mercadoPagoConnected ? 'border-emerald-100 bg-emerald-50 text-emerald-700' : 'border-amber-100 bg-amber-50 text-amber-700'}`}>
+                <p className="font-black">{mercadoPagoConnected ? 'Pagamento seguro via Mercado Pago' : 'Pagamentos online indisponíveis'}</p>
+                <p className="mt-1">{mercadoPagoConnected ? 'Finalize com Pix, cartão de crédito ou débito pelo Checkout Pro.' : 'Esta loja ainda não ativou pagamentos online. Use o WhatsApp como apoio para combinar o pedido.'}</p>
+              </div>
             ) : (
-              <div className="rounded-2xl bg-amber-50 p-3 text-xs font-bold leading-5 text-amber-700">A empresa ainda não cadastrou formas de pagamento. A solicitação será combinada no atendimento.</div>
+              <div className="rounded-2xl bg-blue-50 p-3 text-xs font-bold leading-5 text-[#05245c]">Esta solicitação será registrada no painel da empresa. O WhatsApp fica apenas como apoio para dúvidas.</div>
             )}
-
-            {selectedPayment?.instructions ? <div className="rounded-2xl bg-blue-50 p-3 text-xs font-bold leading-5 text-[#05245c]">{selectedPayment.instructions}</div> : null}
-            {selectedPayment?.type === 'online' && !company.marketplace_payment_online_enabled ? <div className="rounded-2xl bg-amber-50 p-3 text-xs font-bold leading-5 text-amber-700">Pagamento online ainda não está conectado. Escolha outra forma ou fale pelo WhatsApp.</div> : null}
 
             <textarea value={checkout.notes} onChange={(event) => updateCheckout('notes', event.target.value)} placeholder="Observações gerais" className="min-h-24 rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold outline-none" />
           </div>
@@ -642,7 +619,7 @@ export default function SegmentMarketplaceCatalog({
           {success ? <div className="mt-4 rounded-2xl bg-emerald-50 p-3 text-sm font-bold text-emerald-700">{success}</div> : null}
 
           <button type="button" onClick={submitOrder} disabled={submitting || !cart.length} className="mt-5 w-full rounded-2xl px-5 py-4 font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!submitting && cart.length ? { background: primaryColor } : undefined}>
-            {submitting ? 'Enviando...' : checkoutTitle}
+            {submitting ? 'Enviando...' : mercadoPagoConnected && isStoreLike(normalizedType) ? 'Finalizar e pagar' : checkoutTitle}
           </button>
 
           <a href={whatsappLink(company, `Olá, tenho uma dúvida sobre ${company.nome || 'a empresa'}.`)} target="_blank" rel="noreferrer" className="mt-3 block rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-center text-sm font-black text-emerald-700">
