@@ -7,14 +7,17 @@ import {
 } from "@/lib/business-types";
 import {
   getSubdomainSuggestions,
-  normalizeSubdomainSlug,
   validateSubdomainSlug,
 } from "@/lib/slug";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const mercadoPagoToken = process.env.MERCADO_PAGO_ACCESS_TOKEN!;
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = (
+  process.env.ORCALY_APP_URL ||
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "https://orcaly.com.br"
+).replace(/\/$/, "");
 
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
   auth: {
@@ -28,10 +31,6 @@ const planos: Record<string, { nome: string; valor: number }> = {
   profissional: { nome: "Profissional", valor: 99.9 },
   premium: { nome: "Premium", valor: 149.9 },
 };
-
-function criarSlug(valor: string) {
-  return normalizeSubdomainSlug(valor) || `empresa-${Date.now()}`;
-}
 
 function telefoneLimpo(valor: string) {
   return valor.replace(/\D/g, "");
@@ -57,15 +56,10 @@ function normalizarPaymentMode(value: unknown) {
 function getPreferencePaymentMethods(paymentMode: string) {
   if (paymentMode !== "pix_avulso") return undefined;
 
+  // Cadastro/primeira mensalidade no Pix também é pagamento único via Checkout Pro.
+  // Evita default_payment_method_id para não cair no erro de método padrão excluído.
   return {
-    default_payment_method_id: "pix",
     installments: 1,
-    excluded_payment_types: [
-      { id: "credit_card" },
-      { id: "debit_card" },
-      { id: "ticket" },
-      { id: "atm" },
-    ],
   };
 }
 

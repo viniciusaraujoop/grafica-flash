@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -71,15 +72,12 @@ function normalizarPaymentMode(value: unknown): PaymentMode {
 function getPreferencePaymentMethods(paymentMode: PaymentMode) {
   if (paymentMode !== "pix_avulso") return undefined;
 
+  // Pix avulso é pagamento único via Checkout Pro.
+  // Não enviamos default_payment_method_id porque o Mercado Pago rejeita a
+  // preferência quando o método padrão entra em conflito com métodos/tipos excluídos.
+  // Mantemos só o limite de parcelas para evitar transformar o Pix avulso em recorrência.
   return {
-    default_payment_method_id: "pix",
     installments: 1,
-    excluded_payment_types: [
-      { id: "credit_card" },
-      { id: "debit_card" },
-      { id: "ticket" },
-      { id: "atm" },
-    ],
   };
 }
 
@@ -104,6 +102,7 @@ function isUuid(value: unknown) {
 
 function getSafeHttpsSiteUrl(request: NextRequest) {
   const candidates = [
+    process.env.ORCALY_APP_URL,
     process.env.NEXT_PUBLIC_SITE_URL,
     request.headers.get("origin"),
     "https://orcaly.com.br",

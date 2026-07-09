@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -58,11 +59,27 @@ function getMercadoPagoToken() {
   return token;
 }
 
-function getSiteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(
-    /\/$/,
-    "",
-  );
+function getOrcalyAppUrl() {
+  const raw = (
+    process.env.ORCALY_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://orcaly.com.br"
+  ).trim();
+
+  const fallback = "https://orcaly.com.br";
+
+  try {
+    const url = new URL(raw);
+
+    if (url.protocol !== "https:") return fallback;
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+      return fallback;
+    }
+
+    return url.origin.replace(/\/$/, "");
+  } catch {
+    return fallback;
+  }
 }
 
 function isUuid(value: unknown) {
@@ -535,7 +552,7 @@ export async function POST(request: NextRequest) {
         "profissional",
     );
     const plano = planos[planoId];
-    const siteUrl = getSiteUrl();
+    const appUrl = getOrcalyAppUrl();
     const email = String(
       body.email || access.company.email || requester.email || "",
     )
@@ -569,8 +586,8 @@ export async function POST(request: NextRequest) {
       reason: `Plano ${plano.nome} - Orçaly`,
       external_reference: paymentRow.id,
       payer_email: email,
-      back_url: `${siteUrl}/assinatura?assinatura=retorno`,
-      notification_url: `${siteUrl}/api/mercado-pago/webhook`,
+      back_url: `${appUrl}/assinatura/retorno`,
+      notification_url: `${appUrl}/api/mercado-pago/webhook`,
       auto_recurring: {
         frequency: 1,
         frequency_type: "months",
