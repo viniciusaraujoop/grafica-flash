@@ -2,63 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-function getMercadoPagoPlatformAccessToken() {
-  const token =
-    process.env.MERCADO_PAGO_PLATFORM_ACCESS_TOKEN ||
-    process.env.MERCADO_PAGO_ACCESS_TOKEN ||
-    "";
-
-  if (!token) {
-    throw new Error(
-      "MERCADO_PAGO_PLATFORM_ACCESS_TOKEN ou MERCADO_PAGO_ACCESS_TOKEN não configurado.",
-    );
-  }
-
-  return token;
-}
-
-function isTestMercadoPagoToken(token: string) {
-  return String(token || "").startsWith("TEST-");
-}
-
-function validateMercadoPagoSubscriptionEnvironment({
-  accessToken,
-  payerEmail,
-  collectorEmail,
-}: {
-  accessToken: string;
-  payerEmail?: string | null;
-  collectorEmail?: string | null;
-}) {
-  const token = String(accessToken || "");
-  const email = String(payerEmail || "").trim().toLowerCase();
-  const collector = String(collectorEmail || "").trim().toLowerCase();
-  const isTest = isTestMercadoPagoToken(token);
-
-  if (!token) {
-    return "Credenciais Mercado Pago da plataforma não configuradas.";
-  }
-
-  if (!email || !email.includes("@")) {
-    return "E-mail válido obrigatório para criar assinatura.";
-  }
-
-  if (collector && collector === email) {
-    return "O pagador não pode ser o mesmo e-mail da conta Mercado Pago recebedora.";
-  }
-
-  if (isTest && !email.includes("test_user")) {
-    return "Credenciais Mercado Pago em ambiente de teste exigem pagador de teste. Use usuário de teste ou credenciais reais de produção.";
-  }
-
-  if (!isTest && email.includes("test_user")) {
-    return "Credenciais Mercado Pago reais não podem usar pagador de teste. Use e-mail real ou credenciais TEST.";
-  }
-
-  return null;
-}
-
-
 type EmpresaAssinatura = {
   id: string;
   assinatura_expira_em: string | null;
@@ -83,7 +26,13 @@ function getSupabaseAdmin() {
 }
 
 function getMercadoPagoToken() {
-  return getMercadoPagoPlatformAccessToken();
+  const token = process.env.MERCADO_PAGO_PLATFORM_ACCESS_TOKEN || process.env.MERCADO_PAGO_ACCESS_TOKEN;
+
+  if (!token) {
+    throw new Error("Token Mercado Pago da plataforma não configurado.");
+  }
+
+  return token;
 }
 
 async function mercadoPagoRequest(path: string) {
@@ -114,19 +63,6 @@ function isUuid(value: unknown) {
       value,
     )
   );
-}
-
-function extractPlanPaymentId(reference: unknown) {
-  const value = String(reference || "").trim();
-
-  if (!value) return "";
-
-  if (isUuid(value)) return value;
-
-  const parts = value.split(":");
-  const last = parts[parts.length - 1] || "";
-
-  return isUuid(last) ? last : "";
 }
 
 function normalizarPlano(value: unknown) {
@@ -191,17 +127,16 @@ async function updateCompanyBySubscription(
   body: any,
 ) {
   const externalReference = subscription?.external_reference;
-  const planPaymentId = extractPlanPaymentId(externalReference);
   const subscriptionId = subscription?.id;
   const status = subscription?.status || "desconhecido";
 
   let paymentRow: any = null;
 
-  if (planPaymentId) {
+  if (isUuid(externalReference)) {
     const { data } = await supabaseAdmin
       .from("plan_payments")
       .select("id, company_id, plano, valor")
-      .eq("id", planPaymentId)
+      .eq("id", externalReference)
       .maybeSingle();
 
     paymentRow = data;
@@ -333,15 +268,14 @@ async function processAuthorizedPaymentWebhook(body: any, resourceId: string) {
     authorizedPayment?.payment?.status || authorizedPayment?.status;
   const paymentId = authorizedPayment?.payment?.id;
   const externalReference = authorizedPayment?.external_reference;
-  const planPaymentId = extractPlanPaymentId(externalReference);
 
   let paymentRow: any = null;
 
-  if (planPaymentId) {
+  if (isUuid(externalReference)) {
     const { data } = await supabaseAdmin
       .from("plan_payments")
       .select("id, company_id, plano")
-      .eq("id", planPaymentId)
+      .eq("id", externalReference)
       .maybeSingle();
 
     paymentRow = data;
@@ -435,7 +369,7 @@ async function processLegacyPaymentWebhook(body: any, paymentId: string) {
   const supabaseAdmin = getSupabaseAdmin();
   const paymentData = await mercadoPagoRequest(`/v1/payments/${paymentId}`);
 
-  const paymentRowId = extractPlanPaymentId(paymentData.external_reference) || paymentData.external_reference;
+  const paymentRowId = paymentData.external_reference;
   const status = paymentData.status;
   const companyId = paymentData.metadata?.company_id;
   const plano = normalizarPlano(paymentData.metadata?.plano);

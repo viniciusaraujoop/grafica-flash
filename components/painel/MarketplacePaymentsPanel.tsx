@@ -68,11 +68,21 @@ function paymentGross(row: any) {
 }
 
 function paymentDiscounts(row: any) {
-  return Number(row.discount_amount || 0) + Number(row.commission_amount || 0)
+  return Number(row.discount_amount || 0)
+    + Number(row.commission_amount || 0)
+    + Number(row.provider_fee_amount || 0)
 }
 
 function paymentNet(row: any) {
-  return Math.max(0, paymentGross(row) - Number(row.commission_amount || 0))
+  const recorded = Number(row.net_amount || 0)
+  if (recorded > 0) return recorded
+
+  return Math.max(
+    0,
+    paymentGross(row)
+      - Number(row.commission_amount || 0)
+      - Number(row.provider_fee_amount || 0),
+  )
 }
 
 function paymentKind(row: any) {
@@ -239,7 +249,7 @@ export default function MarketplacePaymentsPanel({ mode }: { mode: Mode }) {
 
         <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <Metric label="Total vendido online" value={money(stats.paid_amount)} detail="Valor bruto aprovado" />
-          <Metric label="Valor líquido estimado" value={money(netEstimated)} detail="Após desconto Orçaly registrado" />
+          <Metric label="Valor líquido estimado" value={money(netEstimated)} detail="Após taxas registradas" />
           <Metric label="Pagamentos aprovados" value={String(stats.paid_count || 0)} detail="Pedidos confirmados" />
           <Metric label="Pagamentos pendentes" value={String(stats.pending_count || 0)} detail="Aguardando confirmação" />
           <Metric label="Pagamentos com erro" value={String(stats.failed_count || 0)} detail="Recusados ou cancelados" />
@@ -248,15 +258,12 @@ export default function MarketplacePaymentsPanel({ mode }: { mode: Mode }) {
         {activeTab === 'overview' ? (
           <>
             <IntegrationCard connected={connected} setting={setting} commissionPercentage={commissionPercentage} connect={connectMercadoPago} disconnect={disconnectMercadoPago} connecting={connecting} />
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-              <SalesTable rows={filteredSales.slice(0, 6)} />
-              <PlatformFeesCard currentPlan={currentPlan} commissionPercentage={commissionPercentage} />
-            </div>
+            <SalesTable rows={filteredSales.slice(0, 6)} />
           </>
         ) : null}
 
         {activeTab === 'online' ? <SalesTable rows={filteredSales} /> : null}
-        {activeTab === 'formas' ? <PaymentMethodsManager /> : null}
+        {activeTab === 'formas' ? <PaymentMethodsManager embedded /> : null}
         {activeTab === 'mercado-pago' ? <IntegrationCard connected={connected} setting={setting} commissionPercentage={commissionPercentage} connect={connectMercadoPago} disconnect={disconnectMercadoPago} connecting={connecting} expanded /> : null}
         {activeTab === 'taxas' ? <PlatformFeesCard currentPlan={currentPlan} commissionPercentage={commissionPercentage} expanded /> : null}
       </section>
@@ -395,4 +402,3 @@ function SalesTable({ rows }: { rows: any[] }) {
     </div>
   )
 }
-

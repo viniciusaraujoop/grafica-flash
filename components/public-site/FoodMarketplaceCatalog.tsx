@@ -525,7 +525,6 @@ export default function FoodMarketplaceCatalog({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          company_id: company.id,
           slug: company.slug || company.subdomain_slug,
           code,
           subtotal: cartSubtotal,
@@ -599,7 +598,6 @@ export default function FoodMarketplaceCatalog({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          company_id: company.id,
           slug: company.slug || company.subdomain_slug,
           segment: 'food',
           business_type: 'food',
@@ -637,7 +635,7 @@ export default function FoodMarketplaceCatalog({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            company_id: company.id,
+            slug: company.slug || company.subdomain_slug,
             order_id: payload.order_id,
           }),
         })

@@ -262,7 +262,8 @@ function routeExists(href: string) {
   if (href.startsWith('http')) return true
   if (href.startsWith('/painel/modulos/')) return true
 
-  return knownExistingPanelRouteSet.has(href)
+  const cleanHref = href.split('?')[0]
+  return knownExistingPanelRouteSet.has(cleanHref)
 }
 
 function makeModule(input: Omit<PanelModule, 'icon'>): PanelModule {
@@ -441,7 +442,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     description: 'Lançamentos financeiros de receita e despesa.',
     href: '/painel/financeiro/lancamentos',
     fallbackHref: '/painel/financeiro',
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     group: 'financeiro',
     segments: allSegments,
     status: 'hidden',
@@ -458,7 +459,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     description: 'Valores que clientes ainda precisam pagar.',
     href: '/painel/financeiro/contas-a-receber',
     fallbackHref: '/painel/financeiro',
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     group: 'financeiro',
     segments: allSegments,
     status: 'hidden',
@@ -475,7 +476,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     description: 'Despesas futuras, fornecedores e pagamentos pendentes.',
     href: '/painel/financeiro/contas-a-pagar',
     fallbackHref: '/painel/financeiro',
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     group: 'financeiro',
     segments: allSegments,
     status: 'hidden',
@@ -492,7 +493,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     description: 'Notas emitidas e recebidas, XML/PDF e vínculo financeiro.',
     href: '/painel/notas-fiscais',
     fallbackHref: '/painel/financeiro',
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     group: 'financeiro',
     segments: allSegments,
     status: 'hidden',
@@ -509,7 +510,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     description: 'Gastos com materiais, insumos, peças e custos de produção.',
     href: '/painel/financeiro/materiais',
     fallbackHref: '/painel/financeiro',
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     group: 'financeiro',
     segments: allSegments,
     status: 'hidden',
@@ -753,9 +754,9 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     emoji: '💳',
     label: 'Formas de pagamento',
     description: 'Pix, dinheiro, cartão, retirada, entrega e regras de pagamento.',
-    href: '/painel/formas-pagamento',
-    fallbackHref: '/painel/modulos/formas-pagamento',
-    relatedHref: '/painel/configuracoes',
+    href: '/painel/pagamentos?tab=formas',
+    fallbackHref: '/painel/pagamentos?tab=formas',
+    relatedHref: '/painel/pagamentos',
     group: 'operacao',
     segments: ['food', 'store'],
     status: 'active',
@@ -1036,7 +1037,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     description: 'Comissões por profissional, atendimento, serviço e período.',
     href: '/painel/comissoes',
     fallbackHref: '/painel/financeiro',
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     group: 'operacao',
     segments: ['beauty', 'barber'],
     status: 'coming_soon',
@@ -1107,7 +1108,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     description: 'Controle sinal, parcelas, valores pendentes e confirmação.',
     href: '/painel/sinal-pagamento',
     fallbackHref: '/painel/financeiro/contas-a-receber',
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     group: 'operacao',
     segments: ['events'],
     status: 'coming_soon',

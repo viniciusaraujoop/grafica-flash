@@ -84,6 +84,17 @@ export async function POST(request: NextRequest) {
     const marketplacePaymentId = parsedRef.marketplacePaymentId || marketplacePayment.id
     const mappedStatus = mapMercadoPagoStatus(mpPayment.status)
     const paidAt = mappedStatus === 'paid' ? (mpPayment.date_approved || new Date().toISOString()) : null
+    const grossAmount = Number(mpPayment.transaction_amount || marketplacePayment.amount || 0)
+    const feeDetails = Array.isArray(mpPayment.fee_details) ? mpPayment.fee_details : []
+    const providerFeeAmount = feeDetails.reduce(
+      (total: number, fee: any) => total + Math.max(0, Number(fee?.amount || 0)),
+      0
+    )
+    const commissionAmount = Math.max(0, Number(marketplacePayment.commission_amount || 0))
+    const reportedNetAmount = Number(mpPayment.transaction_details?.net_received_amount || 0)
+    const netAmount = reportedNetAmount > 0
+      ? reportedNetAmount
+      : Math.max(0, Number((grossAmount - providerFeeAmount - commissionAmount).toFixed(2)))
 
     await supabaseAdmin
       .from('marketplace_payments')
@@ -91,7 +102,9 @@ export async function POST(request: NextRequest) {
         provider_payment_id: String(mpPayment.id || paymentId),
         provider_status: mpPayment.status || null,
         status: mappedStatus,
-        amount: Number(mpPayment.transaction_amount || marketplacePayment.amount || 0),
+        amount: grossAmount,
+        provider_fee_amount: Number(providerFeeAmount.toFixed(2)),
+        net_amount: Number(netAmount.toFixed(2)),
         raw_payload: mpPayment,
         paid_at: paidAt,
         updated_at: new Date().toISOString(),

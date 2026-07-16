@@ -2,14 +2,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/company-access'
 import { calculateMarketplaceCommission, getMarketplaceCommissionForCompany, roundMoney } from '@/lib/marketplace-commission'
-import { createMercadoPagoPreference, refreshMercadoPagoAccessToken } from '@/lib/mercado-pago'
+import { createMercadoPagoPreference, getOrcalyAppUrl, refreshMercadoPagoAccessToken } from '@/lib/mercado-pago'
 
 function cleanPhone(value: unknown) {
   return String(value || '').replace(/\D/g, '')
 }
 
 function absoluteUrl(request: NextRequest, path: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL || `${new URL(request.url).origin}`
+  const requestOrigin = new URL(request.url).origin
+  const base = process.env.NODE_ENV === 'production' ? getOrcalyAppUrl() : requestOrigin
   return new URL(path, base).toString()
 }
 
@@ -54,29 +55,36 @@ async function getValidAccessToken(supabaseAdmin: ReturnType<typeof getSupabaseA
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}))
-    const orderId = String(body.order_id || body.orderId || '')
-    const companyIdInput = String(body.company_id || '')
+    const orderId = String(body.order_id || body.orderId || '').trim()
+    const slug = String(body.slug || '').trim()
 
     if (!orderId) return NextResponse.json({ error: 'Pedido não informado.' }, { status: 400 })
+    if (!slug) return NextResponse.json({ error: 'Loja não informada.' }, { status: 400 })
 
     const supabaseAdmin = getSupabaseAdmin()
 
-    let orderQuery = supabaseAdmin
+    const { data: company, error: companyError } = await supabaseAdmin
+      .from('companies')
+      .select('*')
+      .or(`slug.eq.${slug},subdomain_slug.eq.${slug}`)
+      .maybeSingle()
+
+    if (companyError) throw companyError
+    if (!company?.id) return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
+
+    const companyId = company.id
+
+    const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .select('*')
       .eq('id', orderId)
-      .limit(1)
+      .eq('company_id', companyId)
+      .maybeSingle()
 
-    if (companyIdInput) orderQuery = orderQuery.eq('company_id', companyIdInput)
-
-    const { data: order, error: orderError } = await orderQuery.maybeSingle()
     if (orderError) throw orderError
-    if (!order?.company_id) return NextResponse.json({ error: 'Pedido não encontrado.' }, { status: 404 })
+    if (!order?.company_id) return NextResponse.json({ error: 'Pedido não encontrado para esta empresa.' }, { status: 404 })
 
-    const companyId = order.company_id
-
-    const [{ data: company, error: companyError }, { data: setting, error: settingError }, { data: items, error: itemsError }] = await Promise.all([
-      supabaseAdmin.from('companies').select('*').eq('id', companyId).maybeSingle(),
+    const [{ data: setting, error: settingError }, { data: items, error: itemsError }] = await Promise.all([
       supabaseAdmin
         .from('marketplace_payment_settings')
         .select('*')
@@ -91,10 +99,8 @@ export async function POST(request: NextRequest) {
         .eq('order_id', orderId),
     ])
 
-    if (companyError) throw companyError
     if (settingError) throw settingError
     if (itemsError) throw itemsError
-    if (!company) return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     if (!setting?.access_token) return NextResponse.json({ error: 'Mercado Pago não conectado para esta empresa.' }, { status: 400 })
 
     const totalAmount = roundMoney(Number(order.total_amount || order.valor_total || order.preco_estimado || 0))
@@ -133,6 +139,8 @@ export async function POST(request: NextRequest) {
           discount_amount: discountAmount,
           commission_amount: commissionAmount,
           commission_percentage: rule.commission_percentage,
+          provider_fee_amount: 0,
+          net_amount: Math.max(0, roundMoney(totalAmount - commissionAmount)),
           payer_name: order.nome || null,
           payer_phone: order.telefone || null,
         })
@@ -152,6 +160,8 @@ export async function POST(request: NextRequest) {
           discount_amount: discountAmount,
           commission_amount: commissionAmount,
           commission_percentage: rule.commission_percentage,
+          provider_fee_amount: Number(marketplacePayment.provider_fee_amount || 0),
+          net_amount: Math.max(0, roundMoney(totalAmount - commissionAmount - Number(marketplacePayment.provider_fee_amount || 0))),
           payer_name: order.nome || marketplacePayment.payer_name || null,
           payer_phone: order.telefone || marketplacePayment.payer_phone || null,
           last_error: null,

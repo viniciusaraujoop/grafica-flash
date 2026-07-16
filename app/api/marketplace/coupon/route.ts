@@ -152,15 +152,14 @@ function validateCoupon(coupon: any, subtotal: number, deliveryFee: number, item
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const requestedCompanyId = String(body.company_id || body.companyId || '')
     const slug = String(body.slug || '').trim()
     const code = normalizeCode(body.codigo || body.code || body.coupon_code)
     const subtotal = money(body.subtotal)
     const deliveryFee = money(body.delivery_fee)
     const items = asArray<CouponValidationItem>(body.items)
 
-    if (!requestedCompanyId && !slug) {
-      return NextResponse.json({ error: 'Empresa não informada.' }, { status: 400 })
+    if (!slug) {
+      return NextResponse.json({ error: 'Loja não informada.' }, { status: 400 })
     }
 
     if (!code) {
@@ -171,9 +170,7 @@ export async function POST(request: NextRequest) {
       .from('companies')
       .select('id')
 
-    companyQuery = requestedCompanyId
-      ? companyQuery.eq('id', requestedCompanyId)
-      : companyQuery.or(`slug.eq.${slug},subdomain_slug.eq.${slug}`)
+    companyQuery = companyQuery.or(`slug.eq.${slug},subdomain_slug.eq.${slug}`)
 
     const { data: company, error: companyError } = await companyQuery.maybeSingle()
     if (companyError) throw companyError

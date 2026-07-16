@@ -14,8 +14,48 @@ function requiredEnv(name: string) {
   return value
 }
 
+const OFFICIAL_APP_URL = 'https://orcaly.com.br'
+const MARKETPLACE_CALLBACK_PATH = '/api/marketplace/payments/mercado-pago/callback'
+
+export function getOrcalyAppUrl() {
+  const configured = String(
+    process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.ORCALY_APP_URL ||
+      OFFICIAL_APP_URL
+  ).trim()
+
+  try {
+    const url = new URL(configured)
+    const local = ['localhost', '127.0.0.1'].includes(url.hostname)
+
+    if (process.env.NODE_ENV === 'production' && (url.protocol !== 'https:' || local)) {
+      return OFFICIAL_APP_URL
+    }
+
+    return url.origin.replace(/\/$/, '')
+  } catch {
+    return OFFICIAL_APP_URL
+  }
+}
+
 export function mercadoPagoRedirectUri() {
-  return requiredEnv('MERCADO_PAGO_REDIRECT_URI')
+  const configured = String(process.env.MERCADO_PAGO_REDIRECT_URI || '').trim()
+
+  if (configured) {
+    try {
+      const url = new URL(configured)
+      const local = ['localhost', '127.0.0.1'].includes(url.hostname)
+
+      if (process.env.NODE_ENV !== 'production' || (url.protocol === 'https:' && !local)) {
+        return url.toString().replace(/\/$/, '')
+      }
+    } catch {
+      // Usa fallback oficial abaixo.
+    }
+  }
+
+  return `${getOrcalyAppUrl()}${MARKETPLACE_CALLBACK_PATH}`
 }
 
 export function buildMercadoPagoAuthUrl(state: string) {

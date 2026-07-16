@@ -13,21 +13,29 @@ export function roundMoney(value: number) {
 }
 
 export function normalizePlanKey(company: any) {
-  return String(
+  const raw = String(
     company?.assinatura_plano ||
     company?.plano ||
     company?.plan_key ||
     company?.subscription_plan ||
     ''
   ).trim().toLowerCase()
+
+  if (['basico', 'básico', 'basic', 'essencial'].includes(raw)) return 'essencial'
+  if (['intermediario', 'intermediário', 'profissional', 'professional', 'pro'].includes(raw)) return 'profissional'
+  if (['premium', 'avancado', 'avançado'].includes(raw)) return 'premium'
+
+  return raw
 }
 
 export function fallbackCommissionPercentage(planKey?: string | null) {
   const plan = String(planKey || '').toLowerCase()
-  if (['premium', 'pro', 'avancado', 'avançado'].includes(plan)) return 1.5
-  if (['intermediario', 'intermediário', 'profissional', 'professional'].includes(plan)) return 3
-  if (['basico', 'básico', 'essencial', 'basic'].includes(plan)) return 5
-  return toNumber(process.env.ORCALY_MARKETPLACE_DEFAULT_COMMISSION_PERCENTAGE, 5)
+  if (plan === 'premium') return 2
+  if (plan === 'profissional') return 3
+  if (plan === 'essencial') return 3.5
+
+  const envFallback = toNumber(process.env.ORCALY_MARKETPLACE_DEFAULT_COMMISSION_PERCENTAGE, 3.5)
+  return envFallback > 0 ? envFallback : 3.5
 }
 
 export async function getMarketplaceCommissionForCompany(

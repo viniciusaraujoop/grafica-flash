@@ -1,96 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-
-function getOrcalyAppUrl() {
-  const raw = (
-    process.env.ORCALY_APP_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    "https://orcaly.com.br"
-  )
-    .trim()
-    .replace(/\/$/, "");
-
-  const fallback = "https://orcaly.com.br";
-
-  try {
-    const url = new URL(raw);
-
-    if (url.protocol !== "https:") return fallback;
-    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
-      return fallback;
-    }
-
-    return url.origin.replace(/\/$/, "");
-  } catch {
-    return fallback;
-  }
-}
-
-function getValidBackUrl(path = "/assinatura/retorno") {
-  const base = getOrcalyAppUrl();
-  const cleanPath = path.startsWith("/") ? path : `/${path}`;
-
-  return `${base}${cleanPath}`;
-}
-
-
-function getMercadoPagoPlatformAccessToken() {
-  const token =
-    process.env.MERCADO_PAGO_PLATFORM_ACCESS_TOKEN ||
-    process.env.MERCADO_PAGO_ACCESS_TOKEN ||
-    "";
-
-  if (!token) {
-    throw new Error(
-      "MERCADO_PAGO_PLATFORM_ACCESS_TOKEN ou MERCADO_PAGO_ACCESS_TOKEN não configurado.",
-    );
-  }
-
-  return token;
-}
-
-function isTestMercadoPagoToken(token: string) {
-  return String(token || "").startsWith("TEST-");
-}
-
-function validateMercadoPagoSubscriptionEnvironment({
-  accessToken,
-  payerEmail,
-  collectorEmail,
-}: {
-  accessToken: string;
-  payerEmail?: string | null;
-  collectorEmail?: string | null;
-}) {
-  const token = String(accessToken || "");
-  const email = String(payerEmail || "").trim().toLowerCase();
-  const collector = String(collectorEmail || "").trim().toLowerCase();
-  const isTest = isTestMercadoPagoToken(token);
-
-  if (!token) {
-    return "Credenciais Mercado Pago da plataforma não configuradas.";
-  }
-
-  if (!email || !email.includes("@")) {
-    return "E-mail válido obrigatório para criar assinatura.";
-  }
-
-  if (collector && collector === email) {
-    return "O pagador não pode ser o mesmo e-mail da conta Mercado Pago recebedora.";
-  }
-
-  if (isTest && !email.includes("test_user")) {
-    return "Credenciais Mercado Pago em ambiente de teste exigem pagador de teste. Use usuário de teste ou credenciais reais de produção.";
-  }
-
-  if (!isTest && email.includes("test_user")) {
-    return "Credenciais Mercado Pago reais não podem usar pagador de teste. Use e-mail real ou credenciais TEST.";
-  }
-
-  return null;
-}
-
 import {
   getBusinessTypeConfig,
   getDefaultSetupForBusiness,
@@ -103,8 +12,15 @@ import {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const mercadoPagoToken = process.env.MERCADO_PAGO_PLATFORM_ACCESS_TOKEN || process.env.MERCADO_PAGO_ACCESS_TOKEN || "";
-const siteUrl = getOrcalyAppUrl();
+const mercadoPagoToken =
+  process.env.MERCADO_PAGO_PLATFORM_ACCESS_TOKEN ||
+  process.env.MERCADO_PAGO_ACCESS_TOKEN ||
+  "";
+const siteUrl = (
+  process.env.ORCALY_APP_URL ||
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "https://orcaly.com.br"
+).replace(/\/$/, "");
 
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
   auth: {
@@ -118,6 +34,24 @@ const planos: Record<string, { nome: string; valor: number }> = {
   profissional: { nome: "Profissional", valor: 99.9 },
   premium: { nome: "Premium", valor: 149.9 },
 };
+
+function validateMercadoPagoPayerEnvironment(
+  accessToken: string,
+  payerEmail: string,
+) {
+  const isTestToken = accessToken.startsWith("TEST-");
+  const isTestPayer = payerEmail.toLowerCase().includes("test_user");
+
+  if (isTestToken && !isTestPayer) {
+    return "Credenciais Mercado Pago em ambiente de teste exigem pagador de teste.";
+  }
+
+  if (!isTestToken && isTestPayer) {
+    return "Credenciais Mercado Pago reais não podem usar pagador de teste.";
+  }
+
+  return "";
+}
 
 function telefoneLimpo(valor: string) {
   return valor.replace(/\D/g, "");
@@ -140,12 +74,11 @@ function normalizarPaymentMode(value: unknown) {
   return "checkout_pro";
 }
 
-function getPreferencePaymentMethods(paymentMode: unknown) {
+function getPreferencePaymentMethods(paymentMode: string) {
   if (paymentMode !== "pix_avulso") return undefined;
 
-  // Pix mensal avulso é pagamento único via Checkout Pro.
-  // Não usamos default_payment_method_id porque ele pode conflitar com tipos excluídos.
-  // Não excluímos bank_transfer, pois Pix depende desse tipo no Checkout Pro.
+  // Cadastro/primeira mensalidade no Pix também é pagamento único via Checkout Pro.
+  // Evita default_payment_method_id para não cair no erro de método padrão excluído.
   return {
     excluded_payment_types: [
       { id: "credit_card" },
@@ -188,6 +121,13 @@ export async function POST(request: NextRequest) {
     const email = String(body.email || "")
       .trim()
       .toLowerCase();
+
+    const environmentError = validateMercadoPagoPayerEnvironment(
+      mercadoPagoToken,
+      email,
+    );
+
+    if (environmentError) return erro(environmentError, 400);
     const whatsapp = telefoneLimpo(String(body.whatsapp || ""));
     const empresa_nome = String(body.empresa_nome || "").trim();
     const business_type = normalizeBusinessType(
@@ -359,19 +299,6 @@ export async function POST(request: NextRequest) {
       },
       payment_methods: getPreferencePaymentMethods(payment_mode),
     };
-
-    const mpEnvironmentError = validateMercadoPagoSubscriptionEnvironment({
-      accessToken: mercadoPagoToken,
-      payerEmail: email,
-      collectorEmail:
-        process.env.MERCADO_PAGO_COLLECTOR_EMAIL ||
-        process.env.ORCALY_BILLING_EMAIL ||
-        null,
-    });
-
-    if (mpEnvironmentError) {
-      return NextResponse.json({ error: mpEnvironmentError }, { status: 400 });
-    }
 
     const mpResponse = await fetch(
       "https://api.mercadopago.com/checkout/preferences",

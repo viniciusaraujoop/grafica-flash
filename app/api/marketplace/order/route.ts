@@ -446,14 +446,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const requestedCompanyId = String(body.company_id || '')
     const slug = String(body.slug || '').trim()
     const cliente = body.cliente || {}
     const items = Array.isArray(body.items) ? itemsSanitize(body.items) : []
     const couponCode = normalizeCode(body.coupon_code || body.cupom_codigo || body.codigo_cupom)
 
-    if (!requestedCompanyId && !slug) {
-      return NextResponse.json({ error: 'Empresa não informada.' }, { status: 400 })
+    if (!slug) {
+      return NextResponse.json({ error: 'Loja não informada.' }, { status: 400 })
     }
 
     if (!cliente.nome || cleanPhone(cliente.telefone).length < 10) {
@@ -483,9 +482,7 @@ export async function POST(request: NextRequest) {
         modelo_perguntas
       `)
 
-    companyQuery = requestedCompanyId
-      ? companyQuery.eq('id', requestedCompanyId)
-      : companyQuery.or(`slug.eq.${slug},subdomain_slug.eq.${slug}`)
+    companyQuery = companyQuery.or(`slug.eq.${slug},subdomain_slug.eq.${slug}`)
 
     const { data: company, error: companyError } = await companyQuery.maybeSingle()
 

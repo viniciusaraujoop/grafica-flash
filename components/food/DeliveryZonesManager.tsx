@@ -47,6 +47,8 @@ type DeliveryZoneForm = {
   notes: string
 }
 
+type StatusFilter = 'all' | 'active' | 'inactive'
+
 const emptyForm: DeliveryZoneForm = {
   name: '',
   fee: '',
@@ -80,6 +82,16 @@ function estimatedTime(zone: DeliveryZone) {
   return 'Não definido'
 }
 
+function StatCard({ label, value, detail }: { label: string; value: string | number; detail: string }) {
+  return (
+    <article className="min-w-0 rounded-[1.6rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
+      <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{label}</p>
+      <p className="mt-3 truncate text-3xl font-black tracking-[-0.04em] text-[#071b3a]">{value}</p>
+      <p className="mt-2 text-sm font-bold leading-5 text-slate-500">{detail}</p>
+    </article>
+  )
+}
+
 export default function DeliveryZonesManager() {
   const [companyId, setCompanyId] = useState('')
   const [zones, setZones] = useState<DeliveryZone[]>([])
@@ -89,6 +101,9 @@ export default function DeliveryZonesManager() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [showForm, setShowForm] = useState(false)
 
   async function loadZones(companyRef?: string) {
     setLoading(true)
@@ -130,6 +145,21 @@ export default function DeliveryZonesManager() {
   function resetForm() {
     setForm(emptyForm)
     setEditingId(null)
+    setShowForm(false)
+  }
+
+  function startCreate() {
+    setForm(emptyForm)
+    setEditingId(null)
+    setShowForm(true)
+    window.setTimeout(() => document.getElementById('taxa-entrega-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
+  }
+
+  function startEdit(zone: DeliveryZone) {
+    setEditingId(zone.id)
+    setForm(formFromZone(zone))
+    setShowForm(true)
+    window.setTimeout(() => document.getElementById('taxa-entrega-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
   }
 
   function validateForm() {
@@ -256,18 +286,36 @@ export default function DeliveryZonesManager() {
     }
   }, [zones])
 
+  const visibleZones = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    return zones.filter((zone) => {
+      const matchesSearch = !term || `${zone.name} ${zone.notes || ''}`.toLowerCase().includes(term)
+      const matchesStatus = statusFilter === 'all'
+        || (statusFilter === 'active' && zone.is_active !== false)
+        || (statusFilter === 'inactive' && zone.is_active === false)
+      return matchesSearch && matchesStatus
+    })
+  }, [zones, search, statusFilter])
+
   return (
-    <main className="min-h-screen bg-[#f5f8ff] px-4 py-6 text-[#071b3a]">
-      <section className="mx-auto max-w-7xl space-y-6">
-        <header className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-          <Link href="/painel" className="text-sm font-black text-[#05245c]">← Voltar ao painel</Link>
-          <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#05245c]">Operação Food</p>
-              <h1 className="mt-2 text-4xl font-black tracking-[-0.05em] sm:text-5xl">Taxas de entrega</h1>
-              <p className="mt-3 max-w-3xl font-bold leading-7 text-slate-500">Cadastre bairros, regiões, valores, pedido mínimo e prazo estimado. Tudo salvo por empresa, como gente civilizada deveria ter feito desde o começo.</p>
+    <main className="min-h-screen overflow-x-hidden bg-[#f5f8ff] px-4 py-6 text-[#071b3a]">
+      <section className="mx-auto max-w-7xl min-w-0 space-y-6">
+        <header className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-blue-950/5">
+          <div className="relative p-6 sm:p-8">
+            <div className="absolute right-0 top-0 h-36 w-36 rounded-full bg-blue-100 blur-3xl" />
+            <div className="absolute bottom-0 right-28 h-36 w-36 rounded-full bg-emerald-100 blur-3xl" />
+            <div className="relative flex min-w-0 flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="min-w-0">
+                <Link href="/painel" className="text-sm font-black text-[#05245c]">← Voltar ao painel</Link>
+                <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#05245c]">Operação de entrega</p>
+                <h1 className="mt-2 text-4xl font-black tracking-[-0.05em] sm:text-5xl">📍 Taxas de entrega</h1>
+                <p className="mt-3 max-w-3xl font-bold leading-7 text-slate-500">Configure bairros, regiões, valores, pedido mínimo e tempo estimado para suas entregas.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={startCreate} className={buttonPrimary}>Nova taxa</button>
+                <button type="button" onClick={() => loadZones()} className={buttonSecondary}>Atualizar</button>
+              </div>
             </div>
-            <button type="button" onClick={() => loadZones()} className={buttonPrimary}>Atualizar</button>
           </div>
         </header>
 
@@ -278,69 +326,124 @@ export default function DeliveryZonesManager() {
           <LoadingState title="Carregando taxas de entrega..." description="Buscando regiões cadastradas no Supabase." />
         ) : (
           <>
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <article className={cardClass}><p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Total de regiões</p><p className="mt-3 text-3xl font-black">{stats.total}</p><p className="mt-2 text-sm font-bold text-slate-500">Bairros ou áreas cadastradas.</p></article>
-              <article className={cardClass}><p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Regiões ativas</p><p className="mt-3 text-3xl font-black">{stats.active}</p><p className="mt-2 text-sm font-bold text-slate-500">Disponíveis para entrega.</p></article>
-              <article className={cardClass}><p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Menor taxa</p><p className="mt-3 text-3xl font-black">{money(stats.minFee)}</p><p className="mt-2 text-sm font-bold text-slate-500">Valor mais baixo cadastrado.</p></article>
-              <article className={cardClass}><p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Maior taxa</p><p className="mt-3 text-3xl font-black">{money(stats.maxFee)}</p><p className="mt-2 text-sm font-bold text-slate-500">Valor mais alto cadastrado.</p></article>
+            <section className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <StatCard label="Regiões cadastradas" value={stats.total} detail="Bairros ou áreas cadastradas." />
+              <StatCard label="Regiões ativas" value={stats.active} detail="Disponíveis para entrega." />
+              <StatCard label="Menor taxa" value={money(stats.minFee)} detail="Valor mais baixo cadastrado." />
+              <StatCard label="Maior taxa" value={money(stats.maxFee)} detail="Valor mais alto cadastrado." />
             </section>
 
-            <section className="grid gap-6 xl:grid-cols-[420px_1fr]">
-              <form onSubmit={saveZone} className={panelClass}>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-black tracking-[-0.04em]">{editingId ? 'Editar taxa' : 'Nova taxa'}</h2>
-                    <p className="mt-2 text-sm font-bold leading-6 text-slate-500">A região salva aqui já fica disponível para o controle de entregas.</p>
+            <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.35fr)]">
+              <div className="min-w-0 space-y-5">
+                <section className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-xl shadow-blue-950/5 sm:p-5">
+                  <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
+                    <label className="grid gap-2 text-sm font-black text-[#071b3a]">
+                      Buscar bairro/região
+                      <input value={search} onChange={(event) => setSearch(event.target.value)} className={inputClass} placeholder="Ex: Centro, Pajuçara..." />
+                    </label>
+                    <label className="grid gap-2 text-sm font-black text-[#071b3a]">
+                      Status
+                      <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className={inputClass}>
+                        <option value="all">Todas</option>
+                        <option value="active">Ativas</option>
+                        <option value="inactive">Inativas</option>
+                      </select>
+                    </label>
                   </div>
-                  {editingId ? <button type="button" onClick={resetForm} className={buttonSecondary}>Cancelar</button> : null}
-                </div>
+                </section>
 
-                <div className="mt-5 grid gap-4">
-                  <label className={labelClass}>Região/bairro<input value={form.name} onChange={(event) => updateForm('name', event.target.value)} className={inputClass} placeholder="Ex: Centro, Massagueira, Pajuçara" /></label>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className={labelClass}>Valor da taxa<input type="number" min="0" step="0.01" value={form.fee} onChange={(event) => updateForm('fee', event.target.value)} className={inputClass} placeholder="0,00" /></label>
-                    <label className={labelClass}>Pedido mínimo<input type="number" min="0" step="0.01" value={form.minimum_order} onChange={(event) => updateForm('minimum_order', event.target.value)} className={inputClass} placeholder="0,00" /></label>
+                <form id="taxa-entrega-form" onSubmit={saveZone} className={`${panelClass} ${showForm ? 'block' : 'hidden xl:block'}`}>
+                  <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Cadastro</p>
+                      <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">{editingId ? 'Editar taxa' : 'Nova taxa'}</h2>
+                      <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Use valores claros para o checkout calcular a entrega sem depender de conversa no WhatsApp.</p>
+                    </div>
+                    {editingId || showForm ? <button type="button" onClick={resetForm} className={buttonSecondary}>Fechar</button> : null}
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className={labelClass}>Tempo mínimo estimado<input type="number" min="0" value={form.estimated_time_min} onChange={(event) => updateForm('estimated_time_min', event.target.value)} className={inputClass} placeholder="30" /></label>
-                    <label className={labelClass}>Tempo máximo estimado<input type="number" min="0" value={form.estimated_time_max} onChange={(event) => updateForm('estimated_time_max', event.target.value)} className={inputClass} placeholder="60" /></label>
-                  </div>
-                  <label className={labelClass}>Observações<textarea value={form.notes} onChange={(event) => updateForm('notes', event.target.value)} className={`${inputClass} min-h-28 resize-none`} placeholder="Ex: Entrega só até a praça principal." /></label>
-                  <label className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 font-black"><input type="checkbox" checked={form.is_active} onChange={(event) => updateForm('is_active', event.target.checked)} />Ativo</label>
-                  <button type="submit" disabled={saving} className={buttonPrimary}>{saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Cadastrar taxa'}</button>
-                </div>
-              </form>
 
-              <section className="space-y-4">
-                {zones.length === 0 ? (
+                  <div className="mt-5 grid min-w-0 gap-4">
+                    <label className={labelClass}>Região/Bairro<input value={form.name} onChange={(event) => updateForm('name', event.target.value)} className={inputClass} placeholder="Ex: Centro, Massagueira, Pajuçara" /></label>
+                    <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+                      <label className={labelClass}>Valor da taxa<input type="number" min="0" step="0.01" value={form.fee} onChange={(event) => updateForm('fee', event.target.value)} className={inputClass} placeholder="0,00" /></label>
+                      <label className={labelClass}>Pedido mínimo<input type="number" min="0" step="0.01" value={form.minimum_order} onChange={(event) => updateForm('minimum_order', event.target.value)} className={inputClass} placeholder="0,00" /></label>
+                    </div>
+                    <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+                      <label className={labelClass}>Tempo mínimo<input type="number" min="0" value={form.estimated_time_min} onChange={(event) => updateForm('estimated_time_min', event.target.value)} className={inputClass} placeholder="30" /></label>
+                      <label className={labelClass}>Tempo máximo<input type="number" min="0" value={form.estimated_time_max} onChange={(event) => updateForm('estimated_time_max', event.target.value)} className={inputClass} placeholder="60" /></label>
+                    </div>
+                    <label className={labelClass}>Observações<textarea value={form.notes} onChange={(event) => updateForm('notes', event.target.value)} className={`${inputClass} min-h-24 resize-none`} placeholder="Ex: entrega apenas até a praça principal." /></label>
+                    <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 font-black"><input type="checkbox" checked={form.is_active} onChange={(event) => updateForm('is_active', event.target.checked)} />Ativo para checkout</label>
+                    <button type="submit" disabled={saving} className={buttonPrimary}>{saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Cadastrar taxa'}</button>
+                  </div>
+                </form>
+              </div>
+
+              <section className="min-w-0 space-y-4">
+                {visibleZones.length === 0 ? (
                   <EmptyState title="Nenhuma taxa de entrega cadastrada." description="Cadastre bairros ou regiões para organizar suas entregas." />
                 ) : (
-                  zones.map((zone) => (
-                    <article key={zone.id} className={cardClass}>
-                      <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                        <div className="min-w-0 flex-1">
+                  <>
+                    <div className="hidden min-w-0 overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-blue-950/5 lg:block">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[920px] text-left text-sm">
+                          <thead className="bg-[#f5f8ff] text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                            <tr>
+                              <th className="px-5 py-4">Região/Bairro</th>
+                              <th className="px-5 py-4">Taxa</th>
+                              <th className="px-5 py-4">Pedido mínimo</th>
+                              <th className="px-5 py-4">Tempo</th>
+                              <th className="px-5 py-4">Status</th>
+                              <th className="px-5 py-4">Observações</th>
+                              <th className="px-5 py-4">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-blue-50">
+                            {visibleZones.map((zone) => (
+                              <tr key={zone.id} className="align-top">
+                                <td className="max-w-[210px] px-5 py-5 font-black text-[#071b3a]">{zone.name}</td>
+                                <td className="px-5 py-5 font-black text-[#05245c]">{money(zone.fee)}</td>
+                                <td className="px-5 py-5 font-bold text-slate-600">{money(zone.minimum_order)}</td>
+                                <td className="px-5 py-5 font-bold text-slate-600">{estimatedTime(zone)}</td>
+                                <td className="px-5 py-5"><StatusBadge active={zone.is_active !== false} /></td>
+                                <td className="max-w-[240px] px-5 py-5 font-bold leading-6 text-slate-500">{zone.notes || 'Sem observação'}</td>
+                                <td className="px-5 py-5">
+                                  <div className="grid min-w-[170px] grid-cols-2 gap-2">
+                                    <button type="button" onClick={() => startEdit(zone)} className="rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-black text-[#05245c]">Editar</button>
+                                    <button type="button" onClick={() => toggleZone(zone)} className="rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-black text-[#05245c]">{zone.is_active === false ? 'Ativar' : 'Inativar'}</button>
+                                    <button type="button" onClick={() => deleteZone(zone)} className="col-span-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-black text-red-700">Excluir</button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div className="grid min-w-0 gap-4 lg:hidden">
+                      {visibleZones.map((zone) => (
+                        <article key={zone.id} className={`${cardClass} min-w-0 overflow-hidden`}>
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge active={zone.is_active !== false} />
                             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{money(zone.fee)}</span>
                           </div>
-                          <h3 className="mt-4 text-2xl font-black tracking-[-0.04em]">{zone.name}</h3>
-                          <div className="mt-4 grid gap-3 text-sm font-bold text-slate-500 md:grid-cols-2">
-                            <p><span className="text-slate-400">Taxa:</span> {money(zone.fee)}</p>
+                          <h3 className="mt-4 break-words text-2xl font-black tracking-[-0.04em]">{zone.name}</h3>
+                          <div className="mt-4 grid min-w-0 gap-3 text-sm font-bold text-slate-500">
                             <p><span className="text-slate-400">Pedido mínimo:</span> {money(zone.minimum_order)}</p>
                             <p><span className="text-slate-400">Tempo estimado:</span> {estimatedTime(zone)}</p>
                             <p><span className="text-slate-400">Status:</span> {zone.is_active !== false ? 'Ativo' : 'Inativo'}</p>
                           </div>
-                          {zone.notes ? <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm font-bold leading-6 text-slate-500">{zone.notes}</p> : null}
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 xl:justify-end">
-                          <button type="button" onClick={() => { setEditingId(zone.id); setForm(formFromZone(zone)); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className={buttonSecondary}>Editar</button>
-                          <button type="button" onClick={() => toggleZone(zone)} className={buttonSecondary}>{zone.is_active === false ? 'Ativar' : 'Inativar'}</button>
-                          <button type="button" onClick={() => deleteZone(zone)} className={buttonDanger}>Excluir</button>
-                        </div>
-                      </div>
-                    </article>
-                  ))
+                          {zone.notes ? <p className="mt-4 break-words rounded-2xl bg-slate-50 p-4 text-sm font-bold leading-6 text-slate-500">{zone.notes}</p> : null}
+                          <div className="mt-4 grid grid-cols-2 gap-2">
+                            <button type="button" onClick={() => startEdit(zone)} className={buttonSecondary}>Editar</button>
+                            <button type="button" onClick={() => toggleZone(zone)} className={buttonSecondary}>{zone.is_active === false ? 'Ativar' : 'Inativar'}</button>
+                            <button type="button" onClick={() => deleteZone(zone)} className={`${buttonDanger} col-span-2`}>Excluir</button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </>
                 )}
               </section>
             </section>

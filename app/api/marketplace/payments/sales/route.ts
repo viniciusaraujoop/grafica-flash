@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from('marketplace_payments')
-      .select('id,order_id,provider,provider_preference_id,provider_payment_id,status,provider_status,checkout_url,sandbox_checkout_url,amount,subtotal,delivery_fee,discount_amount,commission_amount,commission_percentage,payer_name,payer_phone,paid_at,created_at')
+      .select('id,order_id,provider,provider_preference_id,provider_payment_id,status,provider_status,checkout_url,sandbox_checkout_url,amount,subtotal,delivery_fee,discount_amount,commission_amount,commission_percentage,provider_fee_amount,net_amount,payer_name,payer_phone,paid_at,created_at')
       .eq('company_id', access.company.id)
       .order('created_at', { ascending: false })
       .limit(300)

@@ -1,5 +1,5 @@
-import PaymentMethodsManager from '@/components/food/PaymentMethodsManager'
+import { redirect } from 'next/navigation'
 
-export default function FormasPagamentoPage() {
-  return <PaymentMethodsManager />
+export default function FormasPagamentoRedirectPage() {
+  redirect('/painel/pagamentos?tab=formas')
 }

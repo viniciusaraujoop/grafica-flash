@@ -379,6 +379,32 @@ export default function PremiumCatalog({
     )
   }
 
+  const structuredBusinessTypes: string[] = [
+    'store',
+    'graphic',
+    'custom_products',
+    'beauty',
+    'barber',
+    'technical_assistance',
+    'auto',
+    'events',
+    'services',
+  ]
+
+  if (structuredBusinessTypes.includes(normalizedType)) {
+    return (
+      <SegmentMarketplaceCatalog
+        company={company}
+        products={products}
+        businessType={normalizedType}
+        primaryColor={primaryColor}
+        accentColor={accentColor}
+        fallbackTitle={fallbackTitle}
+        fallbackText={fallbackText}
+      />
+    )
+  }
+
   return (
     <SegmentMarketplaceCatalog
       company={company}

@@ -332,7 +332,6 @@ export default function SegmentMarketplaceCatalog({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          company_id: company.id,
           slug: company.slug || company.subdomain_slug,
           code,
           subtotal,
@@ -395,7 +394,6 @@ export default function SegmentMarketplaceCatalog({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          company_id: company.id,
           slug: company.slug || company.subdomain_slug,
           segment: normalizedType,
           business_type: normalizedType,
@@ -435,7 +433,7 @@ export default function SegmentMarketplaceCatalog({
         const paymentResponse = await fetch('/api/marketplace/payments/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ company_id: company.id, order_id: payload.order_id }),
+          body: JSON.stringify({ slug: company.slug || company.subdomain_slug, order_id: payload.order_id }),
         })
         const paymentPayload = await paymentResponse.json().catch(() => ({}))
         if (!paymentResponse.ok) throw new Error(paymentPayload.error || 'Solicitação criada, mas o pagamento online não abriu.')

@@ -2,63 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-function getMercadoPagoPlatformAccessToken() {
-  const token =
-    process.env.MERCADO_PAGO_PLATFORM_ACCESS_TOKEN ||
-    process.env.MERCADO_PAGO_ACCESS_TOKEN ||
-    "";
-
-  if (!token) {
-    throw new Error(
-      "MERCADO_PAGO_PLATFORM_ACCESS_TOKEN ou MERCADO_PAGO_ACCESS_TOKEN não configurado.",
-    );
-  }
-
-  return token;
-}
-
-function isTestMercadoPagoToken(token: string) {
-  return String(token || "").startsWith("TEST-");
-}
-
-function validateMercadoPagoSubscriptionEnvironment({
-  accessToken,
-  payerEmail,
-  collectorEmail,
-}: {
-  accessToken: string;
-  payerEmail?: string | null;
-  collectorEmail?: string | null;
-}) {
-  const token = String(accessToken || "");
-  const email = String(payerEmail || "").trim().toLowerCase();
-  const collector = String(collectorEmail || "").trim().toLowerCase();
-  const isTest = isTestMercadoPagoToken(token);
-
-  if (!token) {
-    return "Credenciais Mercado Pago da plataforma não configuradas.";
-  }
-
-  if (!email || !email.includes("@")) {
-    return "E-mail válido obrigatório para criar assinatura.";
-  }
-
-  if (collector && collector === email) {
-    return "O pagador não pode ser o mesmo e-mail da conta Mercado Pago recebedora.";
-  }
-
-  if (isTest && !email.includes("test_user")) {
-    return "Credenciais Mercado Pago em ambiente de teste exigem pagador de teste. Use usuário de teste ou credenciais reais de produção.";
-  }
-
-  if (!isTest && email.includes("test_user")) {
-    return "Credenciais Mercado Pago reais não podem usar pagador de teste. Use e-mail real ou credenciais TEST.";
-  }
-
-  return null;
-}
-
-
 type PlanoId = "basico" | "profissional" | "premium";
 type Action = "create" | "renew" | "sync" | "cancel";
 
@@ -107,7 +50,35 @@ function getSupabaseAdmin() {
 }
 
 function getMercadoPagoToken() {
-  return getMercadoPagoPlatformAccessToken();
+  const token =
+    process.env.MERCADO_PAGO_PLATFORM_ACCESS_TOKEN ||
+    process.env.MERCADO_PAGO_ACCESS_TOKEN;
+
+  if (!token) {
+    throw new Error(
+      "MERCADO_PAGO_PLATFORM_ACCESS_TOKEN ou MERCADO_PAGO_ACCESS_TOKEN não configurado.",
+    );
+  }
+
+  return token;
+}
+
+function validateMercadoPagoPayerEnvironment(
+  accessToken: string,
+  payerEmail: string,
+) {
+  const isTestToken = accessToken.startsWith("TEST-");
+  const isTestPayer = payerEmail.toLowerCase().includes("test_user");
+
+  if (isTestToken && !isTestPayer) {
+    return "Credenciais Mercado Pago em ambiente de teste exigem pagador de teste.";
+  }
+
+  if (!isTestToken && isTestPayer) {
+    return "Credenciais Mercado Pago reais não podem usar pagador de teste.";
+  }
+
+  return "";
 }
 
 function getOrcalyAppUrl() {
@@ -116,9 +87,7 @@ function getOrcalyAppUrl() {
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
     "https://orcaly.com.br"
-  )
-    .trim()
-    .replace(/\/$/, "");
+  ).trim();
 
   const fallback = "https://orcaly.com.br";
 
@@ -134,13 +103,6 @@ function getOrcalyAppUrl() {
   } catch {
     return fallback;
   }
-}
-
-function getValidBackUrl(path = "/assinatura/retorno") {
-  const base = getOrcalyAppUrl();
-  const cleanPath = path.startsWith("/") ? path : `/${path}`;
-
-  return `${base}${cleanPath}`;
 }
 
 function isUuid(value: unknown) {
@@ -627,17 +589,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const mpEnvironmentError = validateMercadoPagoSubscriptionEnvironment({
-      accessToken: getMercadoPagoToken(),
-      payerEmail: email,
-      collectorEmail:
-        process.env.MERCADO_PAGO_COLLECTOR_EMAIL ||
-        process.env.ORCALY_BILLING_EMAIL ||
-        null,
-    });
+    const environmentError = validateMercadoPagoPayerEnvironment(
+      getMercadoPagoToken(),
+      email,
+    );
 
-    if (mpEnvironmentError) {
-      return NextResponse.json({ error: mpEnvironmentError }, { status: 400 });
+    if (environmentError) {
+      return NextResponse.json({ error: environmentError }, { status: 400 });
     }
 
     const { data: paymentRow, error: paymentError } = await supabaseAdmin
@@ -658,9 +616,9 @@ export async function POST(request: NextRequest) {
 
     const preapprovalPayload = {
       reason: `Plano ${plano.nome} - Orçaly`,
-      external_reference: `orcaly_subscription_recurring:${access.company.id}:${planoId}:${paymentRow.id}`,
+      external_reference: paymentRow.id,
       payer_email: email,
-      back_url: getValidBackUrl("/assinatura/retorno"),
+      back_url: `${appUrl}/assinatura/retorno`,
       notification_url: `${appUrl}/api/mercado-pago/webhook`,
       auto_recurring: {
         frequency: 1,

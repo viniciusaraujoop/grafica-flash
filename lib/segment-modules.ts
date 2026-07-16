@@ -150,7 +150,7 @@ export const segmentInfos: SegmentInfo[] = [
     label: 'Alimentício / Food',
     shortLabel: 'Food',
     description: 'Organize pedidos, cardápio, entregas, horários, taxas e financeiro em um painel feito para negócios alimentícios.',
-    principalModules: ['Pedidos do dia', 'Cardápio', 'Entregas', 'Horários', 'Taxas de entrega', 'Cupons'],
+    principalModules: ['Pedidos do dia', 'Cardápio', 'Entregas', 'Horários', 'Taxas de entrega', 'Formas de pagamento', 'Cupons'],
     adminModules: ['Clientes/CRM', 'Financeiro', 'Entradas e saídas', 'Contas a receber', 'Contas a pagar', 'Notas fiscais'],
     developmentModules: ['Adicionais', 'Formas de pagamento', 'Itens mais vendidos'],
   },
@@ -360,7 +360,7 @@ export const segmentModules: SegmentModule[] = [
     requiresActiveSubscription: true,
     isGlobal: true,
     aliases: ['entradas-saidas', 'lancamentos'],
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     futureActions: ['Registrar venda', 'Registrar despesa', 'Vincular pedido', 'Acompanhar pagamento'],
   },
   {
@@ -375,7 +375,7 @@ export const segmentModules: SegmentModule[] = [
     iconName: 'banknote',
     requiresActiveSubscription: true,
     isGlobal: true,
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     futureActions: ['Ver pendências', 'Marcar como recebido', 'Vincular proposta', 'Filtrar por cliente'],
   },
   {
@@ -390,7 +390,7 @@ export const segmentModules: SegmentModule[] = [
     iconName: 'receipt',
     requiresActiveSubscription: true,
     isGlobal: true,
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     futureActions: ['Registrar conta', 'Marcar como paga', 'Anexar comprovante', 'Filtrar por categoria'],
   },
   {
@@ -406,7 +406,7 @@ export const segmentModules: SegmentModule[] = [
     requiresActiveSubscription: true,
     isGlobal: true,
     aliases: ['notas-fiscais', 'nf', 'xml', 'danfe'],
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     futureActions: ['Cadastrar nota manualmente', 'Enviar XML', 'Anexar PDF/DANFE', 'Vincular cliente e pedido'],
   },
   {
@@ -622,14 +622,14 @@ export const segmentModules: SegmentModule[] = [
     id: 'formas_pagamento',
     label: 'Formas de pagamento',
     description: 'Pix manual, dinheiro, cartão na entrega e instruções operacionais.',
-    href: '/painel/formas-pagamento',
-    fallbackHref: '/painel/modulos/formas-pagamento',
+    href: '/painel/pagamentos?tab=formas',
+    fallbackHref: '/painel/pagamentos?tab=formas',
     group: 'financeiro',
     segments: ['food', 'store', 'services', 'graphic', 'custom_products'],
     status: 'active',
     iconName: 'credit-card',
     requiresActiveSubscription: true,
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     futureActions: ['Ativar Pix manual', 'Informar cartão local', 'Salvar instruções', 'Exibir no checkout'],
   },
 
@@ -782,7 +782,7 @@ export const segmentModules: SegmentModule[] = [
     status: 'coming_soon',
     iconName: 'wrench',
     requiresActiveSubscription: true,
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     futureActions: ['Registrar peça', 'Informar custo', 'Vincular OS', 'Controlar garantia'],
   },
   {
@@ -796,7 +796,7 @@ export const segmentModules: SegmentModule[] = [
     status: 'coming_soon',
     iconName: 'hammer',
     requiresActiveSubscription: true,
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     futureActions: ['Registrar serviço', 'Calcular custo', 'Vincular profissional', 'Compor orçamento'],
   },
   {
@@ -948,7 +948,7 @@ export const segmentModules: SegmentModule[] = [
     status: 'coming_soon',
     iconName: 'percent',
     requiresActiveSubscription: true,
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     futureActions: ['Definir percentual', 'Vincular profissional', 'Calcular repasse', 'Ver histórico'],
   },
 
@@ -1044,7 +1044,7 @@ export const segmentModules: SegmentModule[] = [
     status: 'coming_soon',
     iconName: 'landmark',
     requiresActiveSubscription: true,
-    relatedHref: '/painel/financeiro',
+    relatedHref: '/painel/pagamentos',
     futureActions: ['Registrar sinal', 'Definir parcelas', 'Anexar comprovante', 'Acompanhar saldo'],
   },
   {
@@ -1127,7 +1127,8 @@ function moduleIdMatch(module: SegmentModule, id: string) {
 function isRouteAvailable(href: string) {
   if (href.startsWith('http')) return true
   if (href.startsWith('/painel/modulos/')) return true
-  return existingPanelRoutes.has(href)
+  const cleanHref = href.split('?')[0]
+  return existingPanelRoutes.has(cleanHref)
 }
 
 export function getSafeModuleHref(module: SegmentModule) {
