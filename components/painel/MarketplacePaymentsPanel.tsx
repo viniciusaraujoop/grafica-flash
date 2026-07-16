@@ -256,7 +256,7 @@ export default function MarketplacePaymentsPanel({ mode }: { mode: Mode }) {
         ) : null}
 
         {activeTab === 'online' ? <SalesTable rows={filteredSales} /> : null}
-        {activeTab === 'formas' ? <PaymentMethodsManager embedded /> : null}
+        {activeTab === 'formas' ? <PaymentMethodsManager /> : null}
         {activeTab === 'mercado-pago' ? <IntegrationCard connected={connected} setting={setting} commissionPercentage={commissionPercentage} connect={connectMercadoPago} disconnect={disconnectMercadoPago} connecting={connecting} expanded /> : null}
         {activeTab === 'taxas' ? <PlatformFeesCard currentPlan={currentPlan} commissionPercentage={commissionPercentage} expanded /> : null}
       </section>
@@ -395,3 +395,4 @@ function SalesTable({ rows }: { rows: any[] }) {
     </div>
   )
 }
+
