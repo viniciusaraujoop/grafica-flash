@@ -49,7 +49,7 @@ const futureActions = [
 
 export default function FollowUpPage() {
   return (
-    <main className="min-h-screen bg-[#f5f8ff] px-4 py-6 text-[#071b3a]">
+    <main className="panel-page min-h-screen bg-[#f5f8ff] px-4 py-6 text-[#071b3a]">
       <section className="mx-auto max-w-7xl space-y-6">
         <header className="rounded-[2.4rem] border border-blue-100 bg-white p-6 shadow-2xl shadow-blue-950/10 sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">

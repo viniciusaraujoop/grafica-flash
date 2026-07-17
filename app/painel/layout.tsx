@@ -4,9 +4,9 @@ import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import PanelSegmentSidebar from '@/components/painel/PanelSegmentSidebar'
-import PanelSidebar from '@/components/painel/PanelSidebar'
 import { getCompanyPublicHost } from '@/lib/company-url'
+import PanelPremiumShell from '@/components/painel/PanelPremiumShell'
+import './premium.css'
 
 type EmpresaAssinatura = {
   id: string
@@ -330,11 +330,8 @@ export default function PainelLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f8ff] lg:grid lg:grid-cols-[292px_minmax(0,1fr)]">
-      <PanelSidebar company={payload.company} />
-      <div className="min-w-0">
-        {children}
-      </div>
-    </div>
+    <PanelPremiumShell company={payload.company} pathname={pathname}>
+      {children}
+    </PanelPremiumShell>
   )
 }

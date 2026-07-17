@@ -45,7 +45,7 @@ export default function PanelSidebar({ company }: { company: PanelSidebarCompany
 
   return (
     <>
-      <div className="sticky top-0 z-40 border-b border-blue-100 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+      <div className="panel-sidebar-mobile-legacy sticky top-0 z-40 border-b border-blue-100 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
         <details className="group">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
@@ -72,7 +72,7 @@ export default function PanelSidebar({ company }: { company: PanelSidebarCompany
         </details>
       </div>
 
-      <aside className="hidden min-h-screen border-r border-blue-100 bg-white/95 lg:block">
+      <aside className="panel-sidebar-desktop-legacy hidden min-h-screen border-r border-blue-100 bg-white/95 lg:block">
         <div className="sticky top-0 flex h-screen flex-col overflow-hidden">
           <div className="border-b border-blue-100 p-5">
             <Link href="/painel" className="flex items-center gap-3">
