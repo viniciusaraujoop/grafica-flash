@@ -648,7 +648,7 @@ function EmptyStateAlerts({ company, metrics, onCopy }: { company: Company | nul
       ? { title: 'Seu link público já está pronto para compartilhar.', action: 'Copiar link', button: true }
       : null,
     typeof expiresIn === 'number' && expiresIn >= 0 && expiresIn <= 7
-      ? { title: `Sua assinatura vence em ${expiresIn} dia(s).`, action: 'Renovar agora', href: '/assinatura' }
+      ? { title: `Sua assinatura vence em ${expiresIn} dia(s).`, action: 'Renovar agora', href: '/painel/assinatura' }
       : null,
     metrics.pedidosPendentes > 0
       ? { title: 'Você tem pedidos aguardando resposta.', action: 'Ver pedidos', href: '/painel/pedidos' }

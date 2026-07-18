@@ -215,12 +215,13 @@ export default function MarketplacePaymentsPanel({ mode }: { mode: Mode }) {
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Central da loja</p>
                 <h1 className="mt-2 text-4xl font-black tracking-[-0.055em]">💳 Pagamentos</h1>
                 <p className="mt-2 max-w-3xl font-bold leading-7 text-slate-500">
-                  Gerencie formas de pagamento, recebimentos online e integração Mercado Pago da sua loja.
+                  Acompanhe vendas, valores recebidos e pagamentos processados pelo seu site.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => load()} className="rounded-2xl border border-blue-100 bg-white px-5 py-3 text-sm font-black text-[#05245c]">Atualizar</button>
                 <Link href="/painel/configuracoes" className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-black text-[#05245c]">Configurações</Link>
+                <Link href="/painel/assinatura" className="rounded-2xl border border-violet-100 bg-violet-50 px-5 py-3 text-sm font-black text-violet-700">Gerenciar assinatura do Orcaly</Link>
               </div>
             </div>
           </div>

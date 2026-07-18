@@ -143,7 +143,7 @@ export default function PanelPlaceholderPage({ moduleId }: PanelPlaceholderPageP
                 </Link>
               ) : null}
 
-              <Link href="/assinatura" className="rounded-2xl bg-blue-50 px-5 py-4 text-center font-black text-[#05245c]">
+              <Link href="/painel/assinatura" className="rounded-2xl bg-blue-50 px-5 py-4 text-center font-black text-[#05245c]">
                 Ver assinatura
               </Link>
             </div>

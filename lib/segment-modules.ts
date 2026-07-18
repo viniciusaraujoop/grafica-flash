@@ -141,7 +141,7 @@ const existingPanelRoutes = new Set([
   '/painel/horarios',
   '/painel/entregas',
   '/painel/whatsapp',
-  '/assinatura',
+  '/painel/assinatura',
 ])
 
 export const segmentInfos: SegmentInfo[] = [
@@ -526,7 +526,7 @@ export const segmentModules: SegmentModule[] = [
     id: 'assinatura',
     label: 'Assinatura',
     description: 'Plano, renovação e acesso aos recursos.',
-    href: '/assinatura',
+    href: '/painel/assinatura',
     group: 'sistema',
     segments: allSegments,
     status: 'active',

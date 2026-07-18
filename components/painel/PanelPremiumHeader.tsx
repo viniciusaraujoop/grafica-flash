@@ -1,12 +1,9 @@
 'use client'
 
-/* eslint-disable @next/next/no-img-element */
-
 import Link from 'next/link'
-import { PanelBadge, PanelBreadcrumb } from '@/components/panel-ui'
-import { getCompanyPublicUrl } from '@/lib/company-url'
 
 export type PanelPremiumCompany = {
+  id?: string | null
   nome?: string | null
   slug?: string | null
   subdomain_slug?: string | null
@@ -15,6 +12,7 @@ export type PanelPremiumCompany = {
   site_template?: string | null
   assinatura_plano?: string | null
   plano?: string | null
+  assinatura_status?: string | null
 }
 
 const routeLabels: Record<string, string> = {
@@ -27,7 +25,6 @@ const routeLabels: Record<string, string> = {
   'follow-up': 'Follow-up',
   propostas: 'Propostas',
   cupons: 'Cupons',
-  cupom: 'Cupons',
   financeiro: 'Financeiro',
   pagamentos: 'Pagamentos',
   entregas: 'Entregas',
@@ -38,7 +35,6 @@ const routeLabels: Record<string, string> = {
   assinatura: 'Assinatura',
   agenda: 'Agenda',
   estoque: 'Estoque',
-  'ordens-servico': 'Ordens de servico',
   relatorios: 'Relatorios',
   profissionais: 'Profissionais',
   veiculos: 'Veiculos',
@@ -46,42 +42,59 @@ const routeLabels: Record<string, string> = {
   eventos: 'Eventos',
   contratos: 'Contratos',
   solicitacoes: 'Solicitacoes',
+  tarefas: 'Tarefas',
+  whatsapp: 'WhatsApp',
 }
 
 const pageDescriptions: Record<string, string> = {
-  '/painel': 'Acompanhe resultados, pendencias e os proximos passos da operacao.',
-  '/painel/pedidos': 'Organize pedidos, status e prioridades sem perder o contexto.',
-  '/painel/produtos': 'Mantenha produtos, precos e disponibilidade sempre organizados.',
-  '/painel/catalogo': 'Cuide da apresentacao comercial e do que seus clientes encontram.',
-  '/painel/clientes': 'Centralize relacionamentos e historico comercial.',
-  '/painel/financeiro': 'Acompanhe entradas, saidas e compromissos financeiros.',
-  '/painel/pagamentos': 'Visualize recebimentos, taxas e valores liquidos.',
-  '/painel/entregas': 'Acompanhe a operacao de entrega do inicio ao fim.',
-  '/painel/site': 'Configure a presenca digital publica da empresa.',
-  '/painel/configuracoes': 'Ajuste os dados e preferencias da empresa.',
+  '/painel': 'Acompanhe a operacao e acesse rapidamente as areas mais importantes do seu negocio.',
+  '/painel/pedidos': 'Organize pedidos, prioridades, clientes e mudancas de status.',
+  '/painel/produtos': 'Gerencie produtos, servicos, precos, imagens e disponibilidade.',
+  '/painel/catalogo': 'Controle como seus produtos e servicos aparecem para o cliente.',
+  '/painel/clientes': 'Centralize contatos, historico e oportunidades comerciais.',
+  '/painel/crm': 'Acompanhe oportunidades e avance cada negociacao com clareza.',
+  '/painel/follow-up': 'Mantenha retornos e contatos importantes sob controle.',
+  '/painel/propostas': 'Crie, acompanhe e organize propostas comerciais.',
+  '/painel/cupons': 'Gerencie campanhas e beneficios sem perder margem.',
+  '/painel/financeiro': 'Acompanhe entradas, saidas, vencimentos e saldo operacional.',
+  '/painel/pagamentos': 'Veja recebimentos, taxas, descontos e valores liquidos.',
+  '/painel/entregas': 'Monitore a operacao de entrega do preparo ate a conclusao.',
+  '/painel/taxas-entrega': 'Defina regioes, valores, prazos e pedidos minimos.',
+  '/painel/horarios': 'Configure os horarios reais de atendimento da empresa.',
+  '/painel/site': 'Personalize a presenca publica e a experiencia do cliente.',
+  '/painel/configuracoes': 'Ajuste dados, preferencias e identidade da empresa.',
+  '/painel/assinatura': 'Acompanhe plano, periodo de acesso, cobranca e recursos contratados.',
 }
 
-function planLabel(value?: string | null) {
-  if (value === 'basico') return 'Essencial'
-  if (value === 'essencial') return 'Essencial'
-  if (value === 'profissional') return 'Profissional'
-  if (value === 'premium') return 'Premium'
-  return value || 'Plano'
+function normalizePlan(value?: string | null) {
+  const normalized = String(value || '').toLowerCase()
+  if (normalized === 'basico' || normalized === 'essencial') return 'Essencial'
+  if (normalized === 'intermediario' || normalized === 'profissional') return 'Profissional'
+  if (normalized === 'premium') return 'Premium'
+  return value || 'Plano ativo'
 }
 
-function segmentLabel(value?: string | null) {
+function normalizeSegment(value?: string | null) {
   const normalized = String(value || 'services').toLowerCase()
   const labels: Record<string, string> = {
     food: 'Food',
-    grafica: 'Grafica',
+    restaurante: 'Food',
+    lanchonete: 'Food',
+    delivery: 'Food',
     graphic: 'Grafica',
+    grafica: 'Grafica',
+    custom_products: 'Personalizados',
     auto: 'Auto e oficina',
+    oficina: 'Auto e oficina',
     automotive: 'Auto e oficina',
-    assistance: 'Assistencia',
-    assistencia: 'Assistencia',
+    technical_assistance: 'Assistencia tecnica',
+    assistencia: 'Assistencia tecnica',
     beauty: 'Beauty',
-    eventos: 'Eventos',
+    barber: 'Barbearia',
+    barbearia: 'Barbearia',
     events: 'Eventos',
+    eventos: 'Eventos',
+    store: 'Loja',
     loja: 'Loja',
     retail: 'Loja',
     services: 'Servicos',
@@ -104,48 +117,58 @@ export default function PanelPremiumHeader({
   pathname: string
 }) {
   const title = titleFromPath(pathname)
-  const description = pageDescriptions[pathname] || 'Gerencie esta area com clareza e sem perder o fluxo da operacao.'
+  const description = pageDescriptions[pathname] || 'Gerencie esta area com clareza, contexto e menos ruido visual.'
   const publicSlug = company.subdomain_slug || company.slug || ''
-  const publicUrl = publicSlug ? getCompanyPublicUrl(publicSlug) : ''
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'orcaly.com.br'
+  const publicUrl = publicSlug ? `https://${publicSlug}.${rootDomain}` : ''
   const parts = pathname.split('/').filter(Boolean).slice(1)
-  const breadcrumbItems = [
-    { label: 'Painel', href: pathname === '/painel' ? undefined : '/painel' },
-    ...parts.map((part, index) => ({
-      label: routeLabels[part] || part.replace(/-/g, ' '),
-      href: index === parts.length - 1 ? undefined : `/painel/${parts.slice(0, index + 1).join('/')}`,
-    })),
-  ]
 
   return (
-    <header className="panel-premium-header">
-      <div className="min-w-0 flex-1">
-        <PanelBreadcrumb items={breadcrumbItems} />
-        <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
-          <h1>{title}</h1>
-          <PanelBadge tone="blue">{segmentLabel(company.business_type || company.site_template)}</PanelBadge>
+    <header className="panel-adaptive-header">
+      <div className="panel-adaptive-header-copy min-w-0">
+        <nav className="panel-adaptive-breadcrumb" aria-label="Navegacao estrutural">
+          <Link href="/painel">Painel</Link>
+          {parts.map((part, index) => (
+            <span key={`${part}-${index}`}>
+              <span aria-hidden="true">/</span>
+              <span>{routeLabels[part] || part.replace(/-/g, ' ')}</span>
+            </span>
+          ))}
+        </nav>
+
+        <div className="panel-adaptive-title-row">
+          <div className="min-w-0">
+            <span className="panel-adaptive-kicker">Central de gestao</span>
+            <h1>{title}</h1>
+          </div>
+          <span className="panel-adaptive-segment-badge">
+            {normalizeSegment(company.business_type || company.site_template)}
+          </span>
         </div>
+
         <p>{description}</p>
       </div>
 
-      <div className="panel-premium-header-actions">
-        <div className="panel-premium-company-pill" title={company.nome || 'Empresa Or\u00e7aly'}>
+      <div className="panel-adaptive-header-actions">
+        <div className="panel-adaptive-company-card" title={company.nome || 'Empresa Orcaly'}>
           {company.logo_url ? (
-            <span className="panel-premium-company-logo">
+            <span className="panel-adaptive-company-logo">
               <img src={company.logo_url} alt="" />
             </span>
           ) : (
-            <span className="panel-premium-company-logo panel-premium-company-initial" aria-hidden="true">
+            <span className="panel-adaptive-company-logo panel-adaptive-company-initial" aria-hidden="true">
               {(company.nome || 'O').slice(0, 1)}
             </span>
           )}
+
           <span className="min-w-0">
-            <strong>{company.nome || 'Empresa Or\u00e7aly'}</strong>
-            <small>{planLabel(company.assinatura_plano || company.plano)}</small>
+            <strong>{company.nome || 'Empresa Orcaly'}</strong>
+            <small>{normalizePlan(company.assinatura_plano || company.plano)}</small>
           </span>
         </div>
 
         {publicUrl ? (
-          <Link href={publicUrl} target="_blank" rel="noreferrer" className="panel-premium-site-link">
+          <Link href={publicUrl} target="_blank" rel="noreferrer" className="panel-adaptive-open-site">
             Abrir site
             <span aria-hidden="true">&#8599;</span>
           </Link>

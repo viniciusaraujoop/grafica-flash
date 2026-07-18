@@ -1188,3 +1188,748 @@
   }
 }
 /* ORCALY_PANEL_PREMIUM_END */
+
+/* ORCALY_PANEL_ADAPTIVE_START */
+.orcaly-panel-adaptive {
+  --orcaly-panel-navy: #071a3a;
+  --orcaly-panel-blue: #174ea6;
+  --orcaly-panel-blue-strong: #0a377f;
+  --orcaly-panel-cyan: #218fce;
+  --orcaly-panel-bg: #f2f6fb;
+  --orcaly-panel-surface: #ffffff;
+  --orcaly-panel-surface-soft: #f7f9fc;
+  --orcaly-panel-border: #dce5f1;
+  --orcaly-panel-text: #10213b;
+  --orcaly-panel-muted: #65758b;
+  --orcaly-panel-success: #14805e;
+  --orcaly-panel-warning: #a56107;
+  --orcaly-panel-danger: #b42318;
+  --orcaly-panel-shadow: 0 16px 42px rgba(9, 31, 66, 0.08);
+  --orcaly-panel-shadow-hover: 0 22px 54px rgba(9, 31, 66, 0.13);
+  min-width: 0;
+  background:
+    radial-gradient(circle at 78% -8%, rgba(45, 124, 211, 0.12), transparent 28rem),
+    linear-gradient(180deg, #edf3fa 0, #f7f9fc 27rem, #f3f6fa 100%);
+  color: var(--orcaly-panel-text);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-content {
+  position: relative;
+  min-width: 0;
+  min-height: 100vh;
+  overflow: clip;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-top-line {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 288px;
+  z-index: 80;
+  height: 3px;
+  background: linear-gradient(90deg, #0a377f, #267bd1 50%, #27a0cf);
+  box-shadow: 0 2px 12px rgba(23, 78, 166, 0.32);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-slot {
+  min-width: 0;
+  padding: clamp(1rem, 2.15vw, 2rem);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-width {
+  width: min(100%, 1560px);
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas {
+  animation: orcaly-panel-page-enter 260ms ease both;
+}
+
+@keyframes orcaly-panel-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.orcaly-panel-adaptive .panel-adaptive-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  min-width: 0;
+  min-height: 110px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  border-bottom: 1px solid rgba(210, 222, 238, 0.92);
+  background: rgba(255, 255, 255, 0.94);
+  padding: 1.1rem clamp(1rem, 2.3vw, 2rem);
+  box-shadow: 0 11px 32px rgba(9, 31, 66, 0.05);
+  backdrop-filter: blur(18px);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-header-copy {
+  flex: 1 1 auto;
+  max-width: 75rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-breadcrumb {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.42rem;
+  color: #77879d;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-breadcrumb a {
+  color: #36577f;
+  transition: color 140ms ease;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-breadcrumb a:hover {
+  color: var(--orcaly-panel-blue);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-breadcrumb > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-title-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.45rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-kicker {
+  display: block;
+  margin-bottom: 0.12rem;
+  color: #71839d;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-header h1 {
+  margin: 0;
+  color: #0d203c;
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-header-copy > p {
+  max-width: 58rem;
+  margin-top: 0.38rem;
+  color: #61738c;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-segment-badge {
+  display: inline-flex;
+  min-height: 1.8rem;
+  align-items: center;
+  border: 1px solid #cfe0f4;
+  border-radius: 999px;
+  background: #eff6ff;
+  padding: 0.28rem 0.68rem;
+  color: #174e93;
+  font-size: 0.69rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-company-card {
+  display: flex;
+  min-width: 13rem;
+  max-width: 20rem;
+  align-items: center;
+  gap: 0.68rem;
+  border: 1px solid #dbe5f1;
+  border-radius: 1rem;
+  background: white;
+  padding: 0.54rem 0.68rem;
+  box-shadow: 0 9px 24px rgba(9, 31, 66, 0.07);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-company-logo {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 0.78rem;
+  background: #eaf2fc;
+  color: var(--orcaly-panel-blue);
+  font-weight: 900;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-company-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-company-card strong,
+.orcaly-panel-adaptive .panel-adaptive-company-card small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-company-card strong {
+  color: #122641;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-company-card small {
+  margin-top: 0.12rem;
+  color: #73839a;
+  font-size: 0.69rem;
+  font-weight: 750;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-open-site {
+  display: inline-flex;
+  min-height: 2.9rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 0.95rem;
+  background: linear-gradient(135deg, #0b3b86, #1960bc);
+  padding: 0.75rem 0.95rem;
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 850;
+  box-shadow: 0 11px 25px rgba(11, 59, 134, 0.2);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-open-site:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 15px 31px rgba(11, 59, 134, 0.27);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-open-site:active {
+  transform: scale(0.98);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-overview {
+  display: grid;
+  grid-template-columns: minmax(15rem, 0.85fr) minmax(0, 1.65fr);
+  gap: 1rem;
+  margin-bottom: 1.05rem;
+  border: 1px solid rgba(189, 209, 234, 0.92);
+  border-radius: 1.35rem;
+  background:
+    radial-gradient(circle at 90% 0, rgba(56, 141, 222, 0.14), transparent 20rem),
+    linear-gradient(135deg, #ffffff, #f6f9fd);
+  padding: clamp(1rem, 2vw, 1.4rem);
+  box-shadow: var(--orcaly-panel-shadow);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-overview-copy {
+  min-width: 0;
+  align-self: center;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-overview-copy > span {
+  color: #2a66a9;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-overview-copy h2 {
+  margin-top: 0.38rem;
+  color: #102641;
+  font-size: clamp(1.15rem, 2vw, 1.52rem);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-overview-copy p {
+  margin-top: 0.4rem;
+  color: #65768d;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-actions {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-action-card {
+  display: flex;
+  min-width: 0;
+  min-height: 4.75rem;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid #dde7f3;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 0.78rem;
+  color: #112641;
+  box-shadow: 0 8px 20px rgba(9, 31, 66, 0.05);
+  transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-action-card:hover {
+  transform: translateY(-2px);
+  border-color: #b9d0eb;
+  box-shadow: 0 14px 28px rgba(9, 31, 66, 0.1);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-action-card:active {
+  transform: scale(0.985);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-action-code {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: #eaf3fd;
+  color: #174f91;
+  font-size: 0.68rem;
+  font-weight: 950;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-action-card strong,
+.orcaly-panel-adaptive .panel-adaptive-action-card small {
+  display: block;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-action-card strong {
+  font-size: 0.79rem;
+  font-weight: 900;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-action-card small {
+  margin-top: 0.15rem;
+  color: #708096;
+  font-size: 0.67rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-action-arrow {
+  margin-left: auto;
+  color: #6282a8;
+  font-size: 1rem;
+}
+
+/* Sidebar - visual only, routes and handlers remain in the current component. */
+.orcaly-panel-adaptive :is(.panel-sidebar-desktop-legacy, .panel-sidebar-desktop, aside[class*="bg-[#05245c]"]) {
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background:
+    radial-gradient(circle at 0 0, rgba(42, 132, 218, 0.2), transparent 17rem),
+    linear-gradient(180deg, #061a3b 0%, #08234d 52%, #06152f 100%) !important;
+  box-shadow: 12px 0 36px rgba(5, 20, 46, 0.14) !important;
+}
+
+.orcaly-panel-adaptive :is(.panel-sidebar-desktop-legacy, .panel-sidebar-desktop) nav {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+.orcaly-panel-adaptive :is(.panel-sidebar-desktop-legacy, .panel-sidebar-desktop) nav section > p {
+  margin-bottom: 0.48rem !important;
+  color: rgba(194, 214, 239, 0.62) !important;
+  font-size: 0.61rem !important;
+  letter-spacing: 0.17em !important;
+}
+
+.orcaly-panel-adaptive :is(.panel-sidebar-desktop-legacy, .panel-sidebar-desktop) nav a {
+  border-radius: 0.9rem !important;
+  padding-block: 0.66rem !important;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease !important;
+}
+
+.orcaly-panel-adaptive :is(.panel-sidebar-desktop-legacy, .panel-sidebar-desktop) nav a:hover {
+  transform: translateX(2px);
+}
+
+.orcaly-panel-adaptive :is(.panel-sidebar-desktop-legacy, .panel-sidebar-desktop) nav a[class*="bg-[#05245c]"],
+.orcaly-panel-adaptive :is(.panel-sidebar-desktop-legacy, .panel-sidebar-desktop) nav a[aria-current="page"] {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  background: linear-gradient(135deg, rgba(50, 128, 211, 0.88), rgba(28, 85, 161, 0.92)) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16) !important;
+}
+
+/* Existing page cards, sections and tables receive a common premium treatment. */
+.orcaly-panel-adaptive .panel-adaptive-page-canvas :is(main, section, article, div) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas :is(
+  div[class*="bg-white"][class*="border"],
+  section[class*="bg-white"][class*="border"],
+  article[class*="bg-white"][class*="border"]
+) {
+  border-color: var(--orcaly-panel-border) !important;
+  box-shadow: 0 10px 30px rgba(9, 31, 66, 0.055);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas :is(
+  div[class*="rounded-3xl"],
+  section[class*="rounded-3xl"],
+  article[class*="rounded-3xl"]
+) {
+  border-radius: 1.25rem !important;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas :is(
+  h1,
+  h2,
+  h3
+) {
+  color: #10233f;
+  letter-spacing: -0.025em;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: #233851;
+  font-size: 0.78rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas :is(div, section)[class*="overflow-x-auto"] {
+  max-width: 100%;
+  border-radius: 1rem;
+  scrollbar-width: thin;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas thead {
+  background: #f4f7fb;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas th {
+  border-bottom: 1px solid #dce5f1;
+  padding: 0.78rem 0.85rem;
+  color: #66788e;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas td {
+  border-bottom: 1px solid #edf1f6;
+  padding: 0.82rem 0.85rem;
+  vertical-align: middle;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas tbody tr {
+  transition: background-color 140ms ease;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas tbody tr:hover {
+  background: #f8fbff;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas :is(input, textarea, select) {
+  max-width: 100%;
+  border-color: #ccd8e6 !important;
+  border-radius: 0.82rem !important;
+  background: #fff !important;
+  color: #162a44 !important;
+  box-shadow: 0 1px 2px rgba(9, 31, 66, 0.025);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas :is(input, textarea, select):focus {
+  border-color: #4d8ed3 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(50, 122, 204, 0.13) !important;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas button,
+.orcaly-panel-adaptive .panel-adaptive-page-canvas a[class*="rounded"] {
+  max-width: 100%;
+  transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas button:not(:disabled):active,
+.orcaly-panel-adaptive .panel-adaptive-page-canvas a[class*="rounded"]:active {
+  transform: scale(0.985);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid rgba(39, 116, 204, 0.3) !important;
+  outline-offset: 2px;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-page-canvas :is(
+  [class*="grid-cols-4"],
+  [class*="grid-cols-5"],
+  [class*="grid-cols-6"]
+) {
+  gap: clamp(0.7rem, 1.25vw, 1rem);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading {
+  display: grid;
+  gap: 1rem;
+  animation: orcaly-panel-page-enter 220ms ease both;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-heading,
+.orcaly-panel-adaptive .panel-adaptive-loading-card,
+.orcaly-panel-adaptive .panel-adaptive-loading-table,
+.orcaly-panel-adaptive .panel-adaptive-loading-side {
+  border: 1px solid #dfe7f1;
+  border-radius: 1.15rem;
+  background: white;
+  box-shadow: 0 9px 26px rgba(9, 31, 66, 0.05);
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-heading {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.2rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-heading span:first-child {
+  width: 13rem;
+  height: 1.4rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-heading span:last-child {
+  width: min(28rem, 72%);
+  height: 0.75rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-card {
+  display: grid;
+  gap: 0.65rem;
+  min-height: 8rem;
+  padding: 1rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-card span {
+  width: 42%;
+  height: 0.7rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-card strong {
+  width: 66%;
+  height: 1.55rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-card small {
+  width: 54%;
+  height: 0.62rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(15rem, 0.8fr);
+  gap: 0.85rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-table,
+.orcaly-panel-adaptive .panel-adaptive-loading-side {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading :is(span, strong, small, i) {
+  display: block;
+  overflow: hidden;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #edf2f7 25%, #f7f9fc 50%, #edf2f7 75%);
+  background-size: 220% 100%;
+  animation: orcaly-panel-skeleton 1.25s ease-in-out infinite;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-table > span,
+.orcaly-panel-adaptive .panel-adaptive-loading-side > span {
+  width: 34%;
+  height: 0.8rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-table i {
+  width: 100%;
+  height: 2.9rem;
+  border-radius: 0.65rem;
+}
+
+.orcaly-panel-adaptive .panel-adaptive-loading-side i {
+  width: 100%;
+  height: 4.1rem;
+  border-radius: 0.75rem;
+}
+
+@keyframes orcaly-panel-skeleton {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (max-width: 1180px) {
+  .orcaly-panel-adaptive .panel-adaptive-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-header {
+    align-items: flex-start;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 1023px) {
+  .orcaly-panel-adaptive .panel-adaptive-top-line {
+    left: 0;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-header {
+    position: relative;
+    min-height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    padding-top: 1rem;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-company-card {
+    min-width: 0;
+    max-width: min(70vw, 20rem);
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-loading-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .orcaly-panel-adaptive .panel-adaptive-page-slot {
+    padding: 0.85rem;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-header {
+    padding: 0.95rem 0.85rem;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-title-row {
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-header h1 {
+    font-size: 1.42rem;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-header-actions {
+    align-items: stretch;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-company-card {
+    flex: 1 1 12rem;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-open-site {
+    min-height: 2.8rem;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-actions,
+  .orcaly-panel-adaptive .panel-adaptive-loading-content {
+    grid-template-columns: 1fr;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-page-canvas table {
+    min-width: 42rem;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-page-canvas :is(button, a)[class*="px-"] {
+    min-height: 2.75rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .orcaly-panel-adaptive .panel-adaptive-actions,
+  .orcaly-panel-adaptive .panel-adaptive-loading-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-overview {
+    border-radius: 1.1rem;
+    padding: 0.9rem;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-header-actions {
+    flex-direction: column;
+  }
+
+  .orcaly-panel-adaptive .panel-adaptive-company-card,
+  .orcaly-panel-adaptive .panel-adaptive-open-site {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orcaly-panel-adaptive *,
+  .orcaly-panel-adaptive *::before,
+  .orcaly-panel-adaptive *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+/* ORCALY_PANEL_ADAPTIVE_END */

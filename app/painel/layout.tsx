@@ -156,7 +156,7 @@ function PainelBloqueado({ payload }: { payload: CompanyCurrentPayload }) {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               {podeRenovar ? (
                 <Link
-                  href="/assinatura"
+                  href="/painel/assinatura"
                   className="inline-flex items-center justify-center rounded-2xl bg-[#05245c] px-6 py-4 text-center font-black text-white shadow-lg shadow-blue-950/20 transition hover:-translate-y-0.5"
                 >
                   Renovar assinatura
@@ -325,7 +325,7 @@ export default function PainelLayout({ children }: { children: ReactNode }) {
 
   if (!payload?.company?.id) return null
 
-  if (payload.assinatura_ativa !== true) {
+  if (payload.assinatura_ativa !== true && pathname !== '/painel/assinatura') {
     return <PainelBloqueado payload={payload} />
   }
 
