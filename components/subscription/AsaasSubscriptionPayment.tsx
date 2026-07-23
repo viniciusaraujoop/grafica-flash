@@ -88,7 +88,7 @@ export default function AsaasSubscriptionPayment() {
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
       <div className="max-w-3xl">
-        <p className="text-sm font-bold text-violet-600">Pagamento seguro Asaas</p>
+        <p className="text-sm font-bold text-violet-600">Pagamento seguro</p>
         <h2 className="mt-2 text-2xl font-black text-slate-950">Ativar ou reativar assinatura</h2>
         <p className="mt-3 text-sm leading-6 text-slate-600">
           O periodo gratuito continua sendo concedido somente na primeira adesao. Nenhum dado de cartao e armazenado pelo Orcaly.
@@ -237,3 +237,4 @@ export default function AsaasSubscriptionPayment() {
     </section>
   );
 }
+
