@@ -1,4 +1,4 @@
-// ORCALY_ASAAS_MIGRATION_V2
+// ORCALY_CHECKOUT_ASAAS_PIX_PAYOUT_V1
 import "server-only";
 import type { PaymentProvider } from "@/lib/payments/provider";
 import type {
@@ -15,6 +15,24 @@ import type {
 import { getAsaasBaseUrl } from "@/lib/payments/asaas-config";
 
 type JsonRecord = Record<string, unknown>;
+
+export type PixKeyType = "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP";
+
+export type ExternalPixKeyResult = {
+  key: string;
+  type: PixKeyType;
+  ownerName?: string;
+  cpfCnpj?: string;
+  bankName?: string;
+};
+
+export type PixTransferResult = {
+  id: string;
+  status: string;
+  value: number;
+  effectiveDate?: string;
+  failReason?: string;
+};
 
 export class AsaasApiError extends Error {
   status: number;
@@ -49,7 +67,7 @@ export class AsaasProvider implements PaymentProvider {
   constructor(apiKey: string, baseUrl = getAsaasBaseUrl()) {
     this.apiKey = String(apiKey || "").trim();
     this.baseUrl = baseUrl.replace(/\/+$/, "");
-    if (!this.apiKey) throw new Error("Credencial Asaas nao configurada.");
+    if (!this.apiKey) throw new Error("Credencial Asaas nÃ£o configurada.");
   }
 
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -74,7 +92,7 @@ export class AsaasProvider implements PaymentProvider {
           : "";
 
       throw new AsaasApiError(
-        safeMessage(payload, "Nao foi possivel concluir a operacao financeira."),
+        safeMessage(payload, "NÃ£o foi possÃ­vel concluir a operaÃ§Ã£o financeira."),
         response.status,
         code || undefined,
       );
@@ -83,7 +101,9 @@ export class AsaasProvider implements PaymentProvider {
     return payload as T;
   }
 
-  async createProviderAccount(input: ProviderAccountInput): Promise<ProviderAccountResult> {
+  async createProviderAccount(
+    input: ProviderAccountInput,
+  ): Promise<ProviderAccountResult> {
     const { webhooks, ...accountInput } = input;
     const payload = await this.request<JsonRecord>("/accounts", {
       method: "POST",
@@ -94,9 +114,7 @@ export class AsaasProvider implements PaymentProvider {
     if (apiKey && Array.isArray(webhooks) && webhooks.length > 0) {
       const accountProvider = new AsaasProvider(apiKey, this.baseUrl);
       for (const webhook of webhooks) {
-        await accountProvider
-          .createWebhook(webhook)
-          .catch(() => undefined);
+        await accountProvider.createWebhook(webhook).catch(() => undefined);
       }
     }
 
@@ -117,7 +135,9 @@ export class AsaasProvider implements PaymentProvider {
   }
 
   async getProviderAccountStatus(accountId: string) {
-    const payload = await this.request<JsonRecord>("/myAccount", { method: "GET" });
+    const payload = await this.request<JsonRecord>("/myAccount", {
+      method: "GET",
+    });
     return {
       id: accountId,
       status: String(payload.status || payload.accountStatus || "PENDING"),
@@ -125,12 +145,17 @@ export class AsaasProvider implements PaymentProvider {
     };
   }
 
-  async createCustomer(input: ProviderCustomerInput): Promise<ProviderCustomerResult> {
+  async createCustomer(
+    input: ProviderCustomerInput,
+  ): Promise<ProviderCustomerResult> {
     const payload = await this.request<JsonRecord>("/customers", {
       method: "POST",
       body: JSON.stringify(input),
     });
-    return { id: String(payload.id || ""), name: String(payload.name || "") || undefined };
+    return {
+      id: String(payload.id || ""),
+      name: String(payload.name || "") || undefined,
+    };
   }
 
   async createPixPayment(input: PixInput): Promise<PaymentResult> {
@@ -226,7 +251,10 @@ export class AsaasProvider implements PaymentProvider {
     };
   }
 
-  async refundPayment(paymentId: string, value?: number): Promise<PaymentResult> {
+  async refundPayment(
+    paymentId: string,
+    value?: number,
+  ): Promise<PaymentResult> {
     const payload = await this.request<JsonRecord>(
       `/payments/${encodeURIComponent(paymentId)}/refund`,
       {
@@ -239,6 +267,65 @@ export class AsaasProvider implements PaymentProvider {
       id: String(payload.id || paymentId),
       status: String(payload.status || "REFUNDED"),
       value: Number(payload.value || value || 0),
+    };
+  }
+
+  async getExternalPixKey(
+    type: PixKeyType,
+    key: string,
+  ): Promise<ExternalPixKeyResult> {
+    const query = new URLSearchParams({ type, key });
+    const payload = await this.request<JsonRecord>(
+      `/pix/addressKeys/external?${query.toString()}`,
+      { method: "GET" },
+    );
+
+    return {
+      key,
+      type,
+      ownerName: String(payload.ownerName || payload.name || "") || undefined,
+      cpfCnpj: String(payload.cpfCnpj || "") || undefined,
+      bankName:
+        String(payload.bankName || payload.institutionName || "") || undefined,
+    };
+  }
+
+  async createPixTransfer(input: {
+    value: number;
+    pixAddressKey: string;
+    pixAddressKeyType: PixKeyType;
+    description: string;
+    externalReference: string;
+  }): Promise<PixTransferResult> {
+    const payload = await this.request<JsonRecord>("/transfers", {
+      method: "POST",
+      body: JSON.stringify({
+        ...input,
+        operationType: "PIX",
+      }),
+    });
+
+    return {
+      id: String(payload.id || ""),
+      status: String(payload.status || "PENDING"),
+      value: Number(payload.value || input.value),
+      effectiveDate: String(payload.effectiveDate || "") || undefined,
+      failReason: String(payload.failReason || "") || undefined,
+    };
+  }
+
+  async getTransfer(transferId: string): Promise<PixTransferResult> {
+    const payload = await this.request<JsonRecord>(
+      `/transfers/${encodeURIComponent(transferId)}`,
+      { method: "GET" },
+    );
+
+    return {
+      id: String(payload.id || transferId),
+      status: String(payload.status || "PENDING"),
+      value: Number(payload.value || 0),
+      effectiveDate: String(payload.effectiveDate || "") || undefined,
+      failReason: String(payload.failReason || "") || undefined,
     };
   }
 

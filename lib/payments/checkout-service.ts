@@ -193,6 +193,7 @@ export async function getCheckoutCatalog(slug: string) {
         .select("account_status,charges_enabled,pix_enabled,card_enabled")
         .eq("company_id", companyId)
         .eq("provider", "asaas")
+        .eq("is_active", true)
         .maybeSingle(),
     ]);
 
@@ -663,3 +664,4 @@ export async function createCheckoutPayment(
     throw error;
   }
 }
+

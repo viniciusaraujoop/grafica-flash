@@ -1,4 +1,4 @@
-// ORCALY_ASAAS_MIGRATION_V2
+// ORCALY_CHECKOUT_ASAAS_PIX_PAYOUT_V1
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import type { NextRequest } from "next/server";
@@ -9,11 +9,13 @@ type JsonRecord = Record<string, unknown>;
 
 export function getSupabaseAdmin() {
   const url = String(process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
-  const serviceRole = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  const serviceRole = String(
+    process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+  ).trim();
 
   if (!url || !serviceRole) {
     throw new Error(
-      "As credenciais administrativas do Supabase nao foram configuradas.",
+      "As credenciais administrativas do Supabase nÃ£o foram configuradas.",
     );
   }
 
@@ -36,7 +38,7 @@ export async function requireUserCompany(request: NextRequest) {
   const token = bearer(request);
 
   if (!token) {
-    throw Object.assign(new Error("Sessao nao enviada."), { status: 401 });
+    throw Object.assign(new Error("SessÃ£o nÃ£o enviada."), { status: 401 });
   }
 
   const { data: authData, error: authError } =
@@ -44,7 +46,7 @@ export async function requireUserCompany(request: NextRequest) {
   const user = authData.user;
 
   if (authError || !user) {
-    throw Object.assign(new Error("Sessao invalida."), { status: 401 });
+    throw Object.assign(new Error("SessÃ£o invÃ¡lida."), { status: 401 });
   }
 
   const { data: owned } = await supabase
@@ -73,7 +75,7 @@ export async function requireUserCompany(request: NextRequest) {
 
   if (!member?.company_id) {
     throw Object.assign(
-      new Error("Empresa nao encontrada para esta sessao."),
+      new Error("Empresa nÃ£o encontrada para esta sessÃ£o."),
       { status: 403 },
     );
   }
@@ -85,7 +87,7 @@ export async function requireUserCompany(request: NextRequest) {
     .maybeSingle();
 
   if (!company?.id) {
-    throw Object.assign(new Error("Empresa nao encontrada."), {
+    throw Object.assign(new Error("Empresa nÃ£o encontrada."), {
       status: 404,
     });
   }
@@ -110,7 +112,7 @@ export async function resolveCompanyBySlug(slug: string) {
     .maybeSingle();
 
   if (error || !company?.id) {
-    throw Object.assign(new Error("Empresa nao encontrada."), {
+    throw Object.assign(new Error("Empresa nÃ£o encontrada."), {
       status: 404,
     });
   }
@@ -128,12 +130,14 @@ export async function getCompanyPaymentSettings(companyId: string) {
     .from("marketplace_payment_settings")
     .select("*")
     .eq("company_id", companyId)
+    .eq("is_active", true)
+    .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (error) {
     throw Object.assign(
-      new Error("Nao foi possivel consultar a configuracao financeira."),
+      new Error("NÃ£o foi possÃ­vel consultar a configuraÃ§Ã£o financeira."),
       { status: 500 },
     );
   }
@@ -146,36 +150,43 @@ export async function getCompanyPaymentSettings(companyId: string) {
 }
 
 export async function getCompanyProviderAccount(companyId: string) {
-  const settings = await getCompanyPaymentSettings(companyId);
-  const data = settings.record;
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("marketplace_payment_settings")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("provider", "asaas")
+    .eq("is_active", true)
+    .limit(1)
+    .maybeSingle();
 
-  if (settings.provider !== "asaas") {
+  if (error) {
     throw Object.assign(
-      new Error("Esta empresa ainda utiliza Mercado Pago."),
-      { status: 409, code: "ASAAS_NOT_ENABLED_FOR_COMPANY" },
+      new Error("NÃ£o foi possÃ­vel consultar a conta de recebimento."),
+      { status: 500 },
     );
   }
 
-  if (!data.provider_account_id) {
+  const record = (data || {}) as JsonRecord;
+
+  if (!record.provider_account_id) {
     throw Object.assign(
-      new Error(
-        "A conta de recebimento da empresa ainda nao foi configurada.",
-      ),
+      new Error("A conta de recebimento ainda nÃ£o foi configurada."),
       { status: 409 },
     );
   }
 
-  if (!data.encrypted_provider_api_key) {
+  if (!record.encrypted_provider_api_key) {
     throw Object.assign(
-      new Error("A credencial protegida da subconta nao esta disponivel."),
+      new Error("A credencial protegida da subconta nÃ£o estÃ¡ disponÃ­vel."),
       { status: 409 },
     );
   }
 
   return {
-    record: data,
+    record,
     apiKey: decryptPaymentCredential(
-      String(data.encrypted_provider_api_key),
+      String(record.encrypted_provider_api_key),
     ),
   };
 }
@@ -192,7 +203,7 @@ export function getRequestIp(request: NextRequest) {
 
   if (!candidate) {
     throw Object.assign(
-      new Error("Nao foi possivel identificar o IP do dispositivo."),
+      new Error("NÃ£o foi possÃ­vel identificar o IP do dispositivo."),
       { status: 400, code: "REMOTE_IP_MISSING" },
     );
   }
@@ -218,6 +229,8 @@ export function cleanSensitivePayload(
     "cpfcnpj",
     "document",
     "documento",
+    "pixaddresskey",
+    "payout_pix_key_encrypted",
     "asaas-access-token",
   ]);
 

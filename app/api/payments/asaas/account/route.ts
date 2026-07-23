@@ -1,4 +1,4 @@
-// ORCALY_ASAAS_MIGRATION_V2
+// ORCALY_CHECKOUT_ASAAS_PIX_PAYOUT_V1
 import { NextRequest, NextResponse } from "next/server";
 import {
   getAsaasCapabilities,
@@ -19,6 +19,9 @@ function statusOf(error: unknown) {
   );
 }
 
+const PUBLIC_ACCOUNT_FIELDS =
+  "id,provider_account_id,provider_wallet_id,onboarding_status,account_status,charges_enabled,payouts_enabled,card_enabled,pix_enabled,onboarding_url,legal_name,document_last4,bank_name,bank_account_last4,bank_account_type,last_status_check_at,is_active,created_at,updated_at";
+
 export async function GET(request: NextRequest) {
   try {
     const context = await requireUserCompany(request);
@@ -26,15 +29,15 @@ export async function GET(request: NextRequest) {
 
     const { data } = await context.supabase
       .from("marketplace_payment_settings")
-      .select(
-        "id,provider_account_id,provider_wallet_id,onboarding_status,account_status,charges_enabled,payouts_enabled,card_enabled,pix_enabled,onboarding_url,legal_name,document_last4,bank_name,bank_account_last4,bank_account_type,last_status_check_at,created_at,updated_at",
-      )
+      .select(PUBLIC_ACCOUNT_FIELDS)
       .eq("company_id", companyId)
       .eq("provider", "asaas")
+      .order("updated_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     return NextResponse.json({
-      configured: Boolean(data),
+      configured: Boolean(data?.provider_account_id),
       provider: "asaas",
       accountStatus: data?.account_status || null,
       onboardingStatus: data?.onboarding_status || null,
@@ -58,7 +61,7 @@ export async function GET(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "Nao foi possivel consultar a conta.",
+            : "NÃ£o foi possÃ­vel consultar a conta.",
       },
       { status: statusOf(error) },
     );
@@ -71,10 +74,7 @@ export async function POST(request: NextRequest) {
 
     if (!capabilities.subaccountsEnabled) {
       return NextResponse.json(
-        {
-          error:
-            "A criacao de subcontas ainda nao foi habilitada no ambiente.",
-        },
+        { error: "A criaÃ§Ã£o de subcontas ainda nÃ£o foi habilitada." },
         { status: 409 },
       );
     }
@@ -85,17 +85,25 @@ export async function POST(request: NextRequest) {
 
     const { data: existing } = await context.supabase
       .from("marketplace_payment_settings")
-      .select("id,account_status")
+      .select("*")
       .eq("company_id", companyId)
       .eq("provider", "asaas")
       .maybeSingle();
 
-    if (existing?.id) {
-      return NextResponse.json({
-        ok: true,
-        repeated: true,
-        account: existing,
-      });
+    if (existing?.provider_account_id) {
+      await context.supabase
+        .from("marketplace_payment_settings")
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq("company_id", companyId);
+
+      const { data: active } = await context.supabase
+        .from("marketplace_payment_settings")
+        .update({ is_active: true, updated_at: new Date().toISOString() })
+        .eq("id", existing.id)
+        .select(PUBLIC_ACCOUNT_FIELDS)
+        .single();
+
+      return NextResponse.json({ ok: true, repeated: true, account: active });
     }
 
     const provider = new AsaasProvider(requireAsaasMasterApiKey());
@@ -123,7 +131,7 @@ export async function POST(request: NextRequest) {
       incomeValue: Number(body.incomeValue || 0) || undefined,
       webhooks: [
         {
-          name: "Orcaly pagamentos",
+          name: "OrÃ§aly pagamentos e repasses",
           url: `${appUrl}/api/webhooks/asaas`,
           email: String(body.email || context.user.email || "").trim(),
           enabled: true,
@@ -141,6 +149,13 @@ export async function POST(request: NextRequest) {
             "PAYMENT_DELETED",
             "PAYMENT_SPLIT_DONE",
             "PAYMENT_SPLIT_CANCELLED",
+            "TRANSFER_CREATED",
+            "TRANSFER_PENDING",
+            "TRANSFER_IN_BANK_PROCESSING",
+            "TRANSFER_BLOCKED",
+            "TRANSFER_DONE",
+            "TRANSFER_FAILED",
+            "TRANSFER_CANCELLED",
           ],
         },
       ],
@@ -148,35 +163,44 @@ export async function POST(request: NextRequest) {
 
     if (!account.apiKey || !account.walletId) {
       throw new Error(
-        "O Asaas nao retornou a credencial ou a carteira da subconta.",
+        "O Asaas nÃ£o retornou a credencial ou a carteira da subconta.",
       );
     }
 
     const document = String(body.cpfCnpj || "").replace(/\D/g, "");
 
-    const { data, error } = await context.supabase
+    await context.supabase
       .from("marketplace_payment_settings")
-      .insert({
-        company_id: companyId,
-        provider: "asaas",
-        provider_account_id: account.id,
-        provider_wallet_id: account.walletId,
-        encrypted_provider_api_key: encryptPaymentCredential(account.apiKey),
-        onboarding_status: "started",
-        account_status: account.status,
-        charges_enabled: false,
-        payouts_enabled: false,
-        card_enabled: false,
-        pix_enabled: true,
-        onboarding_url: account.onboardingUrl || null,
-        legal_name: String(body.name || "").trim(),
-        document_last4: document.slice(-4) || null,
-      })
-      .select(
-        "id,provider_account_id,provider_wallet_id,onboarding_status,account_status,charges_enabled,payouts_enabled,card_enabled,pix_enabled,onboarding_url,legal_name,document_last4",
-      )
-      .single();
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq("company_id", companyId);
 
+    const payload = {
+      company_id: companyId,
+      provider: "asaas",
+      provider_account_id: account.id,
+      provider_wallet_id: account.walletId,
+      encrypted_provider_api_key: encryptPaymentCredential(account.apiKey),
+      onboarding_status: "started",
+      account_status: account.status,
+      charges_enabled: false,
+      payouts_enabled: false,
+      card_enabled: false,
+      pix_enabled: true,
+      is_active: true,
+      onboarding_url: account.onboardingUrl || null,
+      legal_name: String(body.name || "").trim(),
+      document_last4: document.slice(-4) || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const query = existing?.id
+      ? context.supabase
+          .from("marketplace_payment_settings")
+          .update(payload)
+          .eq("id", existing.id)
+      : context.supabase.from("marketplace_payment_settings").insert(payload);
+
+    const { data, error } = await query.select(PUBLIC_ACCOUNT_FIELDS).single();
     if (error) throw error;
 
     return NextResponse.json({ ok: true, account: data });
@@ -186,7 +210,7 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "Nao foi possivel criar a conta de recebimento.",
+            : "NÃ£o foi possÃ­vel criar a conta de recebimento.",
       },
       { status: statusOf(error) },
     );

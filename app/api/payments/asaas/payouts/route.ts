@@ -1,4 +1,4 @@
-// ORCALY_ASAAS_MIGRATION_V2
+// ORCALY_CHECKOUT_ASAAS_PIX_PAYOUT_V1
 import { NextRequest, NextResponse } from "next/server";
 import { requireUserCompany } from "@/lib/payments/server-context";
 
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await context.supabase
       .from("payment_payouts")
       .select(
-        "id,transaction_id,provider_payout_id,amount,status,expected_at,paid_at,failure_reason,created_at,updated_at",
+        "id,marketplace_payment_id,provider_payout_id,amount,status,expected_at,paid_at,failure_reason,external_reference,pix_key_type,pix_key_masked,attempts,created_at,updated_at",
       )
       .eq("company_id", companyId)
       .order("created_at", { ascending: false })
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "Nao foi possivel carregar os repasses.",
+            : "NÃ£o foi possÃ­vel carregar os repasses.",
       },
       { status: 500 },
     );
