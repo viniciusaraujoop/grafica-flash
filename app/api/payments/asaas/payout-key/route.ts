@@ -29,7 +29,7 @@ function statusOf(error: unknown) {
 function normalizeType(value: unknown): PixKeyType {
   const type = String(value || "").trim().toUpperCase() as PixKeyType;
   if (!ALLOWED_TYPES.has(type)) {
-    throw Object.assign(new Error("Selecione um tipo de chave Pix vÃ¡lido."), {
+    throw Object.assign(new Error("Selecione um tipo de chave Pix válido."), {
       status: 400,
     });
   }
@@ -67,8 +67,8 @@ function maskKey(type: PixKeyType, key: string) {
   }
 
   return key.length >= 8
-    ? `${key.slice(0, 4)}â€¢â€¢â€¢â€¢${key.slice(-4)}`
-    : "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢";
+    ? `${key.slice(0, 4)}••••${key.slice(-4)}`
+    : "••••••••";
 }
 
 async function validatePixKey(
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "NÃ£o foi possÃ­vel consultar a chave Pix.",
+            : "Não foi possível consultar a chave Pix.",
       },
       { status: statusOf(error) },
     );
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "NÃ£o foi possÃ­vel validar a chave Pix.",
+            : "Não foi possível validar a chave Pix.",
       },
       { status: statusOf(error) },
     );
@@ -201,7 +201,7 @@ export async function PUT(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "NÃ£o foi possÃ­vel salvar a chave Pix.",
+            : "Não foi possível salvar a chave Pix.",
       },
       { status: statusOf(error) },
     );
@@ -236,7 +236,7 @@ export async function DELETE(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "NÃ£o foi possÃ­vel remover a chave Pix.",
+            : "Não foi possível remover a chave Pix.",
       },
       { status: statusOf(error) },
     );

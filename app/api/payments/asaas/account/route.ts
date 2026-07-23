@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "NÃ£o foi possÃ­vel consultar a conta.",
+            : "Não foi possível consultar a conta.",
       },
       { status: statusOf(error) },
     );
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     if (!capabilities.subaccountsEnabled) {
       return NextResponse.json(
-        { error: "A criaÃ§Ã£o de subcontas ainda nÃ£o foi habilitada." },
+        { error: "A criação de subcontas ainda não foi habilitada." },
         { status: 409 },
       );
     }
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       incomeValue: Number(body.incomeValue || 0) || undefined,
       webhooks: [
         {
-          name: "OrÃ§aly pagamentos e repasses",
+          name: "Orçaly pagamentos e repasses",
           url: `${appUrl}/api/webhooks/asaas`,
           email: String(body.email || context.user.email || "").trim(),
           enabled: true,
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
 
     if (!account.apiKey || !account.walletId) {
       throw new Error(
-        "O Asaas nÃ£o retornou a credencial ou a carteira da subconta.",
+        "O Asaas não retornou a credencial ou a carteira da subconta.",
       );
     }
 
@@ -210,7 +210,7 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "NÃ£o foi possÃ­vel criar a conta de recebimento.",
+            : "Não foi possível criar a conta de recebimento.",
       },
       { status: statusOf(error) },
     );

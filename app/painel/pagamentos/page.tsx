@@ -1,4 +1,4 @@
-// ORCALY_CHECKOUT_ASAAS_PIX_PAYOUT_V1
+// ORCALY_PAYMENTS_PREMIUM_V2
 import PaymentsHub from "@/components/payments/PaymentsHub";
 
 export default function PagamentosPage() {

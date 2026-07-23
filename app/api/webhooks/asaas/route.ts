@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     if (!token || token !== requireAsaasWebhookToken()) {
       return NextResponse.json(
-        { error: "Webhook nÃ£o autorizado." },
+        { error: "Webhook não autorizado." },
         { status: 401 },
       );
     }
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     if (!eventId || !eventType) {
       return NextResponse.json(
-        { error: "Evento Asaas invÃ¡lido." },
+        { error: "Evento Asaas inválido." },
         { status: 400 },
       );
     }
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
         .update({
           processing_status: updated ? "processed" : "ignored",
           processed_at: new Date().toISOString(),
-          error_message: updated ? null : "Repasse interno nÃ£o localizado.",
+          error_message: updated ? null : "Repasse interno não localizado.",
         })
         .eq("provider", "asaas")
         .eq("provider_event_id", eventId);
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     if (!paymentId) {
       return NextResponse.json(
-        { error: "Evento de pagamento invÃ¡lido." },
+        { error: "Evento de pagamento inválido." },
         { status: 400 },
       );
     }
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
         .update({
           processing_status: "ignored",
           processed_at: new Date().toISOString(),
-          error_message: "TransaÃ§Ã£o interna nÃ£o localizada.",
+          error_message: "Transação interna não localizada.",
         })
         .eq("provider", "asaas")
         .eq("provider_event_id", eventId);
@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json(
       {
-        error: "NÃ£o foi possÃ­vel processar o evento financeiro.",
+        error: "Não foi possível processar o evento financeiro.",
         code: "WEBHOOK_PROCESSING_FAILED",
       },
       { status: 500 },

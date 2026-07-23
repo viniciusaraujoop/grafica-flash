@@ -15,7 +15,7 @@ export function getSupabaseAdmin() {
 
   if (!url || !serviceRole) {
     throw new Error(
-      "As credenciais administrativas do Supabase nÃ£o foram configuradas.",
+      "As credenciais administrativas do Supabase não foram configuradas.",
     );
   }
 
@@ -38,7 +38,7 @@ export async function requireUserCompany(request: NextRequest) {
   const token = bearer(request);
 
   if (!token) {
-    throw Object.assign(new Error("SessÃ£o nÃ£o enviada."), { status: 401 });
+    throw Object.assign(new Error("Sessão não enviada."), { status: 401 });
   }
 
   const { data: authData, error: authError } =
@@ -46,7 +46,7 @@ export async function requireUserCompany(request: NextRequest) {
   const user = authData.user;
 
   if (authError || !user) {
-    throw Object.assign(new Error("SessÃ£o invÃ¡lida."), { status: 401 });
+    throw Object.assign(new Error("Sessão inválida."), { status: 401 });
   }
 
   const { data: owned } = await supabase
@@ -75,7 +75,7 @@ export async function requireUserCompany(request: NextRequest) {
 
   if (!member?.company_id) {
     throw Object.assign(
-      new Error("Empresa nÃ£o encontrada para esta sessÃ£o."),
+      new Error("Empresa não encontrada para esta sessão."),
       { status: 403 },
     );
   }
@@ -87,7 +87,7 @@ export async function requireUserCompany(request: NextRequest) {
     .maybeSingle();
 
   if (!company?.id) {
-    throw Object.assign(new Error("Empresa nÃ£o encontrada."), {
+    throw Object.assign(new Error("Empresa não encontrada."), {
       status: 404,
     });
   }
@@ -112,7 +112,7 @@ export async function resolveCompanyBySlug(slug: string) {
     .maybeSingle();
 
   if (error || !company?.id) {
-    throw Object.assign(new Error("Empresa nÃ£o encontrada."), {
+    throw Object.assign(new Error("Empresa não encontrada."), {
       status: 404,
     });
   }
@@ -137,7 +137,7 @@ export async function getCompanyPaymentSettings(companyId: string) {
 
   if (error) {
     throw Object.assign(
-      new Error("NÃ£o foi possÃ­vel consultar a configuraÃ§Ã£o financeira."),
+      new Error("Não foi possível consultar a configuração financeira."),
       { status: 500 },
     );
   }
@@ -162,7 +162,7 @@ export async function getCompanyProviderAccount(companyId: string) {
 
   if (error) {
     throw Object.assign(
-      new Error("NÃ£o foi possÃ­vel consultar a conta de recebimento."),
+      new Error("Não foi possível consultar a conta de recebimento."),
       { status: 500 },
     );
   }
@@ -171,14 +171,14 @@ export async function getCompanyProviderAccount(companyId: string) {
 
   if (!record.provider_account_id) {
     throw Object.assign(
-      new Error("A conta de recebimento ainda nÃ£o foi configurada."),
+      new Error("A conta de recebimento ainda não foi configurada."),
       { status: 409 },
     );
   }
 
   if (!record.encrypted_provider_api_key) {
     throw Object.assign(
-      new Error("A credencial protegida da subconta nÃ£o estÃ¡ disponÃ­vel."),
+      new Error("A credencial protegida da subconta não está disponível."),
       { status: 409 },
     );
   }
@@ -203,7 +203,7 @@ export function getRequestIp(request: NextRequest) {
 
   if (!candidate) {
     throw Object.assign(
-      new Error("NÃ£o foi possÃ­vel identificar o IP do dispositivo."),
+      new Error("Não foi possível identificar o IP do dispositivo."),
       { status: 400, code: "REMOTE_IP_MISSING" },
     );
   }

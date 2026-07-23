@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "NÃ£o foi possÃ­vel carregar os repasses.",
+            : "Não foi possível carregar os repasses.",
       },
       { status: 500 },
     );

@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
     if (!payoutId) {
       return NextResponse.json(
-        { error: "Informe o repasse que serÃ¡ reenviado." },
+        { error: "Informe o repasse que será reenviado." },
         { status: 400 },
       );
     }
@@ -25,14 +25,14 @@ export async function POST(request: NextRequest) {
 
     if (!payout?.marketplace_payment_id) {
       return NextResponse.json(
-        { error: "Repasse nÃ£o encontrado." },
+        { error: "Repasse não encontrado." },
         { status: 404 },
       );
     }
 
     if (!["FAILED", "CANCELLED", "BLOCKED"].includes(String(payout.status).toUpperCase())) {
       return NextResponse.json(
-        { error: "Este repasse nÃ£o pode ser reenviado no estado atual." },
+        { error: "Este repasse não pode ser reenviado no estado atual." },
         { status: 409 },
       );
     }
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "NÃ£o foi possÃ­vel reenviar o repasse.",
+            : "Não foi possível reenviar o repasse.",
       },
       { status: 500 },
     );

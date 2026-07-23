@@ -41,12 +41,12 @@ export async function createAutomaticPayoutForTransaction(
     .maybeSingle();
 
   if (transactionError || !transaction?.id) {
-    return { created: false, reason: "TransaÃ§Ã£o nÃ£o encontrada." };
+    return { created: false, reason: "Transação não encontrada." };
   }
 
   const normalizedStatus = text(transaction.status).toUpperCase();
   if (!["PAID", "RECEIVED", "CONFIRMED"].includes(normalizedStatus)) {
-    return { created: false, reason: "Pagamento ainda nÃ£o confirmado." };
+    return { created: false, reason: "Pagamento ainda não confirmado." };
   }
 
   const { data: settings } = await supabase
@@ -58,28 +58,28 @@ export async function createAutomaticPayoutForTransaction(
     .maybeSingle();
 
   if (!settings?.automatic_payout_enabled && !options.force) {
-    return { created: false, reason: "TransferÃªncia automÃ¡tica desativada." };
+    return { created: false, reason: "Transferência automática desativada." };
   }
 
   if (!settings?.payouts_enabled) {
-    return { created: false, reason: "Repasses ainda nÃ£o habilitados." };
+    return { created: false, reason: "Repasses ainda não habilitados." };
   }
 
   if (!settings?.payout_pix_key_encrypted || !settings?.payout_pix_key_type) {
-    return { created: false, reason: "Chave Pix de repasse nÃ£o configurada." };
+    return { created: false, reason: "Chave Pix de repasse não configurada." };
   }
 
   const amount = money(transaction.seller_net_amount);
   const minimum = money(settings.minimum_payout_amount);
 
   if (amount <= 0) {
-    return { created: false, reason: "Valor lÃ­quido ainda indisponÃ­vel." };
+    return { created: false, reason: "Valor líquido ainda indisponível." };
   }
 
   if (amount < minimum && !options.force) {
     return {
       created: false,
-      reason: "Valor lÃ­quido abaixo do mÃ­nimo configurado.",
+      reason: "Valor líquido abaixo do mínimo configurado.",
     };
   }
 
@@ -96,7 +96,7 @@ export async function createAutomaticPayoutForTransaction(
   ) {
     return {
       created: false,
-      reason: "A transferÃªncia jÃ¡ foi criada.",
+      reason: "A transferência já foi criada.",
       payoutId: text(existing.id),
       providerPayoutId: text(existing.provider_payout_id),
       status: text(existing.status),

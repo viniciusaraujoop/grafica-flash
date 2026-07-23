@@ -67,7 +67,7 @@ export class AsaasProvider implements PaymentProvider {
   constructor(apiKey: string, baseUrl = getAsaasBaseUrl()) {
     this.apiKey = String(apiKey || "").trim();
     this.baseUrl = baseUrl.replace(/\/+$/, "");
-    if (!this.apiKey) throw new Error("Credencial Asaas nÃ£o configurada.");
+    if (!this.apiKey) throw new Error("Credencial Asaas não configurada.");
   }
 
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -92,7 +92,7 @@ export class AsaasProvider implements PaymentProvider {
           : "";
 
       throw new AsaasApiError(
-        safeMessage(payload, "NÃ£o foi possÃ­vel concluir a operaÃ§Ã£o financeira."),
+        safeMessage(payload, "Não foi possível concluir a operação financeira."),
         response.status,
         code || undefined,
       );
