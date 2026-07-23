@@ -1,0 +1,46 @@
+[2026-07-23 14:23:46] [STEP] Fase 0 - auditando codigo, checkout, assinatura e providers
+[2026-07-23 14:23:47] [OK] Auditoria concluida: 187 arquivos relacionados.
+[2026-07-23 14:23:47] [STEP] Executando npm.cmd run build
+[2026-07-23 14:24:12] [OK] build inicial passou em 25.1s.
+[2026-07-23 14:24:12] [STEP] Executando npm.cmd run lint
+[2026-07-23 14:24:34] [WARN] lint inicial falhou com codigo 1.
+[2026-07-23 14:24:34] [STEP] Aplicando fase: backend
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\assinatura\asaas\cancelar\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\assinatura\asaas\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\checkout\[slug]\card\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\checkout\[slug]\pix\[paymentId]\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\checkout\[slug]\pix\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\checkout\[slug]\prepare\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\checkout\[slug]\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\checkout\[slug]\status\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\payments\asaas\account\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\payments\asaas\account\status\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\payments\asaas\payouts\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\payments\asaas\transactions\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: app\api\webhooks\asaas\route.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\asaas-config.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\checkout-service.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\credential-encryption.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\financial-integration.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\idempotency.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\money.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\payment-errors.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\plan-fees.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\provider.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\provider-factory.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\providers\asaas.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\providers\mercado-pago.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\server-context.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\subscription-asaas.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\payments\types.ts
+[2026-07-23 14:24:34] [INFO] Sem alteracao: lib\plans\plan-config.ts
+[2026-07-23 14:24:34] [INFO] Wrapper ja instalado: app/api/checkout/plano/route.ts
+[2026-07-23 14:24:34] [INFO] Wrapper ja instalado: app/api/assinatura/cancelar/route.ts
+[2026-07-23 14:24:34] [STEP] Validando implementacao estatica
+[2026-07-23 14:24:34] [OK] Validacao estatica concluida.
+[2026-07-23 14:24:34] [STEP] Executando npm.cmd run lint
+[2026-07-23 14:24:56] [WARN] lint final falhou com codigo 1.
+[2026-07-23 14:24:56] [STEP] Executando npm.cmd run build
+[2026-07-23 14:25:22] [OK] build final passou em 25.64s.
+[2026-07-23 14:25:22] [INFO] Backup criado: RELATORIO-MIGRACAO-ASAAS-ORCALY.md
+[2026-07-23 14:25:22] [OK] Atualizado: RELATORIO-MIGRACAO-ASAAS-ORCALY.md

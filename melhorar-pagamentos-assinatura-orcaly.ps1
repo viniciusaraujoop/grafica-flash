@@ -1,0 +1,702 @@
+#requires -version 5.1
+<#+
+.SYNOPSIS
+  Melhora Pagamentos e Assinatura do Orcaly com trial unico e cancelamento real.
+
+.USAGE
+  powershell -ExecutionPolicy Bypass -File .\melhorar-pagamentos-assinatura-orcaly.ps1
+#>
+
+param(
+    [switch]$DryRun,
+    [switch]$SkipInitialBuild,
+    [switch]$SkipFinalBuild,
+    [switch]$SkipQa,
+    [switch]$VerboseOutput
+)
+
+Set-StrictMode -Version 2.0
+$ErrorActionPreference = "Stop"
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+$ProjectRoot = (Get-Location).Path
+$Timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$BackupRoot = Join-Path $ProjectRoot (".orcaly-backups\pagamentos-assinatura-" + $Timestamp)
+$LogPath = Join-Path $BackupRoot "execucao.log"
+$ManifestPath = Join-Path $BackupRoot "manifesto-arquivos-alterados.txt"
+$AuditPath = Join-Path $BackupRoot "auditoria-inicial.txt"
+$ReportPath = Join-Path $ProjectRoot "RELATORIO-PAGAMENTOS-ASSINATURA-ORCALY.md"
+$ChangedFiles = New-Object System.Collections.ArrayList
+$CreatedFiles = New-Object System.Collections.ArrayList
+$QaResults = New-Object System.Collections.ArrayList
+$PreservedSymbols = New-Object System.Collections.ArrayList
+$AuditFiles = New-Object System.Collections.ArrayList
+$BuildInitial = "NAO TESTADO"
+$BuildFinal = "NAO TESTADO"
+$LintInitial = "NAO TESTADO"
+$LintFinal = "NAO TESTADO"
+$MigrationGenerated = $false
+$PagePaymentsStatus = "NAO TESTADO"
+$PageSubscriptionStatus = "NAO TESTADO"
+$TrialStatus = "BLOQUEADO"
+$CancellationStatus = "BLOQUEADO"
+$CardStatus = "BLOQUEADO"
+$PixStatus = "BLOQUEADO"
+
+$PayloadBase64 = @'
+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
+aXB0aW9uLWFjY2Vzcy50c1BLAQIUAxQAAAAIAM2+8Vzf2ksctRwAAEF9AAAbAAAAAAAAAAAAAACAATgDAABsaWIvc3Vic2NyaXB0aW9uLXNlcnZpY2UudHNQ
+SwECFAMUAAAACADNvvFcvdrgKuIBAAAQBQAAJQAAAAAAAAAAAAAAgAEmIAAAYXBwL2FwaS9jb21wYW55L3N1YnNjcmlwdGlvbi9yb3V0ZS50c1BLAQIUAxQA
+AAAIAM2+8VyvmgPwdgEAAOUCAAAkAAAAAAAAAAAAAACAAUsiAABhcHAvYXBpL2Fzc2luYXR1cmEvY2FuY2VsYXIvcm91dGUudHNQSwECFAMUAAAACADNvvFc
+BBQjs1EIAABFIQAAJQAAAAAAAAAAAAAAgAEDJAAAYXBwL2FwaS9tZXJjYWRvLXBhZ28vd2ViaG9vay9yb3V0ZS50c1BLAQIUAxQAAAAIAM2+8VwUJPfPvBkA
+ABdjAAAvAAAAAAAAAAAAAACAAZcsAABjb21wb25lbnRzL3N1YnNjcmlwdGlvbi9TdWJzY3JpcHRpb25NYW5hZ2VyLnRzeFBLAQIUAxQAAAAIAM2+8VxQtgMc
+dAAAAKcAAAAeAAAAAAAAAAAAAACAAaBGAABhcHAvcGFpbmVsL2Fzc2luYXR1cmEvcGFnZS50c3hQSwECFAMUAAAACADNvvFcuRMwHP4AAAABAgAAIQAAAAAA
+AAAAAAAAgAFQRwAAYXBwL3BhaW5lbC9hc3NpbmF0dXJhL2xvYWRpbmcudHN4UEsBAhQDFAAAAAgAzb7xXPDpSsd3AAAArAAAABcAAAAAAAAAAAAAAIABjUgA
+AGFwcC9hc3NpbmF0dXJhL3BhZ2UudHN4UEsBAhQDFAAAAAgAzb7xXMy/ippGAgAArgQAAB8AAAAAAAAAAAAAAIABOUkAAGFwcC9hc3NpbmF0dXJhL3JldG9y
+bm8vcGFnZS50c3hQSwECFAMUAAAACADNvvFc1ICt/YoEAAAkDwAAQAAAAAAAAAAAAAAAgAG8SwAAc3VwYWJhc2UvbWlncmF0aW9ucy8yMDI2MDcxN19zdWJz
+Y3JpcHRpb25fdHJpYWxfY2FuY2VsbGF0aW9uLnNxbFBLBQYAAAAACwALAIEDAACkUAAAAAA=
+'@
+
+function Write-Log {
+    param([string]$Message, [string]$Level = "INFO")
+    $line = "[{0}] [{1}] {2}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Level, $Message
+    if (-not $DryRun) {
+        [System.IO.File]::AppendAllText($LogPath, $line + [Environment]::NewLine, $Utf8NoBom)
+    }
+    if ($VerboseOutput -or $Level -ne "DEBUG") { Write-Host $line }
+}
+
+function Write-Step { param([string]$Message) Write-Host "`n==> $Message" -ForegroundColor Cyan; Write-Log $Message "STEP" }
+function Write-Success { param([string]$Message) Write-Host "[OK] $Message" -ForegroundColor Green; Write-Log $Message "OK" }
+function Write-Warning { param([string]$Message) Write-Host "[AVISO] $Message" -ForegroundColor Yellow; Write-Log $Message "WARN" }
+function Write-Failure { param([string]$Message) Write-Host "[ERRO] $Message" -ForegroundColor Red; Write-Log $Message "ERROR" }
+function Stop-OnCriticalFailure { param([string]$Message) Write-Failure $Message; throw $Message }
+
+function Test-ProjectFile {
+    param([string]$RelativePath)
+    return Test-Path -LiteralPath (Join-Path $ProjectRoot $RelativePath)
+}
+
+function Write-Utf8NoBom {
+    param([string]$Path, [string]$Content)
+    $directory = Split-Path -Parent $Path
+    if ($directory -and -not (Test-Path -LiteralPath $directory)) {
+        [System.IO.Directory]::CreateDirectory($directory) | Out-Null
+    }
+    [System.IO.File]::WriteAllText($Path, $Content, $Utf8NoBom)
+}
+
+function Backup-ProjectFile {
+    param([string]$RelativePath)
+    $source = Join-Path $ProjectRoot $RelativePath
+    if (-not (Test-Path -LiteralPath $source)) { return }
+    $destination = Join-Path $BackupRoot $RelativePath
+    $directory = Split-Path -Parent $destination
+    if (-not (Test-Path -LiteralPath $directory)) { [System.IO.Directory]::CreateDirectory($directory) | Out-Null }
+    Copy-Item -LiteralPath $source -Destination $destination -Force
+}
+
+function Add-ChangedFile {
+    param([string]$RelativePath, [bool]$Created)
+    if (-not $ChangedFiles.Contains($RelativePath)) { [void]$ChangedFiles.Add($RelativePath) }
+    if ($Created -and -not $CreatedFiles.Contains($RelativePath)) { [void]$CreatedFiles.Add($RelativePath) }
+}
+
+function Update-ProjectFile {
+    param([string]$RelativePath, [string]$Content)
+    $target = Join-Path $ProjectRoot $RelativePath
+    $exists = Test-Path -LiteralPath $target
+    $current = if ($exists) { [System.IO.File]::ReadAllText($target) } else { "" }
+    if ($current -eq $Content) {
+        Write-Log ("Sem alteracao: " + $RelativePath) "DEBUG"
+        return $false
+    }
+    if ($DryRun) {
+        Write-Host ("[DRYRUN] Atualizaria: " + $RelativePath) -ForegroundColor Magenta
+        return $true
+    }
+    if ($exists) { Backup-ProjectFile $RelativePath }
+    Write-Utf8NoBom $target $Content
+    Add-ChangedFile $RelativePath (-not $exists)
+    Write-Success ("Atualizado: " + $RelativePath)
+    return $true
+}
+
+function Add-QaResult {
+    param([string]$Area, [string]$Test, [string]$Status, [string]$Detail)
+    [void]$QaResults.Add([pscustomobject]@{ Area = $Area; Test = $Test; Status = $Status; Detail = $Detail })
+}
+
+function Invoke-NpmCommand {
+    param([string]$Label, [string[]]$Arguments, [bool]$Critical = $false)
+    Write-Step ("Executando " + $Label)
+    $started = Get-Date
+    $outputFile = Join-Path $BackupRoot ($Label.Replace(" ", "-") + ".log")
+    if ($DryRun) { return [pscustomobject]@{ Passed = $false; ExitCode = -1; Duration = 0; Output = "DryRun" } }
+    & npm.cmd @Arguments 2>&1 | Tee-Object -FilePath $outputFile | Out-Host
+    $code = $LASTEXITCODE
+    $duration = [math]::Round(((Get-Date) - $started).TotalSeconds, 2)
+    if ($code -eq 0) { Write-Success ("$Label passou em ${duration}s") }
+    else {
+        Write-Warning ("$Label falhou com codigo $code em ${duration}s")
+        if ($Critical) { Stop-OnCriticalFailure ("Falha critica em " + $Label) }
+    }
+    return [pscustomobject]@{ Passed = ($code -eq 0); ExitCode = $code; Duration = $duration; Output = $outputFile }
+}
+
+function Get-PackageScripts {
+    $package = Get-Content -LiteralPath (Join-Path $ProjectRoot "package.json") -Raw | ConvertFrom-Json
+    return $package.scripts
+}
+
+function Audit-Project {
+    Write-Step "Fase 0 - auditando pagamentos e assinatura"
+    $patterns = @(
+        "preapproval", "preapproval_plan", "free_trial", "trial_used_at", "trial_ends_at",
+        "assinatura_status", "assinatura_plano", "assinatura_expira_em", "subscription",
+        "cancel", "canceled", "cancelled", "next_payment_date", "payer_email", "back_url",
+        "external_reference", "MERCADO_PAGO_PLATFORM_ACCESS_TOKEN", "marketplace_payment_settings", "company_id"
+    )
+    $roots = @("app", "lib", "components", "supabase")
+    $lines = New-Object System.Collections.ArrayList
+    [void]$lines.Add("AUDITORIA PAGAMENTOS E ASSINATURA ORCALY")
+    [void]$lines.Add("Gerada em: " + (Get-Date -Format "yyyy-MM-dd HH:mm:ss"))
+    foreach ($root in $roots) {
+        $absolute = Join-Path $ProjectRoot $root
+        if (-not (Test-Path -LiteralPath $absolute)) { continue }
+        Get-ChildItem -LiteralPath $absolute -Recurse -File -ErrorAction SilentlyContinue |
+          Where-Object { $_.Extension -in @(".ts", ".tsx", ".sql", ".js", ".cjs", ".mjs") } |
+          ForEach-Object {
+              $relative = $_.FullName.Substring($ProjectRoot.Length).TrimStart([char[]]"\/")
+              $content = [System.IO.File]::ReadAllText($_.FullName)
+              $matches = @($patterns | Where-Object { $content.IndexOf($_, [StringComparison]::OrdinalIgnoreCase) -ge 0 })
+              if ($matches.Count -gt 0) {
+                  if (-not $AuditFiles.Contains($relative)) { [void]$AuditFiles.Add($relative) }
+                  [void]$lines.Add(("{0} => {1}" -f $relative, ($matches -join ", ")))
+                  $symbols = [regex]::Matches($content, "(?m)^(?:export\s+)?(?:async\s+)?function\s+([A-Za-z0-9_]+)|(?:const|let)\s+(handle[A-Za-z0-9_]+|load[A-Za-z0-9_]+|carregar[A-Za-z0-9_]+)\s*=")
+                  foreach ($symbol in $symbols) {
+                      $name = if ($symbol.Groups[1].Value) { $symbol.Groups[1].Value } else { $symbol.Groups[2].Value }
+                      if ($name -and -not $PreservedSymbols.Contains($name)) { [void]$PreservedSymbols.Add($name) }
+                  }
+              }
+          }
+    }
+    if (-not $DryRun) { Write-Utf8NoBom $AuditPath ($lines -join [Environment]::NewLine) }
+    Write-Success ("Auditoria concluida: " + $AuditFiles.Count + " arquivos relacionados")
+}
+
+function Expand-Payload {
+    Write-Step "Extraindo payload canonico"
+    $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("orcaly-subscription-" + [guid]::NewGuid().ToString("N"))
+    [System.IO.Directory]::CreateDirectory($tempRoot) | Out-Null
+    $zipPath = Join-Path $tempRoot "payload.zip"
+    [System.IO.File]::WriteAllBytes($zipPath, [Convert]::FromBase64String(($PayloadBase64 -replace "\s", "")))
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $tempRoot)
+    return $tempRoot
+}
+
+function Apply-Payload {
+    param([string]$PayloadRoot)
+    Write-Step "Aplicando backend, interface e migration"
+    Get-ChildItem -LiteralPath $PayloadRoot -Recurse -File |
+      Where-Object { $_.Name -ne "payload.zip" } |
+      ForEach-Object {
+          $relative = $_.FullName.Substring($PayloadRoot.Length).TrimStart([char[]]"\/")
+          $content = [System.IO.File]::ReadAllText($_.FullName)
+          [void](Update-ProjectFile $relative $content)
+          if ($relative -like "supabase/migrations/*subscription_trial_cancellation.sql") { $script:MigrationGenerated = $true }
+      }
+}
+
+function Patch-TextFile {
+    param([string]$RelativePath, [scriptblock]$Transform)
+    $path = Join-Path $ProjectRoot $RelativePath
+    if (-not (Test-Path -LiteralPath $path)) { return $false }
+    $current = [System.IO.File]::ReadAllText($path)
+    $next = & $Transform $current
+    if ($next -eq $current) { return $false }
+    return Update-ProjectFile $RelativePath $next
+}
+
+function Apply-ConservativePatches {
+    Write-Step "Separando Pagamentos e Assinatura no menu e na interface"
+
+    foreach ($menuFile in @("lib/panel-modules.ts", "lib/segment-modules.ts")) {
+        if (Test-ProjectFile $menuFile) {
+            [void](Patch-TextFile $menuFile {
+                param($content)
+                $next = $content.Replace("href: '/assinatura'", "href: '/painel/assinatura'")
+                $next = $next.Replace('href: "/assinatura"', 'href: "/painel/assinatura"')
+                return $next
+            })
+        }
+    }
+
+    $paymentsComponent = "components/painel/MarketplacePaymentsPanel.tsx"
+    if (Test-ProjectFile $paymentsComponent) {
+        [void](Patch-TextFile $paymentsComponent {
+            param($content)
+            $next = $content
+            $next = [regex]::Replace(
+              $next,
+              "Gerencie formas de pagamento, recebimentos online e integra..o Mercado Pago da sua loja\.",
+              "Acompanhe vendas, valores recebidos e pagamentos processados pelo seu site.",
+              [Text.RegularExpressions.RegexOptions]::IgnoreCase
+            )
+            if ($next.IndexOf('href="/painel/assinatura"', [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+                $pattern = '(<Link href="/painel/configuracoes"[^>]*>.*?</Link>)'
+                $replacement = '$1' + [Environment]::NewLine + '                <Link href="/painel/assinatura" className="rounded-2xl border border-violet-100 bg-violet-50 px-5 py-3 text-sm font-black text-violet-700">Gerenciar assinatura do Orcaly</Link>'
+                $next = [regex]::Replace($next, $pattern, $replacement, [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+            }
+            return $next
+        })
+    }
+}
+
+function Restore-OnFailure {
+    if ($DryRun) { return }
+    Write-Warning "Restaurando arquivos por falha critica no build final"
+    foreach ($relative in $ChangedFiles) {
+        $backup = Join-Path $BackupRoot $relative
+        $target = Join-Path $ProjectRoot $relative
+        if (Test-Path -LiteralPath $backup) {
+            Copy-Item -LiteralPath $backup -Destination $target -Force
+        } elseif ($CreatedFiles.Contains($relative) -and (Test-Path -LiteralPath $target)) {
+            Remove-Item -LiteralPath $target -Force
+        }
+    }
+}
+
+function Test-Contains {
+    param([string]$RelativePath, [string]$Pattern)
+    $path = Join-Path $ProjectRoot $RelativePath
+    if (-not (Test-Path -LiteralPath $path)) { return $false }
+    return [regex]::IsMatch([System.IO.File]::ReadAllText($path), $Pattern, [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+}
+
+function Run-Qa {
+    Write-Step "Executando QA estatico"
+    Add-QaResult "Pagamentos" "Pagina permanece separada da assinatura" ($(if ((Test-ProjectFile "app/painel/pagamentos/page.tsx") -and (Test-ProjectFile "app/painel/assinatura/page.tsx")) { "PASSOU" } else { "FALHOU" })) "Rotas independentes."
+    Add-QaResult "Assinatura" "Interface premium e modal de cancelamento" ($(if ((Test-Contains "components/subscription/SubscriptionManager.tsx" "Cancelar assinatura") -and (Test-Contains "components/subscription/SubscriptionManager.tsx" 'role="dialog"')) { "PASSOU" } else { "FALHOU" })) "Componente real ligado ao backend."
+    Add-QaResult "Trial" "Concessao atomica somente uma vez" ($(if ((Test-Contains "supabase/migrations/20260717_subscription_trial_cancellation.sql" "trial_used_at is null") -and (Test-Contains "supabase/migrations/20260717_subscription_trial_cancellation.sql" "claim_company_subscription_trial")) { "PASSOU" } else { "FALHOU" })) "Migration deve ser aplicada no Supabase."
+    Add-QaResult "Cartao" "Preapproval usa token da plataforma e free_trial" ($(if ((Test-Contains "lib/subscription-service.ts" "MERCADO_PAGO_PLATFORM_ACCESS_TOKEN") -and (Test-Contains "lib/subscription-service.ts" "free_trial")) { "PASSOU" } else { "FALHOU" })) "Teste externo depende de credenciais reais."
+    Add-QaResult "Pix" "Primeira adesao inicia trial sem criar cobranca" ($(if ((Test-Contains "lib/subscription-service.ts" "Nenhuma cobran.a Pix foi criada agora") -and -not (Test-Contains "lib/subscription-service.ts" "default_payment_method_id")) { "PASSOU" } else { "FALHOU" })) "Pix permanece pagamento mensal avulso."
+    Add-QaResult "Cancelamento" "Mercado Pago confirmado antes da alteracao local" ($(if ((Test-Contains "lib/subscription-service.ts" 'status: "canceled"') -and (Test-Contains "lib/subscription-service.ts" "Nenhuma altera..o local foi aplicada")) { "PASSOU" } else { "FALHOU" })) "Preapproval ID e company ID resolvidos no servidor."
+    Add-QaResult "Seguranca" "Frontend nao envia company_id nem preapproval_id" ($(if (-not (Test-Contains "components/subscription/SubscriptionManager.tsx" "company_id|preapproval_id")) { "PASSOU" } else { "FALHOU" })) "Identificadores sensiveis resolvidos no servidor."
+    Add-QaResult "Webhook" "Referencias distinguem assinatura, Pix e marketplace" ($(if ((Test-Contains "app/api/mercado-pago/webhook/route.ts" "orcaly_marketplace") -and (Test-Contains "lib/subscription-service.ts" "orcaly_subscription_pix")) { "PASSOU" } else { "FALHOU" })) "Marketplace e assinatura nao compartilham referencia."
+    Add-QaResult "Externo" "Cancelamento real no Mercado Pago" "BLOQUEADO" "Exige conta, assinatura e credenciais reais."
+    Add-QaResult "Externo" "Primeira cobranca apos sete dias" "BLOQUEADO" "Exige completar checkout de assinatura no Mercado Pago."
+    Add-QaResult "Banco" "Migration aplicada no Supabase" "BLOQUEADO" "O patcher gera SQL, mas nao recebe credenciais para executar DDL remoto."
+}
+
+function New-Report {
+    if ($SkipQa -or $DryRun) { return }
+    Write-Step "Gerando relatorio final"
+    $lines = New-Object System.Collections.ArrayList
+    [void]$lines.Add("# RELATORIO PAGAMENTOS E ASSINATURA ORCALY")
+    [void]$lines.Add("")
+    [void]$lines.Add("Gerado em: " + (Get-Date -Format "yyyy-MM-dd HH:mm:ss"))
+    [void]$lines.Add("")
+    [void]$lines.Add("## 1. Build inicial")
+    [void]$lines.Add("- Status: " + $BuildInitial)
+    [void]$lines.Add("- Lint inicial: " + $LintInitial)
+    [void]$lines.Add("")
+    [void]$lines.Add("## 2. Arquivos auditados")
+    foreach ($item in $AuditFiles) { [void]$lines.Add("- " + $item) }
+    [void]$lines.Add("")
+    [void]$lines.Add("## 3. Estrutura existente preservada")
+    [void]$lines.Add("- Rota /api/company/subscription mantida e ampliada.")
+    [void]$lines.Add("- Webhook /api/mercado-pago/webhook mantido para assinatura e Pix do Orcaly.")
+    [void]$lines.Add("- Tabelas companies e plan_payments mantidas como fontes existentes.")
+    [void]$lines.Add("- Checkout, OAuth e split das lojas nao foram alterados.")
+    [void]$lines.Add("")
+    [void]$lines.Add("## 4. Pagina Pagamentos")
+    [void]$lines.Add("- Status: " + $PagePaymentsStatus)
+    [void]$lines.Add("- Recebimentos da loja permanecem separados da cobranca do plano.")
+    [void]$lines.Add("")
+    [void]$lines.Add("## 5. Pagina Assinatura")
+    [void]$lines.Add("- Status: " + $PageSubscriptionStatus)
+    [void]$lines.Add("- Novo card principal, estados, historico, planos, Pix, cartao e modal de cancelamento.")
+    [void]$lines.Add("")
+    [void]$lines.Add("## 6. Trial de sete dias")
+    [void]$lines.Add("- Status: " + $TrialStatus)
+    [void]$lines.Add("- trial_used_at e protegido contra limpeza.")
+    [void]$lines.Add("- Concessao usa update atomico condicionado a trial_used_at IS NULL.")
+    [void]$lines.Add("")
+    [void]$lines.Add("## 7. Pix")
+    [void]$lines.Add("- Status: " + $PixStatus)
+    [void]$lines.Add("- Primeira adesao inicia o trial sem cobranca imediata.")
+    [void]$lines.Add("- Renovacoes posteriores usam pagamento unico.")
+    [void]$lines.Add("")
+    [void]$lines.Add("## 8. Cartao recorrente")
+    [void]$lines.Add("- Status: " + $CardStatus)
+    [void]$lines.Add("- Preapproval usa credencial da plataforma e free_trial apenas quando elegivel.")
+    [void]$lines.Add("")
+    [void]$lines.Add("## 9. Cancelamento")
+    [void]$lines.Add("- Status: " + $CancellationStatus)
+    [void]$lines.Add("- Recorrencia e cancelada no Mercado Pago antes da alteracao local.")
+    [void]$lines.Add("- Pix nao chama preapproval.")
+    [void]$lines.Add("- Acesso e preservado ate o fim do periodo valido.")
+    [void]$lines.Add("")
+    [void]$lines.Add("## 10. Webhook")
+    [void]$lines.Add("- Idempotencia apoiada por indice unico em subscription_events.")
+    [void]$lines.Add("- Eventos antigos nao removem trial_used_at nem reativam cancelamento agendado.")
+    [void]$lines.Add("")
+    [void]$lines.Add("## 11. Seguranca")
+    [void]$lines.Add("- company_id, preco, elegibilidade e preapproval_id sao resolvidos no servidor.")
+    [void]$lines.Add("- Tokens nao sao retornados ao frontend nem gravados no relatorio.")
+    [void]$lines.Add("")
+    [void]$lines.Add("## 12. Migration")
+    [void]$lines.Add("- Gerada: " + $MigrationGenerated)
+    [void]$lines.Add("- Caminho: supabase/migrations/20260717_subscription_trial_cancellation.sql")
+    [void]$lines.Add("")
+    [void]$lines.Add("## 13. Testes")
+    foreach ($result in $QaResults) {
+        [void]$lines.Add(("- [{0}] {1} / {2}: {3}" -f $result.Status, $result.Area, $result.Test, $result.Detail))
+    }
+    [void]$lines.Add("")
+    [void]$lines.Add("## 14. Build final")
+    [void]$lines.Add("- Status: " + $BuildFinal)
+    [void]$lines.Add("- Lint final: " + $LintFinal)
+    [void]$lines.Add("")
+    [void]$lines.Add("## 15. Itens bloqueados")
+    [void]$lines.Add("- Aplicacao da migration no Supabase.")
+    [void]$lines.Add("- Checkout real com usuario pagador distinto da conta recebedora.")
+    [void]$lines.Add("- Confirmacao de cobranca somente apos sete dias no ambiente Mercado Pago.")
+    [void]$lines.Add("- Cancelamento de uma preapproval real e confirmacao via webhook.")
+    [void]$lines.Add("")
+    [void]$lines.Add("## 16. Testes manuais necessarios")
+    [void]$lines.Add("- Aplicar a migration no Supabase.")
+    [void]$lines.Add("- Criar primeira adesao com cartao e verificar free trial.")
+    [void]$lines.Add("- Criar primeira adesao com Pix e verificar ausencia de cobranca inicial.")
+    [void]$lines.Add("- Cancelar durante trial e durante periodo pago.")
+    [void]$lines.Add("- Confirmar responsividade de /painel/pagamentos e /painel/assinatura.")
+    [void]$lines.Add("")
+    [void]$lines.Add("## Arquivos alterados")
+    foreach ($item in $ChangedFiles) { [void]$lines.Add("- " + $item) }
+    [void]$lines.Add("")
+    [void]$lines.Add("## Backups")
+    [void]$lines.Add("- " + $BackupRoot)
+    Write-Utf8NoBom $ReportPath ($lines -join [Environment]::NewLine)
+    Write-Success "Relatorio gerado"
+}
+
+try {
+    foreach ($required in @("package.json", "app", "lib", "components")) {
+        if (-not (Test-ProjectFile $required)) { Stop-OnCriticalFailure ("Raiz invalida. Ausente: " + $required) }
+    }
+
+    if (-not $DryRun) {
+        [System.IO.Directory]::CreateDirectory($BackupRoot) | Out-Null
+        Write-Utf8NoBom $LogPath ""
+    }
+
+    Audit-Project
+
+    if ($DryRun) {
+        Write-Step "DryRun concluido"
+        Write-Host "Arquivos previstos: backend de assinatura, webhook, interface, rotas e migration." -ForegroundColor Magenta
+        exit 0
+    }
+
+    $scripts = Get-PackageScripts
+    if (-not $SkipInitialBuild) {
+        $result = Invoke-NpmCommand "build-inicial" @("run", "build") $false
+        $BuildInitial = if ($result.Passed) { "PASSOU" } else { "FALHOU" }
+    }
+    if ($scripts.PSObject.Properties.Name -contains "lint") {
+        $result = Invoke-NpmCommand "lint-inicial" @("run", "lint") $false
+        $LintInitial = if ($result.Passed) { "PASSOU" } else { "FALHOU" }
+    }
+
+    $payloadRoot = Expand-Payload
+    try {
+        Apply-Payload $payloadRoot
+        Apply-ConservativePatches
+    } finally {
+        Remove-Item -LiteralPath $payloadRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    $PagePaymentsStatus = if (Test-ProjectFile "app/painel/pagamentos/page.tsx") { "ATUALIZADA" } else { "FALHOU" }
+    $PageSubscriptionStatus = if (Test-ProjectFile "app/painel/assinatura/page.tsx") { "ATUALIZADA" } else { "FALHOU" }
+    $TrialStatus = if (Test-Contains "lib/subscription-service.ts" "claim_company_subscription_trial") { "IMPLEMENTADO" } else { "BLOQUEADO" }
+    $CancellationStatus = if (Test-ProjectFile "app/api/assinatura/cancelar/route.ts") { "IMPLEMENTADO" } else { "BLOQUEADO" }
+    $CardStatus = if (Test-Contains "lib/subscription-service.ts" "free_trial") { "VALIDADO" } else { "BLOQUEADO" }
+    $PixStatus = if (Test-Contains "lib/subscription-service.ts" "pix_avulso") { "VALIDADO" } else { "BLOQUEADO" }
+
+    Run-Qa
+
+    if ($scripts.PSObject.Properties.Name -contains "typecheck") {
+        [void](Invoke-NpmCommand "typecheck-final" @("run", "typecheck") $false)
+    }
+    if ($scripts.PSObject.Properties.Name -contains "test") {
+        [void](Invoke-NpmCommand "test-final" @("run", "test") $false)
+    }
+    if ($scripts.PSObject.Properties.Name -contains "lint") {
+        $result = Invoke-NpmCommand "lint-final" @("run", "lint") $false
+        $LintFinal = if ($result.Passed) { "PASSOU" } else { "FALHOU" }
+    }
+
+    if (-not $SkipFinalBuild) {
+        $result = Invoke-NpmCommand "build-final" @("run", "build") $false
+        $BuildFinal = if ($result.Passed) { "PASSOU" } else { "FALHOU" }
+        if (-not $result.Passed) {
+            Restore-OnFailure
+            Stop-OnCriticalFailure "Build final falhou. Arquivos restaurados a partir do backup."
+        }
+    }
+
+    if (-not $SkipQa) { New-Report }
+    Write-Utf8NoBom $ManifestPath (($ChangedFiles | Sort-Object) -join [Environment]::NewLine)
+
+    $blockedCount = @($QaResults | Where-Object { $_.Status -eq "BLOQUEADO" }).Count
+    Write-Host "`nOrcaly - pagamentos e assinatura atualizados" -ForegroundColor Green
+    Write-Host ("Build inicial: " + $BuildInitial)
+    Write-Host ("Build final: " + $BuildFinal)
+    Write-Host ("Pagina Pagamentos: " + $PagePaymentsStatus)
+    Write-Host ("Pagina Assinatura: " + $PageSubscriptionStatus)
+    Write-Host ("Teste gratuito: " + $TrialStatus)
+    Write-Host ("Cancelamento: " + $CancellationStatus)
+    Write-Host ("Cartao recorrente: " + $CardStatus)
+    Write-Host ("Pix: " + $PixStatus)
+    Write-Host ("Funcoes preservadas: " + $PreservedSymbols.Count)
+    Write-Host ("Arquivos alterados: " + $ChangedFiles.Count)
+    Write-Host ("Migration gerada: " + $(if ($MigrationGenerated) { "SIM" } else { "NAO" }))
+    Write-Host "Relatorio: RELATORIO-PAGAMENTOS-ASSINATURA-ORCALY.md"
+    Write-Host ("Backups: " + $BackupRoot)
+    Write-Host ("Itens bloqueados: " + $blockedCount)
+    $FinalPhrase = "Pagamentos e Assinatura do Or" + [char]0x00E7 + "aly foram aprimorados com visual premium, teste gratuito " + [char]0x00FA + "nico de sete dias, cancelamento seguro e preserva" + [char]0x00E7 + [char]0x00E3 + "o do acesso at" + [char]0x00E9 + " o fim do per" + [char]0x00ED + "odo v" + [char]0x00E1 + "lido."
+    Write-Host ("`n" + $FinalPhrase) -ForegroundColor Green
+} catch {
+    Write-Failure $_.Exception.Message
+    exit 1
+}

@@ -1,0 +1,1452 @@
+{
+    "generatedAt":  "2026-07-23T13:12:52.8250150-03:00",
+    "project":  "Orcaly",
+    "projectRoot":  "C:\\Users\\arauj\\grafica-flash",
+    "phase":  "all",
+    "files":  [
+                  {
+                      "path":  "app/admin/pagamentos/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  178
+                  },
+                  {
+                      "path":  "app/api/admin/company/[id]/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  1681
+                  },
+                  {
+                      "path":  "app/api/admin/dashboard/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  9125
+                  },
+                  {
+                      "path":  "app/api/admin/scan/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "PIX",
+                                      "webhook"
+                                  ],
+                      "size":  29771
+                  },
+                  {
+                      "path":  "app/api/admin/site/[id]/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  842
+                  },
+                  {
+                      "path":  "app/api/ai/product-helper/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  3354
+                  },
+                  {
+                      "path":  "app/api/assinatura/cancelar/route.ts",
+                      "matches":  [
+
+                                  ],
+                      "size":  741
+                  },
+                  {
+                      "path":  "app/api/audit/logs/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  1243
+                  },
+                  {
+                      "path":  "app/api/balcao/quick-proposal/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  4078
+                  },
+                  {
+                      "path":  "app/api/checkout/lead/route.ts",
+                      "matches":  [
+                                      "checkout/preferences",
+                                      "CREDIT_CARD",
+                                      "external_reference",
+                                      "MercadoPago",
+                                      "mercado-pago",
+                                      "PIX",
+                                      "webhook"
+                                  ],
+                      "size":  10592
+                  },
+                  {
+                      "path":  "app/api/checkout/plano/route.ts",
+                      "matches":  [
+                                      "checkout/preferences",
+                                      "company_id",
+                                      "CREDIT_CARD",
+                                      "external_reference",
+                                      "MercadoPago",
+                                      "mercado-pago",
+                                      "PIX",
+                                      "plan_payments",
+                                      "webhook"
+                                  ],
+                      "size":  13692
+                  },
+                  {
+                      "path":  "app/api/cliente/[token]/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  2175
+                  },
+                  {
+                      "path":  "app/api/clientes/magic-link/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  2122
+                  },
+                  {
+                      "path":  "app/api/company/settings/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "PIX"
+                                  ],
+                      "size":  11646
+                  },
+                  {
+                      "path":  "app/api/company/subscription/route.ts",
+                      "matches":  [
+
+                                  ],
+                      "size":  1296
+                  },
+                  {
+                      "path":  "app/api/company/team/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "PIX"
+                                  ],
+                      "size":  13179
+                  },
+                  {
+                      "path":  "app/api/coupons/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  4651
+                  },
+                  {
+                      "path":  "app/api/coupons/[id]/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  3245
+                  },
+                  {
+                      "path":  "app/api/crm/leads/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  3846
+                  },
+                  {
+                      "path":  "app/api/crm/leads/[id]/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  2525
+                  },
+                  {
+                      "path":  "app/api/leads/complete-account/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  6478
+                  },
+                  {
+                      "path":  "app/api/marketplace/coupon/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "split"
+                                  ],
+                      "size":  7153
+                  },
+                  {
+                      "path":  "app/api/marketplace/order/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "CREDIT_CARD",
+                                      "MercadoPago",
+                                      "order_payments",
+                                      "PIX",
+                                      "provider",
+                                      "split"
+                                  ],
+                      "size":  33708
+                  },
+                  {
+                      "path":  "app/api/marketplace/payments/create/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "external_reference",
+                                      "marketplace_fee",
+                                      "marketplace_payments",
+                                      "MercadoPago",
+                                      "mercado-pago",
+                                      "order_payments",
+                                      "provider",
+                                      "webhook"
+                                  ],
+                      "size":  12702
+                  },
+                  {
+                      "path":  "app/api/marketplace/payments/mercado-pago/callback/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "MercadoPago",
+                                      "mercado-pago",
+                                      "provider"
+                                  ],
+                      "size":  3504
+                  },
+                  {
+                      "path":  "app/api/marketplace/payments/mercado-pago/connect/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "MercadoPago",
+                                      "mercado-pago",
+                                      "provider"
+                                  ],
+                      "size":  1548
+                  },
+                  {
+                      "path":  "app/api/marketplace/payments/mercado-pago/disconnect/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "provider"
+                                  ],
+                      "size":  1378
+                  },
+                  {
+                      "path":  "app/api/marketplace/payments/sales/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "marketplace_payments",
+                                      "provider"
+                                  ],
+                      "size":  1329
+                  },
+                  {
+                      "path":  "app/api/marketplace/payments/settings/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "marketplace_payments",
+                                      "provider"
+                                  ],
+                      "size":  3090
+                  },
+                  {
+                      "path":  "app/api/marketplace/payments/webhook/mercado-pago/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "external_reference",
+                                      "marketplace_payments",
+                                      "MercadoPago",
+                                      "mercado-pago",
+                                      "order_payments",
+                                      "provider",
+                                      "split",
+                                      "webhook"
+                                  ],
+                      "size":  6631
+                  },
+                  {
+                      "path":  "app/api/marketplace/store/[slug]/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "PIX",
+                                      "provider"
+                                  ],
+                      "size":  7221
+                  },
+                  {
+                      "path":  "app/api/mercado-pago/webhook/route.ts",
+                      "matches":  [
+                                      "external_reference",
+                                      "MercadoPago",
+                                      "mercado-pago",
+                                      "PIX",
+                                      "plan_payments",
+                                      "preapproval",
+                                      "provider",
+                                      "webhook"
+                                  ],
+                      "size":  8517
+                  },
+                  {
+                      "path":  "app/api/mercado-pago/webhook-leads/route.ts",
+                      "matches":  [
+                                      "external_reference",
+                                      "MercadoPago"
+                                  ],
+                      "size":  2513
+                  },
+                  {
+                      "path":  "app/api/nichos/apply/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  2495
+                  },
+                  {
+                      "path":  "app/api/notifications/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  2430
+                  },
+                  {
+                      "path":  "app/api/notifications/smart-settings/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  3553
+                  },
+                  {
+                      "path":  "app/api/onboarding/status/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  2939
+                  },
+                  {
+                      "path":  "app/api/orders/repeat/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  4200
+                  },
+                  {
+                      "path":  "app/api/orders/[id]/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  5070
+                  },
+                  {
+                      "path":  "app/api/orders/[id]/comments/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  2886
+                  },
+                  {
+                      "path":  "app/api/orders/[id]/create-proposal/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  3280
+                  },
+                  {
+                      "path":  "app/api/orders/[id]/create-task/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  2619
+                  },
+                  {
+                      "path":  "app/api/orders/[id]/timeline/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  1235
+                  },
+                  {
+                      "path":  "app/api/platform-admin/commission-rules/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  2557
+                  },
+                  {
+                      "path":  "app/api/platform-admin/summary/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "marketplace_payments",
+                                      "provider"
+                                  ],
+                      "size":  4612
+                  },
+                  {
+                      "path":  "app/api/producao/update/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  1803
+                  },
+                  {
+                      "path":  "app/api/products/[id]/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  5050
+                  },
+                  {
+                      "path":  "app/api/propostas/[token]/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "PIX",
+                                      "split"
+                                  ],
+                      "size":  17985
+                  },
+                  {
+                      "path":  "app/api/public-site/[slug]/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "provider"
+                                  ],
+                      "size":  5962
+                  },
+                  {
+                      "path":  "app/api/qrcode/route.ts",
+                      "matches":  [
+                                      "split"
+                                  ],
+                      "size":  889
+                  },
+                  {
+                      "path":  "app/api/system/health/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  3855
+                  },
+                  {
+                      "path":  "app/api/tasks/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  3660
+                  },
+                  {
+                      "path":  "app/api/tasks/[id]/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  2472
+                  },
+                  {
+                      "path":  "app/api/whatsapp/order-status/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  2295
+                  },
+                  {
+                      "path":  "app/api/whatsapp/settings/route.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  6524
+                  },
+                  {
+                      "path":  "app/api/whatsapp/webhook/route.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "webhook"
+                                  ],
+                      "size":  4664
+                  },
+                  {
+                      "path":  "app/assinatura/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  131
+                  },
+                  {
+                      "path":  "app/assinatura/retorno/page.tsx",
+                      "matches":  [
+                                      "PIX"
+                                  ],
+                      "size":  1198
+                  },
+                  {
+                      "path":  "app/cadastro/page.tsx",
+                      "matches":  [
+                                      "PIX"
+                                  ],
+                      "size":  43241
+                  },
+                  {
+                      "path":  "app/checkout/falha/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  947
+                  },
+                  {
+                      "path":  "app/checkout/pendente/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  935
+                  },
+                  {
+                      "path":  "app/checkout/sucesso/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  3561
+                  },
+                  {
+                      "path":  "app/pagamento/erro/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  1500
+                  },
+                  {
+                      "path":  "app/pagamento/pendente/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  1504
+                  },
+                  {
+                      "path":  "app/pagamento/sucesso/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  1503
+                  },
+                  {
+                      "path":  "app/painel/page.tsx",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  40310
+                  },
+                  {
+                      "path":  "app/painel/assinatura/loading.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  513
+                  },
+                  {
+                      "path":  "app/painel/assinatura/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  167
+                  },
+                  {
+                      "path":  "app/painel/central-operacional/page.tsx",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  22533
+                  },
+                  {
+                      "path":  "app/painel/clientes/page.tsx",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  30432
+                  },
+                  {
+                      "path":  "app/painel/configuracoes/ConfiguracoesLegacy.tsx",
+                      "matches":  [
+                                      "PIX"
+                                  ],
+                      "size":  40596
+                  },
+                  {
+                      "path":  "app/painel/financeiro/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  163
+                  },
+                  {
+                      "path":  "app/painel/financeiro/contas-a-pagar/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  160
+                  },
+                  {
+                      "path":  "app/painel/financeiro/contas-a-receber/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  162
+                  },
+                  {
+                      "path":  "app/painel/financeiro/entradas/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  124
+                  },
+                  {
+                      "path":  "app/painel/financeiro/lancamentos/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  166
+                  },
+                  {
+                      "path":  "app/painel/financeiro/materiais/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  164
+                  },
+                  {
+                      "path":  "app/painel/financeiro/saidas/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  124
+                  },
+                  {
+                      "path":  "app/painel/formas-pagamento/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  146
+                  },
+                  {
+                      "path":  "app/painel/modulo/assinatura/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  135
+                  },
+                  {
+                      "path":  "app/painel/oportunidades/page.tsx",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  12339
+                  },
+                  {
+                      "path":  "app/painel/orcamento/[id]/page.tsx",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  18323
+                  },
+                  {
+                      "path":  "app/painel/orcamento-inteligente/page.tsx",
+                      "matches":  [
+                                      "company_id",
+                                      "split"
+                                  ],
+                      "size":  8916
+                  },
+                  {
+                      "path":  "app/painel/pagamentos/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  184
+                  },
+                  {
+                      "path":  "app/painel/pagamentos/configuracao/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  194
+                  },
+                  {
+                      "path":  "app/painel/pagamentos/vendas/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  187
+                  },
+                  {
+                      "path":  "app/painel/pedidos/page.tsx",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  15550
+                  },
+                  {
+                      "path":  "app/painel/pedidos/[id]/page.tsx",
+                      "matches":  [
+                                      "PIX"
+                                  ],
+                      "size":  20852
+                  },
+                  {
+                      "path":  "app/painel/producao/page.tsx",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  8560
+                  },
+                  {
+                      "path":  "app/painel/produtos/page.tsx",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  51266
+                  },
+                  {
+                      "path":  "app/painel/produtos/[id]/page.tsx",
+                      "matches":  [
+                                      "split"
+                                  ],
+                      "size":  18039
+                  },
+                  {
+                      "path":  "app/painel/proposta/[id]/page.tsx",
+                      "matches":  [
+                                      "company_id",
+                                      "PIX"
+                                  ],
+                      "size":  20069
+                  },
+                  {
+                      "path":  "app/painel/propostas/page.tsx",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  9816
+                  },
+                  {
+                      "path":  "app/painel/sinal-pagamento/page.tsx",
+                      "matches":  [
+
+                                  ],
+                      "size":  173
+                  },
+                  {
+                      "path":  "app/painel/site/page.tsx",
+                      "matches":  [
+                                      "company_id",
+                                      "mercado-pago",
+                                      "PIX"
+                                  ],
+                      "size":  35904
+                  },
+                  {
+                      "path":  "app/painel/whatsapp/page.tsx",
+                      "matches":  [
+                                      "webhook"
+                                  ],
+                      "size":  31824
+                  },
+                  {
+                      "path":  "app/proposta/[token]/page.tsx",
+                      "matches":  [
+                                      "PIX"
+                                  ],
+                      "size":  17880
+                  },
+                  {
+                      "path":  "components/SignaturePad.tsx",
+                      "matches":  [
+                                      "PIX"
+                                  ],
+                      "size":  3374
+                  },
+                  {
+                      "path":  "components/admin/InternalAdminClient.tsx",
+                      "matches":  [
+                                      "company_id",
+                                      "provider"
+                                  ],
+                      "size":  13642
+                  },
+                  {
+                      "path":  "components/financeiro/FinancialAreaClient.tsx",
+                      "matches":  [
+                                      "company_id",
+                                      "PIX"
+                                  ],
+                      "size":  43943
+                  },
+                  {
+                      "path":  "components/food/BusinessHoursManager.tsx",
+                      "matches":  [
+                                      "company_id",
+                                      "split"
+                                  ],
+                      "size":  16679
+                  },
+                  {
+                      "path":  "components/food/DeliveriesManager.tsx",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  29891
+                  },
+                  {
+                      "path":  "components/food/DeliveryZonesManager.tsx",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  21761
+                  },
+                  {
+                      "path":  "components/food/PaymentMethodsManager.tsx",
+                      "matches":  [
+                                      "company_id",
+                                      "CREDIT_CARD",
+                                      "PIX"
+                                  ],
+                      "size":  19349
+                  },
+                  {
+                      "path":  "components/painel/MarketplacePaymentsPanel.tsx",
+                      "matches":  [
+                                      "MercadoPago",
+                                      "mercado-pago",
+                                      "PIX",
+                                      "provider"
+                                  ],
+                      "size":  22551
+                  },
+                  {
+                      "path":  "components/painel/PanelPremiumHeader.tsx",
+                      "matches":  [
+                                      "split"
+                                  ],
+                      "size":  6525
+                  },
+                  {
+                      "path":  "components/public-site/FoodMarketplaceCatalog.tsx",
+                      "matches":  [
+                                      "MercadoPago",
+                                      "PIX",
+                                      "provider",
+                                      "split"
+                                  ],
+                      "size":  43353
+                  },
+                  {
+                      "path":  "components/public-site/SegmentHeroPanel.tsx",
+                      "matches":  [
+                                      "PIX"
+                                  ],
+                      "size":  9046
+                  },
+                  {
+                      "path":  "components/public-site/SegmentMarketplaceCatalog.tsx",
+                      "matches":  [
+                                      "MercadoPago",
+                                      "PIX",
+                                      "provider"
+                                  ],
+                      "size":  37752
+                  },
+                  {
+                      "path":  "components/subscription/SubscriptionManager.tsx",
+                      "matches":  [
+                                      "PIX",
+                                      "trial_used_at"
+                                  ],
+                      "size":  33560
+                  },
+                  {
+                      "path":  "lib/business-types.ts",
+                      "matches":  [
+                                      "PIX"
+                                  ],
+                      "size":  23841
+                  },
+                  {
+                      "path":  "lib/company-access.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  5395
+                  },
+                  {
+                      "path":  "lib/company-url.ts",
+                      "matches":  [
+                                      "split"
+                                  ],
+                      "size":  2962
+                  },
+                  {
+                      "path":  "lib/marketplace-commission.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  3373
+                  },
+                  {
+                      "path":  "lib/mercado-pago.ts",
+                      "matches":  [
+                                      "checkout/preferences",
+                                      "MercadoPago",
+                                      "mercado-pago",
+                                      "split",
+                                      "webhook"
+                                  ],
+                      "size":  5761
+                  },
+                  {
+                      "path":  "lib/orcaly-audit.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  1682
+                  },
+                  {
+                      "path":  "lib/orcaly-security.ts",
+                      "matches":  [
+                                      "MercadoPago",
+                                      "split"
+                                  ],
+                      "size":  3923
+                  },
+                  {
+                      "path":  "lib/orcaly-site-templates.ts",
+                      "matches":  [
+                                      "PIX"
+                                  ],
+                      "size":  40324
+                  },
+                  {
+                      "path":  "lib/orcaly-smart-notifications.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  15299
+                  },
+                  {
+                      "path":  "lib/panel-modules.ts",
+                      "matches":  [
+                                      "PIX",
+                                      "split"
+                                  ],
+                      "size":  48565
+                  },
+                  {
+                      "path":  "lib/pix.ts",
+                      "matches":  [
+                                      "PIX"
+                                  ],
+                      "size":  2139
+                  },
+                  {
+                      "path":  "lib/security.ts",
+                      "matches":  [
+                                      "MercadoPago",
+                                      "mercado-pago"
+                                  ],
+                      "size":  2877
+                  },
+                  {
+                      "path":  "lib/segment-modules.ts",
+                      "matches":  [
+                                      "PIX",
+                                      "split"
+                                  ],
+                      "size":  52300
+                  },
+                  {
+                      "path":  "lib/site-templates.ts",
+                      "matches":  [
+                                      "PIX"
+                                  ],
+                      "size":  22527
+                  },
+                  {
+                      "path":  "lib/subscription-access.ts",
+                      "matches":  [
+                                      "trial_used_at"
+                                  ],
+                      "size":  2318
+                  },
+                  {
+                      "path":  "lib/subscription-service.ts",
+                      "matches":  [
+                                      "checkout/preferences",
+                                      "company_id",
+                                      "CREDIT_CARD",
+                                      "external_reference",
+                                      "MercadoPago",
+                                      "mercado-pago",
+                                      "PIX",
+                                      "plan_payments",
+                                      "preapproval",
+                                      "provider",
+                                      "split",
+                                      "subscription_events",
+                                      "trial_used_at",
+                                      "webhook"
+                                  ],
+                      "size":  32065
+                  },
+                  {
+                      "path":  "lib/whatsapp-notifications.ts",
+                      "matches":  [
+                                      "company_id",
+                                      "PIX"
+                                  ],
+                      "size":  10778
+                  },
+                  {
+                      "path":  "lib/whatsapp.ts",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  9332
+                  },
+                  {
+                      "path":  "supabase/migrations/20260628_notificacoes_inteligentes.sql",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  6331
+                  },
+                  {
+                      "path":  "supabase/migrations/20260628_operacao_inteligente.sql",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  5830
+                  },
+                  {
+                      "path":  "supabase/migrations/20260628_orcaly_consolidado.sql",
+                      "matches":  [
+                                      "company_id",
+                                      "plan_payments"
+                                  ],
+                      "size":  14201
+                  },
+                  {
+                      "path":  "supabase/migrations/20260628_pedidos_produtos_pro.sql",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  4590
+                  },
+                  {
+                      "path":  "supabase/migrations/20260628_pedidos_pro_v2.sql",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  3364
+                  },
+                  {
+                      "path":  "supabase/migrations/20260630_fix_cupons_loading.sql",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  1379
+                  },
+                  {
+                      "path":  "supabase/migrations/20260630_painel_whatsapp_pro.sql",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  4189
+                  },
+                  {
+                      "path":  "supabase/migrations/20260630_pre_validacao_orcaly.sql",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  11705
+                  },
+                  {
+                      "path":  "supabase/migrations/20260630_whatsapp_pedidos_status.sql",
+                      "matches":  [
+                                      "company_id",
+                                      "webhook"
+                                  ],
+                      "size":  5715
+                  },
+                  {
+                      "path":  "supabase/migrations/20260701_modulos_por_segmento_food_mvp.sql",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  5560
+                  },
+                  {
+                      "path":  "supabase/migrations/20260704_financeiro_base_seguro.sql",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  9807
+                  },
+                  {
+                      "path":  "supabase/migrations/20260705_food_operacao_funcional.sql",
+                      "matches":  [
+                                      "company_id"
+                                  ],
+                      "size":  17219
+                  },
+                  {
+                      "path":  "supabase/migrations/20260706_assinatura_pix_avulso.sql",
+                      "matches":  [
+                                      "company_id",
+                                      "PIX",
+                                      "plan_payments",
+                                      "preapproval",
+                                      "webhook"
+                                  ],
+                      "size":  3171
+                  },
+                  {
+                      "path":  "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                      "matches":  [
+                                      "company_id",
+                                      "order_payments",
+                                      "provider"
+                                  ],
+                      "size":  13549
+                  },
+                  {
+                      "path":  "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                      "matches":  [
+                                      "company_id",
+                                      "order_payments",
+                                      "provider"
+                                  ],
+                      "size":  28010
+                  },
+                  {
+                      "path":  "supabase/migrations/20260706_marketplace_mercado_pago_split.sql",
+                      "matches":  [
+                                      "company_id",
+                                      "marketplace_payments",
+                                      "provider",
+                                      "split"
+                                  ],
+                      "size":  8517
+                  },
+                  {
+                      "path":  "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql",
+                      "matches":  [
+                                      "company_id",
+                                      "marketplace_payments",
+                                      "provider"
+                                  ],
+                      "size":  5386
+                  },
+                  {
+                      "path":  "supabase/migrations/20260717_subscription_trial_cancellation.sql",
+                      "matches":  [
+                                      "company_id",
+                                      "idempotency",
+                                      "provider",
+                                      "subscription_events",
+                                      "trial_used_at"
+                                  ],
+                      "size":  3876
+                  }
+              ],
+    "migrations":  [
+                       {
+                           "name":  "20260628_notificacoes_inteligentes.sql",
+                           "size":  6331
+                       },
+                       {
+                           "name":  "20260628_operacao_inteligente.sql",
+                           "size":  5830
+                       },
+                       {
+                           "name":  "20260628_orcaly_consolidado.sql",
+                           "size":  14201
+                       },
+                       {
+                           "name":  "20260628_pedidos_pro_v2.sql",
+                           "size":  3364
+                       },
+                       {
+                           "name":  "20260628_pedidos_produtos_pro.sql",
+                           "size":  4590
+                       },
+                       {
+                           "name":  "20260630_fix_cupons_loading.sql",
+                           "size":  1379
+                       },
+                       {
+                           "name":  "20260630_painel_whatsapp_pro.sql",
+                           "size":  4189
+                       },
+                       {
+                           "name":  "20260630_pre_validacao_orcaly.sql",
+                           "size":  11705
+                       },
+                       {
+                           "name":  "20260630_whatsapp_pedidos_status.sql",
+                           "size":  5715
+                       },
+                       {
+                           "name":  "20260701_cadastro_onboarding_inteligente.sql",
+                           "size":  1617
+                       },
+                       {
+                           "name":  "20260701_modulos_por_segmento_food_mvp.sql",
+                           "size":  5560
+                       },
+                       {
+                           "name":  "20260702_sites_premium_segmentos.sql",
+                           "size":  2197
+                       },
+                       {
+                           "name":  "20260704_financeiro_base_seguro.sql",
+                           "size":  9807
+                       },
+                       {
+                           "name":  "20260705_food_operacao_funcional.sql",
+                           "size":  17219
+                       },
+                       {
+                           "name":  "20260706_assinatura_pix_avulso.sql",
+                           "size":  3171
+                       },
+                       {
+                           "name":  "20260706_marketplace_checkout_cupons_segmentos.sql",
+                           "size":  13549
+                       },
+                       {
+                           "name":  "20260706_marketplace_food_checkout.sql",
+                           "size":  28010
+                       },
+                       {
+                           "name":  "20260706_marketplace_mercado_pago_split.sql",
+                           "size":  8517
+                       },
+                       {
+                           "name":  "20260716_estabilizacao_orcaly_fases_2_a_12.sql",
+                           "size":  5386
+                       },
+                       {
+                           "name":  "20260717_subscription_trial_cancellation.sql",
+                           "size":  3876
+                       }
+                   ],
+    "existingMercadoPagoRoutes":  [
+                                      "app/api/marketplace/payments/mercado-pago/callback/route.ts",
+                                      "app/api/marketplace/payments/mercado-pago/connect/route.ts",
+                                      "app/api/marketplace/payments/mercado-pago/disconnect/route.ts",
+                                      "app/api/marketplace/payments/webhook/mercado-pago/route.ts",
+                                      "app/api/mercado-pago/webhook/route.ts",
+                                      "app/api/mercado-pago/webhook-leads/route.ts",
+                                      "lib/mercado-pago.ts"
+                                  ],
+    "existingPaymentFiles":  [
+                                 "app/admin/pagamentos/page.tsx",
+                                 "app/api/checkout/lead/route.ts",
+                                 "app/api/checkout/plano/route.ts",
+                                 "app/api/marketplace/payments/create/route.ts",
+                                 "app/api/marketplace/payments/mercado-pago/callback/route.ts",
+                                 "app/api/marketplace/payments/mercado-pago/connect/route.ts",
+                                 "app/api/marketplace/payments/mercado-pago/disconnect/route.ts",
+                                 "app/api/marketplace/payments/sales/route.ts",
+                                 "app/api/marketplace/payments/settings/route.ts",
+                                 "app/api/marketplace/payments/webhook/mercado-pago/route.ts",
+                                 "app/checkout/falha/page.tsx",
+                                 "app/checkout/pendente/page.tsx",
+                                 "app/checkout/sucesso/page.tsx",
+                                 "app/pagamento/erro/page.tsx",
+                                 "app/pagamento/pendente/page.tsx",
+                                 "app/pagamento/sucesso/page.tsx",
+                                 "app/painel/formas-pagamento/page.tsx",
+                                 "app/painel/pagamentos/page.tsx",
+                                 "app/painel/pagamentos/configuracao/page.tsx",
+                                 "app/painel/pagamentos/vendas/page.tsx",
+                                 "app/painel/sinal-pagamento/page.tsx",
+                                 "components/food/PaymentMethodsManager.tsx",
+                                 "components/painel/MarketplacePaymentsPanel.tsx",
+                                 "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                 "supabase/migrations/20260706_marketplace_food_checkout.sql"
+                             ],
+    "schemaHints":  [
+                        {
+                            "table":  "companies",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260628_notificacoes_inteligentes.sql",
+                                                           "supabase/migrations/20260628_operacao_inteligente.sql",
+                                                           "supabase/migrations/20260628_orcaly_consolidado.sql",
+                                                           "supabase/migrations/20260630_pre_validacao_orcaly.sql",
+                                                           "supabase/migrations/20260701_modulos_por_segmento_food_mvp.sql",
+                                                           "supabase/migrations/20260704_financeiro_base_seguro.sql",
+                                                           "supabase/migrations/20260705_food_operacao_funcional.sql",
+                                                           "supabase/migrations/20260706_assinatura_pix_avulso.sql",
+                                                           "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                                           "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                                                           "supabase/migrations/20260706_marketplace_mercado_pago_split.sql",
+                                                           "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql",
+                                                           "supabase/migrations/20260717_subscription_trial_cancellation.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "orders",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260628_notificacoes_inteligentes.sql",
+                                                           "supabase/migrations/20260628_operacao_inteligente.sql",
+                                                           "supabase/migrations/20260628_orcaly_consolidado.sql",
+                                                           "supabase/migrations/20260628_pedidos_pro_v2.sql",
+                                                           "supabase/migrations/20260628_pedidos_produtos_pro.sql",
+                                                           "supabase/migrations/20260630_pre_validacao_orcaly.sql",
+                                                           "supabase/migrations/20260630_whatsapp_pedidos_status.sql",
+                                                           "supabase/migrations/20260705_food_operacao_funcional.sql",
+                                                           "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                                           "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                                                           "supabase/migrations/20260706_marketplace_mercado_pago_split.sql",
+                                                           "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "order_items",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                                           "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                                                           "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "order_payments",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                                           "supabase/migrations/20260706_marketplace_food_checkout.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "plan_payments",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260628_orcaly_consolidado.sql",
+                                                           "supabase/migrations/20260706_assinatura_pix_avulso.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "marketplace_payment_settings",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260706_marketplace_mercado_pago_split.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "marketplace_payments",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260706_marketplace_mercado_pago_split.sql",
+                                                           "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "marketplace_commissions",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260706_marketplace_mercado_pago_split.sql",
+                                                           "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "marketplace_commission_rules",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260706_marketplace_mercado_pago_split.sql",
+                                                           "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "marketplace_oauth_states",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260706_marketplace_mercado_pago_split.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "subscription_events",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260717_subscription_trial_cancellation.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "financial_transactions",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260704_financeiro_base_seguro.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "payment_methods",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260628_orcaly_consolidado.sql",
+                                                           "supabase/migrations/20260701_modulos_por_segmento_food_mvp.sql",
+                                                           "supabase/migrations/20260705_food_operacao_funcional.sql",
+                                                           "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                                           "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                                                           "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "deliveries",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260705_food_operacao_funcional.sql",
+                                                           "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                                           "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                                                           "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "delivery_zones",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260701_modulos_por_segmento_food_mvp.sql",
+                                                           "supabase/migrations/20260705_food_operacao_funcional.sql",
+                                                           "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                                           "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                                                           "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "business_hours",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260628_orcaly_consolidado.sql",
+                                                           "supabase/migrations/20260701_modulos_por_segmento_food_mvp.sql",
+                                                           "supabase/migrations/20260705_food_operacao_funcional.sql",
+                                                           "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                                           "supabase/migrations/20260706_marketplace_food_checkout.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        },
+                        {
+                            "table":  "marketplace_coupons",
+                            "referencedInMigrations":  [
+                                                           "supabase/migrations/20260628_notificacoes_inteligentes.sql",
+                                                           "supabase/migrations/20260628_orcaly_consolidado.sql",
+                                                           "supabase/migrations/20260630_fix_cupons_loading.sql",
+                                                           "supabase/migrations/20260630_pre_validacao_orcaly.sql",
+                                                           "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql"
+                                                       ],
+                            "liveSchemaVerified":  false
+                        }
+                    ],
+    "notes":  [
+                  "A auditoria nao le arquivos .env.",
+                  "O schema ao vivo nao foi presumido.",
+                  "A migration usa verificacoes aditivas e tabelas equivalentes existentes.",
+                  "Mercado Pago permanece preservado como fallback."
+              ]
+}

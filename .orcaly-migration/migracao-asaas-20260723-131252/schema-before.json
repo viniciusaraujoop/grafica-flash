@@ -1,0 +1,171 @@
+[
+    {
+        "table":  "companies",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260628_notificacoes_inteligentes.sql",
+                                       "supabase/migrations/20260628_operacao_inteligente.sql",
+                                       "supabase/migrations/20260628_orcaly_consolidado.sql",
+                                       "supabase/migrations/20260630_pre_validacao_orcaly.sql",
+                                       "supabase/migrations/20260701_modulos_por_segmento_food_mvp.sql",
+                                       "supabase/migrations/20260704_financeiro_base_seguro.sql",
+                                       "supabase/migrations/20260705_food_operacao_funcional.sql",
+                                       "supabase/migrations/20260706_assinatura_pix_avulso.sql",
+                                       "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                       "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                                       "supabase/migrations/20260706_marketplace_mercado_pago_split.sql",
+                                       "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql",
+                                       "supabase/migrations/20260717_subscription_trial_cancellation.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "orders",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260628_notificacoes_inteligentes.sql",
+                                       "supabase/migrations/20260628_operacao_inteligente.sql",
+                                       "supabase/migrations/20260628_orcaly_consolidado.sql",
+                                       "supabase/migrations/20260628_pedidos_pro_v2.sql",
+                                       "supabase/migrations/20260628_pedidos_produtos_pro.sql",
+                                       "supabase/migrations/20260630_pre_validacao_orcaly.sql",
+                                       "supabase/migrations/20260630_whatsapp_pedidos_status.sql",
+                                       "supabase/migrations/20260705_food_operacao_funcional.sql",
+                                       "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                       "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                                       "supabase/migrations/20260706_marketplace_mercado_pago_split.sql",
+                                       "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "order_items",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                       "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                                       "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "order_payments",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                       "supabase/migrations/20260706_marketplace_food_checkout.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "plan_payments",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260628_orcaly_consolidado.sql",
+                                       "supabase/migrations/20260706_assinatura_pix_avulso.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "marketplace_payment_settings",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260706_marketplace_mercado_pago_split.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "marketplace_payments",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260706_marketplace_mercado_pago_split.sql",
+                                       "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "marketplace_commissions",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260706_marketplace_mercado_pago_split.sql",
+                                       "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "marketplace_commission_rules",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260706_marketplace_mercado_pago_split.sql",
+                                       "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "marketplace_oauth_states",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260706_marketplace_mercado_pago_split.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "subscription_events",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260717_subscription_trial_cancellation.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "financial_transactions",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260704_financeiro_base_seguro.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "payment_methods",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260628_orcaly_consolidado.sql",
+                                       "supabase/migrations/20260701_modulos_por_segmento_food_mvp.sql",
+                                       "supabase/migrations/20260705_food_operacao_funcional.sql",
+                                       "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                       "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                                       "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "deliveries",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260705_food_operacao_funcional.sql",
+                                       "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                       "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                                       "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "delivery_zones",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260701_modulos_por_segmento_food_mvp.sql",
+                                       "supabase/migrations/20260705_food_operacao_funcional.sql",
+                                       "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                       "supabase/migrations/20260706_marketplace_food_checkout.sql",
+                                       "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "business_hours",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260628_orcaly_consolidado.sql",
+                                       "supabase/migrations/20260701_modulos_por_segmento_food_mvp.sql",
+                                       "supabase/migrations/20260705_food_operacao_funcional.sql",
+                                       "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql",
+                                       "supabase/migrations/20260706_marketplace_food_checkout.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    },
+    {
+        "table":  "marketplace_coupons",
+        "referencedInMigrations":  [
+                                       "supabase/migrations/20260628_notificacoes_inteligentes.sql",
+                                       "supabase/migrations/20260628_orcaly_consolidado.sql",
+                                       "supabase/migrations/20260630_fix_cupons_loading.sql",
+                                       "supabase/migrations/20260630_pre_validacao_orcaly.sql",
+                                       "supabase/migrations/20260706_marketplace_checkout_cupons_segmentos.sql"
+                                   ],
+        "liveSchemaVerified":  false
+    }
+]

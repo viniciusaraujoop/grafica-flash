@@ -1,0 +1,26 @@
+﻿[2026-07-18 20:11:52] [STEP] Validando sintaxe do proprio script
+[2026-07-18 20:11:52] [OK] Sintaxe PowerShell valida
+[2026-07-18 20:11:52] [STEP] Validando raiz do projeto
+[2026-07-18 20:11:52] [OK] Raiz do projeto confirmada
+[2026-07-18 20:11:52] [STEP] Mapeando arquivos de texto sem ler .env, node_modules ou artefatos
+[2026-07-18 20:11:52] [OK] Arquivos auditaveis: 291
+[2026-07-18 20:11:53] [STEP] Executando npm.cmd run build
+[2026-07-18 20:12:16] [OK] build passou em 23,85s
+[2026-07-18 20:12:16] [STEP] Executando npm.cmd run lint
+[2026-07-18 20:12:37] [ERROR] lint falhou com codigo 1 em 20,12s
+[2026-07-18 20:12:37] [STEP] Iniciando servidor local na porta 4317
+[2026-07-18 20:12:39] [OK] HTTP /: 200
+[2026-07-18 20:12:39] [OK] HTTP /login: 200
+[2026-07-18 20:12:39] [OK] HTTP /cadastro: 200
+[2026-07-18 20:12:39] [OK] HTTP /painel: 200
+[2026-07-18 20:12:39] [OK] HTTP /painel/assinatura: 200
+[2026-07-18 20:12:39] [OK] HTTP /painel/configuracoes: 200
+[2026-07-18 20:12:39] [OK] HTTP /painel/pagamentos: 200
+[2026-07-18 20:12:40] [OK] HTTP /site/slug-inexistente: 200
+[2026-07-18 20:12:40] [OK] HTTP /favicon.ico: 200
+[2026-07-18 20:12:40] [OK] HTTP /icon.png: 200
+[2026-07-18 20:12:40] [OK] HTTP /og-orcaly.png: 200
+[2026-07-18 20:12:40] [STEP] Executando auditoria estatica e pontuacao
+[2026-07-18 20:12:45] [OK] Checklist manual gerado
+[2026-07-18 20:12:45] [OK] Relatorios Markdown e JSON gerados
+[2026-07-18 20:12:45] [STEP] Encerrando servidor local do smoke test

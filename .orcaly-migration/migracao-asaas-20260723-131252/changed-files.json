@@ -1,0 +1,7 @@
+[
+    "app/admin/pagamentos/page.tsx",
+    "app/api/assinatura/cancelar/route.ts",
+    "app/api/checkout/plano/route.ts",
+    "app/painel/assinatura/page.tsx",
+    "app/painel/pagamentos/page.tsx"
+]

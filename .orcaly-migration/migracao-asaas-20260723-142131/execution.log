@@ -1,0 +1,19 @@
+[2026-07-23 14:21:32] [STEP] Fase 0 - auditando codigo, checkout, assinatura e providers
+[2026-07-23 14:21:32] [OK] Auditoria concluida: 187 arquivos relacionados.
+[2026-07-23 14:21:32] [STEP] Executando npm.cmd run build
+[2026-07-23 14:21:56] [OK] build inicial passou em 23.9s.
+[2026-07-23 14:21:56] [STEP] Executando npm.cmd run lint
+[2026-07-23 14:22:19] [WARN] lint inicial falhou com codigo 1.
+[2026-07-23 14:22:19] [STEP] Aplicando fase: database
+[2026-07-23 14:22:19] [INFO] Sem alteracao: CONFIGURACAO-MIGRACAO-ASAAS-ORCALY.md
+[2026-07-23 14:22:19] [INFO] Sem alteracao: PLANO-ROLLBACK-MIGRACAO-ASAAS-ORCALY.md
+[2026-07-23 14:22:19] [INFO] Sem alteracao: supabase\migrations\20260723_migracao_gradual_asaas_orcaly.sql
+[2026-07-23 14:22:19] [WARN] Migration gerada. Use -ApplyDatabaseMigration para aplicar.
+[2026-07-23 14:22:19] [STEP] Validando implementacao estatica
+[2026-07-23 14:22:19] [OK] Validacao estatica concluida.
+[2026-07-23 14:22:19] [STEP] Executando npm.cmd run lint
+[2026-07-23 14:22:40] [WARN] lint final falhou com codigo 1.
+[2026-07-23 14:22:40] [STEP] Executando npm.cmd run build
+[2026-07-23 14:23:04] [OK] build final passou em 23.34s.
+[2026-07-23 14:23:04] [INFO] Backup criado: RELATORIO-MIGRACAO-ASAAS-ORCALY.md
+[2026-07-23 14:23:04] [OK] Atualizado: RELATORIO-MIGRACAO-ASAAS-ORCALY.md
