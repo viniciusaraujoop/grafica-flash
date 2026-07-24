@@ -9,6 +9,10 @@ function enabled(name: string, fallback = false) {
   return ["1", "true", "yes", "on"].includes(value);
 }
 
+export function forceNewPayments() {
+  return enabled("ORCALY_FORCE_NEW_PAYMENTS");
+}
+
 export function getAsaasEnvironment() {
   return String(process.env.ASAAS_ENV || "sandbox").trim().toLowerCase() ===
     "production"
@@ -26,6 +30,8 @@ export function getAsaasBaseUrl() {
 }
 
 export function getPaymentDefaultProvider(): PaymentProviderName {
+  if (forceNewPayments()) return "asaas";
+
   return String(
     process.env.PAYMENT_PROVIDER_DEFAULT || "mercado_pago",
   ).toLowerCase() === "asaas"
@@ -40,16 +46,16 @@ export function getPaymentFlags() {
     environment === "sandbox" || productionApproved;
 
   return {
-    checkoutV2Enabled: enabled("PAYMENT_CHECKOUT_V2_ENABLED"),
-    asaasEnabled: enabled("ASAAS_ENABLED") && environmentAllowed,
+    checkoutV2Enabled: forceNewPayments() || enabled("PAYMENT_CHECKOUT_V2_ENABLED"),
+    asaasEnabled: (forceNewPayments() || enabled("ASAAS_ENABLED")) && environmentAllowed,
     environment,
     productionApproved,
     subaccountsEnabled:
-      enabled("ASAAS_SUBACCOUNTS_ENABLED") && environmentAllowed,
+      (forceNewPayments() || enabled("ASAAS_SUBACCOUNTS_ENABLED")) && environmentAllowed,
     marketplaceEnabled:
-      enabled("ASAAS_MARKETPLACE_ENABLED") && environmentAllowed,
+      (forceNewPayments() || enabled("ASAAS_MARKETPLACE_ENABLED")) && environmentAllowed,
     subscriptionsEnabled:
-      enabled("ASAAS_SUBSCRIPTIONS_ENABLED") && environmentAllowed,
+      (forceNewPayments() || enabled("ASAAS_SUBSCRIPTIONS_ENABLED")) && environmentAllowed,
     cardTokenizationEnabled:
       enabled("ASAAS_CARD_TOKENIZATION_ENABLED") && environmentAllowed,
   };
@@ -133,3 +139,4 @@ export function getAsaasCapabilities() {
     asaasEnabled: flags.asaasEnabled,
   };
 }
+

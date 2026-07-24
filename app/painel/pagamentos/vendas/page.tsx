@@ -1,5 +1,5 @@
-import MarketplacePaymentsPanel from '@/components/painel/MarketplacePaymentsPanel'
+import { redirect } from "next/navigation";
 
-export default function PagamentosVendasPage() {
-  return <MarketplacePaymentsPanel mode="sales" />
+export default function LegacyPaymentsRedirect() {
+  redirect("/painel/pagamentos");
 }

@@ -137,6 +137,70 @@ export default function CheckoutClient({ slug }: { slug: string }) {
     };
   }, [slug]);
 
+  // ORCALY_MARKETPLACE_HANDOFF_V1
+  useEffect(() => {
+    if (!data) return;
+
+    const key = `orcaly-checkout:${slug}`;
+    const raw = window.sessionStorage.getItem(key);
+    if (!raw) return;
+
+    try {
+      const parsed = JSON.parse(raw) as {
+        items?: CartItem[];
+        customer?: Partial<{
+          name: string;
+          email: string;
+          phone: string;
+          cpfCnpj: string;
+          postalCode: string;
+          addressNumber: string;
+          addressComplement: string;
+        }>;
+        delivery?: Partial<{
+          type: "pickup" | "delivery";
+          zoneId: string;
+          address: string;
+          complement: string;
+          reference: string;
+        }>;
+        couponCode?: string;
+      };
+
+      const allowed = new Set(data.products.map((item) => item.id));
+      const imported = (parsed.items || [])
+        .filter((item) => allowed.has(item.productId))
+        .map((item) => ({
+          productId: item.productId,
+          quantity: Math.max(1, Number(item.quantity || 1)),
+          variationId: item.variationId || undefined,
+          addonIds: Array.isArray(item.addonIds)
+            ? item.addonIds
+            : [],
+          observation: String(item.observation || ""),
+        }));
+
+      if (imported.length) setCart(imported);
+      if (parsed.customer) {
+        setCustomer((current) => ({
+          ...current,
+          ...parsed.customer,
+        }));
+      }
+      if (parsed.delivery) {
+        setDelivery((current) => ({
+          ...current,
+          ...parsed.delivery,
+        }));
+      }
+      if (parsed.couponCode) setCouponCode(parsed.couponCode);
+
+      window.sessionStorage.removeItem(key);
+    } catch {
+      window.sessionStorage.removeItem(key);
+    }
+  }, [data, slug]);
+
   useEffect(() => {
     if (!paymentId) return;
 
@@ -809,3 +873,4 @@ export default function CheckoutClient({ slug }: { slug: string }) {
     </main>
   );
 }
+
