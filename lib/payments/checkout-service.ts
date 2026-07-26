@@ -1,17 +1,20 @@
-// ORCALY_ASAAS_MIGRATION_V2
 import "server-only";
-import { createHash, randomUUID } from "node:crypto";
+import {
+  createHash,
+  randomUUID,
+} from "node:crypto";
 import type { NextRequest } from "next/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { getPlanConfig } from "@/lib/plans/plan-config";
 import {
-  getAsaasCapabilities,
-  requireAsaasRootWalletId,
-} from "@/lib/payments/asaas-config";
-import { AsaasProvider } from "@/lib/payments/providers/asaas";
+  createMercadoPagoPayment,
+  getMercadoPagoPayment,
+  getOrcalyAppUrl,
+  mapMercadoPagoStatus,
+  protectMercadoPagoToken,
+  refreshMercadoPagoAccessToken,
+  unprotectMercadoPagoToken,
+} from "@/lib/mercado-pago";
 import {
-  getCompanyProviderAccount,
-  getRequestIp,
   resolveCompanyBySlug,
 } from "@/lib/payments/server-context";
 
@@ -25,51 +28,108 @@ type CheckoutItem = {
   observation?: string;
 };
 
+type CheckoutCustomer = {
+  name: string;
+  email: string;
+  phone: string;
+  cpfCnpj: string;
+  postalCode?: string;
+  addressNumber?: string;
+  addressComplement?: string;
+};
+
+type CheckoutDelivery = {
+  type: "delivery" | "pickup";
+  zoneId?: string;
+  address?: string;
+  complement?: string;
+  reference?: string;
+};
+
+type CardPaymentData = {
+  token: string;
+  paymentMethodId: string;
+  issuerId?: string;
+  installments?: number;
+  identificationType?: string;
+  identificationNumber?: string;
+};
+
 type CheckoutBody = {
   items: CheckoutItem[];
-  customer: {
-    name: string;
-    email: string;
-    phone: string;
-    cpfCnpj: string;
-    postalCode?: string;
-    addressNumber?: string;
-    addressComplement?: string;
-  };
-  delivery: {
-    type: "delivery" | "pickup";
-    zoneId?: string;
-    address?: string;
-    complement?: string;
-    reference?: string;
-  };
+  customer?: CheckoutCustomer;
+  delivery?: CheckoutDelivery;
   couponCode?: string;
-  paymentMethod: "PIX" | "CREDIT_CARD";
-  card?: {
-    holderName: string;
-    number: string;
-    expiryMonth: string;
-    expiryYear: string;
-    ccv: string;
-  };
+  paymentMethod?: "PIX" | "CREDIT_CARD";
+  cardPayment?: CardPaymentData;
 };
 
-const text = (value: unknown) => String(value || "").trim();
+type CheckoutCalculation = {
+  supabase: Awaited<
+    ReturnType<typeof resolveCompanyBySlug>
+  >["supabase"];
+  company: JsonRecord;
+  companyId: string;
+  calculated: Array<{
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+    variation: unknown;
+    addons: unknown[];
+    observation: string;
+  }>;
+  subtotal: number;
+  discountAmount: number;
+  couponId: string | null;
+  deliveryFee: number;
+  deliveryZoneId: string | null;
+  total: number;
+  feePercent: number;
+  commissionAmount: number;
+};
+
+const text = (value: unknown) =>
+  String(value || "").trim();
+
 const money = (value: unknown) => {
   const parsed = Number(value || 0);
-  return Number.isFinite(parsed) ? Math.round(parsed * 100) / 100 : 0;
+
+  return Number.isFinite(parsed)
+    ? Math.round(parsed * 100) / 100
+    : 0;
 };
-const array = (value: unknown) => (Array.isArray(value) ? value : []);
+
+const array = (value: unknown) =>
+  Array.isArray(value) ? value : [];
+
+function digits(value: unknown) {
+  return text(value).replace(/\D/g, "");
+}
 
 function optionId(value: unknown) {
-  if (!value || typeof value !== "object") return "";
+  if (!value || typeof value !== "object") {
+    return "";
+  }
+
   const record = value as JsonRecord;
-  return text(record.id || record.key || record.nome || record.name);
+
+  return text(
+    record.id ||
+      record.key ||
+      record.nome ||
+      record.name,
+  );
 }
 
 function optionPrice(value: unknown) {
-  if (!value || typeof value !== "object") return 0;
+  if (!value || typeof value !== "object") {
+    return 0;
+  }
+
   const record = value as JsonRecord;
+
   return money(
     record.priceDelta ||
       record.price_delta ||
@@ -89,15 +149,27 @@ function productPrice(product: JsonRecord) {
 }
 
 function productName(product: JsonRecord) {
-  return text(product.nome || product.name || "Produto");
+  return text(
+    product.nome ||
+      product.name ||
+      "Produto",
+  );
 }
 
 function productVariations(product: JsonRecord) {
-  return array(product.variacoes || product.variations || product.opcoes_variacao);
+  return array(
+    product.variacoes ||
+      product.variations ||
+      product.opcoes_variacao,
+  );
 }
 
 function productAddons(product: JsonRecord) {
-  return array(product.adicionais || product.addons || product.complementos);
+  return array(
+    product.adicionais ||
+      product.addons ||
+      product.complementos,
+  );
 }
 
 function idempotencyKey(
@@ -105,8 +177,16 @@ function idempotencyKey(
   body: CheckoutBody,
   request: NextRequest,
 ) {
-  const provided = text(request.headers.get("idempotency-key"));
-  if (provided.length >= 16 && provided.length <= 128) return provided;
+  const provided = text(
+    request.headers.get("idempotency-key"),
+  );
+
+  if (
+    provided.length >= 16 &&
+    provided.length <= 128
+  ) {
+    return provided;
+  }
 
   return createHash("sha256")
     .update(
@@ -115,8 +195,9 @@ function idempotencyKey(
         bucket: Math.floor(Date.now() / 300000),
         items: body.items,
         customer: {
-          email: body.customer.email.toLowerCase(),
-          phone: body.customer.phone,
+          email:
+            body.customer?.email?.toLowerCase(),
+          phone: body.customer?.phone,
         },
         delivery: body.delivery,
         paymentMethod: body.paymentMethod,
@@ -125,131 +206,816 @@ function idempotencyKey(
     .digest("hex");
 }
 
-async function providerCustomer(
-  provider: AsaasProvider,
-  supabase: SupabaseClient,
-  companyId: string,
-  customer: CheckoutBody["customer"],
-) {
-  const internalId = createHash("sha256")
-    .update(`${customer.email.toLowerCase()}:${customer.cpfCnpj}`)
-    .digest("hex");
-
-  const { data: existing } = await supabase
-    .from("provider_customers")
-    .select("provider_customer_id")
-    .eq("company_id", companyId)
-    .eq("provider", "asaas")
-    .eq("customer_id", internalId)
-    .maybeSingle();
-
-  if (existing?.provider_customer_id) {
-    return String(existing.provider_customer_id);
-  }
-
-  const created = await provider.createCustomer({
-    name: customer.name,
-    email: customer.email,
-    cpfCnpj: customer.cpfCnpj,
-    mobilePhone: customer.phone,
-    externalReference: internalId,
-    notificationDisabled: true,
-  });
-
-  await supabase.from("provider_customers").upsert(
-    {
-      company_id: companyId,
-      customer_id: internalId,
-      provider: "asaas",
-      provider_customer_id: created.id,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "company_id,provider,customer_id" },
-  );
-
-  return created.id;
+function terminalStatus(status: unknown) {
+  return [
+    "paid",
+    "failed",
+    "canceled",
+    "refunded",
+    "charged_back",
+  ].includes(text(status).toLowerCase());
 }
 
-export async function getCheckoutCatalog(slug: string) {
-  const { supabase, company } = await resolveCompanyBySlug(slug);
-  const companyId = text(company.id);
+function pixData(payment: JsonRecord) {
+  const point =
+    payment.point_of_interaction &&
+    typeof payment.point_of_interaction ===
+      "object"
+      ? (payment.point_of_interaction as JsonRecord)
+      : {};
 
-  const [{ data: products }, { data: zones }, { data: account }] =
-    await Promise.all([
-      supabase
-        .from("products")
+  const transaction =
+    point.transaction_data &&
+    typeof point.transaction_data === "object"
+      ? (point.transaction_data as JsonRecord)
+      : {};
+
+  return {
+    encodedImage: text(
+      transaction.qr_code_base64,
+    ),
+    payload: text(transaction.qr_code),
+    ticketUrl: text(
+      transaction.ticket_url,
+    ),
+    expirationDate: text(
+      payment.date_of_expiration,
+    ),
+  };
+}
+
+async function getSellerAccessToken(
+  supabase: CheckoutCalculation["supabase"],
+  companyId: string,
+) {
+  const { data: setting, error } =
+    await supabase
+      .from("marketplace_payment_settings")
+      .select(
+        "id,access_token,refresh_token,public_key,token_expires_at,onboarding_status,is_active,last_error",
+      )
+      .eq("company_id", companyId)
+      .eq("provider", "mercado_pago")
+      .maybeSingle();
+
+  if (error) throw error;
+
+  if (
+    !setting?.is_active ||
+    setting.onboarding_status !== "connected" ||
+    !setting.access_token
+  ) {
+    throw Object.assign(
+      new Error(
+        "Esta empresa ainda nao conectou uma conta Mercado Pago para receber.",
+      ),
+      { status: 409 },
+    );
+  }
+
+  let accessToken =
+    unprotectMercadoPagoToken(
+      setting.access_token,
+    );
+
+  const expiresAt = setting.token_expires_at
+    ? new Date(setting.token_expires_at)
+    : null;
+
+  const shouldRefresh =
+    expiresAt &&
+    !Number.isNaN(expiresAt.getTime()) &&
+    expiresAt.getTime() <=
+      Date.now() + 10 * 60 * 1000;
+
+  if (shouldRefresh) {
+    if (!setting.refresh_token) {
+      throw Object.assign(
+        new Error(
+          "A autorizacao Mercado Pago expirou. Reconecte a conta no painel de pagamentos.",
+        ),
+        { status: 409 },
+      );
+    }
+
+    try {
+      const refreshed =
+        await refreshMercadoPagoAccessToken(
+          unprotectMercadoPagoToken(
+            setting.refresh_token,
+          ),
+        );
+
+      accessToken = text(
+        refreshed.access_token,
+      );
+
+      if (!accessToken) {
+        throw new Error(
+          "O Mercado Pago nao retornou o novo token.",
+        );
+      }
+
+      const refreshToken = text(
+        refreshed.refresh_token,
+      );
+      const expiresIn = Number(
+        refreshed.expires_in || 0,
+      );
+      const tokenExpiresAt =
+        expiresIn > 0
+          ? new Date(
+              Date.now() +
+                expiresIn * 1000,
+            ).toISOString()
+          : null;
+
+      await supabase
+        .from(
+          "marketplace_payment_settings",
+        )
+        .update({
+          access_token:
+            protectMercadoPagoToken(
+              accessToken,
+            ),
+          refresh_token: refreshToken
+            ? protectMercadoPagoToken(
+                refreshToken,
+              )
+            : setting.refresh_token,
+          public_key:
+            refreshed.public_key ||
+            setting.public_key ||
+            null,
+          token_expires_at:
+            tokenExpiresAt,
+          last_error: null,
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq("id", setting.id);
+    } catch (cause) {
+      const message =
+        cause instanceof Error
+          ? cause.message
+          : "Falha ao renovar Mercado Pago.";
+
+      await supabase
+        .from(
+          "marketplace_payment_settings",
+        )
+        .update({
+          onboarding_status: "error",
+          last_error: message.slice(0, 500),
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq("id", setting.id);
+
+      throw Object.assign(
+        new Error(
+          "A autorizacao Mercado Pago precisa ser renovada no painel de pagamentos.",
+        ),
+        { status: 409 },
+      );
+    }
+  }
+
+  return accessToken;
+}
+
+async function calculateCheckout(
+  slug: string,
+  body: CheckoutBody,
+): Promise<CheckoutCalculation> {
+  if (
+    !Array.isArray(body.items) ||
+    body.items.length === 0
+  ) {
+    throw Object.assign(
+      new Error("O carrinho esta vazio."),
+      { status: 400 },
+    );
+  }
+
+  const { supabase, company } =
+    await resolveCompanyBySlug(slug);
+  const companyRecord =
+    company as JsonRecord;
+  const companyId = text(company.id);
+  const productIds = Array.from(
+    new Set(
+      body.items.map((item) =>
+        text(item.productId),
+      ),
+    ),
+  );
+
+  const { data: products, error: productsError } =
+    await supabase
+      .from("products")
+      .select("*")
+      .eq("company_id", companyId)
+      .in("id", productIds);
+
+  if (
+    productsError ||
+    !products ||
+    products.length !== productIds.length
+  ) {
+    throw Object.assign(
+      new Error(
+        "Um ou mais produtos nao estao disponiveis.",
+      ),
+      { status: 400 },
+    );
+  }
+
+  const byId = new Map<
+    string,
+    JsonRecord
+  >(
+    products.map(
+      (item): [string, JsonRecord] => {
+        const record =
+          item as JsonRecord;
+
+        return [
+          text(record.id),
+          record,
+        ];
+      },
+    ),
+  );
+
+  const calculated = body.items.map(
+    (input) => {
+      const product = byId.get(
+        text(input.productId),
+      );
+
+      if (
+        !product ||
+        product.ativo === false
+      ) {
+        throw Object.assign(
+          new Error(
+            "Um produto ficou indisponivel.",
+          ),
+          { status: 400 },
+        );
+      }
+
+      const quantity = Math.max(
+        1,
+        Math.min(
+          999,
+          Number(input.quantity || 1),
+        ),
+      );
+
+      const variation =
+        productVariations(product).find(
+          (item) =>
+            optionId(item) ===
+            text(input.variationId),
+        );
+
+      if (
+        input.variationId &&
+        !variation
+      ) {
+        throw Object.assign(
+          new Error(
+            "A variacao selecionada nao esta disponivel.",
+          ),
+          { status: 400 },
+        );
+      }
+
+      const addonIds = new Set(
+        input.addonIds || [],
+      );
+
+      const addons =
+        productAddons(product).filter(
+          (item) =>
+            addonIds.has(optionId(item)),
+        );
+
+      if (addons.length !== addonIds.size) {
+        throw Object.assign(
+          new Error(
+            "Um adicional nao esta disponivel.",
+          ),
+          { status: 400 },
+        );
+      }
+
+      const unitPrice = money(
+        productPrice(product) +
+          optionPrice(variation) +
+          addons.reduce(
+            (sum, item) =>
+              sum + optionPrice(item),
+            0,
+          ),
+      );
+
+      return {
+        productId: text(product.id),
+        productName:
+          productName(product),
+        quantity,
+        unitPrice,
+        total: money(
+          unitPrice * quantity,
+        ),
+        variation: variation || null,
+        addons,
+        observation: text(
+          input.observation,
+        ),
+      };
+    },
+  );
+
+  const subtotal = money(
+    calculated.reduce(
+      (sum, item) =>
+        sum + item.total,
+      0,
+    ),
+  );
+
+  let discountAmount = 0;
+  let couponId: string | null = null;
+
+  if (text(body.couponCode)) {
+    const { data: coupon } =
+      await supabase
+        .from("coupons")
         .select("*")
         .eq("company_id", companyId)
+        .ilike(
+          "codigo",
+          text(body.couponCode),
+        )
         .eq("ativo", true)
-        .order("nome"),
-      supabase
+        .maybeSingle();
+
+    if (!coupon) {
+      throw Object.assign(
+        new Error(
+          "Cupom invalido ou indisponivel.",
+        ),
+        { status: 400 },
+      );
+    }
+
+    const record =
+      coupon as JsonRecord;
+    const minimum = money(
+      record.valor_minimo ||
+        record.minimum_amount,
+    );
+
+    if (subtotal < minimum) {
+      throw Object.assign(
+        new Error(
+          "O pedido nao atingiu o valor minimo do cupom.",
+        ),
+        { status: 400 },
+      );
+    }
+
+    const type = text(
+      record.tipo || record.type,
+    ).toLowerCase();
+    const value = money(
+      record.valor || record.value,
+    );
+
+    discountAmount =
+      type.includes("percent")
+        ? money(
+            subtotal * (value / 100),
+          )
+        : Math.min(subtotal, value);
+
+    couponId =
+      text(record.id) || null;
+  }
+
+  let deliveryFee = 0;
+  let deliveryZoneId:
+    | string
+    | null = null;
+
+  if (
+    body.delivery?.type === "delivery"
+  ) {
+    const { data: zone } =
+      await supabase
         .from("delivery_zones")
         .select("*")
+        .eq(
+          "id",
+          body.delivery.zoneId || "",
+        )
         .eq("company_id", companyId)
         .eq("ativo", true)
-        .order("nome"),
-      supabase
-        .from("marketplace_payment_settings")
-        .select("account_status,charges_enabled,pix_enabled,card_enabled")
-        .eq("company_id", companyId)
-        .eq("provider", "asaas")
-        .eq("is_active", true)
-        .maybeSingle(),
-    ]);
+        .maybeSingle();
 
-  const capabilities = getAsaasCapabilities();
+    if (!zone) {
+      throw Object.assign(
+        new Error(
+          "A regiao de entrega nao esta disponivel.",
+        ),
+        { status: 400 },
+      );
+    }
+
+    const record =
+      zone as JsonRecord;
+    const minimum = money(
+      record.pedido_minimo ||
+        record.minimum_order,
+    );
+
+    if (
+      subtotal - discountAmount <
+      minimum
+    ) {
+      throw Object.assign(
+        new Error(
+          "O pedido nao atingiu o minimo para esta regiao.",
+        ),
+        { status: 400 },
+      );
+    }
+
+    deliveryFee = money(
+      record.taxa || record.fee,
+    );
+    deliveryZoneId =
+      text(record.id);
+  }
+
+  const total = money(
+    subtotal -
+      discountAmount +
+      deliveryFee,
+  );
+
+  if (total <= 0) {
+    throw Object.assign(
+      new Error(
+        "O total do pedido precisa ser maior que zero.",
+      ),
+      { status: 400 },
+    );
+  }
+
+  const plan = getPlanConfig(
+    companyRecord.assinatura_plano ||
+      companyRecord.plano ||
+      companyRecord.plan,
+  );
+  const feePercent =
+    plan.marketplaceFeePercent;
+  const commissionAmount = money(
+    total * (feePercent / 100),
+  );
+
+  return {
+    supabase,
+    company: companyRecord,
+    companyId,
+    calculated,
+    subtotal,
+    discountAmount,
+    couponId,
+    deliveryFee,
+    deliveryZoneId,
+    total,
+    feePercent,
+    commissionAmount,
+  };
+}
+
+export async function getCheckoutCatalog(
+  slug: string,
+) {
+  const { supabase, company } =
+    await resolveCompanyBySlug(slug);
+  const companyId = text(company.id);
+
+  const [
+    { data: products },
+    { data: zones },
+    { data: account },
+  ] = await Promise.all([
+    supabase
+      .from("products")
+      .select("*")
+      .eq("company_id", companyId)
+      .eq("ativo", true)
+      .order("nome"),
+    supabase
+      .from("delivery_zones")
+      .select("*")
+      .eq("company_id", companyId)
+      .eq("ativo", true)
+      .order("nome"),
+    supabase
+      .from(
+        "marketplace_payment_settings",
+      )
+      .select(
+        "access_token,onboarding_status,is_active,last_error",
+      )
+      .eq("company_id", companyId)
+      .eq("provider", "mercado_pago")
+      .maybeSingle(),
+  ]);
+
+  const connected = Boolean(
+    account?.is_active &&
+      account?.access_token &&
+      account?.onboarding_status ===
+        "connected",
+  );
 
   return {
     company: {
-      name: text(company.nome || company.name),
-      logoUrl: text(company.logo_url || company.logo),
-      primaryColor: text(company.site_primary_color || company.cor_primaria),
+      name: text(
+        company.nome || company.name,
+      ),
+      logoUrl: text(
+        company.logo_url ||
+          company.logo,
+      ),
+      primaryColor: text(
+        company.site_primary_color ||
+          company.cor_primaria,
+      ),
       slug,
     },
-    products: (products || []).map((raw) => {
-      const product = raw as JsonRecord;
+    products: (products || []).map(
+      (raw) => {
+        const product =
+          raw as JsonRecord;
 
-      return {
-        id: text(product.id),
-        name: productName(product),
-        description: text(product.descricao || product.description),
-        price: productPrice(product),
-        imageUrl: text(product.imagem_url || product.image_url),
-        variations: productVariations(product).map((item) => {
-          const record = item as JsonRecord;
-          return {
-            id: optionId(item),
-            name: text(record.nome || record.name) || optionId(item),
-            priceDelta: optionPrice(item),
-          };
-        }),
-        addons: productAddons(product).map((item) => {
-          const record = item as JsonRecord;
-          return {
-            id: optionId(item),
-            name: text(record.nome || record.name) || optionId(item),
-            price: optionPrice(item),
-          };
-        }),
-      };
-    }),
-    deliveryZones: (zones || []).map((raw) => {
-      const zone = raw as JsonRecord;
-      return {
-        id: text(zone.id),
-        name: text(zone.nome || zone.name),
-        fee: money(zone.taxa || zone.fee),
-        minimumOrder: money(zone.pedido_minimo || zone.minimum_order),
-      };
-    }),
+        return {
+          id: text(product.id),
+          name: productName(product),
+          description: text(
+            product.descricao ||
+              product.description,
+          ),
+          price: productPrice(product),
+          imageUrl: text(
+            product.imagem_url ||
+              product.image_url,
+          ),
+          variations:
+            productVariations(
+              product,
+            ).map((item) => {
+              const record =
+                item as JsonRecord;
+
+              return {
+                id: optionId(item),
+                name:
+                  text(
+                    record.nome ||
+                      record.name,
+                  ) || optionId(item),
+                priceDelta:
+                  optionPrice(item),
+              };
+            }),
+          addons:
+            productAddons(
+              product,
+            ).map((item) => {
+              const record =
+                item as JsonRecord;
+
+              return {
+                id: optionId(item),
+                name:
+                  text(
+                    record.nome ||
+                      record.name,
+                  ) || optionId(item),
+                price:
+                  optionPrice(item),
+              };
+            }),
+        };
+      },
+    ),
+    deliveryZones: (zones || []).map(
+      (raw) => {
+        const zone =
+          raw as JsonRecord;
+
+        return {
+          id: text(zone.id),
+          name: text(
+            zone.nome ||
+              zone.name,
+          ),
+          fee: money(
+            zone.taxa || zone.fee,
+          ),
+          minimumOrder: money(
+            zone.pedido_minimo ||
+              zone.minimum_order,
+          ),
+        };
+      },
+    ),
     payment: {
-      configured: Boolean(account),
-      chargesEnabled: Boolean(account?.charges_enabled),
-      pixEnabled: Boolean(account?.pix_enabled),
+      provider: "mercado_pago",
+      configured: connected,
+      chargesEnabled: connected,
+      pixEnabled: connected,
       cardEnabled:
-        Boolean(account?.card_enabled) &&
-        capabilities.cardTokenizationEnabled,
+        connected &&
+        Boolean(
+          process.env
+            .NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY,
+        ),
+      lastError:
+        account?.last_error || null,
     },
+  };
+}
+
+export async function prepareCheckoutPayment(
+  slug: string,
+  body: CheckoutBody,
+) {
+  const calculation =
+    await calculateCheckout(slug, body);
+
+  return {
+    subtotal: calculation.subtotal,
+    discountAmount:
+      calculation.discountAmount,
+    deliveryFee:
+      calculation.deliveryFee,
+    total: calculation.total,
+    commissionPercentage:
+      calculation.feePercent,
+  };
+}
+
+async function persistPaymentStatus(
+  calculation: Pick<
+    CheckoutCalculation,
+    "supabase" | "companyId"
+  >,
+  transaction: {
+    id: string;
+    orderId: string;
+  },
+  payment: JsonRecord,
+) {
+  const remoteStatus = text(
+    payment.status,
+  );
+  const mappedStatus =
+    mapMercadoPagoStatus(remoteStatus);
+  const paidAt =
+    mappedStatus === "paid"
+      ? text(payment.date_approved) ||
+        new Date().toISOString()
+      : null;
+  const paymentId = text(payment.id);
+  const methodId = text(
+    payment.payment_method_id,
+  );
+  const card =
+    payment.card &&
+    typeof payment.card === "object"
+      ? (payment.card as JsonRecord)
+      : {};
+  const lastFour = text(
+    card.last_four_digits,
+  );
+
+  await Promise.all([
+    calculation.supabase
+      .from("marketplace_payments")
+      .update({
+        provider_payment_id:
+          paymentId || null,
+        provider_status:
+          remoteStatus || null,
+        status: mappedStatus,
+        raw_payload: payment,
+        card_brand:
+          methodId || null,
+        card_last4:
+          lastFour || null,
+        paid_at: paidAt,
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq("id", transaction.id)
+      .eq(
+        "company_id",
+        calculation.companyId,
+      ),
+    calculation.supabase
+      .from("orders")
+      .update({
+        marketplace_payment_id:
+          transaction.id,
+        payment_provider:
+          "mercado_pago",
+        payment_status:
+          mappedStatus,
+        status:
+          mappedStatus === "paid"
+            ? "Recebido"
+            : "pending_payment",
+        paid_at: paidAt,
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq("id", transaction.orderId)
+      .eq(
+        "company_id",
+        calculation.companyId,
+      ),
+    calculation.supabase
+      .from("order_payments")
+      .update({
+        provider:
+          "mercado_pago",
+        provider_payment_id:
+          paymentId || null,
+        provider_status:
+          remoteStatus || null,
+        status: mappedStatus,
+        paid_amount:
+          mappedStatus === "paid"
+            ? Number(
+                payment.transaction_amount ||
+                  0,
+              )
+            : 0,
+        remaining_amount:
+          mappedStatus === "paid"
+            ? 0
+            : Number(
+                payment.transaction_amount ||
+                  0,
+              ),
+        paid_at: paidAt,
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq("order_id", transaction.orderId)
+      .eq(
+        "company_id",
+        calculation.companyId,
+      ),
+  ]);
+
+  if (mappedStatus === "paid") {
+    await calculation.supabase
+      .from(
+        "marketplace_commissions",
+      )
+      .update({
+        status: "confirmed",
+        confirmed_at:
+          new Date().toISOString(),
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq(
+        "marketplace_payment_id",
+        transaction.id,
+      )
+      .eq(
+        "company_id",
+        calculation.companyId,
+      );
+  }
+
+  return {
+    mappedStatus,
+    remoteStatus,
+    paidAt,
   };
 }
 
@@ -258,410 +1024,663 @@ export async function createCheckoutPayment(
   body: CheckoutBody,
   request: NextRequest,
 ) {
-  if (!Array.isArray(body.items) || body.items.length === 0) {
-    throw Object.assign(new Error("O carrinho esta vazio."), { status: 400 });
-  }
-
-  if (!body.customer?.name || !body.customer?.email || !body.customer?.cpfCnpj) {
+  if (
+    !body.customer?.name ||
+    !body.customer?.email ||
+    !body.customer?.cpfCnpj
+  ) {
     throw Object.assign(
-      new Error("Informe nome, e-mail e CPF ou CNPJ para continuar."),
+      new Error(
+        "Informe nome, e-mail e CPF ou CNPJ para continuar.",
+      ),
       { status: 400 },
-    );
-  }
-
-  const { supabase, company } = await resolveCompanyBySlug(slug);
-  const companyId = text(company.id);
-  const providerAccount = await getCompanyProviderAccount(companyId);
-  const account = providerAccount.record;
-
-  if (!Boolean(account.charges_enabled)) {
-    throw Object.assign(
-      new Error("A conta de recebimento ainda nao esta aprovada para cobrar."),
-      { status: 409 },
     );
   }
 
   if (
-    body.paymentMethod === "CREDIT_CARD" &&
-    !getAsaasCapabilities().cardTokenizationEnabled
+    !body.customer.email.includes("@")
   ) {
     throw Object.assign(
-      new Error("O pagamento por cartao ainda nao foi habilitado. Utilize Pix."),
-      { status: 409 },
-    );
-  }
-
-  const productIds = Array.from(
-    new Set(body.items.map((item) => text(item.productId))),
-  );
-
-  const { data: products, error: productsError } = await supabase
-    .from("products")
-    .select("*")
-    .eq("company_id", companyId)
-    .in("id", productIds);
-
-  if (productsError || !products || products.length !== productIds.length) {
-    throw Object.assign(
-      new Error("Um ou mais produtos nao estao disponiveis."),
+      new Error(
+        "Informe um e-mail valido.",
+      ),
       { status: 400 },
     );
   }
 
-  const byId = new Map<string, JsonRecord>(
-    products.map((item): [string, JsonRecord] => {
-      const record = item as JsonRecord;
-      return [text(record.id), record];
-    }),
-  );
-
-  const calculated = body.items.map((input) => {
-    const product = byId.get(text(input.productId));
-
-    if (!product || product.ativo === false) {
-      throw Object.assign(new Error("Um produto ficou indisponivel."), {
-        status: 400,
-      });
-    }
-
-    const quantity = Math.max(1, Math.min(999, Number(input.quantity || 1)));
-    const variation = productVariations(product).find(
-      (item) => optionId(item) === text(input.variationId),
+  if (
+    body.paymentMethod !== "PIX" &&
+    body.paymentMethod !==
+      "CREDIT_CARD"
+  ) {
+    throw Object.assign(
+      new Error(
+        "Selecione Pix ou cartao.",
+      ),
+      { status: 400 },
     );
-
-    if (input.variationId && !variation) {
-      throw Object.assign(new Error("A variacao selecionada nao esta disponivel."), {
-        status: 400,
-      });
-    }
-
-    const addonIds = new Set(input.addonIds || []);
-    const addons = productAddons(product).filter((item) =>
-      addonIds.has(optionId(item)),
-    );
-
-    if (addons.length !== addonIds.size) {
-      throw Object.assign(new Error("Um adicional nao esta disponivel."), {
-        status: 400,
-      });
-    }
-
-    const unitPrice = money(
-      productPrice(product) +
-        optionPrice(variation) +
-        addons.reduce((sum, item) => sum + optionPrice(item), 0),
-    );
-
-    return {
-      productId: text(product.id),
-      productName: productName(product),
-      quantity,
-      unitPrice,
-      total: money(unitPrice * quantity),
-      variation: variation || null,
-      addons,
-      observation: text(input.observation),
-    };
-  });
-
-  const subtotal = money(calculated.reduce((sum, item) => sum + item.total, 0));
-  let discountAmount = 0;
-  let couponId: string | null = null;
-
-  if (text(body.couponCode)) {
-    const { data: coupon } = await supabase
-      .from("coupons")
-      .select("*")
-      .eq("company_id", companyId)
-      .ilike("codigo", text(body.couponCode))
-      .eq("ativo", true)
-      .maybeSingle();
-
-    if (!coupon) {
-      throw Object.assign(new Error("Cupom invalido ou indisponivel."), {
-        status: 400,
-      });
-    }
-
-    const record = coupon as JsonRecord;
-    const minimum = money(record.valor_minimo || record.minimum_amount);
-
-    if (subtotal < minimum) {
-      throw Object.assign(
-        new Error("O pedido nao atingiu o valor minimo do cupom."),
-        { status: 400 },
-      );
-    }
-
-    const type = text(record.tipo || record.type).toLowerCase();
-    const value = money(record.valor || record.value);
-    discountAmount = type.includes("percent")
-      ? money(subtotal * (value / 100))
-      : Math.min(subtotal, value);
-    couponId = text(record.id) || null;
   }
 
-  let deliveryFee = 0;
-  let deliveryZoneId: string | null = null;
-
-  if (body.delivery?.type === "delivery") {
-    const { data: zone } = await supabase
-      .from("delivery_zones")
-      .select("*")
-      .eq("id", body.delivery.zoneId || "")
-      .eq("company_id", companyId)
-      .eq("ativo", true)
-      .maybeSingle();
-
-    if (!zone) {
-      throw Object.assign(new Error("A regiao de entrega nao esta disponivel."), {
-        status: 400,
-      });
-    }
-
-    const record = zone as JsonRecord;
-    const minimum = money(record.pedido_minimo || record.minimum_order);
-
-    if (subtotal - discountAmount < minimum) {
-      throw Object.assign(
-        new Error("O pedido nao atingiu o minimo para esta regiao."),
-        { status: 400 },
-      );
-    }
-
-    deliveryFee = money(record.taxa || record.fee);
-    deliveryZoneId = text(record.id);
-  }
-
-  const total = money(subtotal - discountAmount + deliveryFee);
-  const plan = getPlanConfig(
-    company.assinatura_plano || company.plano || company.plan,
+  const calculation =
+    await calculateCheckout(slug, body);
+  const {
+    supabase,
+    company,
+    companyId,
+  } = calculation;
+  const accessToken =
+    await getSellerAccessToken(
+      supabase,
+      companyId,
+    );
+  const key = idempotencyKey(
+    companyId,
+    body,
+    request,
   );
-  const feePercent = plan.marketplaceFeePercent;
-  const key = idempotencyKey(companyId, body, request);
 
-  const { data: existing } = await supabase
-    .from("marketplace_payments")
-    .select("*")
-    .eq("idempotency_key", key)
-    .maybeSingle();
+  const { data: existing } =
+    await supabase
+      .from("marketplace_payments")
+      .select(
+        "id,order_id,provider_payment_id,status,amount,gross_amount,raw_payload",
+      )
+      .eq("company_id", companyId)
+      .eq("idempotency_key", key)
+      .maybeSingle();
 
   if (existing?.provider_payment_id) {
+    const raw =
+      existing.raw_payload &&
+      typeof existing.raw_payload ===
+        "object"
+        ? (existing.raw_payload as JsonRecord)
+        : {};
+
     return {
       repeated: true,
       transactionId: existing.id,
       orderId: existing.order_id,
-      paymentId: existing.provider_payment_id,
+      paymentId:
+        existing.provider_payment_id,
       status: existing.status,
-      total: existing.gross_amount,
+      total: money(
+        existing.gross_amount ||
+          existing.amount,
+      ),
+      pix:
+        body.paymentMethod === "PIX"
+          ? pixData(raw)
+          : undefined,
     };
   }
 
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert({
-      company_id: companyId,
-      nome: body.customer.name,
-      customer_name: body.customer.name,
-      customer_email: body.customer.email,
-      customer_phone: body.customer.phone,
-      telefone: body.customer.phone,
-      produto: calculated.map((item) => item.productName).join(", "),
-      quantidade: calculated.reduce((sum, item) => sum + item.quantity, 0),
-      observacoes: calculated
-        .map((item) => item.observation)
-        .filter(Boolean)
-        .join(" | "),
-      status: "pending_payment",
-      payment_status: "pending",
-      payment_method: body.paymentMethod,
-      subtotal,
-      discount_amount: discountAmount,
-      delivery_fee: deliveryFee,
-      total,
-      preco_estimado: total,
-      coupon_id: couponId,
-      checkout_idempotency_key: key,
-      delivery_type: body.delivery?.type || "pickup",
-    })
-    .select("id")
-    .single();
+  const { data: order, error: orderError } =
+    await supabase
+      .from("orders")
+      .insert({
+        company_id: companyId,
+        nome: body.customer.name,
+        customer_name:
+          body.customer.name,
+        customer_email:
+          body.customer.email,
+        customer_phone:
+          body.customer.phone,
+        telefone: body.customer.phone,
+        produto:
+          calculation.calculated
+            .map(
+              (item) =>
+                item.productName,
+            )
+            .join(", "),
+        quantidade:
+          calculation.calculated.reduce(
+            (sum, item) =>
+              sum + item.quantity,
+            0,
+          ),
+        observacoes:
+          calculation.calculated
+            .map(
+              (item) =>
+                item.observation,
+            )
+            .filter(Boolean)
+            .join(" | "),
+        status: "pending_payment",
+        payment_provider:
+          "mercado_pago",
+        payment_status: "pending",
+        payment_method:
+          body.paymentMethod,
+        subtotal:
+          calculation.subtotal,
+        discount_amount:
+          calculation.discountAmount,
+        delivery_fee:
+          calculation.deliveryFee,
+        total: calculation.total,
+        total_amount:
+          calculation.total,
+        preco_estimado:
+          calculation.total,
+        coupon_id:
+          calculation.couponId,
+        coupon_code:
+          text(body.couponCode) ||
+          null,
+        checkout_idempotency_key:
+          key,
+        delivery_type:
+          body.delivery?.type ||
+          "pickup",
+      })
+      .select("id")
+      .single();
 
   if (orderError || !order?.id) {
-    throw Object.assign(new Error("Nao foi possivel criar o pedido."), {
-      status: 500,
-    });
+    throw Object.assign(
+      new Error(
+        orderError?.message ||
+          "Nao foi possivel criar o pedido.",
+      ),
+      { status: 500 },
+    );
   }
 
   const orderId = String(order.id);
 
-  const { error: itemsError } = await supabase.from("order_items").insert(
-    calculated.map((item) => ({
-      order_id: orderId,
-      company_id: companyId,
-      product_id: item.productId,
-      product_name: item.productName,
-      unit_price: item.unitPrice,
-      quantity: item.quantity,
-      total: item.total,
-      variation_json: item.variation,
-      addons_json: item.addons,
-      observation: item.observation || null,
-    })),
-  );
+  const { error: itemsError } =
+    await supabase
+      .from("order_items")
+      .insert(
+        calculation.calculated.map(
+          (item) => ({
+            order_id: orderId,
+            company_id: companyId,
+            product_id:
+              item.productId,
+            nome: item.productName,
+            product_name:
+              item.productName,
+            quantidade:
+              item.quantity,
+            quantity: item.quantity,
+            preco_unitario:
+              item.unitPrice,
+            unit_price:
+              item.unitPrice,
+            subtotal: item.total,
+            total: item.total,
+            variation:
+              item.variation || {},
+            variation_json:
+              item.variation,
+            addons:
+              item.addons,
+            addons_json:
+              item.addons,
+            notes:
+              item.observation ||
+              null,
+            observation:
+              item.observation ||
+              null,
+          }),
+        ),
+      );
 
   if (itemsError) {
-    await supabase.from("orders").delete().eq("id", orderId);
-    throw Object.assign(new Error("Nao foi possivel registrar os itens."), {
-      status: 500,
-    });
+    await supabase
+      .from("orders")
+      .delete()
+      .eq("id", orderId);
+
+    throw Object.assign(
+      new Error(
+        "Nao foi possivel registrar os itens.",
+      ),
+      { status: 500 },
+    );
   }
 
-  if (body.delivery?.type === "delivery") {
-    await supabase.from("deliveries").insert({
-      order_id: orderId,
-      company_id: companyId,
-      delivery_zone_id: deliveryZoneId,
-      endereco: body.delivery.address || "",
-      complemento: body.delivery.complement || "",
-      referencia: body.delivery.reference || "",
-      taxa: deliveryFee,
-      status: "aguardando_pagamento",
-    });
+  if (
+    body.delivery?.type === "delivery"
+  ) {
+    await supabase
+      .from("deliveries")
+      .insert({
+        order_id: orderId,
+        company_id: companyId,
+        delivery_zone_id:
+          calculation.deliveryZoneId,
+        customer_name:
+          body.customer.name,
+        customer_phone:
+          body.customer.phone,
+        endereco:
+          body.delivery.address ||
+          "",
+        address:
+          body.delivery.address ||
+          "",
+        complemento:
+          body.delivery.complement ||
+          "",
+        referencia:
+          body.delivery.reference ||
+          "",
+        taxa:
+          calculation.deliveryFee,
+        delivery_fee:
+          calculation.deliveryFee,
+        status:
+          "aguardando_pagamento",
+      });
   }
 
-  const transactionId = randomUUID();
-
-  const { error: transactionError } = await supabase
-    .from("marketplace_payments")
-    .insert({
-      id: transactionId,
-      company_id: companyId,
-      order_id: orderId,
-      provider: "asaas",
-      payment_method: body.paymentMethod,
-      gross_amount: total,
-      platform_fee_percent: feePercent,
-      currency: "BRL",
-      status: "PENDING",
-      split_status: "PENDING",
-      payout_status: "PENDING",
-      external_reference: `order:${orderId}`,
-      idempotency_key: key,
-      expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-    });
-
-  if (transactionError) {
-    throw Object.assign(new Error("Nao foi possivel iniciar a transacao."), {
-      status: 500,
-    });
-  }
-
-  const provider = new AsaasProvider(providerAccount.apiKey);
-  const customerId = await providerCustomer(
-    provider,
-    supabase,
-    companyId,
-    body.customer,
+  const transactionId =
+    randomUUID();
+  const externalReference =
+    `orcaly:${companyId}:${orderId}:${transactionId}`;
+  const sellerNetEstimate = money(
+    calculation.total -
+      calculation.commissionAmount,
   );
 
-  const splits = [
-    {
-      walletId: requireAsaasRootWalletId(),
-      percentualValue: feePercent,
-      externalReference: `commission:${transactionId}`,
-      description: "Comissao Orcaly",
-    },
-  ];
-
-  try {
-    const dueDate = new Date().toISOString().slice(0, 10);
-    const common = {
-      customer: customerId,
-      value: total,
-      dueDate,
-      description: `Pedido ${orderId}`,
-      externalReference: `order:${orderId}`,
-      splits,
-    };
-
-    const payment =
-      body.paymentMethod === "PIX"
-        ? await provider.createPixPayment(common)
-        : await (async () => {
-            if (!body.card) {
-              throw Object.assign(new Error("Informe os dados do cartao."), {
-                status: 400,
-              });
-            }
-
-            const tokenized = await provider.tokenizeCreditCard({
-              customer: customerId,
-              creditCard: body.card,
-              creditCardHolderInfo: {
-                name: body.customer.name,
-                email: body.customer.email,
-                cpfCnpj: body.customer.cpfCnpj,
-                postalCode: body.customer.postalCode || "",
-                addressNumber: body.customer.addressNumber || "",
-                addressComplement: body.customer.addressComplement || "",
-                mobilePhone: body.customer.phone,
-              },
-              remoteIp: getRequestIp(request),
-            });
-
-            return provider.createCardPayment({
-              ...common,
-              customer: customerId,
-              remoteIp: getRequestIp(request),
-              creditCardToken: text(tokenized.creditCardToken),
-            });
-          })();
-
+  const { error: transactionError } =
     await supabase
       .from("marketplace_payments")
-      .update({
-        provider_payment_id: payment.id,
-        provider_customer_id: customerId,
-        status: payment.status,
-        card_brand: payment.creditCardBrand || null,
-        card_last4: payment.creditCardNumber || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", transactionId)
-      .eq("company_id", companyId);
+      .insert({
+        id: transactionId,
+        company_id: companyId,
+        order_id: orderId,
+        provider: "mercado_pago",
+        payment_method:
+          body.paymentMethod,
+        gross_amount:
+          calculation.total,
+        amount: calculation.total,
+        subtotal:
+          calculation.subtotal,
+        delivery_fee:
+          calculation.deliveryFee,
+        discount_amount:
+          calculation.discountAmount,
+        commission_amount:
+          calculation.commissionAmount,
+        commission_percentage:
+          calculation.feePercent,
+        platform_fee_percent:
+          calculation.feePercent,
+        platform_fee_amount:
+          calculation.commissionAmount,
+        seller_net_amount:
+          sellerNetEstimate,
+        currency: "BRL",
+        status: "pending",
+        provider_status: "pending",
+        split_status: "pending",
+        payout_status:
+          "provider_managed",
+        external_reference:
+          externalReference,
+        idempotency_key: key,
+        expires_at:
+          new Date(
+            Date.now() +
+              30 * 60 * 1000,
+          ).toISOString(),
+        payer_name:
+          body.customer.name,
+        payer_email:
+          body.customer.email,
+        payer_phone:
+          body.customer.phone,
+        raw_payload: {
+          stage:
+            "before_provider_request",
+          checkout: "transparent",
+        },
+      });
+
+  if (transactionError) {
+    throw Object.assign(
+      new Error(
+        transactionError.message ||
+          "Nao foi possivel iniciar a transacao.",
+      ),
+      { status: 500 },
+    );
+  }
+
+  await supabase
+    .from("orders")
+    .update({
+      marketplace_payment_id:
+        transactionId,
+    })
+    .eq("id", orderId)
+    .eq("company_id", companyId);
+
+  await Promise.all([
+    supabase
+      .from("order_payments")
+      .insert({
+        company_id: companyId,
+        order_id: orderId,
+        type: "full",
+        status: "pending",
+        amount:
+          calculation.total,
+        paid_amount: 0,
+        remaining_amount:
+          calculation.total,
+        provider: "mercado_pago",
+        idempotency_key: key,
+        external_reference:
+          externalReference,
+      }),
+    supabase
+      .from(
+        "marketplace_commissions",
+      )
+      .insert({
+        company_id: companyId,
+        order_id: orderId,
+        marketplace_payment_id:
+          transactionId,
+        provider: "mercado_pago",
+        gross_amount:
+          calculation.total,
+        commission_percentage:
+          calculation.feePercent,
+        commission_fixed: 0,
+        commission_amount:
+          calculation.commissionAmount,
+        fee_percent:
+          calculation.feePercent,
+        estimated_amount:
+          calculation.commissionAmount,
+        calculation_base:
+          "gross_amount",
+        status: "pending",
+        external_reference:
+          `commission:${transactionId}`,
+      }),
+  ]);
+
+  const customerDocument =
+    digits(body.customer.cpfCnpj);
+  const identificationType =
+    body.cardPayment
+      ?.identificationType ||
+    (customerDocument.length === 14
+      ? "CNPJ"
+      : "CPF");
+  const identificationNumber =
+    digits(
+      body.cardPayment
+        ?.identificationNumber ||
+        customerDocument,
+    );
+  const appUrl = getOrcalyAppUrl();
+  const paymentPayload: JsonRecord = {
+    transaction_amount:
+      calculation.total,
+    description:
+      `Pedido ${orderId} - ${text(
+        company.nome || company.name,
+      )}`.slice(0, 120),
+    external_reference:
+      externalReference,
+    application_fee:
+      calculation.commissionAmount,
+    notification_url:
+      `${appUrl}/api/marketplace/payments/webhook/mercado-pago` +
+      `?company_id=${encodeURIComponent(companyId)}` +
+      `&marketplace_payment_id=${encodeURIComponent(transactionId)}`,
+    statement_descriptor: "ORCALY",
+    binary_mode: false,
+    metadata: {
+      company_id: companyId,
+      order_id: orderId,
+      marketplace_payment_id:
+        transactionId,
+      payment_method:
+        body.paymentMethod,
+      slug,
+    },
+    payer: {
+      email:
+        body.customer.email,
+      first_name:
+        body.customer.name,
+      identification: {
+        type: identificationType,
+        number:
+          identificationNumber,
+      },
+    },
+    additional_info: {
+      items:
+        calculation.calculated.map(
+          (item) => ({
+            id: item.productId,
+            title:
+              item.productName,
+            quantity:
+              item.quantity,
+            unit_price:
+              item.unitPrice,
+          }),
+        ),
+      payer: {
+        first_name:
+          body.customer.name,
+        phone: {
+          number:
+            body.customer.phone,
+        },
+      },
+    },
+  };
+
+  if (
+    body.paymentMethod === "PIX"
+  ) {
+    paymentPayload.payment_method_id =
+      "pix";
+    paymentPayload.date_of_expiration =
+      new Date(
+        Date.now() +
+          30 * 60 * 1000,
+      ).toISOString();
+  } else {
+    const card =
+      body.cardPayment;
+
+    if (
+      !card?.token ||
+      !card.paymentMethodId
+    ) {
+      throw Object.assign(
+        new Error(
+          "Os dados seguros do cartao nao foram gerados.",
+        ),
+        { status: 400 },
+      );
+    }
+
+    paymentPayload.token =
+      card.token;
+    paymentPayload.installments =
+      Math.max(
+        1,
+        Math.min(
+          12,
+          Number(
+            card.installments || 1,
+          ),
+        ),
+      );
+    paymentPayload.payment_method_id =
+      card.paymentMethodId;
+
+    if (text(card.issuerId)) {
+      paymentPayload.issuer_id =
+        card.issuerId;
+    }
+  }
+
+  try {
+    const payment =
+      (await createMercadoPagoPayment(
+        accessToken,
+        paymentPayload,
+        key,
+      )) as JsonRecord;
+
+    const status =
+      await persistPaymentStatus(
+        calculation,
+        {
+          id: transactionId,
+          orderId,
+        },
+        payment,
+      );
 
     return {
       repeated: false,
       transactionId,
       orderId,
-      paymentId: payment.id,
-      status: payment.status,
-      total,
+      paymentId: text(payment.id),
+      status:
+        status.mappedStatus,
+      providerStatus:
+        status.remoteStatus,
+      total: calculation.total,
+      commissionAmount:
+        calculation.commissionAmount,
       pix:
         body.paymentMethod === "PIX"
-          ? {
-              encodedImage: payment.encodedImage,
-              payload: payment.payload,
-              expirationDate: payment.expirationDate,
-            }
+          ? pixData(payment)
           : undefined,
     };
-  } catch (error) {
-    await supabase
-      .from("marketplace_payments")
-      .update({
-        status: "FAILED",
-        error_message:
-          error instanceof Error
-            ? error.message.slice(0, 500)
-            : "Falha no provider",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", transactionId)
-      .eq("company_id", companyId);
+  } catch (cause) {
+    const message =
+      cause instanceof Error
+        ? cause.message
+        : "Falha no Mercado Pago.";
 
-    throw error;
+    await Promise.all([
+      supabase
+        .from(
+          "marketplace_payments",
+        )
+        .update({
+          status: "failed",
+          last_error:
+            message.slice(0, 500),
+          error_message:
+            message.slice(0, 500),
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq("id", transactionId)
+        .eq(
+          "company_id",
+          companyId,
+        ),
+      supabase
+        .from("order_payments")
+        .update({
+          status: "failed",
+          notes:
+            message.slice(0, 500),
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq("order_id", orderId)
+        .eq(
+          "company_id",
+          companyId,
+        ),
+    ]);
+
+    throw cause;
   }
 }
 
+export async function getCheckoutPaymentStatus(
+  slug: string,
+  paymentId: string,
+) {
+  const { supabase, company } =
+    await resolveCompanyBySlug(slug);
+  const companyId = text(company.id);
+
+  const { data: transaction } =
+    await supabase
+      .from("marketplace_payments")
+      .select(
+        "id,order_id,provider_payment_id,status,provider_status,paid_at",
+      )
+      .eq("company_id", companyId)
+      .eq("provider", "mercado_pago")
+      .eq(
+        "provider_payment_id",
+        paymentId,
+      )
+      .maybeSingle();
+
+  if (!transaction) {
+    throw Object.assign(
+      new Error(
+        "Pagamento nao encontrado.",
+      ),
+      { status: 404 },
+    );
+  }
+
+  if (
+    terminalStatus(
+      transaction.status,
+    )
+  ) {
+    return transaction;
+  }
+
+  const accessToken =
+    await getSellerAccessToken(
+      supabase,
+      companyId,
+    );
+  const payment =
+    (await getMercadoPagoPayment(
+      accessToken,
+      paymentId,
+    )) as JsonRecord;
+  const status =
+    await persistPaymentStatus(
+      { supabase, companyId },
+      {
+        id: String(transaction.id),
+        orderId: String(
+          transaction.order_id,
+        ),
+      },
+      payment,
+    );
+
+  return {
+    ...transaction,
+    status: status.mappedStatus,
+    providerStatus:
+      status.remoteStatus,
+    paidAt: status.paidAt,
+  };
+}

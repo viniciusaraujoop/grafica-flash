@@ -1,42 +1,61 @@
-// ORCALY_ASAAS_MIGRATION_V2
-import { NextRequest, NextResponse } from "next/server";
-import { getPaymentFlags } from "@/lib/payments/asaas-config";
-import { createCheckoutPayment } from "@/lib/payments/checkout-service";
-import { paymentErrorMessage, paymentErrorStatus } from "@/lib/payments/payment-errors";
+import {
+  NextRequest,
+  NextResponse,
+} from "next/server";
+import {
+  createCheckoutPayment,
+} from "@/lib/payments/checkout-service";
 
-type Context = { params: Promise<{ slug: string }> };
+type Context = {
+  params: Promise<{
+    slug: string;
+  }>;
+};
 
 export async function POST(
   request: NextRequest,
   context: Context,
 ) {
   try {
-    const flags = getPaymentFlags();
-
-    if (!flags.cardTokenizationEnabled) {
-      return NextResponse.json(
-        {
-          error:
-            "O pagamento por cartao ainda nao foi habilitado. Utilize Pix.",
-        },
-        { status: 409 },
-      );
-    }
-
-    const { slug } = await context.params;
-    const body = await request.json();
+    const { slug } =
+      await context.params;
+    const body = await request
+      .json()
+      .catch(() => ({}));
 
     return NextResponse.json(
       await createCheckoutPayment(
         slug,
-        { ...body, paymentMethod: "CREDIT_CARD" },
+        {
+          ...body,
+          paymentMethod:
+            "CREDIT_CARD",
+        },
         request,
       ),
     );
   } catch (error) {
+    const status =
+      error &&
+      typeof error === "object" &&
+      "status" in error
+        ? Number(
+            (
+              error as {
+                status?: number;
+              }
+            ).status || 500,
+          )
+        : 500;
+
     return NextResponse.json(
-      { error: paymentErrorMessage(error) },
-      { status: paymentErrorStatus(error) },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Nao foi possivel processar o cartao.",
+      },
+      { status },
     );
   }
 }
