@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/company-access'
-import { getMercadoPagoPayment, mapMercadoPagoStatus, verifyMercadoPagoWebhookSignature } from '@/lib/mercado-pago'
+import {
+  getMercadoPagoPayment,
+  mapMercadoPagoStatus,
+  unprotectMercadoPagoToken,
+  verifyMercadoPagoWebhookSignature,
+} from '@/lib/mercado-pago'
 
 function extractPaymentId(body: any, url: URL) {
   return String(
@@ -77,12 +82,17 @@ export async function POST(request: NextRequest) {
     if (settingError) throw settingError
     if (!setting?.access_token) throw new Error('Empresa sem access_token Mercado Pago.')
 
-    const mpPayment = await getMercadoPagoPayment(setting.access_token, paymentId)
+    const mpPayment: any = await getMercadoPagoPayment(
+      unprotectMercadoPagoToken(setting.access_token),
+      paymentId,
+    )
     const parsedRef = parseExternalReference(mpPayment.external_reference)
     const companyId = parsedRef.companyId || marketplacePayment.company_id
     const orderId = parsedRef.orderId || marketplacePayment.order_id
     const marketplacePaymentId = parsedRef.marketplacePaymentId || marketplacePayment.id
-    const mappedStatus = mapMercadoPagoStatus(mpPayment.status)
+    const mappedStatus = mapMercadoPagoStatus(
+      String(mpPayment.status || ''),
+    )
     const paidAt = mappedStatus === 'paid' ? (mpPayment.date_approved || new Date().toISOString()) : null
     const grossAmount = Number(mpPayment.transaction_amount || marketplacePayment.amount || 0)
     const feeDetails = Array.isArray(mpPayment.fee_details) ? mpPayment.fee_details : []
@@ -100,7 +110,7 @@ export async function POST(request: NextRequest) {
       .from('marketplace_payments')
       .update({
         provider_payment_id: String(mpPayment.id || paymentId),
-        provider_status: mpPayment.status || null,
+        provider_status: String(mpPayment.status || '') || null,
         status: mappedStatus,
         amount: grossAmount,
         provider_fee_amount: Number(providerFeeAmount.toFixed(2)),

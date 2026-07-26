@@ -1,6 +1,5 @@
-// ORCALY_PAYMENTS_PREMIUM_V2
-import PaymentsHub from "@/components/payments/PaymentsHub";
+import MarketplacePaymentsPanel from "@/components/painel/MarketplacePaymentsPanel";
 
 export default function PagamentosPage() {
-  return <PaymentsHub useAsaas legacy={null} />;
+  return <MarketplacePaymentsPanel mode="overview" />;
 }
