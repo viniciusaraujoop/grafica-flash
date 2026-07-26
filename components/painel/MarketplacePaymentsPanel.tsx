@@ -155,6 +155,25 @@ export default function MarketplacePaymentsPanel({ mode }: { mode: Mode }) {
   }
 
   useEffect(() => { load() }, [])
+  useEffect(() => {
+    const mp = searchParams.get("mp");
+    const providerMessage = searchParams.get("message");
+
+    if (mp === "connected") {
+      setMessage(
+        "Mercado Pago conectado. O checkout online da empresa pode ser configurado.",
+      );
+      setError("");
+    }
+
+    if (mp === "error") {
+      setError(
+        providerMessage ||
+          "Nao foi possivel concluir a conexao com o Mercado Pago.",
+      );
+      setMessage("");
+    }
+  }, [searchParams]);
 
   async function connectMercadoPago() {
     setConnecting(true)

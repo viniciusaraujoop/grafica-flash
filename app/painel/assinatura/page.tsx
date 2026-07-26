@@ -1,5 +1,6 @@
-import SubscriptionManager from "@/components/subscription/SubscriptionManager";
+// ORCALY_SUBSCRIPTION_WEBHOOK_V1
+import AsaasSubscriptionPayment from "@/components/subscription/AsaasSubscriptionPayment";
 
-export default function PainelAssinaturaPage() {
-  return <SubscriptionManager />;
+export default function AssinaturaPage() {
+  return <AsaasSubscriptionPayment />;
 }

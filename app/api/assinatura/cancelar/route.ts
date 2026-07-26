@@ -1,19 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cancelCompanySubscription } from "@/lib/subscription-service";
+// ORCALY_ASAAS_MIGRATION_V2
+import { NextRequest } from "next/server";
+import { POST as asaasPost } from "@/app/api/assinatura/asaas/cancelar/route";
+import { POST as mercadoPagoPost } from "./route.mercado-pago";
+import {
+  canUseAsaasSubscriptions,
+  getDefaultPaymentProvider,
+} from "@/lib/payments/asaas-config";
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json().catch(() => ({}));
-    const result = await cancelCompanySubscription(request, body?.reason);
-    return NextResponse.json({ ok: true, ...result });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Não foi possível cancelar sua assinatura.";
-    const status = message.toLowerCase().includes("não autorizado")
-      ? 401
-      : message.toLowerCase().includes("permissão")
-        ? 403
-        : 400;
-    return NextResponse.json({ error: message }, { status });
-  }
+  const useAsaas =
+    getDefaultPaymentProvider() === "asaas" &&
+    canUseAsaasSubscriptions();
+
+  return useAsaas
+    ? asaasPost(request)
+    : mercadoPagoPost(request);
 }

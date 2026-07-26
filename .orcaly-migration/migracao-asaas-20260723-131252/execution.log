@@ -1,0 +1,69 @@
+[2026-07-23 13:12:52] [STEP] Fase 0 - auditando codigo, checkout, assinatura e providers
+[2026-07-23 13:12:52] [OK] Auditoria concluida: 146 arquivos relacionados.
+[2026-07-23 13:12:52] [STEP] Executando npm.cmd run build
+[2026-07-23 13:13:17] [OK] build inicial passou em 24.71s.
+[2026-07-23 13:13:17] [STEP] Executando npm.cmd run lint
+[2026-07-23 13:13:37] [WARN] lint inicial falhou com codigo 1.
+[2026-07-23 13:13:37] [STEP] Aplicando fase: all
+[2026-07-23 13:13:37] [OK] Criado: app\admin\pagamentos\asaas\page.tsx
+[2026-07-23 13:13:37] [INFO] Backup criado: app\admin\pagamentos\page.tsx
+[2026-07-23 13:13:37] [OK] Atualizado: app\admin\pagamentos\page.tsx
+[2026-07-23 13:13:37] [OK] Criado: app\api\assinatura\asaas\cancelar\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\assinatura\asaas\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\checkout\[slug]\card\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\checkout\[slug]\pix\[paymentId]\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\checkout\[slug]\pix\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\checkout\[slug]\prepare\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\checkout\[slug]\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\checkout\[slug]\status\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\payments\asaas\account\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\payments\asaas\account\status\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\payments\asaas\payouts\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\payments\asaas\transactions\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\webhooks\asaas\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\checkout\[slug]\page.tsx
+[2026-07-23 13:13:37] [OK] Criado: CHECKLIST-MIGRACAO-ASAAS-ORCALY.md
+[2026-07-23 13:13:37] [OK] Criado: components\checkout\CheckoutClient.tsx
+[2026-07-23 13:13:37] [OK] Criado: components\checkout\CheckoutShell.tsx
+[2026-07-23 13:13:37] [OK] Criado: components\payments\AsaasFinancialPanel.tsx
+[2026-07-23 13:13:37] [OK] Criado: components\payments\PaymentsHub.tsx
+[2026-07-23 13:13:37] [OK] Criado: components\subscription\AsaasSubscriptionPayment.tsx
+[2026-07-23 13:13:37] [OK] Criado: CONFIGURACAO-MIGRACAO-ASAAS-ORCALY.md
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\asaas-config.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\checkout-service.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\credential-encryption.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\financial-integration.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\idempotency.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\money.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\payment-errors.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\plan-fees.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\provider.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\provider-factory.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\providers\asaas.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\providers\mercado-pago.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\server-context.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\subscription-asaas.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\payments\types.ts
+[2026-07-23 13:13:37] [OK] Criado: lib\plans\plan-config.ts
+[2026-07-23 13:13:37] [OK] Criado: PLANO-ROLLBACK-MIGRACAO-ASAAS-ORCALY.md
+[2026-07-23 13:13:37] [OK] Criado: supabase\migrations\20260723_migracao_gradual_asaas_orcaly.sql
+[2026-07-23 13:13:37] [OK] Criado: app\painel\pagamentos\PagamentosLegacy.tsx
+[2026-07-23 13:13:37] [INFO] Backup criado: app\painel\pagamentos\page.tsx
+[2026-07-23 13:13:37] [OK] Atualizado: app\painel\pagamentos\page.tsx
+[2026-07-23 13:13:37] [OK] Criado: app\painel\assinatura\AssinaturaLegacy.tsx
+[2026-07-23 13:13:37] [INFO] Backup criado: app\painel\assinatura\page.tsx
+[2026-07-23 13:13:37] [OK] Atualizado: app\painel\assinatura\page.tsx
+[2026-07-23 13:13:37] [OK] Criado: app\api\checkout\plano\route.mercado-pago.ts
+[2026-07-23 13:13:37] [INFO] Backup criado: app\api\checkout\plano\route.ts
+[2026-07-23 13:13:37] [OK] Atualizado: app\api\checkout\plano\route.ts
+[2026-07-23 13:13:37] [OK] Criado: app\api\assinatura\cancelar\route.mercado-pago.ts
+[2026-07-23 13:13:37] [INFO] Backup criado: app\api\assinatura\cancelar\route.ts
+[2026-07-23 13:13:37] [OK] Atualizado: app\api\assinatura\cancelar\route.ts
+[2026-07-23 13:13:37] [WARN] Migration gerada. Use -ApplyDatabaseMigration para aplicar.
+[2026-07-23 13:13:37] [STEP] Validando implementacao estatica
+[2026-07-23 13:13:37] [OK] Validacao estatica concluida.
+[2026-07-23 13:13:37] [STEP] Executando npm.cmd run lint
+[2026-07-23 13:13:54] [WARN] lint final falhou com codigo 1.
+[2026-07-23 13:13:54] [STEP] Executando npm.cmd run build
+[2026-07-23 13:14:19] [OK] build final passou em 25.19s.
+[2026-07-23 13:14:19] [OK] Criado: RELATORIO-MIGRACAO-ASAAS-ORCALY.md

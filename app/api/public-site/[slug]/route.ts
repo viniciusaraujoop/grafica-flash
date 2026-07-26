@@ -90,9 +90,9 @@ export async function GET(_request: NextRequest, context: RouteContext) {
         .order('weekday', { ascending: true }),
       supabaseAdmin
         .from('marketplace_payment_settings')
-        .select('id,onboarding_status,is_active')
+        .select('id,onboarding_status,account_status,is_active,charges_enabled,pix_enabled')
         .eq('company_id', company.id)
-        .eq('provider', 'mercado_pago')
+        .eq('provider', 'asaas')
         .maybeSingle(),
     ])
 
@@ -114,7 +114,16 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       site_features: arr(company.site_features).length ? company.site_features : defaults.site_features,
       site_payment_methods: arr(company.site_payment_methods).length ? company.site_payment_methods : defaults.site_payment_methods,
       site_delivery_options: arr(company.site_delivery_options).length ? company.site_delivery_options : defaults.site_delivery_options,
-      marketplace_payment_online_enabled: !paymentSettingsResult.error && paymentSettingsResult.data?.is_active === true && paymentSettingsResult.data?.onboarding_status === 'connected',
+      marketplace_payment_online_enabled:
+        !paymentSettingsResult.error &&
+        paymentSettingsResult.data?.is_active === true &&
+        paymentSettingsResult.data?.charges_enabled === true &&
+        paymentSettingsResult.data?.pix_enabled === true,
+      unified_checkout_enabled:
+        !paymentSettingsResult.error &&
+        paymentSettingsResult.data?.is_active === true &&
+        paymentSettingsResult.data?.charges_enabled === true &&
+        paymentSettingsResult.data?.pix_enabled === true,
     }
 
     return NextResponse.json({
@@ -132,3 +141,4 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     )
   }
 }
+

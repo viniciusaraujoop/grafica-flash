@@ -241,7 +241,7 @@ export default function SegmentMarketplaceCatalog({
   const localIdRef = useRef(0)
 
   const deliveryZones = asArray<DeliveryZone>((company as any).delivery_zones).filter((zone) => zone.is_active !== false)
-  const mercadoPagoConnected = company.marketplace_payment_online_enabled === true
+  const unifiedCheckoutEnabled = (company as any).unified_checkout_enabled === true || company.marketplace_payment_online_enabled === true
 
   const safeProducts = useMemo(() => products.filter((product) => product.ativo !== false), [products])
   const categories = useMemo(() => {
@@ -270,7 +270,7 @@ export default function SegmentMarketplaceCatalog({
   const total = Number(Math.max(0, subtotal + deliveryFeeBase - totalDiscount).toFixed(2))
   const checkoutTitle = getSegmentCheckoutTitle(normalizedType)
   const logisticsEnabled = shouldUseDelivery(normalizedType)
-  const onlineEnabled = mercadoPagoConnected
+  const onlineEnabled = unifiedCheckoutEnabled
 
   function updateCheckout(field: keyof CheckoutState, value: string) {
     setCheckout((current) => ({ ...current, [field]: value }))
@@ -374,85 +374,74 @@ export default function SegmentMarketplaceCatalog({
       if (minimum > 0 && subtotal < minimum) return `Pedido mínimo para ${selectedZone?.name || 'esta região'} é ${money(minimum)}.`
     }
 
-    if (isStoreLike(normalizedType) && !mercadoPagoConnected) return 'Esta loja ainda não ativou pagamentos online. Fale com a loja para concluir.'
+    if (isStoreLike(normalizedType) && !unifiedCheckoutEnabled) return 'Esta loja ainda nao ativou o checkout online.'
     return ''
   }
 
   async function submitOrder() {
-    setError('')
-    setSuccess('')
-    const validation = validateCheckout()
+    setError("");
+    setSuccess("");
+
+    const validation = validateCheckout();
     if (validation) {
-      setError(validation)
-      return
+      setError(validation);
+      return;
     }
 
-    setSubmitting(true)
+    const slug = String(
+      company.slug || company.subdomain_slug || "",
+    ).trim();
 
-    try {
-      const response = await fetch('/api/marketplace/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          slug: company.slug || company.subdomain_slug,
-          segment: normalizedType,
-          business_type: normalizedType,
-          delivery_type: logisticsEnabled ? checkout.deliveryType : 'pickup',
-          delivery_zone_id: logisticsEnabled && checkout.deliveryType === 'delivery' ? checkout.deliveryZoneId : null,
-          payment_method_id: null,
-          payment_provider: mercadoPagoConnected ? 'mercado_pago' : 'manual_request',
-          force_mercado_pago: mercadoPagoConnected,
-          coupon_code: coupon.appliedCode || null,
-          observacoes: checkout.notes,
-          cliente: {
-            nome: checkout.customerName,
-            telefone: checkout.customerPhone,
-            email: checkout.customerEmail,
-            endereco: checkout.address,
-            bairro: checkout.neighborhood || selectedZone?.name || '',
-            complemento: checkout.complement,
-            referencia: checkout.referencePoint,
-          },
-          respostas_gerais: {
-            segmento: normalizedType,
-            origem: 'site_segmentado_orcaly',
-          },
-          items: cart.map((item) => ({
-            product_id: item.productId,
-            quantidade: item.quantity,
-            observacoes: item.notes,
-            respostas: item.answers,
-          })),
-        }),
-      })
-
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload.error || 'Erro ao enviar solicitação.')
-
-      if (mercadoPagoConnected && isStoreLike(normalizedType)) {
-        const paymentResponse = await fetch('/api/marketplace/payments/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slug: company.slug || company.subdomain_slug, order_id: payload.order_id }),
-        })
-        const paymentPayload = await paymentResponse.json().catch(() => ({}))
-        if (!paymentResponse.ok) throw new Error(paymentPayload.error || 'Solicitação criada, mas o pagamento online não abriu.')
-        const checkoutUrl = paymentPayload.checkout_url || paymentPayload.init_point || paymentPayload.sandbox_init_point
-        if (checkoutUrl) {
-          window.location.href = checkoutUrl
-          return
-        }
-      }
-
-      setSuccess(`Solicitação enviada com sucesso. Pedido ${String(payload.order_id || '').slice(0, 8)} registrado no painel.`)
-      setCart([])
-      setCheckout(initialCheckout)
-      setCoupon(initialCoupon)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao enviar solicitação.')
-    } finally {
-      setSubmitting(false)
+    if (!slug) {
+      setError("Empresa nao identificada.");
+      return;
     }
+
+    window.sessionStorage.setItem(
+      `orcaly-checkout:${slug}`,
+      JSON.stringify({
+        items: cart.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          addonIds: [],
+          observation: [
+            item.notes,
+            ...Object.entries(item.answers || {}).map(
+              ([key, value]) => `${key}: ${value}`,
+            ),
+          ]
+            .filter(Boolean)
+            .join(" | "),
+        })),
+        customer: {
+          name: checkout.customerName,
+          email: checkout.customerEmail,
+          phone: checkout.customerPhone,
+          cpfCnpj: "",
+          postalCode: "",
+          addressNumber: "",
+          addressComplement: checkout.complement,
+        },
+        delivery: {
+          type: logisticsEnabled
+            ? checkout.deliveryType
+            : "pickup",
+          zoneId:
+            logisticsEnabled &&
+            checkout.deliveryType === "delivery"
+              ? checkout.deliveryZoneId
+              : "",
+          address: checkout.address,
+          complement: checkout.complement,
+          reference: checkout.referencePoint,
+        },
+        couponCode: coupon.appliedCode || "",
+      }),
+    );
+
+    window.location.assign(
+      `/checkout/${encodeURIComponent(slug)}?origem=marketplace`,
+    );
   }
 
   return (
@@ -602,9 +591,9 @@ export default function SegmentMarketplaceCatalog({
             ) : null}
 
             {isStoreLike(normalizedType) ? (
-              <div className={`rounded-[1.4rem] border p-4 text-sm font-bold leading-6 ${mercadoPagoConnected ? 'border-emerald-100 bg-emerald-50 text-emerald-700' : 'border-amber-100 bg-amber-50 text-amber-700'}`}>
-                <p className="font-black">{mercadoPagoConnected ? 'Pagamento seguro via Mercado Pago' : 'Pagamentos online indisponíveis'}</p>
-                <p className="mt-1">{mercadoPagoConnected ? 'Finalize com Pix, cartão de crédito ou débito pelo Checkout Pro.' : 'Esta loja ainda não ativou pagamentos online. Use o WhatsApp como apoio para combinar o pedido.'}</p>
+              <div className={`rounded-[1.4rem] border p-4 text-sm font-bold leading-6 ${unifiedCheckoutEnabled ? 'border-emerald-100 bg-emerald-50 text-emerald-700' : 'border-amber-100 bg-amber-50 text-amber-700'}`}>
+                <p className="font-black">{unifiedCheckoutEnabled ? 'Pagamento seguro via Mercado Pago' : 'Pagamentos online indisponíveis'}</p>
+                <p className="mt-1">{unifiedCheckoutEnabled ? 'Finalize com Pix, cartão de crédito ou débito pelo Checkout Pro.' : 'Esta loja ainda não ativou pagamentos online. Use o WhatsApp como apoio para combinar o pedido.'}</p>
               </div>
             ) : (
               <div className="rounded-2xl bg-blue-50 p-3 text-xs font-bold leading-5 text-[#05245c]">Esta solicitação será registrada no painel da empresa. O WhatsApp fica apenas como apoio para dúvidas.</div>
@@ -617,7 +606,7 @@ export default function SegmentMarketplaceCatalog({
           {success ? <div className="mt-4 rounded-2xl bg-emerald-50 p-3 text-sm font-bold text-emerald-700">{success}</div> : null}
 
           <button type="button" onClick={submitOrder} disabled={submitting || !cart.length} className="mt-5 w-full rounded-2xl px-5 py-4 font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!submitting && cart.length ? { background: primaryColor } : undefined}>
-            {submitting ? 'Enviando...' : mercadoPagoConnected && isStoreLike(normalizedType) ? 'Finalizar e pagar' : checkoutTitle}
+            {submitting ? 'Enviando...' : unifiedCheckoutEnabled && isStoreLike(normalizedType) ? 'Finalizar e pagar' : checkoutTitle}
           </button>
 
           <a href={whatsappLink(company, `Olá, tenho uma dúvida sobre ${company.nome || 'a empresa'}.`)} target="_blank" rel="noreferrer" className="mt-3 block rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-center text-sm font-black text-emerald-700">
@@ -723,3 +712,4 @@ function ProductRequestModal({
     </div>
   )
 }
+

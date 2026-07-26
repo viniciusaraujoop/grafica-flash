@@ -1,0 +1,28 @@
+[2026-07-23 14:25:27] [STEP] Fase 0 - auditando codigo, checkout, assinatura e providers
+[2026-07-23 14:25:28] [OK] Auditoria concluida: 187 arquivos relacionados.
+[2026-07-23 14:25:28] [STEP] Executando npm.cmd run build
+[2026-07-23 14:25:54] [OK] build inicial passou em 26s.
+[2026-07-23 14:25:54] [STEP] Executando npm.cmd run lint
+[2026-07-23 14:26:16] [WARN] lint inicial falhou com codigo 1.
+[2026-07-23 14:26:16] [STEP] Aplicando fase: ui
+[2026-07-23 14:26:16] [INFO] Sem alteracao: app\admin\pagamentos\asaas\page.tsx
+[2026-07-23 14:26:16] [INFO] Sem alteracao: app\admin\pagamentos\page.tsx
+[2026-07-23 14:26:16] [INFO] Sem alteracao: app\checkout\[slug]\page.tsx
+[2026-07-23 14:26:16] [INFO] Sem alteracao: CHECKLIST-MIGRACAO-ASAAS-ORCALY.md
+[2026-07-23 14:26:16] [INFO] Sem alteracao: components\checkout\CheckoutClient.tsx
+[2026-07-23 14:26:16] [INFO] Sem alteracao: components\checkout\CheckoutShell.tsx
+[2026-07-23 14:26:16] [INFO] Sem alteracao: components\payments\AsaasFinancialPanel.tsx
+[2026-07-23 14:26:16] [INFO] Sem alteracao: components\payments\PaymentsHub.tsx
+[2026-07-23 14:26:16] [INFO] Sem alteracao: components\subscription\AsaasSubscriptionPayment.tsx
+[2026-07-23 14:26:16] [INFO] Sem alteracao: CONFIGURACAO-MIGRACAO-ASAAS-ORCALY.md
+[2026-07-23 14:26:16] [INFO] Sem alteracao: PLANO-ROLLBACK-MIGRACAO-ASAAS-ORCALY.md
+[2026-07-23 14:26:16] [INFO] Wrapper ja instalado: app/painel/pagamentos/page.tsx
+[2026-07-23 14:26:16] [INFO] Wrapper ja instalado: app/painel/assinatura/page.tsx
+[2026-07-23 14:26:16] [STEP] Validando implementacao estatica
+[2026-07-23 14:26:16] [OK] Validacao estatica concluida.
+[2026-07-23 14:26:16] [STEP] Executando npm.cmd run lint
+[2026-07-23 14:26:39] [WARN] lint final falhou com codigo 1.
+[2026-07-23 14:26:39] [STEP] Executando npm.cmd run build
+[2026-07-23 14:27:05] [OK] build final passou em 26.24s.
+[2026-07-23 14:27:05] [INFO] Backup criado: RELATORIO-MIGRACAO-ASAAS-ORCALY.md
+[2026-07-23 14:27:05] [OK] Atualizado: RELATORIO-MIGRACAO-ASAAS-ORCALY.md
