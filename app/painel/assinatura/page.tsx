@@ -1,6 +1,5 @@
-// ORCALY_SUBSCRIPTION_WEBHOOK_V1
-import AsaasSubscriptionPayment from "@/components/subscription/AsaasSubscriptionPayment";
+import MercadoPagoSubscriptionCheckout from "@/components/subscription/MercadoPagoSubscriptionCheckout";
 
 export default function AssinaturaPage() {
-  return <AsaasSubscriptionPayment />;
+  return <MercadoPagoSubscriptionCheckout />;
 }

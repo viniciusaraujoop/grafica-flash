@@ -1,13 +1,16 @@
-// ORCALY_ASAAS_MIGRATION_V2
-import { NextRequest, NextResponse } from "next/server";
-import { AsaasProvider } from "@/lib/payments/providers/asaas";
 import {
-  getCompanyProviderAccount,
-  resolveCompanyBySlug,
-} from "@/lib/payments/server-context";
+  NextRequest,
+  NextResponse,
+} from "next/server";
+import {
+  getCheckoutPaymentStatus,
+} from "@/lib/payments/checkout-service";
 
 type Context = {
-  params: Promise<{ slug: string; paymentId: string }>;
+  params: Promise<{
+    slug: string;
+    paymentId: string;
+  }>;
 };
 
 export async function GET(
@@ -15,38 +18,42 @@ export async function GET(
   context: Context,
 ) {
   try {
-    const { slug, paymentId } = await context.params;
-    const { supabase, company } = await resolveCompanyBySlug(slug);
-    const companyId = String(company.id);
+    const {
+      slug,
+      paymentId,
+    } = await context.params;
 
-    const { data: transaction } = await supabase
-      .from("marketplace_payments")
-      .select("provider_payment_id")
-      .eq("company_id", companyId)
-      .eq("provider_payment_id", paymentId)
-      .maybeSingle();
-
-    if (!transaction) {
-      return NextResponse.json(
-        { error: "Pagamento nao encontrado." },
-        { status: 404 },
+    const payment =
+      await getCheckoutPaymentStatus(
+        slug,
+        paymentId,
       );
-    }
 
-    const account = await getCompanyProviderAccount(companyId);
-    const provider = new AsaasProvider(account.apiKey);
-    const payment = await provider.getPayment(paymentId);
-
-    return NextResponse.json({ payment });
+    return NextResponse.json({
+      payment,
+    });
   } catch (error) {
+    const status =
+      error &&
+      typeof error === "object" &&
+      "status" in error
+        ? Number(
+            (
+              error as {
+                status?: number;
+              }
+            ).status || 500,
+          )
+        : 500;
+
     return NextResponse.json(
       {
         error:
           error instanceof Error
             ? error.message
-            : "Nao foi possivel consultar o pagamento.",
+            : "Nao foi possivel consultar o Pix.",
       },
-      { status: 500 },
+      { status },
     );
   }
 }
