@@ -18,6 +18,7 @@ import {
 type CadastroForm = {
   nome_responsavel: string;
   email: string;
+  cpf_cnpj: string;
   whatsapp: string;
   empresa_nome: string;
   modelo_negocio: string;
@@ -126,6 +127,28 @@ function formatPhone(value: string) {
   return `+${numbers.slice(0, 2)} (${numbers.slice(2, 4)}) ${numbers.slice(4, 9)}-${numbers.slice(9, 13)}`;
 }
 
+function formatCpfCnpj(value: string) {
+  const numbers = value.replace(/\D/g, "").slice(0, 14);
+
+  if (numbers.length <= 11) {
+    return numbers
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1-$2");
+  }
+
+  return numbers
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+}
+
+function validCpfCnpj(value: string) {
+  const numbers = value.replace(/\D/g, "");
+  return numbers.length === 11 || numbers.length === 14;
+}
+
 function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
@@ -135,6 +158,7 @@ function CadastroContent() {
   const [form, setForm] = useState<CadastroForm>({
     nome_responsavel: "",
     email: "",
+    cpf_cnpj: "",
     whatsapp: "",
     empresa_nome: "",
     modelo_negocio: "services",
@@ -324,6 +348,8 @@ function CadastroContent() {
     if (currentStep === 1) {
       if (!form.nome_responsavel.trim()) return "Informe seu nome.";
       if (!isEmail(form.email)) return "Informe um e-mail válido.";
+      if (!validCpfCnpj(form.cpf_cnpj))
+        return "Informe um CPF ou CNPJ válido.";
     }
 
     if (currentStep === 2) {
@@ -567,6 +593,25 @@ function CadastroContent() {
                           type="email"
                           className="h-14 rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 font-bold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
                         />
+                      </label>
+
+                      <label className="grid gap-2">
+                        <span className="text-sm font-black text-[#344d6b]">
+                          CPF ou CNPJ
+                        </span>
+                        <input
+                          value={form.cpf_cnpj}
+                          onChange={(e) =>
+                            update("cpf_cnpj", formatCpfCnpj(e.target.value))
+                          }
+                          placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          className="h-14 rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 font-bold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                        />
+                        <span className="text-xs font-bold text-[#607895]">
+                          Usado para identificar o pagador no Pix e no cartão.
+                        </span>
                       </label>
                     </div>
                   ) : null}

@@ -5,10 +5,8 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import PaymentMethodsManager from '@/components/food/PaymentMethodsManager'
-
-type Mode = 'overview' | 'config' | 'sales' | 'forms' | 'fees'
-type Tab = 'overview' | 'online' | 'formas' | 'mercado-pago' | 'taxas'
+type Mode = 'overview' | 'config' | 'sales' | 'fees'
+type Tab = 'overview' | 'online' | 'mercado-pago' | 'taxas'
 
 const platformRates = [
   { plan: 'Essencial', percentage: 3.5, detail: 'Plano de entrada para começar vendendo online.' },
@@ -94,13 +92,13 @@ function paymentKind(row: any) {
 function tabFromMode(mode: Mode): Tab {
   if (mode === 'config') return 'mercado-pago'
   if (mode === 'sales') return 'online'
-  if (mode === 'forms') return 'formas'
   if (mode === 'fees') return 'taxas'
   return 'overview'
 }
 
 function normalizeTab(value: string | null, fallback: Tab): Tab {
-  if (value === 'online' || value === 'formas' || value === 'mercado-pago' || value === 'taxas' || value === 'overview') return value
+  if (value === 'formas') return 'mercado-pago'
+  if (value === 'online' || value === 'mercado-pago' || value === 'taxas' || value === 'overview') return value
   if (value === 'vendas') return 'online'
   if (value === 'configuracao' || value === 'mercado_pago') return 'mercado-pago'
   if (value === 'fees' || value === 'comissao') return 'taxas'
@@ -161,7 +159,7 @@ export default function MarketplacePaymentsPanel({ mode }: { mode: Mode }) {
 
     if (mp === "connected") {
       setMessage(
-        "Mercado Pago conectado. O checkout online da empresa pode ser configurado.",
+        "Mercado Pago conectado. O marketplace já pode receber Pix e cartões.",
       );
       setError("");
     }
@@ -234,7 +232,7 @@ export default function MarketplacePaymentsPanel({ mode }: { mode: Mode }) {
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Central da loja</p>
                 <h1 className="mt-2 text-4xl font-black tracking-[-0.055em]">💳 Pagamentos</h1>
                 <p className="mt-2 max-w-3xl font-bold leading-7 text-slate-500">
-                  Acompanhe vendas, valores recebidos e pagamentos processados pelo seu site.
+                  O Mercado Pago é a única forma de recebimento online do marketplace.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -253,7 +251,6 @@ export default function MarketplacePaymentsPanel({ mode }: { mode: Mode }) {
           {[
             { id: 'overview', label: 'Visão geral', href: '/painel/pagamentos' },
             { id: 'online', label: 'Recebimentos online', href: '/painel/pagamentos?tab=online' },
-            { id: 'formas', label: 'Pagamentos presenciais', href: '/painel/pagamentos?tab=formas' },
             { id: 'mercado-pago', label: 'Mercado Pago', href: '/painel/pagamentos?tab=mercado-pago' },
             { id: 'taxas', label: 'Taxas da plataforma', href: '/painel/pagamentos?tab=taxas' },
           ].map((item) => (
@@ -283,7 +280,6 @@ export default function MarketplacePaymentsPanel({ mode }: { mode: Mode }) {
         ) : null}
 
         {activeTab === 'online' ? <SalesTable rows={filteredSales} /> : null}
-        {activeTab === 'formas' ? <PaymentMethodsManager embedded /> : null}
         {activeTab === 'mercado-pago' ? <IntegrationCard connected={connected} setting={setting} commissionPercentage={commissionPercentage} connect={connectMercadoPago} disconnect={disconnectMercadoPago} connecting={connecting} expanded /> : null}
         {activeTab === 'taxas' ? <PlatformFeesCard currentPlan={currentPlan} commissionPercentage={commissionPercentage} expanded /> : null}
       </section>
@@ -300,8 +296,8 @@ function IntegrationCard({ connected, setting, commissionPercentage, connect, di
           <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">{connected ? 'Mercado Pago conectado' : 'Conecte sua conta Mercado Pago'}</h2>
           <p className="mt-2 max-w-3xl font-bold leading-7 text-slate-500">
             {connected
-              ? 'Sua loja já pode receber Pix e cartão online pelo checkout do site. O Orçaly registra o status automaticamente quando o Mercado Pago confirma o pagamento.'
-              : 'Ative Pix e cartão no checkout do seu site. Sem Mercado Pago conectado, o checkout online fica indisponível e o WhatsApp segue apenas como apoio.'}
+              ? 'A conexão libera automaticamente Pix e cartões no marketplace. O Mercado Pago recebe o valor e o Orçaly atualiza pedido, pagamento e entrega.'
+              : 'Conecte sua conta para liberar as vendas. Sem Mercado Pago conectado, o marketplace não aceita pagamentos nem cria pedidos pagos.'}
           </p>
         </div>
         {statusBadge(connected ? 'connected' : setting?.onboarding_status || 'pending')}
@@ -329,8 +325,7 @@ function IntegrationCard({ connected, setting, commissionPercentage, connect, di
       <div className="flex flex-col gap-3 p-6 sm:flex-row">
         <button onClick={connect} disabled={connecting} className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white disabled:opacity-60">{connecting ? 'Abrindo Mercado Pago...' : connected ? 'Reconectar Mercado Pago' : 'Conectar Mercado Pago'}</button>
         {connected ? <button onClick={disconnect} className="rounded-2xl border border-red-100 bg-red-50 px-5 py-4 font-black text-red-700">Desconectar</button> : null}
-        <Link href="/painel/pagamentos?tab=formas" className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-center font-black text-[#05245c]">Pagamentos presenciais</Link>
-      </div>
+</div>
     </div>
   )
 }

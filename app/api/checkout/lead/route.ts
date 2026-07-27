@@ -32,6 +32,10 @@ function telefoneLimpo(valor: string) {
   return valor.replace(/\D/g, "");
 }
 
+function documentoLimpo(valor: unknown) {
+  return String(valor || "").replace(/\D/g, "");
+}
+
 function erro(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
@@ -66,6 +70,9 @@ export async function POST(request: NextRequest) {
 
     const nome_responsavel = String(body.nome_responsavel || "").trim();
     const email = String(body.email || "").trim().toLowerCase();
+    const cpf_cnpj = documentoLimpo(
+      body.cpf_cnpj || body.documento || body.document,
+    );
     const whatsapp = telefoneLimpo(String(body.whatsapp || ""));
     const empresa_nome = String(body.empresa_nome || "").trim();
     const business_type = normalizeBusinessType(
@@ -89,6 +96,9 @@ export async function POST(request: NextRequest) {
     if (!nome_responsavel) return erro("Informe seu nome.");
     if (!email || !email.includes("@")) {
       return erro("Informe um e-mail válido.");
+    }
+    if (![11, 14].includes(cpf_cnpj.length)) {
+      return erro("Informe um CPF ou CNPJ válido.");
     }
     if (!whatsapp || whatsapp.length < 10) {
       return erro("Informe um WhatsApp válido.");
@@ -124,6 +134,10 @@ export async function POST(request: NextRequest) {
 
     const rawData = {
       ...body,
+      cpf_cnpj,
+      signup_document: cpf_cnpj,
+      signup_document_type:
+        cpf_cnpj.length === 14 ? "CNPJ" : "CPF",
       business_type,
       onboarding_goal,
       subdomain_slug: validation.slug,

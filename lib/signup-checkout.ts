@@ -103,14 +103,35 @@ function platformToken() {
 }
 
 function appUrl() {
-  const value = text(
-    process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.ORCALY_APP_URL ||
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      "https://orcaly.com.br",
-  ).replace(/\/$/, "");
+  const candidates = [
+    process.env.ORCALY_APP_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    "https://orcaly.com.br",
+  ];
 
-  return value || "https://orcaly.com.br";
+  for (const candidate of candidates) {
+    const value = text(candidate).replace(/\/$/, "");
+
+    if (!value) continue;
+
+    try {
+      const url = new URL(value);
+      const localHost = [
+        "localhost",
+        "127.0.0.1",
+        "::1",
+      ].includes(url.hostname);
+
+      if (url.protocol === "https:" && !localHost) {
+        return url.origin;
+      }
+    } catch {
+      // Ignora valores malformados e tenta a proxima URL publica.
+    }
+  }
+
+  return "https://orcaly.com.br";
 }
 
 function signingKey() {
@@ -242,6 +263,11 @@ function checkoutSummary(lead: JsonRecord) {
     companyName: text(lead.empresa_nome),
     email: text(lead.email),
     phone: text(lead.whatsapp),
+    document: digits(
+      raw.signup_document ||
+        raw.cpf_cnpj ||
+        raw.documento,
+    ),
     plan: selected,
     status: text(lead.status),
     paymentMethod: paymentMethod || null,
@@ -360,7 +386,12 @@ export async function createSignupPix(input: {
   }
 
   const selected = SIGNUP_PLANS[planKey(lead.plano)];
-  const cpfCnpj = digits(input.document);
+  const cpfCnpj = digits(
+    input.document ||
+      raw.signup_document ||
+      raw.cpf_cnpj ||
+      raw.documento,
+  );
 
   if (![11, 14].includes(cpfCnpj.length)) {
     throw Object.assign(new Error("Informe um CPF ou CNPJ válido."), {

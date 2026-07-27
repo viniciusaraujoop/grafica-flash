@@ -749,23 +749,6 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     isOperational: true,
     futureActions: ['Cadastrar região', 'Definir taxa', 'Valor mínimo', 'Prazo estimado'],
   },
-  {
-    id: 'formas_pagamento',
-    emoji: '💳',
-    label: 'Formas de pagamento',
-    description: 'Pix, dinheiro, cartão, retirada, entrega e regras de pagamento.',
-    href: '/painel/pagamentos?tab=formas',
-    fallbackHref: '/painel/pagamentos?tab=formas',
-    relatedHref: '/painel/pagamentos',
-    group: 'operacao',
-    segments: ['food', 'store'],
-    status: 'active',
-    requiredPlan: 'intermediate',
-    requiresActiveSubscription: true,
-    iconName: 'formas_pagamento',
-    isOperational: true,
-    futureActions: ['Configurar Pix manual', 'Adicionar dinheiro/cartão', 'Definir instruções', 'Exibir no checkout'],
-  },
 
   // Auto / oficina
   {

@@ -60,8 +60,9 @@ type CheckoutBody = {
   customer?: CheckoutCustomer;
   delivery?: CheckoutDelivery;
   couponCode?: string;
-  paymentMethod?: "PIX" | "CREDIT_CARD";
+  paymentMethod?: "PIX" | "CREDIT_CARD" | "DEBIT_CARD";
   cardPayment?: CardPaymentData;
+  paymentFormData?: JsonRecord;
 };
 
 type CheckoutCalculation = {
@@ -106,6 +107,58 @@ const array = (value: unknown) =>
 
 function digits(value: unknown) {
   return text(value).replace(/\D/g, "");
+}
+
+function asRecord(value: unknown): JsonRecord {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as JsonRecord;
+}
+
+function resolveCheckoutPaymentMethod(
+  body: CheckoutBody,
+): CheckoutBody["paymentMethod"] {
+  const formData = asRecord(body.paymentFormData);
+  const selected = text(
+    formData.selected_payment_method ||
+      formData.selectedPaymentMethod,
+  ).toLowerCase();
+  const methodId = text(
+    formData.payment_method_id ||
+      body.cardPayment?.paymentMethodId,
+  ).toLowerCase();
+  const paymentTypeId = text(
+    formData.payment_type_id,
+  ).toLowerCase();
+
+  if (
+    methodId === "pix" ||
+    paymentTypeId === "bank_transfer" ||
+    selected.includes("pix") ||
+    selected.includes("bank_transfer")
+  ) {
+    return "PIX";
+  }
+
+  if (
+    paymentTypeId === "debit_card" ||
+    selected.includes("debit")
+  ) {
+    return "DEBIT_CARD";
+  }
+
+  if (
+    paymentTypeId === "credit_card" ||
+    selected.includes("credit") ||
+    selected.includes("card") ||
+    formData.token
+  ) {
+    return "CREDIT_CARD";
+  }
+
+  return body.paymentMethod;
 }
 
 function optionId(value: unknown) {
@@ -1024,6 +1077,8 @@ export async function createCheckoutPayment(
   body: CheckoutBody,
   request: NextRequest,
 ) {
+  body.paymentMethod = resolveCheckoutPaymentMethod(body);
+
   if (
     !body.customer?.name ||
     !body.customer?.email ||
@@ -1050,12 +1105,12 @@ export async function createCheckoutPayment(
 
   if (
     body.paymentMethod !== "PIX" &&
-    body.paymentMethod !==
-      "CREDIT_CARD"
+    body.paymentMethod !== "CREDIT_CARD" &&
+    body.paymentMethod !== "DEBIT_CARD"
   ) {
     throw Object.assign(
       new Error(
-        "Selecione Pix ou cartao.",
+        "Selecione Pix, cartão de crédito ou débito.",
       ),
       { status: 400 },
     );
@@ -1412,18 +1467,26 @@ export async function createCheckoutPayment(
       }),
   ]);
 
+  const paymentForm =
+    asRecord(body.paymentFormData);
+  const paymentPayer =
+    asRecord(paymentForm.payer);
+  const paymentIdentification =
+    asRecord(paymentPayer.identification);
   const customerDocument =
     digits(body.customer.cpfCnpj);
   const identificationType =
-    body.cardPayment
-      ?.identificationType ||
+    text(
+      paymentIdentification.type ||
+        body.cardPayment?.identificationType,
+    ) ||
     (customerDocument.length === 14
       ? "CNPJ"
       : "CPF");
   const identificationNumber =
     digits(
-      body.cardPayment
-        ?.identificationNumber ||
+      paymentIdentification.number ||
+        body.cardPayment?.identificationNumber ||
         customerDocument,
     );
   const appUrl = getOrcalyAppUrl();
@@ -1501,37 +1564,55 @@ export async function createCheckoutPayment(
   } else {
     const card =
       body.cardPayment;
+    const cardToken =
+      text(paymentForm.token || card?.token);
+    const cardMethodId =
+      text(
+        paymentForm.payment_method_id ||
+          card?.paymentMethodId,
+      );
+    const issuerId =
+      text(
+        paymentForm.issuer_id ||
+          card?.issuerId,
+      );
+    const installments =
+      body.paymentMethod === "DEBIT_CARD"
+        ? 1
+        : Math.max(
+            1,
+            Math.min(
+              12,
+              Number(
+                paymentForm.installments ||
+                  card?.installments ||
+                  1,
+              ),
+            ),
+          );
 
     if (
-      !card?.token ||
-      !card.paymentMethodId
+      !cardToken ||
+      !cardMethodId
     ) {
       throw Object.assign(
         new Error(
-          "Os dados seguros do cartao nao foram gerados.",
+          "Os dados seguros do cartão não foram gerados.",
         ),
         { status: 400 },
       );
     }
 
     paymentPayload.token =
-      card.token;
+      cardToken;
     paymentPayload.installments =
-      Math.max(
-        1,
-        Math.min(
-          12,
-          Number(
-            card.installments || 1,
-          ),
-        ),
-      );
+      installments;
     paymentPayload.payment_method_id =
-      card.paymentMethodId;
+      cardMethodId;
 
-    if (text(card.issuerId)) {
+    if (issuerId) {
       paymentPayload.issuer_id =
-        card.issuerId;
+        issuerId;
     }
   }
 
