@@ -150,9 +150,6 @@ function CadastroContent() {
   const [buscaCidade, setBuscaCidade] = useState("");
   const [carregandoCidades, setCarregandoCidades] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [paymentMode, setPaymentMode] = useState<"pix_avulso" | "checkout_pro">(
-    "pix_avulso",
-  );
   const [erro, setErro] = useState("");
   const [slugCheck, setSlugCheck] = useState<SlugCheck>({
     status: "idle",
@@ -395,9 +392,6 @@ function CadastroContent() {
           modelo_categoria: config.siteSubheadline,
           subdomain_slug: normalizeSubdomainSlug(form.subdomain_slug),
           marketing_opt_in: true,
-          payment_mode: paymentMode,
-          paymentMode,
-          metodoPagamento: paymentMode,
         }),
       });
 
@@ -869,37 +863,36 @@ function CadastroContent() {
                       </div>
 
                       <div className="rounded-[1.5rem] border border-blue-100 bg-white p-5">
-                        <p className="text-sm font-black text-[#05245c]">
-                          Pagamento da primeira mensalidade
-                        </p>
-                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMode("pix_avulso")}
-                            disabled={loading}
-                            className={`rounded-2xl border p-4 text-left transition ${paymentMode === "pix_avulso" ? "border-emerald-500 bg-emerald-50 text-emerald-900" : "border-blue-100 bg-[#f8fbff] text-[#607895] hover:bg-white"}`}
-                          >
-                            <p className="font-black">Pix avulso</p>
-                            <p className="mt-2 text-xs font-bold leading-5">
-                              Pague o primeiro mês por Pix. Depois você pode
-                              continuar no Pix mensal ou ativar cartão
-                              recorrente no painel.
+                        <div className="flex items-start gap-4">
+                          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-50 text-xl font-black text-[#05245c]">
+                            ✓
+                          </span>
+                          <div>
+                            <p className="font-black text-[#05245c]">
+                              Pagamento na próxima tela
                             </p>
-                          </button>
+                            <p className="mt-2 text-sm font-semibold leading-6 text-[#607895]">
+                              Primeiro você confirma o cadastro. Depois escolhe Pix
+                              ou cartão em uma página do Orçaly.
+                            </p>
+                          </div>
+                        </div>
 
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMode("checkout_pro")}
-                            disabled={loading}
-                            className={`rounded-2xl border p-4 text-left transition ${paymentMode === "checkout_pro" ? "border-[#05245c] bg-blue-50 text-[#05245c]" : "border-blue-100 bg-[#f8fbff] text-[#607895] hover:bg-white"}`}
-                          >
-                            <p className="font-black">Mercado Pago completo</p>
-                            <p className="mt-2 text-xs font-bold leading-5">
-                              Abre o checkout com os meios disponíveis na sua
-                              conta Mercado Pago. Útil se quiser cartão logo de
-                              início.
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-2xl bg-emerald-50 p-4">
+                            <p className="font-black text-emerald-800">Pix</p>
+                            <p className="mt-1 text-xs font-bold leading-5 text-emerald-700">
+                              QR Code gerado somente após a confirmação. O primeiro
+                              ciclo terá 37 dias.
                             </p>
-                          </button>
+                          </div>
+                          <div className="rounded-2xl bg-blue-50 p-4">
+                            <p className="font-black text-[#05245c]">Cartão</p>
+                            <p className="mt-1 text-xs font-bold leading-5 text-[#607895]">
+                              R$ 0,00 hoje. A primeira mensalidade será cobrada
+                              depois de 7 dias.
+                            </p>
+                          </div>
                         </div>
                       </div>
 
@@ -908,10 +901,8 @@ function CadastroContent() {
                         className="rounded-2xl bg-[#05245c] px-6 py-5 text-base font-black text-white shadow-xl shadow-[#05245c]/25 transition hover:bg-[#031a43] disabled:opacity-60"
                       >
                         {loading
-                          ? "Criando sua estrutura..."
-                          : paymentMode === "pix_avulso"
-                            ? "Criar estrutura e pagar com Pix"
-                            : "Criar estrutura e ir ao checkout"}
+                          ? "Preparando pagamento..."
+                          : "Continuar para pagamento"}
                       </button>
                     </div>
                   ) : null}

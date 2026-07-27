@@ -11,8 +11,6 @@ import {
 
 type JsonRecord = Record<string, unknown>;
 
-const DAY_MS = 86_400_000;
-
 function text(value: unknown) {
   return String(value || "").trim();
 }
@@ -41,55 +39,6 @@ function normalizePlan(value: unknown): PlanKey {
   }
 
   return "profissional";
-}
-
-function validDate(value: unknown) {
-  if (!value) return null;
-
-  const date = new Date(String(value));
-
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function remainingTrialDays(company: JsonRecord) {
-  if (!company.trial_used_at) return 7;
-
-  const end = validDate(company.trial_ends_at);
-
-  if (!end || end.getTime() <= Date.now()) return 0;
-
-  return Math.max(
-    1,
-    Math.ceil((end.getTime() - Date.now()) / DAY_MS),
-  );
-}
-
-async function claimTrial(
-  admin: Awaited<
-    ReturnType<typeof resolveSubscriptionContext>
-  >["admin"],
-  companyId: string,
-) {
-  const { data, error } = await admin.rpc(
-    "claim_company_subscription_trial",
-    { p_company_id: companyId },
-  );
-
-  if (error) {
-    throw new Error(
-      "Nao foi possivel registrar os sete dias gratuitos.",
-    );
-  }
-
-  const row = Array.isArray(data) ? data[0] : data;
-
-  if (!row) {
-    throw new Error(
-      "O periodo gratuito desta empresa ja foi utilizado.",
-    );
-  }
-
-  return row as JsonRecord;
 }
 
 async function cancelRemoteSubscription(
@@ -197,7 +146,7 @@ export async function createTransparentSubscription(
     );
   }
 
-  const trialDays = remainingTrialDays(company);
+  const trialDays = 0;
 
   const { data: paymentRow, error: paymentError } =
     await context.admin
@@ -294,32 +243,14 @@ export async function createTransparentSubscription(
     );
   }
 
-  let trialCompany: JsonRecord | null = null;
-
-  if (!company.trial_used_at && trialDays > 0) {
-    try {
-      trialCompany = await claimTrial(
-        context.admin,
-        companyId,
-      );
-    } catch (error) {
-      await cancelRemoteSubscription(subscriptionId);
-      throw error;
-    }
-  }
-
-  const trialEndsAt = text(
-    trialCompany?.trial_ends_at ||
-      company.trial_ends_at,
-  );
+  const trialEndsAt = "";
   const providerStatus =
     text(subscription.status) || "authorized";
   const nextBillingAt = text(
     subscription.next_payment_date ||
       trialEndsAt,
   );
-  const internalStatus =
-    trialDays > 0 ? "trialing" : "pendente";
+  const internalStatus = "pendente";
   const now = new Date().toISOString();
 
   const { error: paymentUpdateError } =
@@ -372,10 +303,6 @@ export async function createTransparentSubscription(
     updated_at: now,
   };
 
-  if (trialEndsAt) {
-    companyUpdate.access_until = trialEndsAt;
-  }
-
   const { data: updatedCompany, error: companyError } =
     await context.admin
       .from("companies")
@@ -419,8 +346,6 @@ export async function createTransparentSubscription(
     nextBillingAt: nextBillingAt || null,
     company: updatedCompany,
     message:
-      trialDays > 0
-        ? "Assinatura configurada. Seus sete dias gratuitos comecaram e a primeira mensalidade sera cobrada somente ao final do periodo."
-        : "Assinatura configurada. A ativacao sera concluida apos a confirmacao da primeira cobranca.",
+      "Assinatura configurada. A cobrança mensal foi enviada para ativação.",
   };
 }
