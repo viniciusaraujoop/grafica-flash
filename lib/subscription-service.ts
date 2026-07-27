@@ -932,7 +932,7 @@ export async function applyApprovedSubscriptionPayment(
     providerReference: string;
     preapprovalId?: string | null;
     nextPaymentDate?: string | null;
-    paymentType: "pix" | "card_recurring";
+    paymentType: "pix" | "card" | "card_recurring";
     amount?: number | null;
   },
 ) {
@@ -958,7 +958,11 @@ export async function applyApprovedSubscriptionPayment(
       assinatura_proxima_cobranca: options.nextPaymentDate || null,
       assinatura_auto_recorrente: options.paymentType === "card_recurring",
       assinatura_forma_pagamento_preferida:
-        options.paymentType === "card_recurring" ? "cartao_recorrente" : "pix_avulso",
+        options.paymentType === "card_recurring"
+          ? "cartao_recorrente"
+          : options.paymentType === "card"
+            ? "cartao_avulso"
+            : "pix_avulso",
       assinatura_pix_avulso_status: options.paymentType === "pix" ? "paid" : company.assinatura_pix_avulso_status || null,
       assinatura_pix_avulso_ultimo_pagamento: options.paymentType === "pix" ? now.toISOString() : company.assinatura_pix_avulso_ultimo_pagamento || null,
       mercado_pago_subscription_id: options.preapprovalId || company.mercado_pago_subscription_id || null,
