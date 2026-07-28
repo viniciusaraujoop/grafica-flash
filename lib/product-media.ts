@@ -47,8 +47,71 @@ export function productHasVideo(product: ProductMediaLike) {
   return cleanUrl(product.video_url).length > 0
 }
 
+export function getProductOldPriceNumber(product: ProductMediaLike) {
+  const data = extras(product)
+  const oldPrice = numberFromValue(
+    data.preco_anterior ??
+      data.old_price ??
+      data.previous_price ??
+      data.compare_at_price,
+  )
+  const currentPrice = getProductPriceNumber(product)
+
+  return oldPrice > currentPrice ? oldPrice : 0
+}
+
+export function getProductDiscountPercent(product: ProductMediaLike) {
+  const oldPrice = getProductOldPriceNumber(product)
+  const currentPrice = getProductPriceNumber(product)
+
+  if (oldPrice <= currentPrice || currentPrice <= 0) return 0
+
+  return Math.max(1, Math.round(((oldPrice - currentPrice) / oldPrice) * 100))
+}
+
+export function getProductStockInfo(product: ProductMediaLike) {
+  const data = extras(product)
+  const controlled = data.controle_estoque === true || data.stock_control === true
+  const quantity = Math.max(
+    0,
+    Math.floor(numberFromValue(data.estoque ?? data.stock ?? data.stock_quantity)),
+  )
+  const lowAt = Math.max(
+    0,
+    Math.floor(numberFromValue(data.estoque_baixo_em ?? data.low_stock_threshold ?? 3)),
+  )
+  const soldOut = controlled && quantity <= 0
+  const low = controlled && quantity > 0 && quantity <= lowAt
+
+  return {
+    controlled,
+    quantity,
+    lowAt,
+    soldOut,
+    low,
+    label: soldOut
+      ? 'Esgotado'
+      : low
+        ? `Últimas ${quantity} unidades`
+        : controlled
+          ? `${quantity} em estoque`
+          : '',
+  }
+}
+
+export function getProductCommercialBadge(product: ProductMediaLike) {
+  const data = extras(product)
+  const value = String(data.selo ?? data.commercial_badge ?? data.badge ?? '').trim()
+
+  return value.slice(0, 28)
+}
+
 export function isProductAvailable(product: ProductMediaLike) {
-  return product.available !== false && product.ativo !== false
+  return (
+    product.available !== false &&
+    product.ativo !== false &&
+    !getProductStockInfo(product).soldOut
+  )
 }
 
 export function isProductHighlighted(product: ProductMediaLike) {
@@ -110,7 +173,11 @@ export function getProductStatusLabel(product: ProductMediaLike) {
 
 export function getCommercialBadges(product: ProductMediaLike) {
   const badges: string[] = []
+  const commercialBadge = getProductCommercialBadge(product)
+  const discount = getProductDiscountPercent(product)
 
+  if (commercialBadge) badges.push(commercialBadge)
+  if (discount > 0) badges.push(`${discount}% OFF`)
   if (isProductBestSeller(product)) badges.push('Mais pedido')
   if (isProductNew(product)) badges.push('Novo')
   if (isProductPromotion(product)) badges.push('Promoção')

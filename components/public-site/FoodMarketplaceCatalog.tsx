@@ -7,6 +7,10 @@ import {
   getPrimaryProductImage,
   getProductPriceLabel,
   getProductPriceNumber,
+  getProductOldPriceNumber,
+  getProductDiscountPercent,
+  getProductStockInfo,
+  getProductCommercialBadge,
   isProductAvailable,
   isProductConsultOnly,
 } from '@/lib/product-media'
@@ -674,14 +678,24 @@ export default function FoodMarketplaceCatalog({
                 const image = getPrimaryProductImage(product)
                 const variations = getVariations(product)
                 const addons = getAddons(product)
+                const oldPrice = getProductOldPriceNumber(product)
+                const discount = getProductDiscountPercent(product)
+                const stockInfo = getProductStockInfo(product)
+                const commercialBadge = getProductCommercialBadge(product)
 
                 return (
                   <article key={product.id} className="group min-w-0 overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-xl shadow-blue-950/6 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-950/12">
-                    {image ? (
-                      <img src={image} alt={product.nome || 'Item'} className="h-56 w-full rounded-[1.5rem] object-cover" />
-                    ) : (
-                      <div className="grid h-56 place-items-center rounded-[1.5rem] bg-slate-100 text-sm font-black text-slate-400">Sem foto</div>
-                    )}
+                    <div className="relative">
+                      {image ? (
+                        <img src={image} alt={product.nome || 'Item'} className="h-56 w-full rounded-[1.5rem] object-cover" />
+                      ) : (
+                        <div className="grid h-56 place-items-center rounded-[1.5rem] bg-slate-100 text-sm font-black text-slate-400">Sem foto</div>
+                      )}
+                      <div className="absolute left-3 top-3 flex max-w-[70%] flex-wrap gap-2">
+                        {commercialBadge ? <span className="rounded-full bg-[#071b3a]/90 px-3 py-1 text-xs font-black text-white backdrop-blur">{commercialBadge}</span> : null}
+                      </div>
+                      {discount > 0 ? <span className="absolute right-3 top-3 rounded-full bg-amber-400 px-3 py-2 text-xs font-black text-amber-950 shadow-lg">{discount}% OFF</span> : null}
+                    </div>
                     <div className="p-4">
                       <div className="flex flex-wrap gap-2">
                         <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{getCategory(product)}</span>
@@ -696,7 +710,11 @@ export default function FoodMarketplaceCatalog({
                         </div>
                       ) : null}
                       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-2xl font-black text-[#05245c]">{getProductPriceLabel(product)}</p>
+                        <div>
+                          {oldPrice > 0 ? <p className="text-sm font-black text-slate-400 line-through">{money(oldPrice)}</p> : null}
+                          <p className="text-2xl font-black text-[#05245c]">{getProductPriceLabel(product)}</p>
+                          {stockInfo.label ? <p className={`mt-1 text-xs font-black ${stockInfo.low || stockInfo.soldOut ? 'text-amber-700' : 'text-emerald-700'}`}>{stockInfo.label}</p> : null}
+                        </div>
                         <button type="button" onClick={() => available ? setSelectedProduct(product) : null} disabled={!available} className="rounded-2xl px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={available ? { background: primaryColor } : undefined}>
                           Adicionar ao carrinho
                         </button>
@@ -833,4 +851,3 @@ export default function FoodMarketplaceCatalog({
     </section>
   )
 }
-

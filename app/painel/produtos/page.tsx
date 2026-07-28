@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { getCurrentCompanyClient } from '@/lib/current-company-client'
 import { getCatalogLabels, normalizeCatalogBusinessType } from '@/lib/catalog-labels'
 import { getCompanyPublicUrl } from '@/lib/company-url'
+import CommercialOfferModal from '@/components/catalog/CommercialOfferModal'
 
 type Empresa = {
   id: string
@@ -393,6 +394,7 @@ export default function ProdutosPage() {
   const [filtroStatus, setFiltroStatus] = useState<StatusFiltro>('todos')
   const [filtroCategoria, setFiltroCategoria] = useState('Todas')
   const [visualizacao, setVisualizacao] = useState<Visualizacao>('cards')
+  const [ofertaItem, setOfertaItem] = useState<ItemCatalogo | null>(null)
 
   async function carregarDados() {
     setCarregando(true)
@@ -1077,6 +1079,7 @@ export default function ProdutosPage() {
                     item={item}
                     empresaSlug={empresa?.slug || ''}
                     onEdit={preencherEdicao}
+                    onOffer={setOfertaItem}
                     onToggle={alternarAtivo}
                     onDelete={excluirItem}
                   />
@@ -1087,6 +1090,7 @@ export default function ProdutosPage() {
                 items={itensFiltrados}
                 empresaSlug={empresa?.slug || ''}
                 onEdit={preencherEdicao}
+                onOffer={setOfertaItem}
                 onToggle={alternarAtivo}
                 onDelete={excluirItem}
               />
@@ -1094,6 +1098,15 @@ export default function ProdutosPage() {
           </section>
         </section>
       </section>
+
+      {empresa && ofertaItem ? (
+        <CommercialOfferModal
+          item={ofertaItem}
+          companyId={empresa.id}
+          onClose={() => setOfertaItem(null)}
+          onSaved={carregarDados}
+        />
+      ) : null}
     </main>
   )
 }
@@ -1190,12 +1203,14 @@ function ProductCard({
   item,
   empresaSlug,
   onEdit,
+  onOffer,
   onToggle,
   onDelete,
 }: {
   item: ItemCatalogo
   empresaSlug: string
   onEdit: (item: ItemCatalogo) => void
+  onOffer: (item: ItemCatalogo) => void
   onToggle: (item: ItemCatalogo) => void
   onDelete: (itemId: string) => void
 }) {
@@ -1226,9 +1241,13 @@ function ProductCard({
           <p>Sinal: {item.cobrar_sinal_personalizado ? `${item.percentual_sinal_produto || 0}%` : 'padrão da empresa'}</p>
         </div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
           <button onClick={() => onEdit(item)} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 font-black text-[#05245c] transition hover:bg-blue-50">
             Editar
+          </button>
+
+          <button onClick={() => onOffer(item)} className="rounded-2xl bg-amber-50 px-4 py-3 font-black text-amber-700 transition hover:bg-amber-100">
+            Oferta/estoque
           </button>
 
           <a href={empresaSlug ? getCompanyPublicUrl(empresaSlug) : '#'} target="_blank" className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center font-black text-[#05245c] transition hover:bg-blue-50">
@@ -1252,12 +1271,14 @@ function ProductTable({
   items,
   empresaSlug,
   onEdit,
+  onOffer,
   onToggle,
   onDelete,
 }: {
   items: ItemCatalogo[]
   empresaSlug: string
   onEdit: (item: ItemCatalogo) => void
+  onOffer: (item: ItemCatalogo) => void
   onToggle: (item: ItemCatalogo) => void
   onDelete: (itemId: string) => void
 }) {
@@ -1307,6 +1328,7 @@ function ProductTable({
                 <td className="px-4 py-4">
                   <div className="flex gap-2">
                     <button onClick={() => onEdit(item)} className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">Editar</button>
+                    <button onClick={() => onOffer(item)} className="rounded-xl bg-amber-50 px-3 py-2 font-black text-amber-700">Oferta</button>
                     <a href={empresaSlug ? getCompanyPublicUrl(empresaSlug) : '#'} target="_blank" className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">Site</a>
                     <button onClick={() => onToggle(item)} className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">{itemAtivo(item) ? 'Inativar' : 'Ativar'}</button>
                     <button onClick={() => onDelete(item.id)} className="rounded-xl bg-red-50 px-3 py-2 font-black text-red-700">Excluir</button>

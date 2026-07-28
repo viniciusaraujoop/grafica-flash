@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import SitePreview from '@/components/site-builder/SitePreview'
 import LogoUploader from '@/components/site-builder/LogoUploader'
+import BannerUploader from '@/components/site-builder/BannerUploader'
 import ColorPalettePicker from '@/components/site-builder/ColorPalettePicker'
 import BenefitsEditor, { cleanBenefits, type BenefitEditorItem } from '@/components/site-builder/BenefitsEditor'
 import FaqEditor, { cleanFaq, type FaqEditorItem } from '@/components/site-builder/FaqEditor'
@@ -33,6 +34,22 @@ const tabs: Array<{ id: Tab; label: string }> = [
 
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? value as T[] : []
+}
+
+type GalleryItem = {
+  url?: string
+  image_url?: string
+  title?: string
+  kind?: string
+  type?: string
+}
+
+function getBannerUrl(value: unknown) {
+  const banner = asArray<GalleryItem>(value).find(
+    (item) => item.kind === 'banner' || item.type === 'banner',
+  )
+
+  return banner?.url || banner?.image_url || ''
 }
 
 function publicLink(company: PublicSiteCompany | null) {
@@ -161,6 +178,19 @@ export default function SiteBuilderPage() {
     setFaq(next)
     setCompany((current) => ({ ...(current || {}), site_faq: next }))
     markDirty()
+  }
+
+  function updateBanner(url: string | null) {
+    const gallery = asArray<GalleryItem>(company?.site_gallery).filter(
+      (item) => item.kind !== 'banner' && item.type !== 'banner',
+    )
+
+    update(
+      'site_gallery',
+      url
+        ? [{ kind: 'banner', type: 'banner', title: 'Banner principal', url }, ...gallery]
+        : gallery,
+    )
   }
 
   async function load() {
@@ -476,6 +506,13 @@ export default function SiteBuilderPage() {
 
               {tab === 'capa' ? (
                 <div className="grid gap-5">
+                  <BannerUploader
+                    companyId={company.id}
+                    value={getBannerUrl(company.site_gallery)}
+                    disabled={saving}
+                    onChange={updateBanner}
+                  />
+
                   <div className="rounded-[1.7rem] border border-blue-100 bg-[#f8fbff] p-5">
                     <p className="font-black text-[#05245c]">Modelo recomendado para {template.label}</p>
                     <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
