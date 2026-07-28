@@ -24,6 +24,10 @@ type Account = {
   documentLast4?: string;
   bankName?: string;
   bankAccountLast4?: string;
+  businessType?: string | null;
+  businessTypeLabel?: string | null;
+  suggestedName?: string | null;
+  suggestedEmail?: string | null;
 };
 
 type PayoutKey = {
@@ -80,6 +84,40 @@ type Tab =
   | "transactions"
   | "payouts";
 
+const ASAAS_COMPANY_TYPES = [
+  { value: "MEI", label: "Microempreendedor Individual (MEI)" },
+  { value: "LIMITED", label: "Sociedade Limitada (LTDA)" },
+  { value: "INDIVIDUAL", label: "Empresario Individual (EI)" },
+  { value: "ASSOCIATION", label: "Associacao" },
+] as const;
+
+function onlyDigits(value: unknown) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+function documentType(value: unknown) {
+  const document = onlyDigits(value);
+  if (document.length === 11) return "CPF";
+  if (document.length === 14) return "CNPJ";
+  return null;
+}
+
+function formatCpfCnpj(value: unknown) {
+  const document = onlyDigits(value).slice(0, 14);
+
+  if (document.length <= 11) {
+    return document
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1-$2");
+  }
+
+  return document
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+}
 type IconName =
   | "chart"
   | "wallet"
@@ -415,11 +453,21 @@ export default function AsaasFinancialPanel() {
     minimumPayoutAmount: "0",
   });
 
+  const currentDocumentType = documentType(accountForm.cpfCnpj);
+
   function applyDashboard(payload: Dashboard) {
     setAccount(payload.account);
     setPayoutKey(payload.payoutKey);
     setTransactions(payload.transactions);
     setPayouts(payload.payouts);
+
+    if (!payload.account.configured) {
+      setAccountForm((current) => ({
+        ...current,
+        name: current.name || payload.account.suggestedName || "",
+        email: current.email || payload.account.suggestedEmail || "",
+      }));
+    }
   }
 
   async function reload(showLoader = false) {
@@ -524,8 +572,38 @@ export default function AsaasFinancialPanel() {
     event.preventDefault();
     if (saving) return;
 
-    setSaving(true);
+    const document = onlyDigits(accountForm.cpfCnpj);
+    const type = documentType(document);
+    const incomeValue = Number(accountForm.incomeValue || 0);
+
     setError("");
+    setMessage("");
+
+    if (!type) {
+      setError("Informe um CPF com 11 digitos ou um CNPJ com 14 digitos.");
+      return;
+    }
+
+    if (type === "CPF" && !accountForm.birthDate) {
+      setError("Informe a data de nascimento do titular.");
+      return;
+    }
+
+    if (type === "CNPJ" && !accountForm.companyType) {
+      setError("Selecione a natureza juridica da empresa.");
+      return;
+    }
+
+    if (!Number.isFinite(incomeValue) || incomeValue <= 0) {
+      setError(
+        type === "CPF"
+          ? "Informe a renda mensal do titular."
+          : "Informe o faturamento mensal da empresa.",
+      );
+      return;
+    }
+
+    setSaving(true);
     setMessage("Criando sua conta de recebimento em ambiente seguro...");
 
     try {
@@ -533,7 +611,12 @@ export default function AsaasFinancialPanel() {
         method: "POST",
         body: JSON.stringify({
           ...accountForm,
-          incomeValue: Number(accountForm.incomeValue || 0) || undefined,
+          cpfCnpj: document,
+          birthDate:
+            type === "CPF" ? accountForm.birthDate : undefined,
+          companyType:
+            type === "CNPJ" ? accountForm.companyType : undefined,
+          incomeValue,
         }),
       });
 
@@ -545,14 +628,13 @@ export default function AsaasFinancialPanel() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "N\u00e3o foi poss\u00edvel criar a conta.",
+          : "Nao foi possivel criar a conta.",
       );
       setMessage("");
     } finally {
       setSaving(false);
     }
   }
-
   async function refreshAccountStatus() {
     if (saving) return;
 
@@ -1238,52 +1320,263 @@ export default function AsaasFinancialPanel() {
                   </div>
                 </div>
 
-                <div className="mt-7 grid gap-5 md:grid-cols-2">
-                  {[
-                    ["name", "Nome ou razao social", "text"],
-                    ["email", "E-mail", "email"],
-                    ["cpfCnpj", "CPF ou CNPJ", "text"],
-                    ["birthDate", "Data de nascimento", "date"],
-                    ["companyType", "Tipo de empresa", "text"],
-                    ["phone", "Telefone", "tel"],
-                    ["mobilePhone", "Celular", "tel"],
-                    ["postalCode", "CEP", "text"],
-                    ["address", "Endereco", "text"],
-                    ["addressNumber", "Numero", "text"],
-                    ["complement", "Complemento", "text"],
-                    ["province", "Bairro", "text"],
-                    ["incomeValue", "Faturamento mensal", "number"],
-                  ].map(([name, label, type]) => (
-                    <label
-                      key={name}
-                      className="min-w-0 text-sm font-bold text-slate-700"
-                    >
-                      <span>{label}</span>
+                <div className="mt-7 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-violet-600">
+                    Segmento cadastrado no Orcaly
+                  </p>
+                  <p className="mt-2 text-lg font-black text-slate-950">
+                    {account.businessTypeLabel || "Segmento ainda nao definido"}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">
+                    O segmento vem automaticamente do cadastro da empresa. A
+                    natureza juridica e informada separadamente apenas para CNPJ.
+                  </p>
+                </div>
+
+                <div className="mt-5 grid gap-5 md:grid-cols-2">
+                  <label className="min-w-0 text-sm font-bold text-slate-700">
+                    Nome completo ou razao social
+                    <input
+                      type="text"
+                      value={accountForm.name}
+                      onChange={(event) =>
+                        setAccountForm((current) => ({
+                          ...current,
+                          name: event.target.value,
+                        }))
+                      }
+                      required
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    />
+                  </label>
+
+                  <label className="min-w-0 text-sm font-bold text-slate-700">
+                    E-mail
+                    <input
+                      type="email"
+                      value={accountForm.email}
+                      onChange={(event) =>
+                        setAccountForm((current) => ({
+                          ...current,
+                          email: event.target.value,
+                        }))
+                      }
+                      required
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    />
+                  </label>
+
+                  <label className="min-w-0 text-sm font-bold text-slate-700">
+                    CPF ou CNPJ
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={18}
+                      value={formatCpfCnpj(accountForm.cpfCnpj)}
+                      onChange={(event) => {
+                        const cpfCnpj = formatCpfCnpj(event.target.value);
+                        const nextType = documentType(cpfCnpj);
+
+                        setAccountForm((current) => ({
+                          ...current,
+                          cpfCnpj,
+                          birthDate:
+                            nextType === "CNPJ"
+                              ? ""
+                              : current.birthDate,
+                          companyType:
+                            nextType === "CPF"
+                              ? ""
+                              : current.companyType,
+                        }));
+                      }}
+                      required
+                      placeholder="Digite o CPF ou CNPJ"
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    />
+                    <span className="mt-1.5 block text-xs font-normal text-slate-500">
+                      {currentDocumentType === "CPF"
+                        ? "Cadastro identificado como pessoa fisica."
+                        : currentDocumentType === "CNPJ"
+                          ? "Cadastro identificado como pessoa juridica."
+                          : "O tipo e identificado automaticamente pelo documento."}
+                    </span>
+                  </label>
+
+                  {currentDocumentType === "CPF" ? (
+                    <label className="min-w-0 text-sm font-bold text-slate-700">
+                      Data de nascimento
                       <input
-                        type={type}
-                        value={
-                          accountForm[name as keyof typeof accountForm]
-                        }
+                        type="date"
+                        value={accountForm.birthDate}
                         onChange={(event) =>
                           setAccountForm((current) => ({
                             ...current,
-                            [name]: event.target.value,
+                            birthDate: event.target.value,
                           }))
                         }
-                        required={[
-                          "name",
-                          "email",
-                          "cpfCnpj",
-                          "postalCode",
-                          "address",
-                          "addressNumber",
-                        ].includes(name)}
-                        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                        required
+                        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                       />
                     </label>
-                  ))}
-                </div>
+                  ) : currentDocumentType === "CNPJ" ? (
+                    <label className="min-w-0 text-sm font-bold text-slate-700">
+                      Natureza juridica
+                      <select
+                        value={accountForm.companyType}
+                        onChange={(event) =>
+                          setAccountForm((current) => ({
+                            ...current,
+                            companyType: event.target.value,
+                          }))
+                        }
+                        required
+                        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                      >
+                        <option value="">Selecione</option>
+                        {ASAAS_COMPANY_TYPES.map((item) => (
+                          <option key={item.value} value={item.value}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                      Digite o documento completo para exibir os dados
+                      obrigatorios do titular.
+                    </div>
+                  )}
 
+                  <label className="min-w-0 text-sm font-bold text-slate-700">
+                    Telefone
+                    <input
+                      type="tel"
+                      value={accountForm.phone}
+                      onChange={(event) =>
+                        setAccountForm((current) => ({
+                          ...current,
+                          phone: event.target.value,
+                        }))
+                      }
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    />
+                  </label>
+
+                  <label className="min-w-0 text-sm font-bold text-slate-700">
+                    Celular
+                    <input
+                      type="tel"
+                      value={accountForm.mobilePhone}
+                      onChange={(event) =>
+                        setAccountForm((current) => ({
+                          ...current,
+                          mobilePhone: event.target.value,
+                        }))
+                      }
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    />
+                  </label>
+
+                  <label className="min-w-0 text-sm font-bold text-slate-700">
+                    CEP
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={accountForm.postalCode}
+                      onChange={(event) =>
+                        setAccountForm((current) => ({
+                          ...current,
+                          postalCode: event.target.value,
+                        }))
+                      }
+                      required
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    />
+                  </label>
+
+                  <label className="min-w-0 text-sm font-bold text-slate-700">
+                    Endereco
+                    <input
+                      type="text"
+                      value={accountForm.address}
+                      onChange={(event) =>
+                        setAccountForm((current) => ({
+                          ...current,
+                          address: event.target.value,
+                        }))
+                      }
+                      required
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    />
+                  </label>
+
+                  <label className="min-w-0 text-sm font-bold text-slate-700">
+                    Numero
+                    <input
+                      type="text"
+                      value={accountForm.addressNumber}
+                      onChange={(event) =>
+                        setAccountForm((current) => ({
+                          ...current,
+                          addressNumber: event.target.value,
+                        }))
+                      }
+                      required
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    />
+                  </label>
+
+                  <label className="min-w-0 text-sm font-bold text-slate-700">
+                    Complemento
+                    <input
+                      type="text"
+                      value={accountForm.complement}
+                      onChange={(event) =>
+                        setAccountForm((current) => ({
+                          ...current,
+                          complement: event.target.value,
+                        }))
+                      }
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    />
+                  </label>
+
+                  <label className="min-w-0 text-sm font-bold text-slate-700">
+                    Bairro
+                    <input
+                      type="text"
+                      value={accountForm.province}
+                      onChange={(event) =>
+                        setAccountForm((current) => ({
+                          ...current,
+                          province: event.target.value,
+                        }))
+                      }
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    />
+                  </label>
+
+                  <label className="min-w-0 text-sm font-bold text-slate-700">
+                    {currentDocumentType === "CPF"
+                      ? "Renda mensal"
+                      : "Faturamento mensal"}
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={accountForm.incomeValue}
+                      onChange={(event) =>
+                        setAccountForm((current) => ({
+                          ...current,
+                          incomeValue: event.target.value,
+                        }))
+                      }
+                      required
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3.5 text-slate-950 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    />
+                  </label>
+                </div>
                 <div className="mt-7 flex flex-wrap items-center gap-4">
                   <button
                     type="submit"

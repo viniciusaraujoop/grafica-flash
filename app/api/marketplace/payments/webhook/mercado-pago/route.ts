@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/company-access'
+import { getMarketplaceWebhookSecret } from '@/lib/payments/marketplace/config'
 import {
   getMercadoPagoPayment,
   mapMercadoPagoStatus,
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       xSignature: request.headers.get('x-signature'),
       xRequestId: request.headers.get('x-request-id'),
       dataId: paymentId,
-      secret: process.env.MERCADO_PAGO_WEBHOOK_SECRET,
+      secret: getMarketplaceWebhookSecret(),
     })
 
     if (!signatureOk) return NextResponse.json({ error: 'Assinatura inválida.' }, { status: 401 })

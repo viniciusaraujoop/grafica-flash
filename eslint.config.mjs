@@ -12,6 +12,17 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+
+    // Arquivos que nao fazem parte da aplicacao executada.
+    ".orcaly-backups/**",
+    "qa-orcaly-*/**",
+    ".orcaly-qa/**",
+    "scripts/**",
+    "**/*.ps1",
+    "**/*.backup-*",
+    "**/*.bak.*",
+    "**/*.old.*",
+    "**/*.tmp.*",
   ]),
 ]);
 

@@ -1,0 +1,57 @@
+[
+  {
+    "name": "NEXT_PUBLIC_SUPABASE_URL",
+    "configured": true,
+    "length": 40
+  },
+  {
+    "name": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "configured": true,
+    "length": 208
+  },
+  {
+    "name": "SUPABASE_SERVICE_ROLE_KEY",
+    "configured": true,
+    "length": 41
+  },
+  {
+    "name": "NEXT_PUBLIC_APP_URL",
+    "configured": true,
+    "length": 21
+  },
+  {
+    "name": "MERCADO_PAGO_CLIENT_ID",
+    "configured": true,
+    "length": 16
+  },
+  {
+    "name": "MERCADO_PAGO_CLIENT_SECRET",
+    "configured": true,
+    "length": 32
+  },
+  {
+    "name": "MERCADO_PAGO_PLATFORM_ACCESS_TOKEN",
+    "configured": true,
+    "length": 74
+  },
+  {
+    "name": "NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY",
+    "configured": true,
+    "length": 44
+  },
+  {
+    "name": "MERCADO_PAGO_REDIRECT_URI",
+    "configured": true,
+    "length": 68
+  },
+  {
+    "name": "MERCADO_PAGO_WEBHOOK_SECRET",
+    "configured": true,
+    "length": 64
+  },
+  {
+    "name": "PAYMENT_CREDENTIALS_ENCRYPTION_KEY",
+    "configured": true,
+    "length": 44
+  }
+]

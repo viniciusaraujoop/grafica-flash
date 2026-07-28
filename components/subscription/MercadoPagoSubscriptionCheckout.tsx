@@ -169,7 +169,7 @@ function PixIcon() {
 
 export default function MercadoPagoSubscriptionCheckout() {
   const publicKey =
-    process.env.NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY || "";
+    process.env.NEXT_PUBLIC_MP_SUBSCRIPTION_PUBLIC_KEY || "";
 
   const brickControllerRef = useRef<any>(null);
   const processingRef = useRef(false);
@@ -194,7 +194,24 @@ export default function MercadoPagoSubscriptionCheckout() {
 
   const getToken = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
-    return data.session?.access_token || "";
+    const session = data.session;
+    const expiresAt = Number(session?.expires_at || 0);
+    const stillValid =
+      Boolean(session?.access_token) &&
+      expiresAt > Math.floor(Date.now() / 1000) + 60;
+
+    if (stillValid) {
+      return session?.access_token || "";
+    }
+
+    const { data: refreshed } =
+      await supabase.auth.refreshSession();
+
+    return (
+      refreshed.session?.access_token ||
+      session?.access_token ||
+      ""
+    );
   }, []);
 
   const load = useCallback(async () => {
@@ -274,6 +291,7 @@ export default function MercadoPagoSubscriptionCheckout() {
               headers: {
                 "content-type": "application/json",
                 authorization: `Bearer ${token}`,
+            "x-orcaly-session": token,
               },
               body: JSON.stringify({
                 plan: planKey,
@@ -306,6 +324,7 @@ export default function MercadoPagoSubscriptionCheckout() {
           headers: {
             "content-type": "application/json",
             authorization: `Bearer ${token}`,
+            "x-orcaly-session": token,
             "idempotency-key": crypto.randomUUID(),
           },
           body: JSON.stringify({
@@ -506,6 +525,7 @@ export default function MercadoPagoSubscriptionCheckout() {
           cache: "no-store",
           headers: {
             authorization: `Bearer ${token}`,
+            "x-orcaly-session": token,
           },
         },
       );

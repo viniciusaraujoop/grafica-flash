@@ -902,7 +902,7 @@ export async function getCheckoutCatalog(
         connected &&
         Boolean(
           process.env
-            .NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY,
+            .NEXT_PUBLIC_MP_MARKETPLACE_PUBLIC_KEY,
         ),
       lastError:
         account?.last_error || null,

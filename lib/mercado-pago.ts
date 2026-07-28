@@ -4,6 +4,11 @@ import {
   decryptPaymentCredential,
   encryptPaymentCredential,
 } from "@/lib/payments/credential-encryption";
+import {
+  getMarketplaceClientId,
+  getMarketplaceClientSecret,
+  getMarketplaceRedirectUriOverride,
+} from "@/lib/payments/marketplace/config";
 
 export type MercadoPagoPreferenceItem = {
   id?: string;
@@ -150,7 +155,7 @@ export function getOrcalyAppUrl() {
 
 export function mercadoPagoRedirectUri() {
   const configured = String(
-    process.env.MERCADO_PAGO_REDIRECT_URI || "",
+    getMarketplaceRedirectUriOverride(),
   ).trim();
 
   if (configured) {
@@ -213,7 +218,7 @@ export function buildMercadoPagoAuthUrl(
   state: string,
   codeChallenge?: string,
 ) {
-  const clientId = requiredEnv("MERCADO_PAGO_CLIENT_ID");
+  const clientId = getMarketplaceClientId();
   const authBase =
     process.env.MERCADO_PAGO_AUTH_URL ||
     "https://auth.mercadopago.com.br/authorization";
@@ -248,8 +253,8 @@ export async function exchangeMercadoPagoCode(
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        client_secret: requiredEnv("MERCADO_PAGO_CLIENT_SECRET"),
-        client_id: requiredEnv("MERCADO_PAGO_CLIENT_ID"),
+        client_secret: getMarketplaceClientSecret(),
+        client_id: getMarketplaceClientId(),
         grant_type: "authorization_code",
         code,
         redirect_uri: mercadoPagoRedirectUri(),
@@ -289,8 +294,8 @@ export async function refreshMercadoPagoAccessToken(
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        client_secret: requiredEnv("MERCADO_PAGO_CLIENT_SECRET"),
-        client_id: requiredEnv("MERCADO_PAGO_CLIENT_ID"),
+        client_secret: getMarketplaceClientSecret(),
+        client_id: getMarketplaceClientId(),
         grant_type: "refresh_token",
         refresh_token: refreshToken,
       }),

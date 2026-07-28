@@ -2,6 +2,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest } from "next/server";
 import { getCompanySubscriptionAccess } from "@/lib/subscription-access";
+import {
+  getSubscriptionAccessToken,
+  subscriptionMercadoPagoRequest,
+} from "@/lib/payments/subscription/mercado-pago";
 
 export type PlanKey = "basico" | "profissional" | "premium";
 export type SubscriptionAction =
@@ -55,16 +59,7 @@ export function getSupabaseAdmin() {
 }
 
 export function getPlatformAccessToken() {
-  const token =
-    process.env.MERCADO_PAGO_PLATFORM_ACCESS_TOKEN ||
-    process.env.MERCADO_PAGO_ACCESS_TOKEN ||
-    "";
-
-  if (!token) {
-    throw new Error("Credencial Mercado Pago da plataforma não configurada.");
-  }
-
-  return token;
+  return getSubscriptionAccessToken();
 }
 
 export function getAppUrl() {
@@ -92,29 +87,7 @@ export async function mercadoPagoPlatformRequest(
   path: string,
   options: RequestInit = {},
 ) {
-  const response = await fetch(`https://api.mercadopago.com${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${getPlatformAccessToken()}`,
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-    cache: "no-store",
-  });
-
-  const payload = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const safeMessage =
-      typeof payload?.message === "string"
-        ? payload.message
-        : typeof payload?.error === "string"
-          ? payload.error
-          : `Mercado Pago retornou HTTP ${response.status}.`;
-    throw new Error(safeMessage);
-  }
-
-  return payload;
+  return subscriptionMercadoPagoRequest(path, options);
 }
 
 function isUuid(value: unknown) {
@@ -169,13 +142,22 @@ function maxDate(...values: Array<string | Date | null | undefined>) {
 }
 
 async function getRequester(request: NextRequest, admin: ReturnType<typeof getSupabaseAdmin>) {
-  const token = String(request.headers.get("authorization") || "")
+  const authorization = String(
+    request.headers.get("authorization") || "",
+  ).trim();
+  const fallbackSession = String(
+    request.headers.get("x-orcaly-session") || "",
+  ).trim();
+  const token = (authorization || fallbackSession)
     .replace(/^Bearer\s+/i, "")
     .trim();
 
   if (!token) return null;
+
   const { data, error } = await admin.auth.getUser(token);
+
   if (error || !data.user) return null;
+
   return data.user;
 }
 

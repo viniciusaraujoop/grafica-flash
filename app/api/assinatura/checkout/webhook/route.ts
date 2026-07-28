@@ -5,6 +5,9 @@ import {
 import {
   verifyMercadoPagoWebhookSignature,
 } from "@/lib/mercado-pago";
+import {
+  getSubscriptionWebhookSecret,
+} from "@/lib/payments/subscription/mercado-pago";
 
 export const runtime = "nodejs";
 
@@ -39,7 +42,7 @@ export async function POST(request: NextRequest) {
       xSignature: request.headers.get("x-signature"),
       xRequestId: request.headers.get("x-request-id"),
       dataId: paymentId || null,
-      secret: process.env.MERCADO_PAGO_WEBHOOK_SECRET,
+      secret: getSubscriptionWebhookSecret(),
     });
 
     if (!valid) {

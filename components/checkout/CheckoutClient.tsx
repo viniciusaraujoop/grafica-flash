@@ -200,7 +200,7 @@ export default function CheckoutClient({
   slug: string;
 }) {
   const publicKey =
-    process.env.NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY || "";
+    process.env.NEXT_PUBLIC_MP_MARKETPLACE_PUBLIC_KEY || "";
 
   const brickControllerRef = useRef<any>(null);
   const processingRef = useRef(false);

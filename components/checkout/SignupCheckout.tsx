@@ -139,7 +139,7 @@ function CheckoutContent() {
   const expires = params.get("expires") || "";
   const token = params.get("token") || "";
   const publicKey =
-    process.env.NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY || "";
+    process.env.NEXT_PUBLIC_MP_SIGNUP_PUBLIC_KEY || "";
 
   const brickControllerRef = useRef<any>(null);
   const processingRef = useRef(false);
