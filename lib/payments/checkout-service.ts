@@ -544,6 +544,86 @@ function terminalStatus(status: unknown) {
   ].includes(text(status).toLowerCase());
 }
 
+// ORCALY_ATOMIC_STOCK_RESERVATION_1C2
+async function expireMarketplaceStockReservations(
+  supabase: CheckoutCalculation["supabase"],
+) {
+  const { error } = await supabase.rpc(
+    "expire_marketplace_stock_reservations",
+    { p_limit: 100 },
+  );
+
+  if (error) {
+    throw Object.assign(
+      new Error(
+        `Nao foi possivel liberar reservas vencidas: ${error.message}`,
+      ),
+      { status: 500 },
+    );
+  }
+}
+
+async function reserveMarketplaceStock(
+  calculation: CheckoutCalculation,
+  transaction: {
+    id: string;
+    orderId: string;
+    expiresAt: string;
+  },
+) {
+  const { data, error } = await calculation.supabase.rpc(
+    "reserve_marketplace_stock",
+    {
+      p_company_id: calculation.companyId,
+      p_order_id: transaction.orderId,
+      p_marketplace_payment_id: transaction.id,
+      p_expires_at: transaction.expiresAt,
+      p_items: calculation.calculated.map((item) => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+      })),
+    },
+  );
+
+  if (error) {
+    throw Object.assign(
+      new Error(error.message || "Estoque insuficiente."),
+      { status: 409 },
+    );
+  }
+
+  return data;
+}
+
+async function settleMarketplaceStock(
+  supabase: CheckoutCalculation["supabase"],
+  companyId: string,
+  transactionId: string,
+  status: string,
+  reason?: string,
+) {
+  const { data, error } = await supabase.rpc(
+    "settle_marketplace_stock",
+    {
+      p_company_id: companyId,
+      p_marketplace_payment_id: transactionId,
+      p_payment_status: status,
+      p_reason: reason || null,
+    },
+  );
+
+  if (error) {
+    throw Object.assign(
+      new Error(
+        `Nao foi possivel liquidar o estoque: ${error.message}`,
+      ),
+      { status: 500 },
+    );
+  }
+
+  return data;
+}
+
 function pixData(payment: JsonRecord) {
   const point =
     payment.point_of_interaction &&
@@ -729,6 +809,11 @@ async function calculateCheckout(
 
   const { supabase, company } =
     await resolveCompanyBySlug(slug);
+
+  await expireMarketplaceStockReservations(
+    supabase,
+  );
+
   const companyRecord =
     company as JsonRecord;
   const companyId = text(company.id);
@@ -1280,6 +1365,14 @@ async function persistPaymentStatus(
     card.last_four_digits,
   );
 
+  await settleMarketplaceStock(
+    calculation.supabase,
+    calculation.companyId,
+    transaction.id,
+    mappedStatus,
+    remoteStatus || mappedStatus,
+  );
+
   await Promise.all([
     calculation.supabase
       .from("marketplace_payments")
@@ -1655,6 +1748,10 @@ export async function createCheckoutPayment(
 
   const transactionId =
     randomUUID();
+  const reservationExpiresAt =
+    new Date(
+      Date.now() + 30 * 60 * 1000,
+    ).toISOString();
   const externalReference =
     `orcaly:${companyId}:${orderId}:${transactionId}`;
   const sellerNetEstimate = money(
@@ -1701,10 +1798,7 @@ export async function createCheckoutPayment(
           externalReference,
         idempotency_key: key,
         expires_at:
-          new Date(
-            Date.now() +
-              30 * 60 * 1000,
-          ).toISOString(),
+          reservationExpiresAt,
         payer_name:
           body.customer.name,
         payer_email:
@@ -1874,10 +1968,7 @@ export async function createCheckoutPayment(
     paymentPayload.payment_method_id =
       "pix";
     paymentPayload.date_of_expiration =
-      new Date(
-        Date.now() +
-          30 * 60 * 1000,
-      ).toISOString();
+      reservationExpiresAt;
   } else {
     const card =
       body.cardPayment;
@@ -1934,6 +2025,16 @@ export async function createCheckoutPayment(
   }
 
   try {
+    await reserveMarketplaceStock(
+      calculation,
+      {
+        id: transactionId,
+        orderId,
+        expiresAt:
+          reservationExpiresAt,
+      },
+    );
+
     const payment =
       (await createMercadoPagoPayment(
         accessToken,
@@ -1973,6 +2074,14 @@ export async function createCheckoutPayment(
       cause instanceof Error
         ? cause.message
         : "Falha no Mercado Pago.";
+
+    await settleMarketplaceStock(
+      supabase,
+      companyId,
+      transactionId,
+      "failed",
+      message,
+    ).catch(() => null);
 
     await Promise.all([
       supabase
@@ -2049,6 +2158,17 @@ export async function getCheckoutPaymentStatus(
       transaction.status,
     )
   ) {
+    await settleMarketplaceStock(
+      supabase,
+      companyId,
+      String(transaction.id),
+      String(transaction.status),
+      String(
+        transaction.provider_status ||
+          transaction.status,
+      ),
+    );
+
     return transaction;
   }
 

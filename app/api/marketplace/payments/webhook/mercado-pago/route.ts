@@ -107,6 +107,19 @@ export async function POST(request: NextRequest) {
       ? reportedNetAmount
       : Math.max(0, Number((grossAmount - providerFeeAmount - commissionAmount).toFixed(2)))
 
+    // ORCALY_ATOMIC_STOCK_WEBHOOK_1C2
+    const { error: stockError } = await supabaseAdmin.rpc(
+      'settle_marketplace_stock',
+      {
+        p_company_id: companyId,
+        p_marketplace_payment_id: marketplacePaymentId,
+        p_payment_status: mappedStatus,
+        p_reason: String(mpPayment.status || mappedStatus),
+      }
+    )
+
+    if (stockError) throw stockError
+
     await supabaseAdmin
       .from('marketplace_payments')
       .update({
