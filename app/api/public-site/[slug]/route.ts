@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getDefaultSiteSettingsForBusiness, getSiteTemplateByBusinessType, normalizeSectionList } from '@/lib/site-templates'
 
+// ORCALY_PUBLIC_COUPONS_API_V2
+
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE_KEY || '',
@@ -13,6 +15,7 @@ type RouteContext = {
 }
 
 function arr(value: unknown) {
+// ORCALY_PUBLIC_MP_CHECKOUT_V1
   return Array.isArray(value) ? value : []
 }
 
@@ -70,7 +73,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
     if (productError) throw productError
 
-    const [zonesResult, paymentMethodsResult, businessHoursResult, paymentSettingsResult] = await Promise.all([
+    const [zonesResult, paymentMethodsResult, businessHoursResult, paymentSettingsResult, couponsResult] = await Promise.all([
       supabaseAdmin
         .from('delivery_zones')
         .select('id, name, fee, minimum_order, estimated_time_min, estimated_time_max, is_active, notes')
@@ -90,11 +93,52 @@ export async function GET(_request: NextRequest, context: RouteContext) {
         .order('weekday', { ascending: true }),
       supabaseAdmin
         .from('marketplace_payment_settings')
-        .select('id,onboarding_status,account_status,is_active,charges_enabled,pix_enabled')
+        .select('id,onboarding_status,account_status,is_active,charges_enabled,pix_enabled,card_enabled,public_key,access_token,last_error')
         .eq('company_id', company.id)
-        .eq('provider', 'asaas')
+        .eq('provider', 'mercado_pago')
         .maybeSingle(),
+      supabaseAdmin
+        .from('marketplace_coupons')
+        .select('id,codigo,descricao,tipo,coupon_type,free_delivery,valor,valor_minimo_pedido,valor_maximo_desconto,starts_at,ends_at,usage_limit,used_count,created_at')
+        .eq('company_id', company.id)
+        .eq('ativo', true)
+        .order('created_at', { ascending: false })
+        .limit(20),
     ])
+
+    const now = Date.now()
+    const publicCoupons = (couponsResult.error ? [] : couponsResult.data || [])
+      .filter((coupon) => {
+        const starts = coupon.starts_at ? new Date(coupon.starts_at).getTime() : 0
+        const ends = coupon.ends_at ? new Date(coupon.ends_at).getTime() : 0
+        const used = Number(coupon.used_count || 0)
+        const limit = coupon.usage_limit == null ? null : Number(coupon.usage_limit)
+
+        if (starts && starts > now) return false
+        if (ends && ends < now) return false
+        if (limit !== null && used >= limit) return false
+
+        return true
+      })
+      .slice(0, 8)
+
+    const mercadoPagoSetting = paymentSettingsResult.error
+      ? null
+      : paymentSettingsResult.data
+    const mercadoPagoConnected = Boolean(
+      mercadoPagoSetting?.is_active === true &&
+      mercadoPagoSetting?.onboarding_status === 'connected' &&
+      mercadoPagoSetting?.access_token &&
+      mercadoPagoSetting?.public_key
+    )
+    const mercadoPagoPixEnabled = Boolean(
+      mercadoPagoConnected &&
+      mercadoPagoSetting?.pix_enabled !== false
+    )
+    const mercadoPagoCardEnabled = Boolean(
+      mercadoPagoConnected &&
+      mercadoPagoSetting?.card_enabled !== false
+    )
 
     const normalizedCompany = {
       ...company,
@@ -114,16 +158,12 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       site_features: arr(company.site_features).length ? company.site_features : defaults.site_features,
       site_payment_methods: arr(company.site_payment_methods).length ? company.site_payment_methods : defaults.site_payment_methods,
       site_delivery_options: arr(company.site_delivery_options).length ? company.site_delivery_options : defaults.site_delivery_options,
-      marketplace_payment_online_enabled:
-        !paymentSettingsResult.error &&
-        paymentSettingsResult.data?.is_active === true &&
-        paymentSettingsResult.data?.charges_enabled === true &&
-        paymentSettingsResult.data?.pix_enabled === true,
-      unified_checkout_enabled:
-        !paymentSettingsResult.error &&
-        paymentSettingsResult.data?.is_active === true &&
-        paymentSettingsResult.data?.charges_enabled === true &&
-        paymentSettingsResult.data?.pix_enabled === true,
+      marketplace_coupons: publicCoupons,
+      marketplace_payment_provider: mercadoPagoConnected ? 'mercado_pago' : null,
+      marketplace_payment_online_enabled: mercadoPagoConnected,
+      marketplace_payment_pix_enabled: mercadoPagoPixEnabled,
+      marketplace_payment_card_enabled: mercadoPagoCardEnabled,
+      unified_checkout_enabled: mercadoPagoConnected,
     }
 
     return NextResponse.json({

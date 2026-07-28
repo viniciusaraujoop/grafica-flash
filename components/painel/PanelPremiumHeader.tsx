@@ -16,7 +16,8 @@ export type PanelPremiumCompany = {
 }
 
 const routeLabels: Record<string, string> = {
-  painel: 'Visao geral',
+  painel: 'Minha Vitrine',
+  inicio: 'Visão geral',
   pedidos: 'Pedidos',
   produtos: 'Produtos',
   catalogo: 'Catalogo',
@@ -30,7 +31,7 @@ const routeLabels: Record<string, string> = {
   entregas: 'Entregas',
   'taxas-entrega': 'Taxas de entrega',
   horarios: 'Horarios',
-  site: 'Site',
+  site: 'Minha Vitrine',
   configuracoes: 'Configuracoes',
   assinatura: 'Assinatura',
   agenda: 'Agenda',
@@ -47,7 +48,8 @@ const routeLabels: Record<string, string> = {
 }
 
 const pageDescriptions: Record<string, string> = {
-  '/painel': 'Acompanhe a operacao e acesse rapidamente as areas mais importantes do seu negocio.',
+  '/painel': 'Edite a vitrine publica, o catálogo e a experiência que seus clientes acessam.',
+  '/painel/inicio': 'Acompanhe a operação e acesse rapidamente as áreas mais importantes do negócio.',
   '/painel/pedidos': 'Organize pedidos, prioridades, clientes e mudancas de status.',
   '/painel/produtos': 'Gerencie produtos, servicos, precos, imagens e disponibilidade.',
   '/painel/catalogo': 'Controle como seus produtos e servicos aparecem para o cliente.',
@@ -61,7 +63,7 @@ const pageDescriptions: Record<string, string> = {
   '/painel/entregas': 'Monitore a operacao de entrega do preparo ate a conclusao.',
   '/painel/taxas-entrega': 'Defina regioes, valores, prazos e pedidos minimos.',
   '/painel/horarios': 'Configure os horarios reais de atendimento da empresa.',
-  '/painel/site': 'Personalize a presenca publica e a experiencia do cliente.',
+  '/painel/site': 'Edite site, catálogo, cardápio, identidade e publicação em uma única vitrine.',
   '/painel/configuracoes': 'Ajuste dados, preferencias e identidade da empresa.',
   '/painel/assinatura': 'Acompanhe plano, periodo de acesso, cobranca e recursos contratados.',
 }
@@ -127,7 +129,7 @@ export default function PanelPremiumHeader({
     <header className="panel-adaptive-header">
       <div className="panel-adaptive-header-copy min-w-0">
         <nav className="panel-adaptive-breadcrumb" aria-label="Navegacao estrutural">
-          <Link href="/painel">Painel</Link>
+          <Link href="/painel/site">Minha Vitrine</Link>
           {parts.map((part, index) => (
             <span key={`${part}-${index}`}>
               <span aria-hidden="true">/</span>

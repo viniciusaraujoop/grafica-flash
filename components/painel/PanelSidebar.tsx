@@ -29,6 +29,13 @@ function activeFor(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
+// ORCALY_MINHA_VITRINE_NAV_V1
+function principalPriority(id: string) {
+  if (id === 'site') return 0
+  if (id === 'dashboard') return 1
+  return 10
+}
+
 function planoLabel(value?: string | null) {
   if (value === 'basico') return 'Básico'
   if (value === 'essencial') return 'Essencial'
@@ -75,7 +82,7 @@ export default function PanelSidebar({ company }: { company: PanelSidebarCompany
       <aside className="panel-sidebar-desktop-legacy hidden min-h-screen border-r border-blue-100 bg-white/95 lg:block">
         <div className="sticky top-0 flex h-screen flex-col overflow-hidden">
           <div className="border-b border-blue-100 p-5">
-            <Link href="/painel" className="flex items-center gap-3">
+            <Link href="/painel/site" className="flex items-center gap-3">
               {company.logo_url ? (
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white shadow-sm ring-1 ring-blue-100">
                   <img src={company.logo_url} alt={company.nome || 'Logo'} className="max-h-[75%] max-w-[75%] object-contain" />
@@ -111,7 +118,9 @@ function SidebarGroups({ pathname, modules }: { pathname: string; modules: Retur
   return (
     <nav className="space-y-5">
       {groupOrder.map((group) => {
-        const items = modules.filter((module) => module.group === group && module.status === 'active')
+        const items = modules
+          .filter((module) => module.group === group && module.status === 'active')
+          .sort((a, b) => group === 'principal' ? principalPriority(a.id) - principalPriority(b.id) : 0)
         if (!items.length) return null
 
         return (

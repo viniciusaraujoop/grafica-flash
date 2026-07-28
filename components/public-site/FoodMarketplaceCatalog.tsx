@@ -587,7 +587,29 @@ export default function FoodMarketplaceCatalog({
   const total = Number(Math.max(0, cartSubtotal + deliveryFeeBase - totalDiscount).toFixed(2))
   const minimumOrder = selectedZone ? numberFrom(selectedZone.minimum_order) : 0
   const minimumMissing = checkout.deliveryType === 'delivery' && minimumOrder > 0 && cartSubtotal < minimumOrder
-  const cartStorageKey = `orcaly-cart:${String(company.slug || company.subdomain_slug || company.id || 'cardapio')}:food`
+  const companyStorageKey = String(company.slug || company.subdomain_slug || company.id || 'cardapio')
+  const cartStorageKey = `orcaly-cart:${companyStorageKey}:food`
+  const couponStorageKey = `orcaly-coupon:${companyStorageKey}`
+
+  // ORCALY_PUBLIC_COUPON_PREFILL_V2
+  useEffect(() => {
+    function selectCoupon(codeValue: unknown) {
+      const code = String(codeValue || '').trim().toUpperCase()
+      if (!code) return
+      setCoupon((current) => ({ ...current, code, error: '', message: 'Cupom selecionado. Aplique após adicionar os itens.' }))
+    }
+
+    try {
+      selectCoupon(window.localStorage.getItem(couponStorageKey))
+    } catch {}
+
+    function handleCouponSelected(event: Event) {
+      selectCoupon((event as CustomEvent<{ code?: string }>).detail?.code)
+    }
+
+    window.addEventListener('orcaly:coupon-selected', handleCouponSelected)
+    return () => window.removeEventListener('orcaly:coupon-selected', handleCouponSelected)
+  }, [couponStorageKey])
 
   // ORCALY_CART_DRAWER_1B
   useEffect(() => {
@@ -637,7 +659,11 @@ export default function FoodMarketplaceCatalog({
   }, [cart.length, coupon.appliedCode])
 
   function clearAppliedCoupon(message = '') {
-    setCoupon({ ...emptyCoupon, message })
+    setCoupon((current) => ({
+      ...emptyCoupon,
+      code: current.code,
+      message,
+    }))
   }
 
   function updateCheckout(field: keyof CheckoutState, value: string | boolean) {

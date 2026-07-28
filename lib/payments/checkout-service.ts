@@ -1,4 +1,5 @@
 import "server-only";
+// ORCALY_MP_TRANSPARENT_CHECKOUT_V1
 import {
   createHash,
   randomUUID,
@@ -113,6 +114,38 @@ const money = (value: unknown) => {
 
 const array = (value: unknown) =>
   Array.isArray(value) ? value : [];
+
+function normalizeMarketplaceCouponCode(value: unknown) {
+  return text(value)
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/Ç/g, "C")
+    .replace(/[^A-Z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 32);
+}
+
+function normalizeMarketplaceCouponType(coupon: JsonRecord) {
+  const raw = text(
+    coupon.coupon_type ||
+      coupon.tipo,
+  ).toLowerCase();
+
+  if (
+    coupon.free_delivery === true ||
+    ["free_delivery", "frete_gratis", "frete-gratis"].includes(raw)
+  ) {
+    return "free_delivery";
+  }
+
+  if (["fixed", "fixo"].includes(raw)) {
+    return "fixed";
+  }
+
+  return "percentage";
+}
 
 function digits(value: unknown) {
   return text(value).replace(/\D/g, "");
@@ -1005,20 +1038,95 @@ async function calculateCheckout(
   );
 
   let discountAmount = 0;
+  let productDiscount = 0;
+  let deliveryDiscount = 0;
   let couponId: string | null = null;
+  let deliveryFeeBase = 0;
+  let deliveryFee = 0;
+  let deliveryZoneId:
+    | string
+    | null = null;
 
-  if (text(body.couponCode)) {
-    const { data: coupon } =
+  if (
+    body.delivery?.type === "delivery"
+  ) {
+    const { data: zone, error: zoneError } =
       await supabase
-        .from("coupons")
+        .from("delivery_zones")
+        .select("*")
+        .eq(
+          "id",
+          body.delivery.zoneId || "",
+        )
+        .eq("company_id", companyId)
+        .maybeSingle();
+
+    if (zoneError) throw zoneError;
+
+    const record =
+      zone as JsonRecord | null;
+    const enabled = Boolean(
+      record &&
+      (
+        record.is_active === true ||
+        record.active === true ||
+        (
+          record.is_active == null &&
+          record.active == null
+        )
+      )
+    );
+
+    if (!record || !enabled) {
+      throw Object.assign(
+        new Error(
+          "A regiao de entrega nao esta disponivel.",
+        ),
+        { status: 400 },
+      );
+    }
+
+    const minimum = money(
+      record.minimum_order ??
+        record.min_order ??
+        0,
+    );
+
+    if (subtotal < minimum) {
+      throw Object.assign(
+        new Error(
+          "O pedido nao atingiu o minimo para esta regiao.",
+        ),
+        { status: 400 },
+      );
+    }
+
+    deliveryFeeBase = money(
+      record.fee ?? 0,
+    );
+    deliveryFee = deliveryFeeBase;
+    deliveryZoneId =
+      text(record.id);
+  }
+
+  const normalizedCouponCode =
+    normalizeMarketplaceCouponCode(
+      body.couponCode,
+    );
+
+  if (normalizedCouponCode) {
+    const { data: coupon, error: couponError } =
+      await supabase
+        .from("marketplace_coupons")
         .select("*")
         .eq("company_id", companyId)
-        .ilike(
-          "codigo",
-          text(body.couponCode),
+        .eq(
+          "codigo_normalizado",
+          normalizedCouponCode,
         )
-        .eq("ativo", true)
         .maybeSingle();
+
+    if (couponError) throw couponError;
 
     if (!coupon) {
       throw Object.assign(
@@ -1031,9 +1139,45 @@ async function calculateCheckout(
 
     const record =
       coupon as JsonRecord;
+    const now = Date.now();
+    const startsAt = record.starts_at
+      ? new Date(
+          text(record.starts_at),
+        ).getTime()
+      : 0;
+    const endsAt = record.ends_at
+      ? new Date(
+          text(record.ends_at),
+        ).getTime()
+      : 0;
+    const usageLimit =
+      record.usage_limit == null
+        ? null
+        : Number(record.usage_limit);
+    const usedCount = Number(
+      record.used_count || 0,
+    );
+
+    if (
+      record.ativo === false ||
+      (startsAt && startsAt > now) ||
+      (endsAt && endsAt < now) ||
+      (
+        usageLimit !== null &&
+        usedCount >= usageLimit
+      )
+    ) {
+      throw Object.assign(
+        new Error(
+          "Cupom invalido, expirado ou esgotado.",
+        ),
+        { status: 400 },
+      );
+    }
+
     const minimum = money(
-      record.valor_minimo ||
-        record.minimum_amount,
+      record.valor_minimo_pedido ??
+        0,
     );
 
     if (subtotal < minimum) {
@@ -1045,82 +1189,75 @@ async function calculateCheckout(
       );
     }
 
-    const type = text(
-      record.tipo || record.type,
-    ).toLowerCase();
+    const type =
+      normalizeMarketplaceCouponType(
+        record,
+      );
     const value = money(
-      record.valor || record.value,
+      record.valor,
     );
+    const maxDiscount =
+      record.valor_maximo_desconto == null
+        ? null
+        : money(
+            record.valor_maximo_desconto,
+          );
 
-    discountAmount =
-      type.includes("percent")
-        ? money(
-            subtotal * (value / 100),
-          )
-        : Math.min(subtotal, value);
+    if (type === "free_delivery") {
+      if (deliveryFeeBase <= 0) {
+        throw Object.assign(
+          new Error(
+            "Este cupom exige uma entrega com taxa.",
+          ),
+          { status: 400 },
+        );
+      }
 
+      deliveryDiscount =
+        deliveryFeeBase;
+    } else if (type === "fixed") {
+      productDiscount =
+        Math.min(subtotal, value);
+    } else {
+      productDiscount = money(
+        subtotal * (value / 100),
+      );
+    }
+
+    if (
+      maxDiscount !== null &&
+      maxDiscount > 0 &&
+      type !== "free_delivery"
+    ) {
+      productDiscount = Math.min(
+        productDiscount,
+        maxDiscount,
+      );
+    }
+
+    productDiscount = Math.min(
+      subtotal,
+      money(productDiscount),
+    );
+    deliveryDiscount = Math.min(
+      deliveryFeeBase,
+      money(deliveryDiscount),
+    );
+    deliveryFee = money(
+      deliveryFeeBase -
+        deliveryDiscount,
+    );
+    discountAmount = money(
+      productDiscount +
+        deliveryDiscount,
+    );
     couponId =
       text(record.id) || null;
   }
 
-  let deliveryFee = 0;
-  let deliveryZoneId:
-    | string
-    | null = null;
-
-  if (
-    body.delivery?.type === "delivery"
-  ) {
-    const { data: zone } =
-      await supabase
-        .from("delivery_zones")
-        .select("*")
-        .eq(
-          "id",
-          body.delivery.zoneId || "",
-        )
-        .eq("company_id", companyId)
-        .eq("ativo", true)
-        .maybeSingle();
-
-    if (!zone) {
-      throw Object.assign(
-        new Error(
-          "A regiao de entrega nao esta disponivel.",
-        ),
-        { status: 400 },
-      );
-    }
-
-    const record =
-      zone as JsonRecord;
-    const minimum = money(
-      record.pedido_minimo ||
-        record.minimum_order,
-    );
-
-    if (
-      subtotal - discountAmount <
-      minimum
-    ) {
-      throw Object.assign(
-        new Error(
-          "O pedido nao atingiu o minimo para esta regiao.",
-        ),
-        { status: 400 },
-      );
-    }
-
-    deliveryFee = money(
-      record.taxa || record.fee,
-    );
-    deliveryZoneId =
-      text(record.id);
-  }
-
   const total = money(
     subtotal -
-      discountAmount +
+      productDiscount +
       deliveryFee,
   );
 
@@ -1165,12 +1302,13 @@ export async function getCheckoutCatalog(
 ) {
   const { supabase, company } =
     await resolveCompanyBySlug(slug);
+
   const companyId = text(company.id);
 
   const [
-    { data: products },
-    { data: zones },
-    { data: account },
+    { data: products, error: productsError },
+    { data: zones, error: zonesError },
+    { data: account, error: accountError },
   ] = await Promise.all([
     supabase
       .from("products")
@@ -1182,25 +1320,58 @@ export async function getCheckoutCatalog(
       .from("delivery_zones")
       .select("*")
       .eq("company_id", companyId)
-      .eq("ativo", true)
-      .order("nome"),
+      .order("name"),
     supabase
-      .from(
-        "marketplace_payment_settings",
-      )
+      .from("marketplace_payment_settings")
       .select(
-        "access_token,onboarding_status,is_active,last_error",
+        "access_token,public_key,onboarding_status,account_status,is_active,charges_enabled,pix_enabled,card_enabled,last_error",
       )
       .eq("company_id", companyId)
       .eq("provider", "mercado_pago")
       .maybeSingle(),
   ]);
 
+  if (productsError) throw productsError;
+  if (zonesError) throw zonesError;
+  if (accountError) throw accountError;
+
+  const publicKey = text(
+    account?.public_key,
+  );
+
   const connected = Boolean(
     account?.is_active &&
       account?.access_token &&
+      publicKey &&
       account?.onboarding_status ===
         "connected",
+  );
+
+  const chargesEnabled = Boolean(
+    connected &&
+      account?.charges_enabled !== false,
+  );
+
+  const pixEnabled = Boolean(
+    chargesEnabled &&
+      account?.pix_enabled !== false,
+  );
+
+  const cardEnabled = Boolean(
+    chargesEnabled &&
+      account?.card_enabled !== false,
+  );
+
+  const activeZones = (zones || []).filter(
+    (raw) => {
+      const zone = raw as JsonRecord;
+
+      return (
+        zone.ativo !== false &&
+        zone.active !== false &&
+        zone.is_active !== false
+      );
+    },
   );
 
   return {
@@ -1218,6 +1389,7 @@ export async function getCheckoutCatalog(
       ),
       slug,
     },
+
     products: (products || []).map(
       (raw) => {
         const product =
@@ -1225,87 +1397,113 @@ export async function getCheckoutCatalog(
 
         return {
           id: text(product.id),
-          name: productName(product),
+
+          name:
+            productName(product),
+
           description: text(
             product.descricao ||
               product.description,
           ),
-          price: productPrice(product),
+
+          price:
+            productPrice(product),
+
           imageUrl: text(
             product.imagem_url ||
               product.image_url,
           ),
+
           variations:
-            productVariations(
-              product,
-            ).map((item) => {
-              const record =
-                item as JsonRecord;
+            productVariations(product).map(
+              (item) => {
+                const record =
+                  item as JsonRecord;
 
-              return {
-                id: optionId(item),
-                name:
-                  text(
-                    record.nome ||
-                      record.name,
-                  ) || optionId(item),
-                priceDelta:
-                  optionPrice(item),
-              };
-            }),
+                return {
+                  id: optionId(item),
+
+                  name:
+                    text(
+                      record.nome ||
+                        record.name,
+                    ) ||
+                    optionId(item),
+
+                  priceDelta:
+                    optionPrice(item),
+                };
+              },
+            ),
+
           addons:
-            productAddons(
-              product,
-            ).map((item) => {
-              const record =
-                item as JsonRecord;
+            productAddons(product).map(
+              (item) => {
+                const record =
+                  item as JsonRecord;
 
-              return {
-                id: optionId(item),
-                name:
-                  text(
-                    record.nome ||
-                      record.name,
-                  ) || optionId(item),
-                price:
-                  optionPrice(item),
-              };
-            }),
+                return {
+                  id: optionId(item),
+
+                  name:
+                    text(
+                      record.nome ||
+                        record.name,
+                    ) ||
+                    optionId(item),
+
+                  price:
+                    optionPrice(item),
+                };
+              },
+            ),
         };
       },
     ),
-    deliveryZones: (zones || []).map(
-      (raw) => {
+
+    deliveryZones:
+      activeZones.map((raw) => {
         const zone =
           raw as JsonRecord;
 
         return {
           id: text(zone.id),
+
           name: text(
             zone.nome ||
               zone.name,
           ),
+
           fee: money(
-            zone.taxa || zone.fee,
+            zone.taxa ||
+              zone.fee,
           ),
+
           minimumOrder: money(
             zone.pedido_minimo ||
-              zone.minimum_order,
+              zone.minimum_order ||
+              zone.min_order,
           ),
         };
-      },
-    ),
+      }),
+
     payment: {
       provider: "mercado_pago",
-      configured: connected,
-      chargesEnabled: connected,
-      pixEnabled: connected,
-      cardEnabled:
-        connected &&
-        Boolean(
-          process.env
-            .NEXT_PUBLIC_MP_MARKETPLACE_PUBLIC_KEY,
-        ),
+
+      configured:
+        connected,
+
+      chargesEnabled,
+
+      pixEnabled,
+
+      cardEnabled,
+
+      publicKey:
+        connected
+          ? publicKey
+          : "",
+
       lastError:
         account?.last_error || null,
     },
@@ -1454,6 +1652,21 @@ async function persistPaymentStatus(
   ]);
 
   if (mappedStatus === "paid") {
+    const { error: couponConsumeError } =
+      await calculation.supabase.rpc(
+        "consume_marketplace_coupon",
+        {
+          p_company_id:
+            calculation.companyId,
+          p_order_id:
+            transaction.orderId,
+        },
+      );
+
+    if (couponConsumeError) {
+      throw couponConsumeError;
+    }
+
     await calculation.supabase
       .from(
         "marketplace_commissions",

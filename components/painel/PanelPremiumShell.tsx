@@ -27,7 +27,7 @@ export default function PanelPremiumShell({
 
         <div className="panel-adaptive-page-slot min-w-0">
           <div className="panel-adaptive-page-width">
-            {pathname === '/painel' ? <PanelAdaptiveOverview company={company} /> : null}
+            {pathname === '/painel/inicio' ? <PanelAdaptiveOverview company={company} /> : null}
             <div className="panel-adaptive-page-canvas min-w-0">{children}</div>
           </div>
         </div>

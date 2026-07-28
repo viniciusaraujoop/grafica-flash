@@ -291,7 +291,29 @@ export default function SegmentMarketplaceCatalog({
   const checkoutTitle = getSegmentCheckoutTitle(normalizedType)
   const logisticsEnabled = shouldUseDelivery(normalizedType)
   const onlineEnabled = unifiedCheckoutEnabled
-  const cartStorageKey = `orcaly-cart:${String(company.slug || company.subdomain_slug || company.id || 'catalogo')}:segment`
+  const companyStorageKey = String(company.slug || company.subdomain_slug || company.id || 'catalogo')
+  const cartStorageKey = `orcaly-cart:${companyStorageKey}:segment`
+  const couponStorageKey = `orcaly-coupon:${companyStorageKey}`
+
+  // ORCALY_PUBLIC_COUPON_PREFILL_V2
+  useEffect(() => {
+    function selectCoupon(codeValue: unknown) {
+      const code = String(codeValue || '').trim().toUpperCase()
+      if (!code) return
+      setCoupon((current) => ({ ...current, code, error: '', message: 'Cupom selecionado. Aplique após adicionar os itens.' }))
+    }
+
+    try {
+      selectCoupon(window.localStorage.getItem(couponStorageKey))
+    } catch {}
+
+    function handleCouponSelected(event: Event) {
+      selectCoupon((event as CustomEvent<{ code?: string }>).detail?.code)
+    }
+
+    window.addEventListener('orcaly:coupon-selected', handleCouponSelected)
+    return () => window.removeEventListener('orcaly:coupon-selected', handleCouponSelected)
+  }, [couponStorageKey])
 
   // ORCALY_CART_DRAWER_1B
   useEffect(() => {
@@ -336,9 +358,19 @@ export default function SegmentMarketplaceCatalog({
     }
   }, [cartOpen])
 
+  function resetCoupon(message = '') {
+    setCoupon((current) => ({
+      ...initialCoupon,
+      code: current.code,
+      message,
+    }))
+  }
+
   function updateCheckout(field: keyof CheckoutState, value: string) {
     setCheckout((current) => ({ ...current, [field]: value }))
-    if (field === 'deliveryType' || field === 'deliveryZoneId') setCoupon(initialCoupon)
+    if (field === 'deliveryType' || field === 'deliveryZoneId') {
+      resetCoupon('Aplique novamente o cupom após alterar a entrega.')
+    }
   }
 
   function addToCart(
@@ -395,14 +427,14 @@ export default function SegmentMarketplaceCatalog({
     setCart((current) => [...current, next])
     setCartOpen(true)
     setSelected(null)
-    setCoupon(initialCoupon)
+    resetCoupon()
     setError('')
     setSuccess('Item adicionado ao carrinho/solicitação.')
   }
 
   function removeItem(localId: string) {
     setCart((current) => current.filter((item) => item.localId !== localId))
-    setCoupon(initialCoupon)
+    resetCoupon()
   }
 
   function updateQuantity(localId: string, quantity: number) {
@@ -410,7 +442,7 @@ export default function SegmentMarketplaceCatalog({
       ? { ...item, quantity: Math.max(1, quantity), subtotal: Number((item.unitPrice * Math.max(1, quantity)).toFixed(2)) }
       : item
     ))
-    setCoupon(initialCoupon)
+    resetCoupon()
   }
 
   async function applyCoupon() {

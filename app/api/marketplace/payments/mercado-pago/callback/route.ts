@@ -8,6 +8,7 @@ import {
 } from "@/lib/mercado-pago";
 
 export const runtime = "nodejs";
+// ORCALY_MP_AUTO_ENABLE_V1
 
 function panelUrl(
   request: NextRequest,
@@ -130,7 +131,12 @@ export async function GET(request: NextRequest) {
             tokenPayload.public_key || null,
           token_expires_at: tokenExpiresAt,
           onboarding_status: "connected",
+          account_status: "active",
           is_active: true,
+          charges_enabled: true,
+          pix_enabled: true,
+          card_enabled: true,
+          last_status_check_at: new Date().toISOString(),
           last_error: null,
           updated_at: new Date().toISOString(),
         },
@@ -172,7 +178,12 @@ export async function GET(request: NextRequest) {
               company_id: oauthState.company_id,
               provider: "mercado_pago",
               onboarding_status: "error",
+              account_status: "error",
               is_active: false,
+              charges_enabled: false,
+              pix_enabled: false,
+              card_enabled: false,
+              last_status_check_at: new Date().toISOString(),
               last_error: message.slice(0, 500),
               updated_at: new Date().toISOString(),
             },

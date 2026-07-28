@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+// ORCALY_MP_AUTO_DISABLE_V1
 import {
   getCompanyAccess,
   getRequester,
@@ -48,6 +49,11 @@ export async function POST(request: NextRequest) {
       .update({
         is_active: false,
         onboarding_status: "disconnected",
+        account_status: "disconnected",
+        charges_enabled: false,
+        pix_enabled: false,
+        card_enabled: false,
+        last_status_check_at: new Date().toISOString(),
         access_token: null,
         refresh_token: null,
         public_key: null,

@@ -5,6 +5,9 @@ import { getSiteTemplateByBusinessType, normalizeSectionList, type SiteSectionId
 import PremiumCatalog from '@/components/public-site/PremiumCatalog'
 import { SegmentProcessBand } from '@/components/public-site/SegmentHeroPanel'
 import MarketplaceHero from '@/components/public-site/MarketplaceHero'
+import PublicCouponsBand, { type PublicCoupon } from '@/components/public-site/PublicCouponsBand'
+
+// ORCALY_PUBLIC_COUPONS_RENDERER_V2
 
 export type PublicSiteCompany = {
   id?: string
@@ -36,6 +39,7 @@ export type PublicSiteCompany = {
   payment_methods?: unknown
   business_hours?: unknown
   marketplace_payment_online_enabled?: boolean | null
+  marketplace_coupons?: PublicCoupon[] | null
 }
 
 export type PublicSiteProduct = {
@@ -280,6 +284,7 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
   const deliveryOptions = asArray<string>(company.site_delivery_options).length ? asArray<string>(company.site_delivery_options) : template.deliveryOptions
   const sections = normalizeSectionList(company.site_sections, template.sections)
     .filter((section) => section.enabled)
+  const publicCoupons = asArray<PublicCoupon>(company.marketplace_coupons)
 
   const activeProducts = products.filter((product) => product.available !== false && product.ativo !== false)
   const categories = Array.from(new Set(activeProducts.map((product) => product.categoria).filter(Boolean) as string[]))
@@ -453,6 +458,7 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
           </a>
 
           <nav className="hidden items-center gap-5 text-sm font-black text-slate-500 md:flex">
+            {publicCoupons.length ? <a href="#cupons">Cupons</a> : null}
             <a href="#catalogo">Catálogo</a>
             <a href="#contato">Contato</a>
           </nav>
@@ -464,7 +470,17 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
       </header>
 
       {sections.map((section) => (
-        <div key={section.id}>{renderSection(section.id)}</div>
+        <div key={section.id}>
+          {renderSection(section.id)}
+          {section.id === 'hero' && publicCoupons.length ? (
+            <PublicCouponsBand
+              coupons={publicCoupons}
+              companyKey={String(company.slug || company.subdomain_slug || company.id || 'catalogo')}
+              primaryColor={primary}
+              accentColor={accent}
+            />
+          ) : null}
+        </div>
       ))}
     </main>
   )

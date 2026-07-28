@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
-import { supabase } from '@/lib/supabase'
+import { uploadPanelFile } from '@/lib/panel-storage'
 
 type LogoUploaderProps = {
   companyId?: string | null
@@ -12,15 +12,6 @@ type LogoUploaderProps = {
 
 const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml']
 const maxSize = 5 * 1024 * 1024
-
-function cleanFileName(name: string) {
-  return name
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9._-]/g, '-')
-    .replace(/-+/g, '-')
-    .toLowerCase()
-}
 
 export default function LogoUploader({ companyId, value, onChange, disabled }: LogoUploaderProps) {
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -49,21 +40,15 @@ export default function LogoUploader({ companyId, value, onChange, disabled }: L
     setUploading(true)
 
     try {
-      const fileName = cleanFileName(file.name)
-      const path = `${companyId}/logos/${Date.now()}-${fileName}`
+      // ORCALY_LOGO_STORAGE_V1
+      const upload = await uploadPanelFile({
+        companyId,
+        file,
+        purpose: 'logo',
+      })
 
-      const { error: uploadError } = await supabase.storage
-        .from('produtos')
-        .upload(path, file, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: file.type,
-        })
-
-      if (uploadError) throw uploadError
-
-      const { data } = supabase.storage.from('produtos').getPublicUrl(path)
-      onChange(data.publicUrl)
+      if (!upload.url) throw new Error('A URL pública da logo não foi criada.')
+      onChange(upload.url)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao enviar logo.')
     }

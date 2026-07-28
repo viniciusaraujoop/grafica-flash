@@ -4,13 +4,18 @@ import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-
 import { getMarketplaceCommissionForCompany } from '@/lib/marketplace-commission'
 
 function safeSetting(setting: any) {
+// ORCALY_MP_CAPABILITIES_SETTINGS_V1
   if (!setting) return null
   return {
     id: setting.id,
     provider: setting.provider,
     account_connected: Boolean(setting.provider_user_id || setting.provider_account_id),
     onboarding_status: setting.onboarding_status,
+    account_status: setting.account_status,
     is_active: setting.is_active,
+    charges_enabled: setting.charges_enabled,
+    pix_enabled: setting.pix_enabled,
+    card_enabled: setting.card_enabled,
     token_expires_at: setting.token_expires_at,
     last_error: setting.last_error,
     updated_at: setting.updated_at,
@@ -31,7 +36,7 @@ export async function GET(request: NextRequest) {
     const [settingResult, paymentsResult, commissionRule] = await Promise.all([
       supabaseAdmin
         .from('marketplace_payment_settings')
-        .select('id,provider,provider_user_id,provider_account_id,onboarding_status,is_active,token_expires_at,last_error,updated_at')
+        .select('id,provider,provider_user_id,provider_account_id,onboarding_status,account_status,is_active,charges_enabled,pix_enabled,card_enabled,token_expires_at,last_error,updated_at')
         .eq('company_id', companyId)
         .eq('provider', 'mercado_pago')
         .maybeSingle(),

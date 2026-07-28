@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 type Mode = 'overview' | 'config' | 'sales' | 'fees'
 type Tab = 'overview' | 'online' | 'mercado-pago' | 'taxas'
+// ORCALY_MP_CAPABILITIES_PANEL_V1
 
 const platformRates = [
   { plan: 'Essencial', percentage: 3.5, detail: 'Plano de entrada para começar vendendo online.' },
@@ -209,7 +210,12 @@ export default function MarketplacePaymentsPanel({ mode }: { mode: Mode }) {
 
   const stats = settings?.stats || {}
   const setting = settings?.setting
-  const connected = Boolean(setting?.is_active && setting?.onboarding_status === 'connected')
+  const connected = Boolean(
+    setting?.account_connected &&
+    setting?.is_active &&
+    setting?.onboarding_status === 'connected' &&
+    setting?.charges_enabled !== false
+  )
   const commissionPercentage = Number(settings?.commission_rule?.percentage || settings?.commission_rule?.commission_percentage || 0)
   const currentPlan = String(settings?.company?.plano || 'essencial')
   const filteredSales = useMemo(() => sales, [sales])
@@ -300,7 +306,16 @@ function IntegrationCard({ connected, setting, commissionPercentage, connect, di
               : 'Conecte sua conta para liberar as vendas. Sem Mercado Pago conectado, o marketplace não aceita pagamentos nem cria pedidos pagos.'}
           </p>
         </div>
-        {statusBadge(connected ? 'connected' : setting?.onboarding_status || 'pending')}
+        <div className="flex flex-wrap items-center gap-2">
+          {statusBadge(connected ? 'connected' : setting?.onboarding_status || 'pending')}
+          {connected ? (
+            <>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">Pix ativo</span>
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">Cartões ativos</span>
+              <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-black text-violet-700">Cupom + frete</span>
+            </>
+          ) : null}
+        </div>
       </div>
 
       {expanded ? (

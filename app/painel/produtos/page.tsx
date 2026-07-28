@@ -2,10 +2,11 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, react-hooks/purity, @next/next/no-img-element */
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { uploadPanelFile } from '@/lib/panel-storage'
 import { getCurrentCompanyClient } from '@/lib/current-company-client'
 import { getCatalogLabels, normalizeCatalogBusinessType } from '@/lib/catalog-labels'
 import { getCompanyPublicUrl } from '@/lib/company-url'
@@ -167,13 +168,6 @@ function formatarDinheiro(valor: number) {
     style: 'currency',
     currency: 'BRL',
   })
-}
-
-function limparNomeArquivo(nome: string) {
-  return nome
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9.-]/g, '')
 }
 
 function numeroDoCampo(valor: string) {
@@ -440,33 +434,27 @@ export default function ProdutosPage() {
     setCarregando(false)
   }
 
-  async function enviarImagem(companyId: string, arquivo: File) {
-    const nomeArquivo = limparNomeArquivo(arquivo.name)
-    const caminho = `${companyId}/${Date.now()}-${nomeArquivo}`
+  async function enviarImagem(arquivo: File) {
+    // ORCALY_PRODUCT_STORAGE_V1
+    if (!empresa?.id) throw new Error('Empresa não carregada.')
 
-    const { error } = await supabase.storage
-      .from('produtos')
-      .upload(caminho, arquivo, {
-        cacheControl: '3600',
-        upsert: true,
-      })
+    const upload = await uploadPanelFile({
+      companyId: empresa.id,
+      file: arquivo,
+      purpose: 'product-image',
+    })
 
-    if (error) {
-      throw new Error(error.message)
-    }
-
-    const { data } = supabase.storage.from('produtos').getPublicUrl(caminho)
-
-    return data.publicUrl
+    if (!upload.url) throw new Error('A URL pública da imagem não foi criada.')
+    return upload.url
   }
 
-  async function enviarVideo(companyId: string, arquivo: File) {
+  async function enviarVideo(arquivo: File) {
     if (!arquivo.type.startsWith('video/')) {
       throw new Error('Envie um vídeo válido.')
     }
 
-    if (arquivo.size > 50 * 1024 * 1024) {
-      throw new Error('O vídeo precisa ter até 50 MB.')
+    if (arquivo.size > 25 * 1024 * 1024) {
+      throw new Error('O vídeo precisa ter até 25 MB.')
     }
 
     const duracao = await obterDuracaoVideo(arquivo)
@@ -475,18 +463,16 @@ export default function ProdutosPage() {
       throw new Error('O vídeo precisa ter no máximo 30 segundos.')
     }
 
-    const nomeArquivo = limparNomeArquivo(arquivo.name)
-    const caminho = `${companyId}/videos/${Date.now()}-${nomeArquivo}`
+    if (!empresa?.id) throw new Error('Empresa não carregada.')
 
-    const { error } = await supabase.storage.from('produtos').upload(caminho, arquivo, {
-      cacheControl: '3600',
-      upsert: true,
+    const upload = await uploadPanelFile({
+      companyId: empresa.id,
+      file: arquivo,
+      purpose: 'product-video',
     })
 
-    if (error) throw new Error(error.message)
-
-    const { data } = supabase.storage.from('produtos').getPublicUrl(caminho)
-    return data.publicUrl
+    if (!upload.url) throw new Error('A URL pública do vídeo não foi criada.')
+    return upload.url
   }
 
   function obterDuracaoVideo(arquivo: File) {
@@ -612,10 +598,10 @@ export default function ProdutosPage() {
           ? [itemAtual.imagem_url]
           : []
       const novasImagens = arquivosImagens.length
-        ? await Promise.all(arquivosImagens.slice(0, 4).map((arquivo) => enviarImagem(empresa.id, arquivo)))
+        ? await Promise.all(arquivosImagens.slice(0, 4).map((arquivo) => enviarImagem(arquivo)))
         : []
       const imageUrls = [...imagensAtuais, ...novasImagens].slice(0, 4)
-      const videoUrl = arquivoVideo ? await enviarVideo(empresa.id, arquivoVideo) : itemAtual?.video_url || null
+      const videoUrl = arquivoVideo ? await enviarVideo(arquivoVideo) : itemAtual?.video_url || null
       const imagemUrl = imageUrls[0] || ''
 
       const dadosProduto = {
@@ -788,295 +774,231 @@ export default function ProdutosPage() {
     )
   }
 
-  return (
-    <main className="min-h-screen overflow-x-hidden bg-[#f5f8ff] pb-24 text-slate-950">
-      <section className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6">
-        <header className="rounded-[2.4rem] border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-950/10 sm:p-7">
-          <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div className="flex items-start gap-4">
-              <img src="/icone-orcaly.png" alt="Orçaly" className="h-14 w-14 rounded-2xl bg-blue-50 object-contain p-2" />
+  // ORCALY_PRODUCTS_MARKETPLACE_UI_V3
+  function scrollToForm() {
+    document.getElementById('editor-item')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }
 
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-[#05245c]">Catálogo do painel</p>
-                <h1 className="mt-2 text-4xl font-black tracking-[-0.06em] text-[#071b3a] sm:text-5xl">{copy.titulo}</h1>
-                <p className="mt-3 max-w-3xl font-bold leading-7 text-slate-500">{copy.subtitulo}</p>
+  const activeFilterCount = [
+    filtroStatus !== 'todos',
+    filtroCategoria !== 'Todas',
+    Boolean(busca.trim()),
+  ].filter(Boolean).length
+
+  function clearFilters() {
+    setBusca('')
+    setFiltroCategoria('Todas')
+    setFiltroStatus('todos')
+  }
+
+  return (
+    <main className="min-h-screen overflow-x-hidden bg-[#f5f5f5] pb-24 text-slate-950">
+      <section className="border-b border-amber-200 bg-gradient-to-r from-[#fff1b8] via-[#fff8de] to-white">
+        <div className="mx-auto grid w-full max-w-[1540px] gap-6 px-4 py-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-amber-800">
+              <span>Minha Vitrine</span>
+              <span aria-hidden="true">/</span>
+              <span>Central de anúncios</span>
+            </div>
+
+            <div className="mt-3 flex min-w-0 items-start gap-4">
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[#05245c] text-2xl text-white shadow-lg shadow-blue-950/20">
+                🛒
+              </div>
+
+              <div className="min-w-0">
+                <h1 className="break-words text-3xl font-black tracking-[-0.05em] text-[#071b3a] sm:text-4xl">
+                  Produtos e serviços
+                </h1>
+                <p className="mt-2 max-w-3xl text-sm font-bold leading-6 text-slate-600 sm:text-base">
+                  Gerencie os anúncios exibidos na sua vitrine, com preço, mídia, estoque, ofertas e opções comerciais no mesmo lugar.
+                </p>
               </div>
             </div>
-
-            <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[460px]">
-              <button
-                type="button"
-                onClick={() => window.scrollTo({ top: 430, behavior: 'smooth' })}
-                className="rounded-2xl bg-[#05245c] px-5 py-4 text-center text-sm font-black text-white shadow-lg shadow-blue-950/15 transition hover:-translate-y-0.5 hover:bg-[#031a43]"
-              >
-                {copy.novo}
-              </button>
-
-              <a
-                href={publicUrl}
-                target="_blank"
-                className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-center text-sm font-black text-[#05245c] transition hover:bg-blue-50"
-              >
-                {copy.publico}
-              </a>
-
-              <button
-                type="button"
-                onClick={carregarDados}
-                className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-center text-sm font-black text-[#05245c] transition hover:bg-blue-50"
-              >
-                Atualizar lista
-              </button>
-            </div>
           </div>
-        </header>
 
-        {mensagem && (
-          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-[#05245c]">
+          <div className="grid w-full gap-2 sm:grid-cols-2 xl:w-[430px]">
+            <button
+              type="button"
+              onClick={scrollToForm}
+              className="flex min-h-12 items-center justify-center rounded-xl bg-[#05245c] px-5 py-3 text-center text-sm font-black text-white shadow-lg shadow-blue-950/15 transition hover:-translate-y-0.5 hover:bg-[#031a43]"
+            >
+              + {copy.novo}
+            </button>
+
+            <a
+              href={publicUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-center text-sm font-black text-[#05245c] transition hover:-translate-y-0.5 hover:border-[#05245c]"
+            >
+              Ver como cliente ↗
+            </a>
+
+            <Link
+              href="/painel/site"
+              className="flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-white/80 px-4 py-2 text-center text-sm font-black text-amber-900 transition hover:bg-white"
+            >
+              Personalizar vitrine
+            </Link>
+
+            <button
+              type="button"
+              onClick={carregarDados}
+              className="flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-white/80 px-4 py-2 text-center text-sm font-black text-amber-900 transition hover:bg-white"
+            >
+              Atualizar anúncios
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-[1540px] px-4 py-6 sm:px-6 lg:px-8">
+        {mensagem ? (
+          <div className="mb-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold leading-6 text-[#05245c]">
             {mensagem}
           </div>
-        )}
+        ) : null}
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-          <ResumoCard label="Total de itens" value={itens.length} />
-          <ResumoCard label="Ativos no site" value={resumo.ativos} tone="green" />
-          <ResumoCard label="Indisponíveis" value={resumo.indisponiveis} tone="red" />
-          <ResumoCard label="Sem foto" value={resumo.semFoto} tone="amber" />
-          <ResumoCard label="Com vídeo" value={resumo.comVideo} />
-          {resumo.destaques > 0 && <ResumoCard label="Em destaque" value={resumo.destaques} tone="green" />}
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <MarketplaceMetric
+            label="Anúncios cadastrados"
+            value={itens.length}
+            detail="Total da sua operação"
+            icon="📦"
+          />
+          <MarketplaceMetric
+            label="Ativos na vitrine"
+            value={resumo.ativos}
+            detail="Visíveis para clientes"
+            icon="✅"
+            tone="green"
+          />
+          <MarketplaceMetric
+            label="Precisam de atenção"
+            value={resumo.semFoto + resumo.indisponiveis}
+            detail="Sem foto ou indisponíveis"
+            icon="⚠️"
+            tone="amber"
+          />
+          <MarketplaceMetric
+            label="Em destaque"
+            value={resumo.destaques}
+            detail="Com maior evidência"
+            icon="⭐"
+            tone="purple"
+          />
         </section>
 
-        <section className="mt-6 grid gap-6 lg:grid-cols-[0.78fr_1.22fr]">
-          <form onSubmit={salvarItem} className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-            <div className="mb-6">
-              <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">{editandoId ? 'Editar item' : copy.formulario}</p>
-              <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-[#071b3a]">Configurar cobrança</h2>
-              <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
-                Cadastre preço, mídia, categoria e regras que aparecem no site da empresa.
-              </p>
-            </div>
-
-            <div className="grid gap-4">
+        <section className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <label className="relative block min-w-0">
+              <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-lg text-slate-400" aria-hidden="true">
+                🔎
+              </span>
               <input
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                placeholder="Nome do produto ou serviço"
-                className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+                placeholder="Buscar por nome, descrição ou categoria..."
+                className="h-13 w-full rounded-xl border border-slate-200 bg-[#f7f7f7] py-3 pl-12 pr-4 font-bold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
               />
+            </label>
 
-              <textarea
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-                placeholder="Descrição curta para o cliente entender o que está contratando"
-                rows={4}
-                className="resize-none rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-              />
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <input
-                  value={categoria}
-                  onChange={(e) => setCategoria(e.target.value)}
-                  placeholder="Categoria. Ex: impressão, manutenção, aluguel"
-                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-                />
-
-                <select
-                  value={tipo}
-                  onChange={(e) => setTipo(e.target.value)}
-                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-bold text-[#071b3a] outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-                >
-                  <option value="produto">Produto</option>
-                  <option value="servico">Serviço</option>
-                  <option value="locacao">Locação</option>
-                  <option value="assinatura">Assinatura</option>
-                </select>
-              </div>
-
-              <label className="grid gap-2">
-                <span className="text-sm font-black text-[#071b3a]">Tipo de precificação</span>
-
-                <select
-                  value={precificacao}
-                  onChange={(e) => aplicarTipoPrecificacao(e.target.value)}
-                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-bold text-[#071b3a] outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-                >
-                  {tiposPrecificacao.map((item) => (
-                    <option key={item.id} value={item.id}>{item.nome}</option>
-                  ))}
-                </select>
-
-                <span className="rounded-2xl bg-blue-50 px-4 py-3 text-sm font-bold text-[#05245c]">
-                  {tiposPrecificacao.find((item) => item.id === precificacao)?.descricao}
-                </span>
-              </label>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <input
-                  value={preco}
-                  onChange={(e) => setPreco(e.target.value)}
-                  placeholder="Preço base. Ex: 197"
-                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-                />
-
-                <input
-                  value={unidadeLabel}
-                  onChange={(e) => {
-                    setUnidadeLabel(e.target.value)
-                    setUnidade(e.target.value)
-                  }}
-                  placeholder="Nome da unidade. Ex: m², milheiro, hora"
-                  className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-                />
-              </div>
-
-              <input
-                value={valorMinimo}
-                onChange={(e) => setValorMinimo(e.target.value)}
-                placeholder="Valor mínimo. Ex: 50"
-                className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-              />
-
-              <div className="grid gap-3 rounded-3xl border border-blue-100 bg-blue-50 p-4">
-                <p className="font-black text-[#071b3a]">Campos que o cliente deverá preencher</p>
-                <ToggleButton active={permiteQuantidade} onClick={() => setPermiteQuantidade(!permiteQuantidade)} label="Quantidade" />
-                <ToggleButton active={permiteLargura} onClick={() => setPermiteLargura(!permiteLargura)} label="Largura" />
-                <ToggleButton active={permiteAltura} onClick={() => setPermiteAltura(!permiteAltura)} label="Altura" />
-                <ToggleButton active={permiteComprimento} onClick={() => setPermiteComprimento(!permiteComprimento)} label="Comprimento" />
-              </div>
-
-              <div className="grid gap-3 rounded-3xl border border-emerald-100 bg-emerald-50 p-4">
-                <button
-                  type="button"
-                  onClick={() => setCobrarSinalPersonalizado(!cobrarSinalPersonalizado)}
-                  className={`rounded-2xl px-4 py-4 text-left font-black ${cobrarSinalPersonalizado ? 'bg-white text-emerald-700' : 'bg-emerald-100 text-emerald-700'}`}
-                >
-                  {cobrarSinalPersonalizado ? 'Este item tem sinal próprio' : 'Usar sinal padrão da empresa'}
-                </button>
-
-                {cobrarSinalPersonalizado && (
-                  <input
-                    value={percentualSinalProduto}
-                    onChange={(e) => setPercentualSinalProduto(e.target.value)}
-                    placeholder="Percentual do sinal. Ex: 50"
-                    className="rounded-2xl border border-emerald-100 bg-white px-4 py-4 font-medium outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-                  />
-                )}
-              </div>
-
-              <label className="grid cursor-pointer gap-2">
-                <span className="text-sm font-black text-[#071b3a]">Fotos do marketplace, até 4 imagens</span>
-                <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50 px-4 py-5 text-sm font-bold text-[#05245c] transition hover:bg-blue-100">
-                  {arquivosImagens.length ? `${arquivosImagens.length} foto(s) selecionada(s)` : 'Clique para enviar até 4 fotos do item'}
-                </div>
-                <input type="file" accept="image/*" multiple onChange={(e) => selecionarImagens(e.target.files)} className="hidden" />
-              </label>
-
-              <label className="grid cursor-pointer gap-2">
-                <span className="text-sm font-black text-[#071b3a]">Vídeo curto, opcional, até 30 segundos</span>
-                <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 px-4 py-5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100">
-                  {arquivoVideo ? arquivoVideo.name : 'Clique para enviar um vídeo MP4/WebM/MOV'}
-                </div>
-                <input type="file" accept="video/mp4,video/webm,video/quicktime,video/*" onChange={(e) => setArquivoVideo(e.target.files?.[0] || null)} className="hidden" />
-              </label>
-
-              <button
-                type="button"
-                onClick={() => setDestaque(!destaque)}
-                className={`rounded-2xl px-4 py-4 text-left font-black transition ${destaque ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}
-              >
-                {destaque ? 'Item em destaque' : 'Marcar como destaque'}
-              </button>
-
-              <button disabled={salvando} className="rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white shadow-lg shadow-blue-950/15 transition hover:-translate-y-1 hover:bg-[#031a43] disabled:cursor-not-allowed disabled:opacity-60">
-                {salvando ? 'Salvando...' : editandoId ? 'Salvar alterações' : 'Cadastrar item'}
-              </button>
-
-              {editandoId && (
-                <button type="button" onClick={limparFormulario} className="rounded-2xl border border-blue-100 bg-white px-5 py-4 font-black text-[#05245c] transition hover:bg-blue-50">
-                  Cancelar edição
-                </button>
-              )}
-            </div>
-          </form>
-
-          <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
-            <div className="mb-5 flex flex-col justify-between gap-3 xl:flex-row xl:items-start">
-              <div>
-                <p className="text-sm font-black uppercase tracking-[0.25em] text-[#05245c]">Gestão do catálogo</p>
-                <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-[#071b3a]">Itens cadastrados</h2>
-                <p className="mt-2 text-sm font-bold text-slate-500">Visualize mídia, status, preço e ações principais sem sair da tela.</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1">
                 <button
                   type="button"
                   onClick={() => setVisualizacao('cards')}
-                  className={`rounded-2xl px-4 py-3 text-sm font-black ${visualizacao === 'cards' ? 'bg-[#05245c] text-white' : 'border border-blue-100 bg-white text-[#05245c]'}`}
+                  className={`rounded-lg px-4 py-2 text-xs font-black transition ${visualizacao === 'cards' ? 'bg-[#05245c] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
                 >
                   Cards
                 </button>
                 <button
                   type="button"
                   onClick={() => setVisualizacao('tabela')}
-                  className={`rounded-2xl px-4 py-3 text-sm font-black ${visualizacao === 'tabela' ? 'bg-[#05245c] text-white' : 'border border-blue-100 bg-white text-[#05245c]'}`}
+                  className={`rounded-lg px-4 py-2 text-xs font-black transition ${visualizacao === 'tabela' ? 'bg-[#05245c] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
                 >
                   Tabela
                 </button>
               </div>
+
+              {activeFilterCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-black text-red-700 transition hover:bg-red-100"
+                >
+                  Limpar filtros ({activeFilterCount})
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 px-4 py-3">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {statusFilters.map((filter) => (
+                <FilterChip
+                  key={filter.id}
+                  active={filtroStatus === filter.id}
+                  onClick={() => setFiltroStatus(filter.id)}
+                >
+                  {filter.label}
+                </FilterChip>
+              ))}
             </div>
 
-            <div className="grid gap-3 rounded-[1.6rem] border border-blue-100 bg-[#f8fbff] p-4">
-              <input
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar produto, serviço ou categoria..."
-                className="rounded-2xl border border-blue-100 bg-white px-4 py-4 font-bold outline-none transition focus:border-[#05245c] focus:ring-4 focus:ring-blue-100"
-              />
+            <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+              {['Todas', ...categorias].map((categoriaItem) => (
+                <FilterChip
+                  key={categoriaItem}
+                  active={filtroCategoria === categoriaItem}
+                  onClick={() => setFiltroCategoria(categoriaItem)}
+                  secondary
+                >
+                  {categoriaItem}
+                </FilterChip>
+              ))}
+            </div>
+          </div>
+        </section>
 
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {statusFilters.map((filter) => (
-                  <button
-                    key={filter.id}
-                    type="button"
-                    onClick={() => setFiltroStatus(filter.id)}
-                    className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-black transition ${filtroStatus === filter.id ? 'bg-[#05245c] text-white' : 'bg-white text-[#05245c]'}`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
+        <section className="mt-6 grid items-start gap-6 2xl:grid-cols-[minmax(0,1fr)_430px]">
+          <div className="min-w-0">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Seus anúncios</p>
+                <h2 className="mt-1 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">
+                  {itensFiltrados.length} resultado(s)
+                </h2>
               </div>
 
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {['Todas', ...categorias].map((categoriaItem) => (
-                  <button
-                    key={categoriaItem}
-                    type="button"
-                    onClick={() => setFiltroCategoria(categoriaItem)}
-                    className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-black transition ${filtroCategoria === categoriaItem ? 'bg-blue-100 text-blue-700' : 'bg-white text-slate-600'}`}
-                  >
-                    {categoriaItem}
-                  </button>
-                ))}
-              </div>
+              <p className="text-sm font-bold text-slate-500">
+                Edite, publique, destaque ou ajuste o estoque sem sair desta tela.
+              </p>
             </div>
 
             {itens.length === 0 ? (
-              <CatalogEmptyState title={copy.vazioTitulo} text={copy.vazioTexto} button={copy.vazioBotao} />
+              <MarketplaceEmptyState
+                title={copy.vazioTitulo}
+                text={copy.vazioTexto}
+                button={copy.vazioBotao}
+                onClick={scrollToForm}
+              />
             ) : itensFiltrados.length === 0 ? (
-              <CatalogEmptyState
-                title="Nenhum item encontrado com esses filtros."
-                text="Ajuste a busca, categoria ou status para ver outros itens do catálogo."
+              <MarketplaceEmptyState
+                title="Nenhum anúncio encontrado"
+                text="Ajuste a busca, a categoria ou o status para encontrar outros itens."
                 button="Limpar filtros"
-                onClick={() => {
-                  setBusca('')
-                  setFiltroCategoria('Todas')
-                  setFiltroStatus('todos')
-                }}
+                onClick={clearFilters}
               />
             ) : visualizacao === 'cards' ? (
-              <div className="mt-5 grid gap-4 xl:grid-cols-2">
+              <div className="grid gap-4">
                 {itensFiltrados.map((item) => (
-                  <ProductCard
+                  <MarketplaceProductCard
                     key={item.id}
                     item={item}
                     empresaSlug={empresa?.slug || ''}
@@ -1099,7 +1021,238 @@ export default function ProdutosPage() {
                 onDelete={excluirItem}
               />
             )}
-          </section>
+          </div>
+
+          <aside id="editor-item" className="scroll-mt-6 min-w-0">
+            <form
+              onSubmit={salvarItem}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg shadow-slate-950/5 2xl:sticky 2xl:top-6"
+            >
+              <div className="border-b border-slate-100 bg-[#fafafa] px-5 py-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">
+                      {editandoId ? 'Editando anúncio' : 'Novo anúncio'}
+                    </p>
+                    <h2 className="mt-1 break-words text-2xl font-black tracking-[-0.04em] text-[#071b3a]">
+                      {editandoId ? nome || 'Produto ou serviço' : copy.formulario}
+                    </h2>
+                    <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
+                      Preencha os dados essenciais e publique na sua vitrine.
+                    </p>
+                  </div>
+
+                  {editandoId ? (
+                    <button
+                      type="button"
+                      onClick={limparFormulario}
+                      className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 transition hover:bg-slate-100"
+                    >
+                      Cancelar
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="max-h-none divide-y divide-slate-100 2xl:max-h-[calc(100vh-190px)] 2xl:overflow-y-auto">
+                <EditorSection title="Informações do anúncio" icon="📝" open>
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black text-slate-700">Nome</span>
+                    <input
+                      value={nome}
+                      onChange={(event) => setNome(event.target.value)}
+                      placeholder="Nome do produto ou serviço"
+                      className="rounded-xl border border-slate-200 bg-[#f7f7f7] px-4 py-3 font-bold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                      required
+                    />
+                  </label>
+
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black text-slate-700">Descrição</span>
+                    <textarea
+                      value={descricao}
+                      onChange={(event) => setDescricao(event.target.value)}
+                      placeholder="Explique o item para o cliente"
+                      rows={4}
+                      className="resize-none rounded-xl border border-slate-200 bg-[#f7f7f7] px-4 py-3 font-bold leading-6 outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    />
+                  </label>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="grid min-w-0 gap-2">
+                      <span className="text-sm font-black text-slate-700">Categoria</span>
+                      <input
+                        value={categoria}
+                        onChange={(event) => setCategoria(event.target.value)}
+                        placeholder="Ex.: Camisetas"
+                        className="min-w-0 rounded-xl border border-slate-200 bg-[#f7f7f7] px-4 py-3 font-bold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                      />
+                    </label>
+
+                    <label className="grid min-w-0 gap-2">
+                      <span className="text-sm font-black text-slate-700">Tipo</span>
+                      <select
+                        value={tipo}
+                        onChange={(event) => setTipo(event.target.value)}
+                        className="min-w-0 rounded-xl border border-slate-200 bg-[#f7f7f7] px-4 py-3 font-black outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                      >
+                        <option value="produto">Produto</option>
+                        <option value="servico">Serviço</option>
+                        <option value="locacao">Locação</option>
+                        <option value="assinatura">Assinatura</option>
+                      </select>
+                    </label>
+                  </div>
+                </EditorSection>
+
+                <EditorSection title="Preço e cobrança" icon="💰" open>
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black text-slate-700">Tipo de precificação</span>
+                    <select
+                      value={precificacao}
+                      onChange={(event) => aplicarTipoPrecificacao(event.target.value)}
+                      className="rounded-xl border border-slate-200 bg-[#f7f7f7] px-4 py-3 font-black outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    >
+                      {tiposPrecificacao.map((item) => (
+                        <option key={item.id} value={item.id}>{item.nome}</option>
+                      ))}
+                    </select>
+                    <span className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold leading-5 text-[#05245c]">
+                      {tiposPrecificacao.find((item) => item.id === precificacao)?.descricao}
+                    </span>
+                  </label>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="grid min-w-0 gap-2">
+                      <span className="text-sm font-black text-slate-700">Preço base</span>
+                      <input
+                        value={preco}
+                        onChange={(event) => setPreco(event.target.value)}
+                        placeholder="Ex.: 99,90"
+                        inputMode="decimal"
+                        className="min-w-0 rounded-xl border border-slate-200 bg-[#f7f7f7] px-4 py-3 font-bold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                      />
+                    </label>
+
+                    <label className="grid min-w-0 gap-2">
+                      <span className="text-sm font-black text-slate-700">Unidade</span>
+                      <input
+                        value={unidadeLabel}
+                        onChange={(event) => {
+                          setUnidadeLabel(event.target.value)
+                          setUnidade(event.target.value)
+                        }}
+                        placeholder="unidade, m², hora..."
+                        className="min-w-0 rounded-xl border border-slate-200 bg-[#f7f7f7] px-4 py-3 font-bold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                      />
+                    </label>
+                  </div>
+
+                  <label className="grid gap-2">
+                    <span className="text-sm font-black text-slate-700">Valor mínimo</span>
+                    <input
+                      value={valorMinimo}
+                      onChange={(event) => setValorMinimo(event.target.value)}
+                      placeholder="Ex.: 50,00"
+                      inputMode="decimal"
+                      className="rounded-xl border border-slate-200 bg-[#f7f7f7] px-4 py-3 font-bold outline-none transition focus:border-[#05245c] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    />
+                  </label>
+                </EditorSection>
+
+                <EditorSection title="Configuração do pedido" icon="⚙️">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <ToggleChoice active={permiteQuantidade} onClick={() => setPermiteQuantidade(!permiteQuantidade)} label="Quantidade" />
+                    <ToggleChoice active={permiteLargura} onClick={() => setPermiteLargura(!permiteLargura)} label="Largura" />
+                    <ToggleChoice active={permiteAltura} onClick={() => setPermiteAltura(!permiteAltura)} label="Altura" />
+                    <ToggleChoice active={permiteComprimento} onClick={() => setPermiteComprimento(!permiteComprimento)} label="Comprimento" />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setCobrarSinalPersonalizado(!cobrarSinalPersonalizado)}
+                    className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm font-black transition ${
+                      cobrarSinalPersonalizado
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                        : 'border-slate-200 bg-[#f7f7f7] text-slate-600'
+                    }`}
+                  >
+                    <span>{cobrarSinalPersonalizado ? 'Sinal personalizado ativado' : 'Usar sinal padrão da empresa'}</span>
+                    <span>{cobrarSinalPersonalizado ? '✓' : '○'}</span>
+                  </button>
+
+                  {cobrarSinalPersonalizado ? (
+                    <label className="grid gap-2">
+                      <span className="text-sm font-black text-slate-700">Percentual do sinal</span>
+                      <input
+                        value={percentualSinalProduto}
+                        onChange={(event) => setPercentualSinalProduto(event.target.value)}
+                        placeholder="Ex.: 50"
+                        inputMode="decimal"
+                        className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 font-bold outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                      />
+                    </label>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => setDestaque(!destaque)}
+                    className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm font-black transition ${
+                      destaque
+                        ? 'border-amber-300 bg-amber-50 text-amber-900'
+                        : 'border-slate-200 bg-[#f7f7f7] text-slate-600'
+                    }`}
+                  >
+                    <span>{destaque ? 'Anúncio em destaque' : 'Marcar como destaque'}</span>
+                    <span>{destaque ? '★' : '☆'}</span>
+                  </button>
+                </EditorSection>
+
+                <EditorSection title="Fotos e vídeo" icon="🖼️" open>
+                  <label className="grid cursor-pointer gap-2">
+                    <span className="text-sm font-black text-slate-700">Fotos, até 4 imagens</span>
+                    <div className="rounded-xl border-2 border-dashed border-slate-300 bg-[#fafafa] px-4 py-5 text-center text-sm font-bold leading-6 text-slate-600 transition hover:border-[#05245c] hover:bg-blue-50">
+                      {arquivosImagens.length
+                        ? `${arquivosImagens.length} foto(s) selecionada(s)`
+                        : 'Clique para selecionar fotos do anúncio'}
+                    </div>
+                    <input type="file" accept="image/*" multiple onChange={(event) => selecionarImagens(event.target.files)} className="hidden" />
+                  </label>
+
+                  <label className="grid cursor-pointer gap-2">
+                    <span className="text-sm font-black text-slate-700">Vídeo curto, opcional</span>
+                    <div className="rounded-xl border-2 border-dashed border-slate-300 bg-[#fafafa] px-4 py-5 text-center text-sm font-bold leading-6 text-slate-600 transition hover:border-emerald-500 hover:bg-emerald-50">
+                      {arquivoVideo ? arquivoVideo.name : 'Clique para selecionar MP4, WEBM ou MOV'}
+                    </div>
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm,video/quicktime,video/*"
+                      onChange={(event) => setArquivoVideo(event.target.files?.[0] || null)}
+                      className="hidden"
+                    />
+                  </label>
+                </EditorSection>
+              </div>
+
+              <div className="grid gap-2 border-t border-slate-100 bg-white p-4 sm:grid-cols-2">
+                <button
+                  type="submit"
+                  disabled={salvando}
+                  className="min-h-12 rounded-xl bg-[#05245c] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-950/15 transition hover:bg-[#031a43] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {salvando ? 'Salvando...' : editandoId ? 'Salvar alterações' : 'Publicar anúncio'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={limparFormulario}
+                  className="min-h-12 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-600 transition hover:bg-slate-100"
+                >
+                  Limpar formulário
+                </button>
+              </div>
+            </form>
+          </aside>
         </section>
       </section>
 
@@ -1124,95 +1277,132 @@ export default function ProdutosPage() {
   )
 }
 
-function ResumoCard({ label, value, tone = 'blue' }: { label: string; value: number; tone?: 'blue' | 'green' | 'red' | 'amber' }) {
-  const valueColor = {
-    blue: 'text-[#05245c]',
-    green: 'text-emerald-700',
-    red: 'text-red-700',
-    amber: 'text-amber-700',
+function MarketplaceMetric({
+  label,
+  value,
+  detail,
+  icon,
+  tone = 'blue',
+}: {
+  label: string
+  value: number
+  detail: string
+  icon: string
+  tone?: 'blue' | 'green' | 'amber' | 'purple'
+}) {
+  const classes = {
+    blue: 'bg-blue-50 text-[#05245c]',
+    green: 'bg-emerald-50 text-emerald-700',
+    amber: 'bg-amber-50 text-amber-800',
+    purple: 'bg-violet-50 text-violet-700',
   }[tone]
 
   return (
-    <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
-      <p className="text-sm font-bold text-slate-500">{label}</p>
-      <p className={`mt-3 text-4xl font-black ${valueColor}`}>{value}</p>
-    </div>
+    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-black text-slate-600">{label}</p>
+          <p className="mt-2 text-3xl font-black tracking-[-0.05em] text-[#071b3a]">{value}</p>
+          <p className="mt-1 text-xs font-bold leading-5 text-slate-400">{detail}</p>
+        </div>
+        <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl text-xl ${classes}`}>{icon}</span>
+      </div>
+    </article>
   )
 }
 
-function ToggleButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+function FilterChip({
+  active,
+  onClick,
+  children,
+  secondary = false,
+}: {
+  active: boolean
+  onClick: () => void
+  children: ReactNode
+  secondary?: boolean
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-2xl px-4 py-3 text-left font-black ${active ? 'bg-white text-[#05245c]' : 'bg-blue-100 text-slate-500'}`}
+      className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-xs font-black transition ${
+        active
+          ? secondary
+            ? 'border-amber-300 bg-amber-100 text-amber-900'
+            : 'border-[#05245c] bg-[#05245c] text-white'
+          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50'
+      }`}
     >
-      {label}
+      {children}
     </button>
   )
 }
 
-function CatalogEmptyState({ title, text, button, onClick }: { title: string; text: string; button: string; onClick?: () => void }) {
+function EditorSection({
+  title,
+  icon,
+  children,
+  open = false,
+}: {
+  title: string
+  icon: string
+  children: ReactNode
+  open?: boolean
+}) {
   return (
-    <div className="mt-5 rounded-[2rem] border border-dashed border-blue-100 bg-[#f8fbff] p-8 text-center">
-      <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-white text-3xl shadow-lg shadow-blue-950/5">🧩</div>
-      <h3 className="mt-5 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">{title}</h3>
-      <p className="mx-auto mt-2 max-w-xl font-bold leading-7 text-slate-500">{text}</p>
-      <button
-        type="button"
-        onClick={onClick || (() => window.scrollTo({ top: 430, behavior: 'smooth' }))}
-        className="mt-6 rounded-2xl bg-[#05245c] px-5 py-4 font-black text-white shadow-lg shadow-blue-950/15"
-      >
-        {button}
-      </button>
-    </div>
+    <details open={open} className="group">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-base">{icon}</span>
+          <span className="min-w-0 font-black text-[#071b3a]">{title}</span>
+        </span>
+        <span className="text-lg font-black text-slate-400 transition group-open:rotate-180">⌄</span>
+      </summary>
+      <div className="grid gap-4 px-5 pb-5">{children}</div>
+    </details>
   )
 }
 
-function ProductImage({ item }: { item: ItemCatalogo }) {
-  const image = imagemPrincipal(item)
-
+function ToggleChoice({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
-    <div className="relative h-48 overflow-hidden rounded-[1.5rem] bg-blue-50">
-      {image ? (
-        <img src={image} alt={item.nome} className="h-full w-full object-cover" />
-      ) : (
-        <div className="grid h-full place-items-center text-center text-sm font-black text-[#05245c]">
-          <span className="rounded-2xl bg-white px-4 py-3">Sem foto</span>
-        </div>
-      )}
-
-      <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-        <StatusBadge label={item.categoria || 'Sem categoria'} tone="blue" />
-        <StatusBadge label={itemAtivo(item) ? 'Ativo' : 'Inativo'} tone={itemAtivo(item) ? 'green' : 'red'} />
-      </div>
-
-      <div className="absolute bottom-3 left-3 flex flex-wrap gap-2">
-        <StatusBadge label={`${imagensDoItem(item).length || 0} foto(s)`} tone="slate" />
-        {temVideo(item) && <StatusBadge label="Com vídeo" tone="green" />}
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex min-h-11 items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-sm font-black transition ${
+        active
+          ? 'border-blue-300 bg-blue-50 text-[#05245c]'
+          : 'border-slate-200 bg-[#f7f7f7] text-slate-500'
+      }`}
+    >
+      <span>{label}</span>
+      <span>{active ? '✓' : '○'}</span>
+    </button>
   )
 }
 
-function StatusBadge({ label, tone = 'blue' }: { label: string; tone?: 'blue' | 'green' | 'red' | 'slate' | 'amber' }) {
-  return <span className={`rounded-full px-3 py-1 text-xs font-black ${badgeClass(tone)}`}>{label}</span>
+function productQualityScore(item: ItemCatalogo) {
+  let score = 20
+  if (item.nome?.trim()) score += 15
+  if (item.descricao?.trim()) score += 15
+  if (item.categoria?.trim()) score += 10
+  if (temFoto(item)) score += 25
+  if (temVideo(item)) score += 5
+  if (Number(item.preco || 0) > 0 || itemSobConsulta(item)) score += 10
+  return Math.min(score, 100)
 }
 
-function ProductBadges({ item }: { item: ItemCatalogo }) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      <StatusBadge label={item.tipo || 'produto'} tone="slate" />
-      <StatusBadge label={nomePrecificacao(item.precificacao)} tone="blue" />
-      {!temFoto(item) && <StatusBadge label="Sem foto" tone="amber" />}
-      {itemDestaque(item) && <StatusBadge label="Destaque" tone="green" />}
-      {itemPromocao(item) && <StatusBadge label="Promoção" tone="amber" />}
-      {itemSobConsulta(item) && <StatusBadge label="Sob consulta" tone="slate" />}
-    </div>
-  )
+function inventoryLabel(item: ItemCatalogo) {
+  const extras = extrasDoItem(item)
+  const controlled = extras.controle_estoque === true || extras.stock_control === true
+  const quantity = Math.max(0, Math.floor(Number(extras.estoque ?? extras.stock ?? extras.stock_quantity ?? 0)))
+
+  if (!controlled) return 'Estoque não controlado'
+  if (quantity <= 0) return 'Sem estoque'
+  return `${quantity} em estoque`
 }
 
-function ProductCard({
+function MarketplaceProductCard({
   item,
   empresaSlug,
   onEdit,
@@ -1229,60 +1419,155 @@ function ProductCard({
   onToggle: (item: ItemCatalogo) => void
   onDelete: (itemId: string) => void
 }) {
-  const campos = camposDoItem(item)
+  const image = imagemPrincipal(item)
+  const quality = productQualityScore(item)
+  const active = itemAtivo(item)
 
   return (
-    <article className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-blue-950/5 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-950/10">
-      <ProductImage item={item} />
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-lg hover:shadow-slate-950/5">
+      <div className="grid min-w-0 md:grid-cols-[190px_minmax(0,1fr)]">
+        <div className="relative min-h-52 overflow-hidden bg-[#f7f7f7] md:min-h-full">
+          {image ? (
+            <img src={image} alt={item.nome} className="h-full min-h-52 w-full object-cover" />
+          ) : (
+            <div className="grid h-full min-h-52 place-items-center p-6 text-center">
+              <div>
+                <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white text-2xl shadow-sm">🖼️</span>
+                <p className="mt-3 text-sm font-black text-slate-500">Adicione uma foto</p>
+              </div>
+            </div>
+          )}
 
-      <div className="p-5">
-        <ProductBadges item={item} />
+          <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+            <StatusBadge label={active ? 'Ativo' : 'Pausado'} tone={active ? 'green' : 'red'} />
+            {itemDestaque(item) ? <StatusBadge label="Destaque" tone="amber" /> : null}
+          </div>
+        </div>
 
-        <div className="mt-4 flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h3 className="line-clamp-2 text-xl font-black tracking-[-0.03em] text-[#071b3a]">{item.nome}</h3>
-            <p className="mt-1 text-sm font-bold text-slate-500">{item.categoria || 'Sem categoria'}</p>
+        <div className="min-w-0 p-5">
+          <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap gap-2">
+                <StatusBadge label={item.categoria || 'Sem categoria'} tone="blue" />
+                {itemPromocao(item) ? <StatusBadge label="Promoção" tone="amber" /> : null}
+                {itemSobConsulta(item) ? <StatusBadge label="Sob consulta" tone="slate" /> : null}
+              </div>
+
+              <h3 className="mt-3 break-words text-xl font-black tracking-[-0.03em] text-[#071b3a]">
+                {item.nome}
+              </h3>
+              <p className="mt-2 line-clamp-2 break-words text-sm font-bold leading-6 text-slate-500">
+                {limitarTexto(item.descricao, 150) || 'Adicione uma descrição para melhorar a apresentação do anúncio.'}
+              </p>
+            </div>
+
+            <div className="shrink-0 text-left sm:text-right">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">Preço</p>
+              <p className="mt-1 break-words text-2xl font-black tracking-[-0.04em] text-[#071b3a]">
+                {labelPreco(item)}
+              </p>
+              <p className="mt-1 text-xs font-bold text-slate-400">por {item.unidade_label || item.unidade || 'unidade'}</p>
+            </div>
           </div>
 
-          <p className="shrink-0 text-right text-2xl font-black text-[#05245c]">{labelPreco(item)}</p>
-        </div>
+          <div className="mt-4 grid gap-2 rounded-xl bg-[#f7f7f7] p-3 text-xs font-bold text-slate-600 sm:grid-cols-2 xl:grid-cols-4">
+            <p>📷 {imagensDoItem(item).length} foto(s)</p>
+            <p>{temVideo(item) ? '🎬 Com vídeo' : '🎬 Sem vídeo'}</p>
+            <p>📦 {inventoryLabel(item)}</p>
+            <p>💳 Mínimo {formatarDinheiro(Number(item.valor_minimo || 0))}</p>
+          </div>
 
-        {item.descricao && <p className="mt-3 text-sm font-bold leading-6 text-slate-500">{limitarTexto(item.descricao)}</p>}
+          <div className="mt-4">
+            <div className="flex items-center justify-between gap-3 text-xs font-black">
+              <span className="text-slate-500">Qualidade do anúncio</span>
+              <span className={quality >= 80 ? 'text-emerald-700' : quality >= 55 ? 'text-amber-700' : 'text-red-700'}>{quality}%</span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+              <div
+                className={`h-full rounded-full ${quality >= 80 ? 'bg-emerald-500' : quality >= 55 ? 'bg-amber-500' : 'bg-red-500'}`}
+                style={{ width: `${quality}%` }}
+              />
+            </div>
+          </div>
 
-        <div className="mt-4 grid gap-2 rounded-2xl bg-[#f8fbff] p-4 text-xs font-bold text-slate-600 sm:grid-cols-2">
-          <p>Unidade: {item.unidade_label || item.unidade || 'unidade'}</p>
-          <p>Valor mínimo: {formatarDinheiro(Number(item.valor_minimo || 0))}</p>
-          <p>Campos: {campos.join(', ') || 'sem campos'}</p>
-          <p>Sinal: {item.cobrar_sinal_personalizado ? `${item.percentual_sinal_produto || 0}%` : 'padrão da empresa'}</p>
-        </div>
+          <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => onEdit(item)}
+              className="min-h-11 whitespace-normal rounded-xl bg-[#05245c] px-4 py-3 text-center text-sm font-black leading-tight text-white transition hover:bg-[#031a43]"
+            >
+              Editar anúncio
+            </button>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          <button onClick={() => onEdit(item)} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 font-black text-[#05245c] transition hover:bg-blue-50">
-            Editar
-          </button>
+            <button
+              type="button"
+              onClick={() => onOffer(item)}
+              className="min-h-11 whitespace-normal rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-black leading-tight text-amber-900 transition hover:bg-amber-100"
+            >
+              Oferta e estoque
+            </button>
 
-          <button onClick={() => onOffer(item)} className="rounded-2xl bg-amber-50 px-4 py-3 font-black text-amber-700 transition hover:bg-amber-100">
-            Oferta/estoque
-          </button>
+            <button
+              type="button"
+              onClick={() => onOptions(item)}
+              className="min-h-11 whitespace-normal rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-black leading-tight text-emerald-800 transition hover:bg-emerald-100"
+            >
+              Variações e opções
+            </button>
 
-          <button onClick={() => onOptions(item)} className="rounded-2xl bg-emerald-50 px-4 py-3 font-black text-emerald-700 transition hover:bg-emerald-100">
-            Variações/opções
-          </button>
+            <a
+              href={empresaSlug ? getCompanyPublicUrl(empresaSlug) : '#'}
+              target="_blank"
+              rel="noreferrer"
+              className="flex min-h-11 items-center justify-center whitespace-normal rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-black leading-tight text-[#05245c] transition hover:bg-slate-50"
+            >
+              Ver na vitrine
+            </a>
 
-          <a href={empresaSlug ? getCompanyPublicUrl(empresaSlug) : '#'} target="_blank" className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center font-black text-[#05245c] transition hover:bg-blue-50">
-            Ver no site
-          </a>
+            <button
+              type="button"
+              onClick={() => onToggle(item)}
+              className="min-h-11 whitespace-normal rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-black leading-tight text-slate-600 transition hover:bg-slate-50"
+            >
+              {active ? 'Pausar anúncio' : 'Ativar anúncio'}
+            </button>
 
-          <button onClick={() => onToggle(item)} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 font-black text-[#05245c] transition hover:bg-blue-50">
-            {itemAtivo(item) ? 'Inativar' : 'Ativar'}
-          </button>
-
-          <button onClick={() => onDelete(item.id)} className="rounded-2xl bg-red-50 px-4 py-3 font-black text-red-700 transition hover:bg-red-100">
-            Excluir
-          </button>
+            <button
+              type="button"
+              onClick={() => onDelete(item.id)}
+              className="min-h-11 whitespace-normal rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-center text-sm font-black leading-tight text-red-700 transition hover:bg-red-100"
+            >
+              Arquivar anúncio
+            </button>
+          </div>
         </div>
       </div>
     </article>
+  )
+}
+
+function StatusBadge({ label, tone = 'blue' }: { label: string; tone?: 'blue' | 'green' | 'red' | 'slate' | 'amber' }) {
+  const classes = {
+    blue: 'border-blue-100 bg-blue-50 text-[#05245c]',
+    green: 'border-emerald-100 bg-emerald-50 text-emerald-700',
+    red: 'border-red-100 bg-red-50 text-red-700',
+    slate: 'border-slate-200 bg-slate-100 text-slate-600',
+    amber: 'border-amber-200 bg-amber-50 text-amber-800',
+  }[tone]
+
+  return <span className={`rounded-full border px-3 py-1 text-[11px] font-black ${classes}`}>{label}</span>
+}
+
+function MarketplaceEmptyState({ title, text, button, onClick }: { title: string; text: string; button: string; onClick: () => void }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+      <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-amber-50 text-3xl">🛍️</span>
+      <h3 className="mt-5 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">{title}</h3>
+      <p className="mx-auto mt-2 max-w-xl font-bold leading-7 text-slate-500">{text}</p>
+      <button type="button" onClick={onClick} className="mt-6 rounded-xl bg-[#05245c] px-5 py-3 font-black text-white">
+        {button}
+      </button>
+    </div>
   )
 }
 
@@ -1304,60 +1589,67 @@ function ProductTable({
   onDelete: (itemId: string) => void
 }) {
   return (
-    <div className="mt-5 overflow-hidden rounded-[1.6rem] border border-blue-100">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[860px] border-collapse bg-white text-left text-sm">
-          <thead className="bg-[#f8fbff] text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+        <table className="w-full min-w-[1080px] border-collapse text-left text-sm">
+          <thead className="bg-[#f7f7f7] text-xs font-black uppercase tracking-[0.12em] text-slate-400">
             <tr>
-              <th className="px-4 py-4">Produto</th>
-              <th className="px-4 py-4">Categoria</th>
+              <th className="px-4 py-4">Anúncio</th>
               <th className="px-4 py-4">Preço</th>
               <th className="px-4 py-4">Status</th>
-              <th className="px-4 py-4">Mídia</th>
+              <th className="px-4 py-4">Estoque</th>
+              <th className="px-4 py-4">Qualidade</th>
               <th className="px-4 py-4">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-blue-50">
-            {items.map((item) => (
-              <tr key={item.id} className="align-middle">
-                <td className="px-4 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-14 w-14 overflow-hidden rounded-2xl bg-blue-50">
-                      {imagemPrincipal(item) ? (
-                        <img src={imagemPrincipal(item)} alt={item.nome} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="grid h-full place-items-center text-xs font-black text-[#05245c]">Sem foto</div>
-                      )}
+          <tbody className="divide-y divide-slate-100">
+            {items.map((item) => {
+              const quality = productQualityScore(item)
+              const active = itemAtivo(item)
+
+              return (
+                <tr key={item.id} className="align-middle transition hover:bg-[#fcfcfc]">
+                  <td className="px-4 py-4">
+                    <div className="flex min-w-[300px] items-center gap-3">
+                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                        {imagemPrincipal(item) ? (
+                          <img src={imagemPrincipal(item)} alt={item.nome} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="grid h-full place-items-center text-lg">🖼️</div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="max-w-[280px] break-words font-black text-[#071b3a]">{item.nome}</p>
+                        <p className="mt-1 max-w-[280px] break-words text-xs font-bold leading-5 text-slate-500">
+                          {item.categoria || 'Sem categoria'} · {imagensDoItem(item).length} foto(s)
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-black text-[#071b3a]">{item.nome}</p>
-                      <p className="mt-1 text-xs font-bold text-slate-500">{limitarTexto(item.descricao, 64) || item.tipo || 'produto'}</p>
+                  </td>
+                  <td className="max-w-[160px] break-words px-4 py-4 font-black text-[#071b3a]">{labelPreco(item)}</td>
+                  <td className="px-4 py-4"><StatusBadge label={active ? 'Ativo' : 'Pausado'} tone={active ? 'green' : 'red'} /></td>
+                  <td className="max-w-[170px] break-words px-4 py-4 font-bold text-slate-600">{inventoryLabel(item)}</td>
+                  <td className="px-4 py-4">
+                    <div className="w-28">
+                      <div className="flex justify-between text-xs font-black text-slate-500"><span>Qualidade</span><span>{quality}%</span></div>
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+                        <div className={`h-full rounded-full ${quality >= 80 ? 'bg-emerald-500' : quality >= 55 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${quality}%` }} />
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-4 py-4 font-bold text-slate-600">{item.categoria || 'Sem categoria'}</td>
-                <td className="px-4 py-4 font-black text-[#05245c]">{labelPreco(item)}</td>
-                <td className="px-4 py-4">
-                  <StatusBadge label={itemAtivo(item) ? 'Ativo' : 'Inativo'} tone={itemAtivo(item) ? 'green' : 'red'} />
-                </td>
-                <td className="px-4 py-4">
-                  <div className="flex gap-2">
-                    <StatusBadge label={`${imagensDoItem(item).length || 0} foto(s)`} tone={temFoto(item) ? 'blue' : 'amber'} />
-                    {temVideo(item) && <StatusBadge label="Vídeo" tone="green" />}
-                  </div>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="flex gap-2">
-                    <button onClick={() => onEdit(item)} className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">Editar</button>
-                    <button onClick={() => onOffer(item)} className="rounded-xl bg-amber-50 px-3 py-2 font-black text-amber-700">Oferta</button>
-                    <button onClick={() => onOptions(item)} className="rounded-xl bg-emerald-50 px-3 py-2 font-black text-emerald-700">Opções</button>
-                    <a href={empresaSlug ? getCompanyPublicUrl(empresaSlug) : '#'} target="_blank" className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">Site</a>
-                    <button onClick={() => onToggle(item)} className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">{itemAtivo(item) ? 'Inativar' : 'Ativar'}</button>
-                    <button onClick={() => onDelete(item.id)} className="rounded-xl bg-red-50 px-3 py-2 font-black text-red-700">Excluir</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="grid min-w-[310px] grid-cols-3 gap-2">
+                      <button type="button" onClick={() => onEdit(item)} className="rounded-lg bg-[#05245c] px-3 py-2 text-xs font-black text-white">Editar</button>
+                      <button type="button" onClick={() => onOffer(item)} className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-black text-amber-800">Oferta</button>
+                      <button type="button" onClick={() => onOptions(item)} className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700">Opções</button>
+                      <a href={empresaSlug ? getCompanyPublicUrl(empresaSlug) : '#'} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-black text-[#05245c]">Vitrine</a>
+                      <button type="button" onClick={() => onToggle(item)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-black text-slate-600">{active ? 'Pausar' : 'Ativar'}</button>
+                      <button type="button" onClick={() => onDelete(item.id)} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-black text-red-700">Arquivar</button>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

@@ -2,7 +2,7 @@
 'use client'
 
 import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
-import { supabase } from '@/lib/supabase'
+import { uploadPanelFile } from '@/lib/panel-storage'
 
 type BannerUploaderProps = {
   companyId?: string | null
@@ -13,15 +13,6 @@ type BannerUploaderProps = {
 
 const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
 const maxSize = 8 * 1024 * 1024
-
-function cleanFileName(name: string) {
-  return name
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9._-]/g, '-')
-    .replace(/-+/g, '-')
-    .toLowerCase()
-}
 
 export default function BannerUploader({
   companyId,
@@ -55,21 +46,15 @@ export default function BannerUploader({
     setUploading(true)
 
     try {
-      const fileName = cleanFileName(file.name)
-      const path = `${companyId}/banners/${Date.now()}-${fileName}`
+      // ORCALY_BANNER_STORAGE_V1
+      const upload = await uploadPanelFile({
+        companyId,
+        file,
+        purpose: 'banner',
+      })
 
-      const { error: uploadError } = await supabase.storage
-        .from('produtos')
-        .upload(path, file, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: file.type,
-        })
-
-      if (uploadError) throw uploadError
-
-      const { data } = supabase.storage.from('produtos').getPublicUrl(path)
-      onChange(data.publicUrl)
+      if (!upload.url) throw new Error('A URL pública do banner não foi criada.')
+      onChange(upload.url)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao enviar banner.')
     }

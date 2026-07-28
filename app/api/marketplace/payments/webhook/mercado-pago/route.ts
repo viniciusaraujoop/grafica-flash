@@ -21,6 +21,7 @@ function extractPaymentId(body: any, url: URL) {
 }
 
 function parseExternalReference(value: unknown) {
+// ORCALY_COUPON_USAGE_WEBHOOK_V1
   const parts = String(value || '').split(':')
   if (parts.length === 4 && parts[0] === 'orcaly') {
     return { companyId: parts[1], orderId: parts[2], marketplacePaymentId: parts[3] }
@@ -160,6 +161,16 @@ export async function POST(request: NextRequest) {
       .eq('company_id', companyId)
 
     if (mappedStatus === 'paid') {
+      const { error: couponConsumeError } = await supabaseAdmin.rpc(
+        'consume_marketplace_coupon',
+        {
+          p_company_id: companyId,
+          p_order_id: orderId,
+        }
+      )
+
+      if (couponConsumeError) throw couponConsumeError
+
       await supabaseAdmin
         .from('marketplace_commissions')
         .update({ status: 'confirmed', confirmed_at: new Date().toISOString(), updated_at: new Date().toISOString() })

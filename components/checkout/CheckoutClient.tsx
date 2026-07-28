@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 "use client";
+// ORCALY_SELLER_PUBLIC_KEY_V1
 
 import Script from "next/script";
 import {
@@ -56,6 +57,7 @@ type CheckoutData = {
     chargesEnabled: boolean;
     pixEnabled: boolean;
     cardEnabled: boolean;
+    publicKey: string;
     lastError?: string | null;
   };
 };
@@ -219,13 +221,16 @@ export default function CheckoutClient({
 }: {
   slug: string;
 }) {
-  const publicKey =
+  const fallbackPublicKey =
     process.env.NEXT_PUBLIC_MP_MARKETPLACE_PUBLIC_KEY || "";
 
   const brickControllerRef = useRef<any>(null);
   const processingRef = useRef(false);
 
   const [data, setData] = useState<CheckoutData | null>(null);
+  const publicKey =
+    data?.payment.publicKey ||
+    fallbackPublicKey;
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
