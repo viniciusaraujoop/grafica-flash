@@ -42,6 +42,7 @@ type CartItem = {
   variationId?: string
   addonIds: string[]
   optionSummary: string
+  optionSelections?: ProductOptionSelections
   subtotal: number
 }
 
@@ -387,6 +388,7 @@ export default function SegmentMarketplaceCatalog({
         optionGroups,
         optionSelections,
       ),
+      optionSelections,
       subtotal: Number((unitPrice * quantity).toFixed(2)),
     }
 
@@ -502,6 +504,7 @@ export default function SegmentMarketplaceCatalog({
           quantity: item.quantity,
           variationId: item.variationId || undefined,
           addonIds: Array.isArray(item.addonIds) ? item.addonIds : [],
+          optionSelections: item.optionSelections || {},
           observation: [
             item.optionSummary,
             item.notes,

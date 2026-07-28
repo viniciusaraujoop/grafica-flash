@@ -32,6 +32,7 @@ type CartItem = {
   quantity: number;
   variationId?: string;
   addonIds: string[];
+  optionSelections?: Record<string, string[]>;
   observation: string;
 };
 
@@ -105,6 +106,25 @@ function safeRecord(value: unknown): Record<string, unknown> {
   }
 
   return value as Record<string, unknown>;
+}
+
+function normalizeOptionSelections(
+  value: unknown,
+): Record<string, string[]> {
+  const record = safeRecord(value);
+
+  return Object.fromEntries(
+    Object.entries(record).map(([groupId, selected]) => [
+      groupId,
+      Array.from(
+        new Set(
+          (Array.isArray(selected) ? selected : [])
+            .map((item) => String(item || "").trim())
+            .filter(Boolean),
+        ),
+      ),
+    ]),
+  );
 }
 
 function normalizePaymentMethod(
@@ -305,6 +325,9 @@ export default function CheckoutClient({
           addonIds: Array.isArray(item.addonIds)
             ? item.addonIds
             : [],
+          optionSelections: normalizeOptionSelections(
+            item.optionSelections,
+          ),
           observation: String(item.observation || ""),
         }));
 

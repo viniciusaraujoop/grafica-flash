@@ -41,6 +41,7 @@ type FoodCartItem = {
   variation: FoodOption | null
   addons: FoodOption[]
   optionSummary: string
+  optionSelections?: ProductOptionSelections
   notes: string
   subtotal: number
 }
@@ -415,6 +416,7 @@ function ProductConfigurator({
       variation,
       addons,
       optionSummary,
+      optionSelections,
       notes: notes.trim(),
       subtotal,
     })
@@ -777,6 +779,7 @@ export default function FoodMarketplaceCatalog({
           quantity: item.quantity,
           variationId: item.variation?.id || undefined,
           addonIds: item.addons.map((addon) => addon.id),
+          optionSelections: item.optionSelections || {},
           observation: [item.optionSummary, item.notes].filter(Boolean).join(' | '),
         })),
         customer: {

@@ -17,6 +17,14 @@ import {
 import {
   resolveCompanyBySlug,
 } from "@/lib/payments/server-context";
+import {
+  getCheckoutOptionPayload,
+  getOptionSelectionSummary,
+  getOptionSelectionsPrice,
+  getProductOptionGroups,
+  validateProductOptionSelections,
+  type ProductOptionSelections,
+} from "@/lib/product-options";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -25,6 +33,7 @@ type CheckoutItem = {
   quantity: number;
   variationId?: string;
   addonIds?: string[];
+  optionSelections?: ProductOptionSelections;
   observation?: string;
 };
 
@@ -115,6 +124,272 @@ function asRecord(value: unknown): JsonRecord {
   }
 
   return value as JsonRecord;
+}
+
+// ORCALY_SERVER_OPTION_VALIDATION_1C1
+function normalizeOptionSelections(
+  value: unknown,
+): ProductOptionSelections {
+  const record = asRecord(value);
+
+  return Object.fromEntries(
+    Object.entries(record).map(([groupId, selected]) => [
+      groupId,
+      Array.from(
+        new Set(
+          array(selected)
+            .map((item) => text(item))
+            .filter(Boolean),
+        ),
+      ),
+    ]),
+  ) as ProductOptionSelections;
+}
+
+function assertProductAvailability(
+  product: JsonRecord,
+  quantity: number,
+) {
+  if (product.available === false) {
+    throw Object.assign(
+      new Error("Um produto ficou indisponivel."),
+      { status: 409 },
+    );
+  }
+
+  const extras = asRecord(product.extras);
+  const controlled =
+    extras.controle_estoque === true ||
+    extras.stock_control === true ||
+    product.controle_estoque === true ||
+    product.stock_control === true;
+
+  if (!controlled) return;
+
+  const rawStock =
+    extras.estoque ??
+    extras.stock ??
+    product.estoque ??
+    product.stock ??
+    0;
+  const parsedStock = Number(rawStock);
+  const stock = Number.isFinite(parsedStock)
+    ? Math.max(0, Math.floor(parsedStock))
+    : 0;
+
+  if (quantity > stock) {
+    throw Object.assign(
+      new Error(
+        stock > 0
+          ? `Estoque insuficiente para ${productName(product)}. Disponivel: ${stock}.`
+          : `${productName(product)} esta esgotado.`,
+      ),
+      { status: 409 },
+    );
+  }
+}
+
+function resolveConfiguredProductOptions(
+  product: JsonRecord,
+  input: CheckoutItem,
+) {
+  const groups = getProductOptionGroups({
+    extras: asRecord(product.extras),
+    variations: product.variations,
+    addons: product.addons,
+    variacoes: product.variacoes,
+    adicionais: product.adicionais,
+    configuracoes: asRecord(product.configuracoes),
+  });
+
+  if (!groups.length) return null;
+
+  const provided = normalizeOptionSelections(
+    input.optionSelections,
+  );
+  const groupIds = new Set(
+    groups.map((group) => group.id),
+  );
+  const ownerByOptionId = new Map<string, string>();
+
+  for (const group of groups) {
+    for (const option of group.options) {
+      const previousOwner =
+        ownerByOptionId.get(option.id);
+
+      if (
+        previousOwner &&
+        previousOwner !== group.id
+      ) {
+        throw Object.assign(
+          new Error(
+            `A configuracao de opcoes de ${productName(product)} possui identificadores duplicados.`,
+          ),
+          { status: 409 },
+        );
+      }
+
+      ownerByOptionId.set(
+        option.id,
+        group.id,
+      );
+    }
+  }
+
+  for (const [groupId, selected] of Object.entries(provided)) {
+    if (selected.length && !groupIds.has(groupId)) {
+      throw Object.assign(
+        new Error(
+          "Um grupo de opcoes nao esta mais disponivel.",
+        ),
+        { status: 400 },
+      );
+    }
+  }
+
+  const compatibilityIds = [
+    text(input.variationId),
+    ...array(input.addonIds)
+      .map((item) => text(item)),
+  ].filter(Boolean);
+  const submittedIds = new Set([
+    ...compatibilityIds,
+    ...Object.values(provided).flat(),
+  ]);
+
+  for (const optionIdValue of submittedIds) {
+    if (!ownerByOptionId.has(optionIdValue)) {
+      throw Object.assign(
+        new Error(
+          "Uma opcao selecionada nao esta mais disponivel.",
+        ),
+        { status: 400 },
+      );
+    }
+  }
+
+  const selections: ProductOptionSelections =
+    Object.fromEntries(
+      groups.map((group) => [
+        group.id,
+        Array.from(
+          new Set([
+            ...(provided[group.id] || []),
+            ...compatibilityIds.filter(
+              (optionIdValue) =>
+                ownerByOptionId.get(
+                  optionIdValue,
+                ) === group.id,
+            ),
+          ]),
+        ),
+      ]),
+    );
+
+  const validation =
+    validateProductOptionSelections(
+      groups,
+      selections,
+    );
+
+  if (validation) {
+    throw Object.assign(
+      new Error(validation),
+      { status: 400 },
+    );
+  }
+
+  const payload = getCheckoutOptionPayload(
+    groups,
+    selections,
+  );
+  const selectedById = new Map<
+    string,
+    {
+      groupId: string;
+      groupName: string;
+      selection: string;
+      id: string;
+      name: string;
+      price: number;
+    }
+  >();
+
+  for (const group of groups) {
+    const selectedIds = new Set(
+      selections[group.id] || [],
+    );
+
+    for (const option of group.options) {
+      if (!selectedIds.has(option.id)) continue;
+
+      selectedById.set(option.id, {
+        groupId: group.id,
+        groupName: group.name,
+        selection: group.selection,
+        id: option.id,
+        name: option.name,
+        price: option.price,
+      });
+    }
+  }
+
+  const variationEntry = payload.variationId
+    ? selectedById.get(payload.variationId)
+    : undefined;
+  const variation: JsonRecord | null =
+    variationEntry
+      ? {
+          id: variationEntry.id,
+          name: `${variationEntry.groupName}: ${variationEntry.name}`,
+          nome: `${variationEntry.groupName}: ${variationEntry.name}`,
+          price: variationEntry.price,
+          priceDelta: variationEntry.price,
+          price_delta: variationEntry.price,
+          preco: variationEntry.price,
+          preco_adicional:
+            variationEntry.price,
+          group_id: variationEntry.groupId,
+          group_name:
+            variationEntry.groupName,
+          selection:
+            variationEntry.selection,
+        }
+      : null;
+  const addons: JsonRecord[] = [];
+
+  for (const addonId of payload.addonIds) {
+    const entry = selectedById.get(addonId);
+    if (!entry) continue;
+
+    addons.push({
+      id: entry.id,
+      name: `${entry.groupName}: ${entry.name}`,
+      nome: `${entry.groupName}: ${entry.name}`,
+      price: entry.price,
+      preco: entry.price,
+      preco_adicional: entry.price,
+      group_id: entry.groupId,
+      group_name: entry.groupName,
+      selection: entry.selection,
+    });
+  }
+
+  return {
+    selections,
+    variation,
+    addons,
+    optionsPrice: money(
+      getOptionSelectionsPrice(
+        groups,
+        selections,
+      ),
+    ),
+    summary: getOptionSelectionSummary(
+      groups,
+      selections,
+    ),
+  };
 }
 
 function resolveCheckoutPaymentMethod(
@@ -528,53 +803,97 @@ async function calculateCheckout(
         ),
       );
 
-      const variation =
-        productVariations(product).find(
-          (item) =>
-            optionId(item) ===
-            text(input.variationId),
-        );
-
-      if (
-        input.variationId &&
-        !variation
-      ) {
-        throw Object.assign(
-          new Error(
-            "A variacao selecionada nao esta disponivel.",
-          ),
-          { status: 400 },
-        );
-      }
-
-      const addonIds = new Set(
-        input.addonIds || [],
+      assertProductAvailability(
+        product,
+        quantity,
       );
 
-      const addons =
-        productAddons(product).filter(
-          (item) =>
-            addonIds.has(optionId(item)),
+      const configuredOptions =
+        resolveConfiguredProductOptions(
+          product,
+          input,
         );
+      let variation: unknown = null;
+      let addons: unknown[] = [];
+      let optionsPrice = 0;
 
-      if (addons.length !== addonIds.size) {
-        throw Object.assign(
-          new Error(
-            "Um adicional nao esta disponivel.",
-          ),
-          { status: 400 },
+      if (configuredOptions) {
+        variation =
+          configuredOptions.variation;
+        addons = configuredOptions.addons;
+        optionsPrice =
+          configuredOptions.optionsPrice;
+      } else {
+        variation =
+          productVariations(product).find(
+            (item) =>
+              optionId(item) ===
+              text(input.variationId),
+          );
+
+        if (
+          input.variationId &&
+          !variation
+        ) {
+          throw Object.assign(
+            new Error(
+              "A variacao selecionada nao esta disponivel.",
+            ),
+            { status: 400 },
+          );
+        }
+
+        const addonIds = new Set(
+          array(input.addonIds)
+            .map((item) => text(item))
+            .filter(Boolean),
         );
+        const legacyAddons: unknown[] =
+          productAddons(product).filter(
+            (item) =>
+              addonIds.has(optionId(item)),
+          ) as unknown[];
+
+        if (
+          legacyAddons.length !==
+          addonIds.size
+        ) {
+          throw Object.assign(
+            new Error(
+              "Um adicional nao esta disponivel.",
+            ),
+            { status: 400 },
+          );
+        }
+
+        addons = legacyAddons;
+        optionsPrice =
+          optionPrice(variation) +
+          legacyAddons.reduce<number>(
+            (sum, item) =>
+              sum + optionPrice(item),
+            0,
+          );
       }
 
       const unitPrice = money(
         productPrice(product) +
-          optionPrice(variation) +
-          addons.reduce(
-            (sum, item) =>
-              sum + optionPrice(item),
-            0,
-          ),
+          optionsPrice,
       );
+      const suppliedObservation = text(
+        input.observation,
+      );
+      const optionSummary =
+        configuredOptions?.summary || "";
+      const observation =
+        optionSummary &&
+        !suppliedObservation.includes(
+          optionSummary,
+        )
+          ? [optionSummary, suppliedObservation]
+              .filter(Boolean)
+              .join(" | ")
+          : suppliedObservation;
 
       return {
         productId: text(product.id),
@@ -587,9 +906,7 @@ async function calculateCheckout(
         ),
         variation: variation || null,
         addons,
-        observation: text(
-          input.observation,
-        ),
+        observation,
       };
     },
   );
