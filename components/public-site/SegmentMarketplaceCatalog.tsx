@@ -20,6 +20,15 @@ import {
   isProductAvailable,
   isProductConsultOnly,
 } from '@/lib/product-media'
+import {
+  getCheckoutOptionPayload,
+  getOptionSelectionSummary,
+  getOptionSelectionsPrice,
+  getProductOptionGroups,
+  validateProductOptionSelections,
+  type ProductOptionGroup,
+  type ProductOptionSelections,
+} from '@/lib/product-options'
 
 type CartItem = {
   localId: string
@@ -30,6 +39,9 @@ type CartItem = {
   unitPrice: number
   notes: string
   answers: Record<string, string>
+  variationId?: string
+  addonIds: string[]
+  optionSummary: string
   subtotal: number
 }
 
@@ -328,9 +340,36 @@ export default function SegmentMarketplaceCatalog({
     if (field === 'deliveryType' || field === 'deliveryZoneId') setCoupon(initialCoupon)
   }
 
-  function addToCart(product: PublicSiteProduct, quantity: number, notes: string, answers: Record<string, string>) {
-    const unitPrice = getProductPriceNumber(product)
-    if (!isProductAvailable(product) || isProductConsultOnly(product) || unitPrice <= 0) return
+  function addToCart(
+    product: PublicSiteProduct,
+    quantity: number,
+    notes: string,
+    answers: Record<string, string>,
+    optionSelections: ProductOptionSelections,
+  ) {
+    const basePrice = getProductPriceNumber(product)
+    if (!isProductAvailable(product) || isProductConsultOnly(product) || basePrice <= 0) return
+
+    const optionGroups = getProductOptionGroups(product)
+    const validation = validateProductOptionSelections(
+      optionGroups,
+      optionSelections,
+    )
+
+    if (validation) {
+      setError(validation)
+      return
+    }
+
+    const optionPrice = getOptionSelectionsPrice(
+      optionGroups,
+      optionSelections,
+    )
+    const checkoutOptions = getCheckoutOptionPayload(
+      optionGroups,
+      optionSelections,
+    )
+    const unitPrice = Number((basePrice + optionPrice).toFixed(2))
 
     localIdRef.current += 1
     const next: CartItem = {
@@ -342,6 +381,12 @@ export default function SegmentMarketplaceCatalog({
       unitPrice,
       notes,
       answers,
+      variationId: checkoutOptions.variationId,
+      addonIds: checkoutOptions.addonIds,
+      optionSummary: getOptionSelectionSummary(
+        optionGroups,
+        optionSelections,
+      ),
       subtotal: Number((unitPrice * quantity).toFixed(2)),
     }
 
@@ -455,8 +500,10 @@ export default function SegmentMarketplaceCatalog({
         items: cart.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-          addonIds: [],
+          variationId: item.variationId || undefined,
+          addonIds: Array.isArray(item.addonIds) ? item.addonIds : [],
           observation: [
+            item.optionSummary,
             item.notes,
             ...Object.entries(item.answers || {}).map(
               ([key, value]) => `${key}: ${value}`,
@@ -596,14 +643,14 @@ export default function SegmentMarketplaceCatalog({
           style={{ background: primaryColor }}
           aria-label="Abrir carrinho"
         >
-          <span aria-hidden="true">ðŸ›’</span>
-          <span className="truncate">{cartItemCount} {cartItemCount === 1 ? 'item' : 'itens'} â€¢ {money(subtotal)}</span>
+          <span aria-hidden="true">🛒</span>
+          <span className="truncate">{cartItemCount} {cartItemCount === 1 ? 'item' : 'itens'} • {money(subtotal)}</span>
         </button>
 
         <aside
           role="dialog"
           aria-modal="true"
-          aria-label="Carrinho e finalizaÃ§Ã£o"
+          aria-label="Carrinho e finalização"
           className={`fixed inset-x-3 bottom-3 z-[70] max-h-[calc(100dvh-1.5rem)] min-w-0 overflow-y-auto rounded-[2.3rem] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/20 transition duration-300 ease-out sm:inset-y-4 sm:left-auto sm:right-4 sm:bottom-auto sm:w-[390px] sm:max-h-none ${
             cartOpen
               ? 'translate-y-0 opacity-100 sm:translate-x-0'
@@ -635,6 +682,7 @@ export default function SegmentMarketplaceCatalog({
                   <div className="min-w-0">
                     <p className="truncate font-black text-[#071b3a]">{item.productName}</p>
                     <p className="text-xs font-bold text-slate-500">{money(item.unitPrice)} unidade</p>
+                    {item.optionSummary ? <p className="mt-1 line-clamp-2 text-xs font-bold text-slate-500">{item.optionSummary}</p> : null}
                     {item.notes ? <p className="mt-1 line-clamp-2 text-xs font-bold text-slate-500">{item.notes}</p> : null}
                   </div>
                   <button type="button" onClick={() => removeItem(item.localId)} className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black text-red-600">remover</button>
@@ -747,15 +795,95 @@ function ProductRequestModal({
   primaryColor: string
   accentColor: string
   onClose: () => void
-  onAdd: (product: PublicSiteProduct, quantity: number, notes: string, answers: Record<string, string>) => void
+  onAdd: (
+    product: PublicSiteProduct,
+    quantity: number,
+    notes: string,
+    answers: Record<string, string>,
+    optionSelections: ProductOptionSelections,
+  ) => void
 }) {
   const [quantity, setQuantity] = useState(1)
   const [notes, setNotes] = useState('')
   const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [optionSelections, setOptionSelections] =
+    useState<ProductOptionSelections>({})
+  const [optionError, setOptionError] = useState('')
   const fields = segmentFields[businessType] || segmentFields.services
+  const optionGroups = useMemo(
+    () => getProductOptionGroups(product),
+    [product],
+  )
   const price = getProductPriceNumber(product)
-  const subtotal = Number((price * Math.max(1, quantity)).toFixed(2))
+  const optionsPrice = getOptionSelectionsPrice(
+    optionGroups,
+    optionSelections,
+  )
+  const subtotal = Number(
+    (
+      (price + optionsPrice) *
+      Math.max(1, quantity)
+    ).toFixed(2),
+  )
   const image = getPrimaryProductImage(product)
+
+  function selectOption(
+    group: ProductOptionGroup,
+    optionId: string,
+  ) {
+    setOptionError('')
+
+    setOptionSelections((current) => {
+      const selected = current[group.id] || []
+
+      if (group.selection === 'single') {
+        return {
+          ...current,
+          [group.id]:
+            selected[0] === optionId ? [] : [optionId],
+        }
+      }
+
+      if (selected.includes(optionId)) {
+        return {
+          ...current,
+          [group.id]: selected.filter((id) => id !== optionId),
+        }
+      }
+
+      if (selected.length >= Math.max(1, group.max)) {
+        setOptionError(
+          `Escolha no máximo ${group.max} opções em "${group.name}".`,
+        )
+        return current
+      }
+
+      return {
+        ...current,
+        [group.id]: [...selected, optionId],
+      }
+    })
+  }
+
+  function addConfiguredItem() {
+    const validation = validateProductOptionSelections(
+      optionGroups,
+      optionSelections,
+    )
+
+    if (validation) {
+      setOptionError(validation)
+      return
+    }
+
+    onAdd(
+      product,
+      quantity,
+      notes,
+      answers,
+      optionSelections,
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[#071b3a]/60 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true">
@@ -785,6 +913,53 @@ function ProductRequestModal({
                 <input type="number" min={1} value={quantity} onChange={(event) => setQuantity(Math.max(1, Number(event.target.value || 1)))} className="rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-3 font-bold outline-none" />
               </label>
 
+              {optionGroups.map((group) => {
+                const selected = optionSelections[group.id] || []
+                const rule =
+                  group.selection === 'single'
+                    ? group.required
+                      ? 'Escolha 1 opção'
+                      : 'Escolha até 1 opção'
+                    : `${group.required ? `Escolha de ${Math.max(1, group.min)} a` : 'Escolha até'} ${group.max}`
+
+                return (
+                  <section key={group.id} className="rounded-[1.4rem] border border-blue-100 bg-[#f8fbff] p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="font-black text-[#071b3a]">{group.name}</p>
+                        <p className="mt-1 text-xs font-bold text-slate-500">{rule}</p>
+                      </div>
+                      <span className={`rounded-full px-3 py-1 text-xs font-black ${group.required ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-500'}`}>
+                        {group.required ? 'Obrigatório' : 'Opcional'}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 grid gap-2">
+                      {group.options.filter((option) => option.active).map((option) => {
+                        const checked = selected.includes(option.id)
+
+                        return (
+                          <label key={option.id} className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3 ${checked ? 'border-blue-300 bg-white' : 'border-blue-100 bg-white/70'}`}>
+                            <span className="flex min-w-0 items-center gap-3">
+                              <input
+                                type={group.selection === 'single' ? 'radio' : 'checkbox'}
+                                name={`option-group-${group.id}`}
+                                checked={checked}
+                                onChange={() => selectOption(group, option.id)}
+                              />
+                              <span className="truncate font-black text-slate-700">{option.name}</span>
+                            </span>
+                            <span className="shrink-0 text-sm font-black text-[#05245c]">
+                              {option.price > 0 ? `+ ${money(option.price)}` : 'Incluso'}
+                            </span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </section>
+                )
+              })}
+
               {fields.map((field) => (
                 <label key={field.key} className="grid gap-2 text-sm font-black text-slate-600">
                   {field.label}
@@ -801,12 +976,19 @@ function ProductRequestModal({
                 <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Detalhes adicionais, prazo, preferências ou dúvidas." rows={4} className="resize-none rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-3 font-bold outline-none" />
               </label>
 
+              {optionError ? (
+                <div className="rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-700">
+                  {optionError}
+                </div>
+              ) : null}
+
               <div className="flex flex-col gap-3 rounded-[1.5rem] border border-blue-100 bg-[#f8fbff] p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Subtotal estimado</p>
                   <p className="text-3xl font-black text-[#071b3a]">{money(subtotal)}</p>
+                  {optionsPrice > 0 ? <p className="mt-1 text-xs font-bold text-slate-500">Inclui {money(optionsPrice)} por unidade em opções.</p> : null}
                 </div>
-                <button type="button" onClick={() => onAdd(product, quantity, notes, answers)} className="rounded-2xl px-5 py-4 font-black text-white" style={{ background: primaryColor }}>
+                <button type="button" onClick={addConfiguredItem} className="rounded-2xl px-5 py-4 font-black text-white" style={{ background: primaryColor }}>
                   Adicionar
                 </button>
               </div>

@@ -14,6 +14,15 @@ import {
   isProductAvailable,
   isProductConsultOnly,
 } from '@/lib/product-media'
+import {
+  getCheckoutOptionPayload,
+  getOptionSelectionSummary,
+  getOptionSelectionsPrice,
+  getProductOptionGroups,
+  validateProductOptionSelections,
+  type ProductOptionGroup,
+  type ProductOptionSelections,
+} from '@/lib/product-options'
 
 type FoodOption = {
   id: string
@@ -31,6 +40,7 @@ type FoodCartItem = {
   unitPrice: number
   variation: FoodOption | null
   addons: FoodOption[]
+  optionSummary: string
   notes: string
   subtotal: number
 }
@@ -301,28 +311,110 @@ function ProductConfigurator({
   onAdd: (item: Omit<FoodCartItem, 'localId'>) => void
 }) {
   const [quantity, setQuantity] = useState(1)
-  const [variationId, setVariationId] = useState('')
-  const [addonIds, setAddonIds] = useState<string[]>([])
+  const [optionSelections, setOptionSelections] =
+    useState<ProductOptionSelections>({})
   const [notes, setNotes] = useState('')
-  const variations = useMemo(() => getVariations(product), [product])
-  const addons = useMemo(() => getAddons(product), [product])
-  const selectedVariation = variations.find((option) => option.id === variationId) || null
-  const selectedAddons = addons.filter((addon) => addonIds.includes(addon.id))
-  const subtotal = calculateItem(product, quantity, selectedVariation, selectedAddons)
+  const [optionError, setOptionError] = useState('')
+  const optionGroups = useMemo(
+    () => getProductOptionGroups(product),
+    [product],
+  )
+  const optionsPrice = getOptionSelectionsPrice(
+    optionGroups,
+    optionSelections,
+  )
+  const subtotal = Number(
+    (
+      (getProductPriceNumber(product) + optionsPrice) *
+      Math.max(1, quantity)
+    ).toFixed(2),
+  )
 
-  function toggleAddon(id: string) {
-    setAddonIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
+  function selectOption(
+    group: ProductOptionGroup,
+    optionId: string,
+  ) {
+    setOptionError('')
+
+    setOptionSelections((current) => {
+      const selected = current[group.id] || []
+
+      if (group.selection === 'single') {
+        return {
+          ...current,
+          [group.id]:
+            selected[0] === optionId ? [] : [optionId],
+        }
+      }
+
+      if (selected.includes(optionId)) {
+        return {
+          ...current,
+          [group.id]: selected.filter((id) => id !== optionId),
+        }
+      }
+
+      if (selected.length >= Math.max(1, group.max)) {
+        setOptionError(
+          `Escolha no máximo ${group.max} opções em "${group.name}".`,
+        )
+        return current
+      }
+
+      return {
+        ...current,
+        [group.id]: [...selected, optionId],
+      }
+    })
   }
 
   function addToCart() {
+    const validation = validateProductOptionSelections(
+      optionGroups,
+      optionSelections,
+    )
+
+    if (validation) {
+      setOptionError(validation)
+      return
+    }
+
+    const payload = getCheckoutOptionPayload(
+      optionGroups,
+      optionSelections,
+    )
+    const optionMap = new Map(
+      optionGroups.flatMap((group) =>
+        group.options.map((option) => [
+          option.id,
+          {
+            id: option.id,
+            name: option.name,
+            price: option.price,
+          } satisfies FoodOption,
+        ] as const),
+      ),
+    )
+    const variation = payload.variationId
+      ? optionMap.get(payload.variationId) || null
+      : null
+    const addons = payload.addonIds
+      .map((id) => optionMap.get(id))
+      .filter((option): option is FoodOption => Boolean(option))
+    const optionSummary = getOptionSelectionSummary(
+      optionGroups,
+      optionSelections,
+    )
+
     onAdd({
       productId: product.id,
       productName: product.nome || 'Item do cardápio',
       category: getCategory(product),
       quantity: Math.max(1, quantity),
       unitPrice: getProductPriceNumber(product),
-      variation: selectedVariation,
-      addons: selectedAddons,
+      variation,
+      addons,
+      optionSummary,
       notes: notes.trim(),
       subtotal,
     })
@@ -336,7 +428,7 @@ function ProductConfigurator({
           <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#05245c]">Adicionar ao carrinho</p>
             <h3 className="mt-2 text-3xl font-black tracking-[-0.05em] text-[#071b3a] sm:text-4xl">{product.nome || 'Item'}</h3>
-            <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Escolha quantidade, variação, adicionais e observação do item.</p>
+            <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Escolha quantidade, opções, adicionais e observação do item.</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-500">Fechar</button>
         </div>
@@ -362,44 +454,69 @@ function ProductConfigurator({
               <input type="number" min="1" value={quantity} onChange={(event) => setQuantity(Math.max(1, Number(event.target.value || 1)))} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 font-bold outline-none focus:border-[#05245c]" />
             </label>
 
-            {variations.length ? (
-              <label className="grid gap-2 text-sm font-black text-slate-600">
-                Variação
-                <select value={variationId} onChange={(event) => setVariationId(event.target.value)} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 font-bold outline-none focus:border-[#05245c]">
-                  <option value="">Sem variação</option>
-                  {variations.map((option) => (
-                    <option key={option.id} value={option.id}>{option.name}{option.price ? ` (+ ${money(option.price)})` : ''}</option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
+            {optionGroups.map((group) => {
+              const selected = optionSelections[group.id] || []
+              const rule =
+                group.selection === 'single'
+                  ? group.required
+                    ? 'Escolha 1 opção'
+                    : 'Escolha até 1 opção'
+                  : `${group.required ? `Escolha de ${Math.max(1, group.min)} a` : 'Escolha até'} ${group.max}`
 
-            {addons.length ? (
-              <div className="grid gap-2 text-sm font-black text-slate-600">
-                <span>Adicionais</span>
-                <div className="grid gap-2">
-                  {addons.map((addon) => (
-                    <label key={addon.id} className="flex items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white px-4 py-3">
-                      <span className="flex min-w-0 items-center gap-3">
-                        <input type="checkbox" checked={addonIds.includes(addon.id)} onChange={() => toggleAddon(addon.id)} />
-                        <span className="truncate">{addon.name}</span>
-                      </span>
-                      <span className="shrink-0 text-[#05245c]">+ {money(addon.price)}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+              return (
+                <section key={group.id} className="rounded-[1.4rem] border border-blue-100 bg-[#f8fbff] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="font-black text-[#071b3a]">{group.name}</p>
+                      <p className="mt-1 text-xs font-bold text-slate-500">{rule}</p>
+                    </div>
+                    <span className={`rounded-full px-3 py-1 text-xs font-black ${group.required ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-500'}`}>
+                      {group.required ? 'Obrigatório' : 'Opcional'}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid gap-2">
+                    {group.options.filter((option) => option.active).map((option) => {
+                      const checked = selected.includes(option.id)
+
+                      return (
+                        <label key={option.id} className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3 ${checked ? 'border-blue-300 bg-white' : 'border-blue-100 bg-white/70'}`}>
+                          <span className="flex min-w-0 items-center gap-3">
+                            <input
+                              type={group.selection === 'single' ? 'radio' : 'checkbox'}
+                              name={`food-option-group-${group.id}`}
+                              checked={checked}
+                              onChange={() => selectOption(group, option.id)}
+                            />
+                            <span className="truncate font-black text-slate-700">{option.name}</span>
+                          </span>
+                          <span className="shrink-0 text-sm font-black text-[#05245c]">
+                            {option.price > 0 ? `+ ${money(option.price)}` : 'Incluso'}
+                          </span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </section>
+              )
+            })}
 
             <label className="grid gap-2 text-sm font-black text-slate-600">
               Observação do item
               <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ex: sem cebola, maionese à parte..." className="min-h-24 rounded-2xl border border-blue-100 bg-white px-4 py-3 font-bold outline-none focus:border-[#05245c]" />
             </label>
 
+            {optionError ? (
+              <div className="rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-700">
+                {optionError}
+              </div>
+            ) : null}
+
             <div className="flex flex-col gap-3 rounded-[1.5rem] border border-blue-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Subtotal</p>
                 <p className="text-3xl font-black text-[#071b3a]">{money(subtotal)}</p>
+                {optionsPrice > 0 ? <p className="mt-1 text-xs font-bold text-slate-500">Inclui {money(optionsPrice)} por unidade em opções.</p> : null}
               </div>
               <button type="button" onClick={addToCart} className="rounded-2xl px-5 py-4 font-black text-white" style={{ background: primaryColor }}>Adicionar</button>
             </div>
@@ -660,7 +777,7 @@ export default function FoodMarketplaceCatalog({
           quantity: item.quantity,
           variationId: item.variation?.id || undefined,
           addonIds: item.addons.map((addon) => addon.id),
-          observation: item.notes,
+          observation: [item.optionSummary, item.notes].filter(Boolean).join(' | '),
         })),
         customer: {
           name: checkout.customerName,
@@ -797,14 +914,14 @@ export default function FoodMarketplaceCatalog({
           style={{ background: primaryColor }}
           aria-label="Abrir carrinho"
         >
-          <span aria-hidden="true">ðŸ›’</span>
-          <span className="truncate">{cartItemCount} {cartItemCount === 1 ? 'item' : 'itens'} â€¢ {money(cartSubtotal)}</span>
+          <span aria-hidden="true">🛒</span>
+          <span className="truncate">{cartItemCount} {cartItemCount === 1 ? 'item' : 'itens'} • {money(cartSubtotal)}</span>
         </button>
 
         <aside
           role="dialog"
           aria-modal="true"
-          aria-label="Carrinho e finalizaÃ§Ã£o"
+          aria-label="Carrinho e finalização"
           className={`fixed inset-x-3 bottom-3 z-[70] max-h-[calc(100dvh-1.5rem)] min-w-0 overflow-y-auto rounded-[2.3rem] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/20 transition duration-300 ease-out sm:inset-y-4 sm:left-auto sm:right-4 sm:bottom-auto sm:w-[390px] sm:max-h-none ${
             cartOpen
               ? 'translate-y-0 opacity-100 sm:translate-x-0'
@@ -836,8 +953,9 @@ export default function FoodMarketplaceCatalog({
                   <div className="min-w-0">
                     <p className="font-black text-[#071b3a]">{item.productName}</p>
                     <p className="mt-1 text-xs font-bold leading-5 text-slate-500">
-                      {item.variation ? `${item.variation.name}. ` : ''}
-                      {item.addons.length ? `Adicionais: ${item.addons.map((addon) => addon.name).join(', ')}. ` : ''}
+                      {item.optionSummary ? `${item.optionSummary}. ` : ''}
+                      {!item.optionSummary && item.variation ? `${item.variation.name}. ` : ''}
+                      {!item.optionSummary && item.addons.length ? `Adicionais: ${item.addons.map((addon) => addon.name).join(', ')}. ` : ''}
                       {item.notes ? `Obs: ${item.notes}` : ''}
                     </p>
                   </div>

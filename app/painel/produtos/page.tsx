@@ -10,6 +10,7 @@ import { getCurrentCompanyClient } from '@/lib/current-company-client'
 import { getCatalogLabels, normalizeCatalogBusinessType } from '@/lib/catalog-labels'
 import { getCompanyPublicUrl } from '@/lib/company-url'
 import CommercialOfferModal from '@/components/catalog/CommercialOfferModal'
+import ProductOptionsModal from '@/components/catalog/ProductOptionsModal'
 
 type Empresa = {
   id: string
@@ -395,6 +396,7 @@ export default function ProdutosPage() {
   const [filtroCategoria, setFiltroCategoria] = useState('Todas')
   const [visualizacao, setVisualizacao] = useState<Visualizacao>('cards')
   const [ofertaItem, setOfertaItem] = useState<ItemCatalogo | null>(null)
+  const [opcoesItem, setOpcoesItem] = useState<ItemCatalogo | null>(null)
 
   async function carregarDados() {
     setCarregando(true)
@@ -1080,6 +1082,7 @@ export default function ProdutosPage() {
                     empresaSlug={empresa?.slug || ''}
                     onEdit={preencherEdicao}
                     onOffer={setOfertaItem}
+                    onOptions={setOpcoesItem}
                     onToggle={alternarAtivo}
                     onDelete={excluirItem}
                   />
@@ -1091,6 +1094,7 @@ export default function ProdutosPage() {
                 empresaSlug={empresa?.slug || ''}
                 onEdit={preencherEdicao}
                 onOffer={setOfertaItem}
+                onOptions={setOpcoesItem}
                 onToggle={alternarAtivo}
                 onDelete={excluirItem}
               />
@@ -1104,6 +1108,15 @@ export default function ProdutosPage() {
           item={ofertaItem}
           companyId={empresa.id}
           onClose={() => setOfertaItem(null)}
+          onSaved={carregarDados}
+        />
+      ) : null}
+
+      {empresa && opcoesItem ? (
+        <ProductOptionsModal
+          item={opcoesItem}
+          companyId={empresa.id}
+          onClose={() => setOpcoesItem(null)}
           onSaved={carregarDados}
         />
       ) : null}
@@ -1204,6 +1217,7 @@ function ProductCard({
   empresaSlug,
   onEdit,
   onOffer,
+  onOptions,
   onToggle,
   onDelete,
 }: {
@@ -1211,6 +1225,7 @@ function ProductCard({
   empresaSlug: string
   onEdit: (item: ItemCatalogo) => void
   onOffer: (item: ItemCatalogo) => void
+  onOptions: (item: ItemCatalogo) => void
   onToggle: (item: ItemCatalogo) => void
   onDelete: (itemId: string) => void
 }) {
@@ -1241,13 +1256,17 @@ function ProductCard({
           <p>Sinal: {item.cobrar_sinal_personalizado ? `${item.percentual_sinal_produto || 0}%` : 'padrão da empresa'}</p>
         </div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           <button onClick={() => onEdit(item)} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 font-black text-[#05245c] transition hover:bg-blue-50">
             Editar
           </button>
 
           <button onClick={() => onOffer(item)} className="rounded-2xl bg-amber-50 px-4 py-3 font-black text-amber-700 transition hover:bg-amber-100">
             Oferta/estoque
+          </button>
+
+          <button onClick={() => onOptions(item)} className="rounded-2xl bg-emerald-50 px-4 py-3 font-black text-emerald-700 transition hover:bg-emerald-100">
+            Variações/opções
           </button>
 
           <a href={empresaSlug ? getCompanyPublicUrl(empresaSlug) : '#'} target="_blank" className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-center font-black text-[#05245c] transition hover:bg-blue-50">
@@ -1272,6 +1291,7 @@ function ProductTable({
   empresaSlug,
   onEdit,
   onOffer,
+  onOptions,
   onToggle,
   onDelete,
 }: {
@@ -1279,6 +1299,7 @@ function ProductTable({
   empresaSlug: string
   onEdit: (item: ItemCatalogo) => void
   onOffer: (item: ItemCatalogo) => void
+  onOptions: (item: ItemCatalogo) => void
   onToggle: (item: ItemCatalogo) => void
   onDelete: (itemId: string) => void
 }) {
@@ -1329,6 +1350,7 @@ function ProductTable({
                   <div className="flex gap-2">
                     <button onClick={() => onEdit(item)} className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">Editar</button>
                     <button onClick={() => onOffer(item)} className="rounded-xl bg-amber-50 px-3 py-2 font-black text-amber-700">Oferta</button>
+                    <button onClick={() => onOptions(item)} className="rounded-xl bg-emerald-50 px-3 py-2 font-black text-emerald-700">Opções</button>
                     <a href={empresaSlug ? getCompanyPublicUrl(empresaSlug) : '#'} target="_blank" className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">Site</a>
                     <button onClick={() => onToggle(item)} className="rounded-xl border border-blue-100 bg-white px-3 py-2 font-black text-[#05245c]">{itemAtivo(item) ? 'Inativar' : 'Ativar'}</button>
                     <button onClick={() => onDelete(item.id)} className="rounded-xl bg-red-50 px-3 py-2 font-black text-red-700">Excluir</button>
