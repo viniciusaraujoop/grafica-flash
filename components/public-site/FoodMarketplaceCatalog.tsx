@@ -422,6 +422,8 @@ export default function FoodMarketplaceCatalog({
   const [category, setCategory] = useState('Todos')
   const [selectedProduct, setSelectedProduct] = useState<FoodProduct | null>(null)
   const [cart, setCart] = useState<FoodCartItem[]>([])
+  const [cartOpen, setCartOpen] = useState(false)
+  const [cartReady, setCartReady] = useState(false)
   const [checkout, setCheckout] = useState<CheckoutState>(emptyCheckout)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -447,6 +449,7 @@ export default function FoodMarketplaceCatalog({
   }, [category, safeProducts, search])
 
   const cartSubtotal = useMemo(() => Number(cart.reduce((acc, item) => acc + item.subtotal, 0).toFixed(2)), [cart])
+  const cartItemCount = useMemo(() => cart.reduce((acc, item) => acc + Math.max(1, Number(item.quantity || 1)), 0), [cart])
   const selectedZone = deliveryZones.find((zone) => zone.id === checkout.deliveryZoneId) || null
   const deliveryFeeBase = checkout.deliveryType === 'delivery' && selectedZone ? numberFrom(selectedZone.fee) : 0
   const couponProductDiscount = useMemo(() => {
@@ -465,6 +468,50 @@ export default function FoodMarketplaceCatalog({
   const total = Number(Math.max(0, cartSubtotal + deliveryFeeBase - totalDiscount).toFixed(2))
   const minimumOrder = selectedZone ? numberFrom(selectedZone.minimum_order) : 0
   const minimumMissing = checkout.deliveryType === 'delivery' && minimumOrder > 0 && cartSubtotal < minimumOrder
+  const cartStorageKey = `orcaly-cart:${String(company.slug || company.subdomain_slug || company.id || 'cardapio')}:food`
+
+  // ORCALY_CART_DRAWER_1B
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(cartStorageKey)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) setCart(parsed)
+      }
+    } catch {
+      window.localStorage.removeItem(cartStorageKey)
+    } finally {
+      setCartReady(true)
+    }
+  }, [cartStorageKey])
+
+  useEffect(() => {
+    if (!cartReady) return
+
+    if (cart.length) {
+      window.localStorage.setItem(cartStorageKey, JSON.stringify(cart))
+    } else {
+      window.localStorage.removeItem(cartStorageKey)
+    }
+  }, [cart, cartReady, cartStorageKey])
+
+  useEffect(() => {
+    if (!cartOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setCartOpen(false)
+    }
+
+    window.addEventListener('keydown', closeOnEscape)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [cartOpen])
 
   useEffect(() => {
     if (!cart.length && coupon.appliedCode) setCoupon(emptyCoupon)
@@ -484,7 +531,8 @@ export default function FoodMarketplaceCatalog({
 
   function addToCart(item: Omit<FoodCartItem, 'localId'>) {
     cartIdRef.current += 1
-    setCart((current) => [...current, { ...item, localId: `${item.productId}-${cartIdRef.current}` }])
+    setCart((current) => [...current, { ...item, localId: `${item.productId}-${Date.now()}-${cartIdRef.current}` }])
+    setCartOpen(true)
     clearAppliedCoupon('Cupom removido porque o carrinho mudou.')
     setResult(null)
     setError('')
@@ -644,7 +692,7 @@ export default function FoodMarketplaceCatalog({
 
   return (
     <section id="catalogo" className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto grid max-w-7xl gap-8 xl:grid-cols-[minmax(0,1fr)_390px] xl:items-start">
+      <div className="mx-auto max-w-7xl">
         <div className="min-w-0">
           <div className="rounded-[2.3rem] border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-950/8 sm:p-7">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -733,13 +781,52 @@ export default function FoodMarketplaceCatalog({
           )}
         </div>
 
-        <aside className="min-w-0 rounded-[2.3rem] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/8 xl:sticky xl:top-24">
+        {cartOpen ? (
+          <button
+            type="button"
+            aria-label="Fechar carrinho"
+            onClick={() => setCartOpen(false)}
+            className="fixed inset-0 z-[60] bg-[#071b3a]/55 backdrop-blur-[2px]"
+          />
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => setCartOpen(true)}
+          className="fixed bottom-4 right-4 z-50 flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full px-5 py-4 font-black text-white shadow-2xl shadow-blue-950/30 transition hover:-translate-y-1"
+          style={{ background: primaryColor }}
+          aria-label="Abrir carrinho"
+        >
+          <span aria-hidden="true">ðŸ›’</span>
+          <span className="truncate">{cartItemCount} {cartItemCount === 1 ? 'item' : 'itens'} â€¢ {money(cartSubtotal)}</span>
+        </button>
+
+        <aside
+          role="dialog"
+          aria-modal="true"
+          aria-label="Carrinho e finalizaÃ§Ã£o"
+          className={`fixed inset-x-3 bottom-3 z-[70] max-h-[calc(100dvh-1.5rem)] min-w-0 overflow-y-auto rounded-[2.3rem] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/20 transition duration-300 ease-out sm:inset-y-4 sm:left-auto sm:right-4 sm:bottom-auto sm:w-[390px] sm:max-h-none ${
+            cartOpen
+              ? 'translate-y-0 opacity-100 sm:translate-x-0'
+              : 'pointer-events-none translate-y-[110%] opacity-0 sm:translate-x-[110%] sm:translate-y-0'
+          }`}
+        >
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Carrinho</p>
               <h3 className="text-2xl font-black tracking-[-0.04em] text-[#071b3a]">Seu pedido</h3>
             </div>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{cart.length} itens</span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{cartItemCount} itens</span>
+              <button
+                type="button"
+                onClick={() => setCartOpen(false)}
+                className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600"
+                aria-label="Fechar carrinho"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
 
           <div className="mt-4 max-h-[310px] space-y-3 overflow-y-auto pr-1">
