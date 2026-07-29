@@ -91,22 +91,23 @@ function getFriendlyAuthError(message: string) {
   return 'Não foi possível entrar agora. Tente novamente em alguns instantes.'
 }
 
+// ORCALY_LOGIN_DEFAULT_INICIO_V1
 function getSafeNextPath() {
-  if (typeof window === 'undefined') return '/painel'
+  if (typeof window === 'undefined') return '/painel/inicio'
 
   const params = new URLSearchParams(window.location.search)
   const rawNext = params.get('next')
 
-  if (!rawNext) return '/painel'
+  if (!rawNext) return '/painel/inicio'
 
   const next = rawNext.trim()
 
-  if (!next) return '/painel'
-  if (!next.startsWith('/')) return '/painel'
-  if (next.startsWith('//')) return '/painel'
-  if (next.includes('://')) return '/painel'
-  if (next.startsWith('/login')) return '/painel'
-  if (next.startsWith('/cadastro')) return '/painel'
+  if (!next) return '/painel/inicio'
+  if (!next.startsWith('/')) return '/painel/inicio'
+  if (next.startsWith('//')) return '/painel/inicio'
+  if (next.includes('://')) return '/painel/inicio'
+  if (next.startsWith('/login')) return '/painel/inicio'
+  if (next.startsWith('/cadastro')) return '/painel/inicio'
 
   return next
 }

@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getBusinessTypeConfig, normalizeBusinessType } from '@/lib/business-types'
 import { getCompanyLocalSitePath, getCompanyPublicUrl } from '@/lib/company-url'
+import { getOrderStatusVisual, isOrderPaid } from '@/lib/order-status'
 
 type Company = {
   id: string
@@ -31,7 +32,11 @@ type OrderRow = {
   nome?: string | null
   produto?: string | null
   status?: string | null
+  payment_status?: string | null
+  paid_at?: string | null
   valor_total?: number | string | null
+  total?: number | string | null
+  total_amount?: number | string | null
   preco_estimado?: number | string | null
   created_at?: string | null
 }
@@ -111,34 +116,6 @@ function isProgress(value?: string | null) {
   return statusContains(value, ['andamento', 'preparo', 'producao', 'execucao', 'manutencao', 'separacao'])
 }
 
-function statusVisual(value?: string | null) {
-  if (statusContains(value, ['concluido', 'entregue', 'finalizado', 'pronto', 'atendido'])) {
-    return {
-      label: value || 'Concluído',
-      className: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-    }
-  }
-
-  if (isProgress(value)) {
-    return {
-      label: value || 'Em andamento',
-      className: 'bg-blue-50 text-blue-700 ring-blue-100',
-    }
-  }
-
-  if (statusContains(value, ['cancelado', 'reprovado'])) {
-    return {
-      label: value || 'Cancelado',
-      className: 'bg-red-50 text-red-700 ring-red-100',
-    }
-  }
-
-  return {
-    label: value || 'Pendente',
-    className: 'bg-amber-50 text-amber-700 ring-amber-100',
-  }
-}
-
 function publicSlug(company: Company | null) {
   return company?.subdomain_slug || company?.slug || ''
 }
@@ -161,7 +138,7 @@ function productHasImage(product: ProductRow) {
 async function loadOrders(companyId: string) {
   const { data, error } = await supabase
     .from('orders')
-    .select('id, nome, produto, status, valor_total, preco_estimado, created_at')
+    .select('id, nome, produto, status, payment_status, paid_at, valor_total, total, total_amount, preco_estimado, created_at')
     .eq('company_id', companyId)
     .order('created_at', { ascending: false })
     .limit(120)
@@ -268,8 +245,8 @@ function OrderList({ orders }: { orders: OrderRow[] }) {
   return (
     <div className="mt-4 divide-y divide-slate-100">
       {orders.slice(0, 6).map((order) => {
-        const visual = statusVisual(order.status)
-        const value = numberValue(order.valor_total || order.preco_estimado)
+        const visual = getOrderStatusVisual(order.status, order.payment_status, order.paid_at)
+        const value = numberValue(order.total_amount || order.total || order.valor_total || order.preco_estimado)
 
         return (
           <Link
@@ -344,8 +321,23 @@ export default function PainelInicioPage() {
       return Number.isFinite(created) && created >= todayTime
     })
 
-    const todayRevenue = todayOrders.reduce(
-      (sum, order) => sum + numberValue(order.valor_total || order.preco_estimado),
+    // ORCALY_PAID_REVENUE_V1
+    const paidTodayOrders = data.orders.filter((order) => {
+      if (!isOrderPaid(order.payment_status, order.paid_at)) return false
+
+      const paidDate = new Date(order.paid_at || order.created_at || '').getTime()
+      return Number.isFinite(paidDate) && paidDate >= todayTime
+    })
+
+    const todayRevenue = paidTodayOrders.reduce(
+      (sum, order) =>
+        sum +
+        numberValue(
+          order.total_amount ||
+            order.total ||
+            order.valor_total ||
+            order.preco_estimado,
+        ),
       0,
     )
 
@@ -360,6 +352,7 @@ export default function PainelInicioPage() {
 
     return {
       todayOrders: todayOrders.length,
+      paidTodayOrders: paidTodayOrders.length,
       todayRevenue,
       activeProducts,
       pendingOrders,
@@ -546,7 +539,7 @@ export default function PainelInicioPage() {
           <MetricCard
             label="Faturamento hoje"
             value={money(metrics.todayRevenue)}
-            detail="Pedidos criados hoje"
+            detail={`${metrics.paidTodayOrders} pagamento(s) confirmado(s) hoje`}
             icon="R$"
             tone="green"
           />

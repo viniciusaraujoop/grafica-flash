@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { getOrderStatusVisual, isOrderPaid } from '@/lib/order-status'
 
 type Order = {
   id: string
@@ -10,6 +11,10 @@ type Order = {
   telefone?: string | null
   produto?: string | null
   status?: string | null
+  payment_status?: string | null
+  paid_at?: string | null
+  total?: number | null
+  total_amount?: number | null
   quantidade?: number | null
   largura?: number | null
   altura?: number | null
@@ -57,19 +62,6 @@ function whatsappLink(phone?: string | null, text?: string) {
   if (!clean) return '#'
   const finalPhone = clean.startsWith('55') ? clean : `55${clean}`
   return `https://wa.me/${finalPhone}?text=${encodeURIComponent(text || 'Olá! Vim falar sobre meu pedido.')}`
-}
-
-function statusClass(status?: string | null) {
-  const value = String(status || '').toLowerCase()
-
-  if (value.includes('entregue') || value.includes('pronto') || value.includes('aprovado')) {
-    return 'bg-emerald-50 text-emerald-700 border-emerald-100'
-  }
-
-  if (value.includes('cancel')) return 'bg-red-50 text-red-700 border-red-100'
-  if (value.includes('produção') || value.includes('producao')) return 'bg-amber-50 text-amber-700 border-amber-100'
-
-  return 'bg-blue-50 text-[#05245c] border-blue-100'
 }
 
 export default function PedidosPage() {
@@ -137,7 +129,16 @@ export default function PedidosPage() {
     const search = query.trim().toLowerCase()
 
     return orders.filter((order) => {
-      const matchesStatus = statusFilter === 'todos' || order.status === statusFilter
+      const visual = getOrderStatusVisual(
+        order.status,
+        order.payment_status,
+        order.paid_at,
+      )
+      const matchesStatus =
+        statusFilter === 'todos' ||
+        order.status === statusFilter ||
+        visual.label === statusFilter
+
       if (!search) return matchesStatus
 
       const haystack = [
@@ -145,6 +146,8 @@ export default function PedidosPage() {
         order.telefone,
         order.produto,
         order.status,
+        order.payment_status,
+        visual.label,
         order.observacoes,
         order.cupom_codigo,
       ].join(' ').toLowerCase()
@@ -157,9 +160,30 @@ export default function PedidosPage() {
     const total = orders.length
     const pendentes = orders.filter((order) => ['Recebido', 'Pendente', 'Em análise', 'Aguardando aprovação'].includes(order.status || '')).length
     const producao = orders.filter((order) => order.status === 'Em produção').length
-    const faturamento = orders.reduce((acc, order) => acc + Number(order.valor_total || order.preco_estimado || 0), 0)
+    // ORCALY_PAID_ORDERS_METRICS_V1
+    const paidOrders = orders.filter((order) =>
+      isOrderPaid(order.payment_status, order.paid_at),
+    )
+    const faturamento = paidOrders.reduce(
+      (acc, order) =>
+        acc +
+        Number(
+          order.total_amount ||
+            order.total ||
+            order.valor_total ||
+            order.preco_estimado ||
+            0,
+        ),
+      0,
+    )
 
-    return { total, pendentes, producao, faturamento }
+    return {
+      total,
+      pendentes,
+      producao,
+      faturamento,
+      pagos: paidOrders.length,
+    }
   }, [orders])
 
   async function updateStatus(orderId: string, status: string) {
@@ -259,9 +283,9 @@ export default function PedidosPage() {
             <p className="mt-2 text-sm font-bold text-slate-500">Execução em andamento.</p>
           </article>
           <article className="rounded-[1.6rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Estimado</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Faturamento confirmado</p>
             <p className="mt-3 text-3xl font-black">{moeda(metrics.faturamento)}</p>
-            <p className="mt-2 text-sm font-bold text-slate-500">Soma dos valores informados.</p>
+            <p className="mt-2 text-sm font-bold text-slate-500">{metrics.pagos} pagamento(s) aprovado(s).</p>
           </article>
         </div>
 
@@ -289,16 +313,27 @@ export default function PedidosPage() {
 
         <section className="grid gap-4">
           {filteredOrders.map((order) => {
-            const value = Number(order.valor_total || order.preco_estimado || 0)
+            const value = Number(
+              order.total_amount ||
+                order.total ||
+                order.valor_total ||
+                order.preco_estimado ||
+                0,
+            )
             const fileUrl = order.arquivo_url || order.file_url
+            const visual = getOrderStatusVisual(
+              order.status,
+              order.payment_status,
+              order.paid_at,
+            )
 
             return (
               <article key={order.id} className="rounded-[1.8rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className={`rounded-full border px-3 py-1 text-xs font-black ${statusClass(order.status)}`}>
-                        {order.status || 'Recebido'}
+                      <span className={`rounded-full border px-3 py-1 text-xs font-black ${visual.className}`}>
+                        {visual.label}
                       </span>
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
                         {dataCurta(order.created_at)}
@@ -339,6 +374,9 @@ export default function PedidosPage() {
                       onChange={(event) => updateStatus(order.id, event.target.value)}
                       className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black outline-none"
                     >
+                      {order.status && !statusOptions.includes(order.status) ? (
+                        <option value={order.status}>{visual.label}</option>
+                      ) : null}
                       {statusOptions.map((status) => (
                         <option key={status} value={status}>{status}</option>
                       ))}
