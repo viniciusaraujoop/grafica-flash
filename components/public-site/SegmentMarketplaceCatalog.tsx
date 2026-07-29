@@ -686,13 +686,14 @@ export default function SegmentMarketplaceCatalog({
           role="dialog"
           aria-modal="true"
           aria-label="Carrinho e finalização"
-          className={`fixed inset-x-3 bottom-3 z-[70] max-h-[calc(100dvh-1.5rem)] min-w-0 overflow-y-auto rounded-[2.3rem] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/20 transition duration-300 ease-out sm:inset-y-4 sm:left-auto sm:right-4 sm:bottom-auto sm:w-[390px] sm:max-h-none ${
+          className={`fixed inset-x-0 bottom-0 z-[70] flex h-[min(94dvh,860px)] min-w-0 flex-col overflow-hidden rounded-t-[2rem] border border-blue-100 bg-white shadow-2xl shadow-blue-950/20 transition duration-300 ease-out sm:inset-y-4 sm:left-auto sm:right-4 sm:bottom-auto sm:h-[calc(100dvh-2rem)] sm:w-[460px] sm:rounded-[2rem] ${
             cartOpen
               ? 'translate-y-0 opacity-100 sm:translate-x-0'
               : 'pointer-events-none translate-y-[110%] opacity-0 sm:translate-x-[110%] sm:translate-y-0'
           }`}
         >
-          <div className="flex items-center justify-between gap-3">
+          {/* ORCALY_RESPONSIVE_SEGMENT_CART_V3 */}
+          <div className="shrink-0 border-b border-blue-100 bg-white px-4 pb-3 pt-4 sm:px-5">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Checkout</p>
               <h3 className="text-2xl font-black tracking-[-0.04em] text-[#071b3a]">{checkoutTitle}</h3>
@@ -710,7 +711,8 @@ export default function SegmentMarketplaceCatalog({
             </div>
           </div>
 
-          <div className="mt-4 grid gap-3">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 sm:px-5">
+            <div className="mt-4 grid gap-3">
             {cart.length ? cart.map((item) => (
               <div key={item.localId} className="rounded-2xl border border-blue-100 bg-[#f8fbff] p-3">
                 <div className="flex items-start justify-between gap-3">
@@ -732,26 +734,6 @@ export default function SegmentMarketplaceCatalog({
                 Escolha itens para montar o pedido, orçamento ou solicitação.
               </div>
             )}
-          </div>
-
-          <div className="mt-5 grid gap-3 rounded-[1.7rem] bg-[#f8fbff] p-4">
-            <div className="grid grid-cols-[1fr_auto] gap-3 text-sm font-bold text-slate-500"><span>Subtotal</span><span>{money(subtotal)}</span></div>
-            {logisticsEnabled ? <div className="grid grid-cols-[1fr_auto] gap-3 text-sm font-bold text-slate-500"><span>Taxa de entrega</span><span>{money(deliveryFee)}</span></div> : null}
-            {coupon.appliedCode ? <div className="grid grid-cols-[1fr_auto] gap-3 text-sm font-bold text-emerald-700"><span>Cupom {coupon.appliedCode}</span><span>-{money(totalDiscount)}</span></div> : null}
-            <div className="border-t border-blue-100 pt-3 grid grid-cols-[1fr_auto] gap-3 text-xl font-black text-[#071b3a]"><span>Total estimado</span><span>{money(total)}</span></div>
-          </div>
-
-          <div className="mt-4 grid gap-2">
-            <div className="flex gap-2">
-              <input value={coupon.code} onChange={(event) => setCoupon((current) => ({ ...current, code: event.target.value, error: '', message: '' }))} placeholder="Digite seu cupom" className="min-w-0 flex-1 rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold outline-none" />
-              {coupon.appliedCode ? (
-                <button type="button" onClick={() => setCoupon(initialCoupon)} className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-black text-slate-600">Remover</button>
-              ) : (
-                <button type="button" onClick={applyCoupon} disabled={coupon.applying} className="rounded-2xl px-4 py-3 text-sm font-black text-white disabled:opacity-60" style={{ background: primaryColor }}>{coupon.applying ? '...' : 'Aplicar'}</button>
-              )}
-            </div>
-            {coupon.message ? <p className="text-xs font-black text-emerald-700">{coupon.message}</p> : null}
-            {coupon.error ? <p className="text-xs font-black text-red-700">{coupon.error}</p> : null}
           </div>
 
           <div className="mt-5 grid gap-3">
@@ -793,13 +775,51 @@ export default function SegmentMarketplaceCatalog({
           {error ? <div className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</div> : null}
           {success ? <div className="mt-4 rounded-2xl bg-emerald-50 p-3 text-sm font-bold text-emerald-700">{success}</div> : null}
 
-          <button type="button" onClick={submitOrder} disabled={submitting || !cart.length} className="mt-5 w-full rounded-2xl px-5 py-4 font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!submitting && cart.length ? { background: primaryColor } : undefined}>
-            {submitting ? 'Enviando...' : unifiedCheckoutEnabled && isStoreLike(normalizedType) ? 'Finalizar e pagar' : checkoutTitle}
-          </button>
+
 
           <a href={whatsappLink(company, `Olá, tenho uma dúvida sobre ${company.nome || 'a empresa'}.`)} target="_blank" rel="noreferrer" className="mt-3 block rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-center text-sm font-black text-emerald-700">
             Tirar dúvida no WhatsApp
           </a>
+
+          </div>
+
+          <div className="shrink-0 border-t border-blue-100 bg-white/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_40px_rgba(7,27,58,0.08)] backdrop-blur sm:px-5">
+            <div className="flex items-end justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Total estimado</p>
+                {coupon.appliedCode ? <p className="mt-1 truncate text-xs font-black text-emerald-700">Cupom {coupon.appliedCode} aplicado</p> : <p className="mt-1 text-xs font-bold text-slate-500">{cartItemCount} {cartItemCount === 1 ? 'item' : 'itens'}</p>}
+              </div>
+              <p className="shrink-0 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">{money(total)}</p>
+            </div>
+
+            <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <input
+                value={coupon.code}
+                onChange={(event) => setCoupon((current) => ({ ...current, code: event.target.value.toUpperCase(), error: '', message: '' }))}
+                placeholder="Cupom de desconto"
+                className="min-w-0 rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-3 text-sm font-black uppercase outline-none focus:border-[#05245c]"
+              />
+              {coupon.appliedCode ? (
+                <button type="button" onClick={() => setCoupon(initialCoupon)} className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-black text-red-600">Remover</button>
+              ) : (
+                <button type="button" onClick={applyCoupon} disabled={coupon.applying || !cart.length} className="rounded-2xl px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!coupon.applying && cart.length ? { background: primaryColor } : undefined}>{coupon.applying ? 'Aplicando...' : 'Aplicar'}</button>
+              )}
+            </div>
+
+            {coupon.message ? <p className="mt-2 text-xs font-black text-emerald-700">{coupon.message}</p> : null}
+            {coupon.error ? <p className="mt-2 text-xs font-black text-red-700">{coupon.error}</p> : null}
+            {error ? <div className="mt-2 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</div> : null}
+
+            <button
+              type="button"
+              onClick={submitOrder}
+              disabled={submitting || !cart.length}
+              className="mt-3 w-full rounded-2xl px-5 py-4 text-base font-black text-white shadow-lg disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+              style={!submitting && cart.length ? { background: primaryColor } : undefined}
+            >
+              {submitting ? 'Continuando...' : unifiedCheckoutEnabled && isStoreLike(normalizedType) ? `Continuar para pagamento • ${money(total)}` : checkoutTitle}
+            </button>
+          </div>
         </aside>
       </div>
 

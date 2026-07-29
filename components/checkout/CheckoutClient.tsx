@@ -788,6 +788,15 @@ export default function CheckoutClient({
     setPaymentId("");
     setOrderId("");
     setPaymentOpen(true);
+
+    window.setTimeout(() => {
+      document
+        .getElementById("checkout-payment-section")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+    }, 60);
   }
 
   function addProduct(productId: string) {
@@ -870,7 +879,7 @@ export default function CheckoutClient({
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb] p-4 text-[#111827] sm:p-6">
+    <main className="min-h-screen bg-[#f5f7fb] p-4 pb-32 text-[#111827] sm:p-6 sm:pb-32 lg:pb-6">
       <Script
         src="https://sdk.mercadopago.com/js/v2"
         strategy="afterInteractive"
@@ -1257,7 +1266,7 @@ export default function CheckoutClient({
               ) : null}
             </section>
 
-            <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/5 sm:p-7">
+            <section id="checkout-payment-section" className="scroll-mt-5 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/5 sm:p-7">
               <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-black text-[#009ee3]">
@@ -1528,6 +1537,27 @@ export default function CheckoutClient({
           </aside>
         </div>
       </div>
+
+      {/* ORCALY_MOBILE_CHECKOUT_ACTION_V3 */}
+      {!paymentOpen && !pix ? (
+        <div className="fixed inset-x-3 bottom-3 z-50 rounded-[1.5rem] border border-slate-200 bg-white/95 p-3 shadow-2xl shadow-slate-950/20 backdrop-blur lg:hidden">
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Total do pedido</p>
+              <p className="truncate text-xl font-black text-[#061a36]">{currency(finalPreviewTotal)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={openPayment}
+              disabled={cart.length === 0 || !data.payment.chargesEnabled}
+              className="shrink-0 rounded-2xl bg-[#009ee3] px-5 py-4 text-sm font-black text-white shadow-lg shadow-sky-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {data.payment.chargesEnabled ? 'Gerar pagamento' : 'Indisponível'}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
     </main>
   );
 }

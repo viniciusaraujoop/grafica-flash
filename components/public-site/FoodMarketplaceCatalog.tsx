@@ -951,13 +951,14 @@ export default function FoodMarketplaceCatalog({
           role="dialog"
           aria-modal="true"
           aria-label="Carrinho e finalização"
-          className={`fixed inset-x-3 bottom-3 z-[70] max-h-[calc(100dvh-1.5rem)] min-w-0 overflow-y-auto rounded-[2.3rem] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/20 transition duration-300 ease-out sm:inset-y-4 sm:left-auto sm:right-4 sm:bottom-auto sm:w-[390px] sm:max-h-none ${
+          className={`fixed inset-x-0 bottom-0 z-[70] flex h-[min(94dvh,860px)] min-w-0 flex-col overflow-hidden rounded-t-[2rem] border border-blue-100 bg-white shadow-2xl shadow-blue-950/20 transition duration-300 ease-out sm:inset-y-4 sm:left-auto sm:right-4 sm:bottom-auto sm:h-[calc(100dvh-2rem)] sm:w-[460px] sm:rounded-[2rem] ${
             cartOpen
               ? 'translate-y-0 opacity-100 sm:translate-x-0'
               : 'pointer-events-none translate-y-[110%] opacity-0 sm:translate-x-[110%] sm:translate-y-0'
           }`}
         >
-          <div className="flex items-center justify-between gap-3">
+          {/* ORCALY_RESPONSIVE_FOOD_CART_V3 */}
+          <div className="shrink-0 border-b border-blue-100 bg-white px-4 pb-3 pt-4 sm:px-5">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Carrinho</p>
               <h3 className="text-2xl font-black tracking-[-0.04em] text-[#071b3a]">Seu pedido</h3>
@@ -975,7 +976,8 @@ export default function FoodMarketplaceCatalog({
             </div>
           </div>
 
-          <div className="mt-4 max-h-[310px] space-y-3 overflow-y-auto pr-1">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 sm:px-5">
+            <div className="mt-4 space-y-3">
             {cart.length ? cart.map((item) => (
               <article key={item.localId} className="rounded-[1.5rem] border border-blue-100 bg-[#f8fbff] p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -1039,41 +1041,47 @@ export default function FoodMarketplaceCatalog({
               <textarea value={checkout.notes} onChange={(event) => updateCheckout('notes', event.target.value)} placeholder="Observações do pedido" className="min-h-20 rounded-2xl border border-blue-100 px-4 py-3 text-sm font-bold outline-none focus:border-[#05245c]" />
             </div>
 
-            <div className="rounded-[1.5rem] border border-blue-100 bg-white p-4">
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Cupom</p>
-              <div className="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row">
-                <input value={coupon.code} onChange={(event) => setCoupon((current) => ({ ...current, code: event.target.value.toUpperCase(), error: '', message: '' }))} placeholder="Digite seu cupom" className="min-w-0 flex-1 rounded-2xl border border-blue-100 px-4 py-3 text-sm font-black uppercase outline-none focus:border-[#05245c]" />
-                {coupon.appliedCode ? (
-                  <button type="button" onClick={() => setCoupon(emptyCoupon)} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-black text-red-600">Remover</button>
-                ) : (
-                  <button type="button" onClick={applyCoupon} disabled={coupon.applying || !cart.length} className="rounded-2xl px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!coupon.applying && cart.length ? { background: primaryColor } : undefined}>{coupon.applying ? 'Aplicando...' : 'Aplicar'}</button>
-                )}
+
+          </div>
+
+          </div>
+
+          <div className="shrink-0 border-t border-blue-100 bg-white/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_40px_rgba(7,27,58,0.08)] backdrop-blur sm:px-5">
+            <div className="flex items-end justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Total do pedido</p>
+                {totalDiscount > 0 ? <p className="mt-1 truncate text-xs font-black text-emerald-700">Cupom {coupon.appliedCode} economizou {money(totalDiscount)}</p> : <p className="mt-1 text-xs font-bold text-slate-500">{cartItemCount} {cartItemCount === 1 ? 'item' : 'itens'} no carrinho</p>}
               </div>
-              {coupon.appliedCode ? <p className="mt-3 rounded-2xl bg-emerald-50 p-3 text-sm font-bold text-emerald-700">{coupon.message || `Cupom ${coupon.appliedCode} aplicado.`}</p> : null}
-              {!coupon.appliedCode && coupon.message ? <p className="mt-3 rounded-2xl bg-blue-50 p-3 text-sm font-bold text-[#05245c]">{coupon.message}</p> : null}
-              {coupon.error ? <p className="mt-3 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{coupon.error}</p> : null}
+              <p className="shrink-0 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">{money(total)}</p>
             </div>
 
-            <div className="rounded-[1.5rem] border border-blue-100 bg-[#f8fbff] p-4 text-sm font-bold text-slate-600">
-              <div className="flex justify-between"><span>Subtotal</span><span>{money(cartSubtotal)}</span></div>
-              <div className="mt-2 flex justify-between"><span>Taxa de entrega</span><span>{money(deliveryFeeBase)}</span></div>
-              {couponDeliveryDiscount > 0 ? <div className="mt-2 flex justify-between text-slate-500"><span>Taxa cobrada</span><span>{money(deliveryFee)}</span></div> : null}
-              {totalDiscount > 0 ? <div className="mt-2 flex justify-between text-emerald-700"><span>Cupom {coupon.appliedCode ? `(${coupon.appliedCode})` : ''}</span><span>-{money(totalDiscount)}</span></div> : null}
-              {minimumMissing ? <p className="mt-3 rounded-2xl bg-amber-50 p-3 text-amber-700">Pedido mínimo desta região: {money(minimumOrder)}.</p> : null}
-              <div className="mt-4 flex justify-between border-t border-blue-100 pt-4 text-xl font-black text-[#071b3a]"><span>Total</span><span>{money(total)}</span></div>
+            <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <input
+                value={coupon.code}
+                onChange={(event) => setCoupon((current) => ({ ...current, code: event.target.value.toUpperCase(), error: '', message: '' }))}
+                placeholder="Cupom de desconto"
+                className="min-w-0 rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-3 text-sm font-black uppercase outline-none focus:border-[#05245c]"
+              />
+              {coupon.appliedCode ? (
+                <button type="button" onClick={() => setCoupon(emptyCoupon)} className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-black text-red-600">Remover</button>
+              ) : (
+                <button type="button" onClick={applyCoupon} disabled={coupon.applying || !cart.length} className="rounded-2xl px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!coupon.applying && cart.length ? { background: primaryColor } : undefined}>{coupon.applying ? 'Aplicando...' : 'Aplicar'}</button>
+              )}
             </div>
 
-            {error ? <div className="rounded-2xl bg-red-50 p-4 text-sm font-bold leading-6 text-red-700">{error}</div> : null}
-            {result ? (
-              <div className="rounded-2xl bg-emerald-50 p-4 text-sm font-bold leading-6 text-emerald-700">
-                Pedido criado com sucesso. Total: {money(result.total)}. Pagamento: {result.paymentLabel}.
-                {result.checkoutUrl ? <a href={result.checkoutUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-xl bg-[#05245c] px-4 py-3 text-sm font-black text-white">Abrir pagamento online</a> : null}
-                {result.pixPayload ? <textarea readOnly value={result.pixPayload} className="mt-3 min-h-20 w-full rounded-xl border border-emerald-100 bg-white p-3 text-xs text-slate-600" /> : null}
-              </div>
-            ) : null}
+            {coupon.message ? <p className="mt-2 text-xs font-black text-emerald-700">{coupon.message}</p> : null}
+            {coupon.error ? <p className="mt-2 text-xs font-black text-red-700">{coupon.error}</p> : null}
+            {minimumMissing ? <p className="mt-2 text-xs font-black text-amber-700">Pedido mínimo: {money(minimumOrder)}.</p> : null}
+            {error ? <div className="mt-2 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</div> : null}
 
-            <button type="button" onClick={submitOrder} disabled={submitting || !cart.length} className="w-full rounded-2xl px-5 py-4 font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!submitting && cart.length ? { background: primaryColor } : undefined}>
-              {submitting ? 'Redirecionando...' : unifiedCheckoutEnabled ? 'Finalizar e pagar' : 'Pagamento online indisponível'}
+            <button
+              type="button"
+              onClick={submitOrder}
+              disabled={submitting || !cart.length}
+              className="mt-3 w-full rounded-2xl px-5 py-4 text-base font-black text-white shadow-lg disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+              style={!submitting && cart.length ? { background: primaryColor } : undefined}
+            >
+              {submitting ? 'Abrindo pagamento...' : unifiedCheckoutEnabled ? `Continuar para pagamento • ${money(total)}` : 'Pagamento online indisponível'}
             </button>
           </div>
         </aside>
