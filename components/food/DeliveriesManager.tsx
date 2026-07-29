@@ -1,12 +1,19 @@
 'use client'
 
 // ORCALY_DELIVERIES_COMMAND_CENTER_V1
+// ORCALY_DELIVERY_DRIVERS_UI_V1
 
 import type { FormEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getCurrentCompanyClient } from '@/lib/current-company-client'
+import {
+  DeliveryDriverProvider,
+  DeliveryDriverHeaderButtons,
+  DeliveryDriverAction,
+  DeliveryDriverInfo,
+} from '@/components/food/DeliveryDriverOperations'
 import {
   AlertMessage,
   EmptyState,
@@ -43,6 +50,9 @@ type Delivery = {
   delivered_at: string | null
   created_at: string | null
   updated_at: string | null
+  assigned_driver_id: string | null
+  assigned_at: string | null
+  dispatched_at: string | null
 }
 
 type DeliveryZone = {
@@ -65,6 +75,13 @@ type OrderOption = {
   telefone: string | null
   produto: string | null
   status: string | null
+  total_amount: number | null
+  total: number | null
+  valor_total: number | null
+  payment_method: string | null
+  payment_status: string | null
+  address: string | null
+  neighborhood: string | null
   created_at: string | null
 }
 
@@ -353,7 +370,7 @@ export default function DeliveriesManager() {
         supabase
           .from('deliveries')
           .select(
-            'id, company_id, order_id, customer_name, customer_phone, address, neighborhood, delivery_zone_id, delivery_fee, payment_method_id, status, notes, estimated_delivery_at, delivered_at, created_at, updated_at',
+            'id, company_id, order_id, customer_name, customer_phone, address, neighborhood, delivery_zone_id, delivery_fee, payment_method_id, status, notes, estimated_delivery_at, delivered_at, created_at, updated_at, assigned_driver_id, assigned_at, dispatched_at',
           )
           .eq('company_id', currentCompanyId)
           .order('created_at', { ascending: false }),
@@ -369,7 +386,7 @@ export default function DeliveriesManager() {
           .order('name', { ascending: true }),
         supabase
           .from('orders')
-          .select('id, nome, telefone, produto, status, created_at')
+          .select('id, nome, telefone, produto, status, total_amount, total, valor_total, payment_method, payment_status, address, neighborhood, created_at')
           .eq('company_id', currentCompanyId)
           .order('created_at', { ascending: false })
           .limit(100),
@@ -764,6 +781,7 @@ export default function DeliveriesManager() {
     compact?: boolean
   }) {
     const next = nextStatus(delivery.status)
+    const normalizedStatus = normalizeStatus(delivery.status)
     const phone = whatsappLink(delivery.customer_phone)
     const map = mapsLink(
       delivery.address,
@@ -778,7 +796,13 @@ export default function DeliveriesManager() {
             : 'flex flex-wrap items-center gap-2'
         }
       >
-        {next ? (
+        {normalizedStatus === 'ready_for_delivery' ||
+        normalizedStatus === 'out_for_delivery' ? (
+          <DeliveryDriverAction
+            delivery={delivery}
+            compact={compact}
+          />
+        ) : next ? (
           <button
             type="button"
             onClick={() => changeStatus(delivery, next)}
@@ -928,6 +952,8 @@ export default function DeliveriesManager() {
             </p>
           ) : null}
 
+          <DeliveryDriverInfo delivery={delivery} />
+
           {delivery.notes && !board ? (
             <p className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs font-bold leading-5 text-slate-500">
               {delivery.notes}
@@ -954,7 +980,30 @@ export default function DeliveriesManager() {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#f4f6fa] px-3 py-4 text-[#071b3a] sm:px-5 sm:py-6">
+    <DeliveryDriverProvider
+      companyId={companyId}
+      deliveries={deliveries}
+      orders={orders}
+      paymentMethods={paymentMethods}
+      onDeliveryPatch={(deliveryId, patch) => {
+        setDeliveries((current) =>
+          current.map((delivery) =>
+            delivery.id === deliveryId
+              ? ({ ...delivery, ...patch } as Delivery)
+              : delivery,
+          ),
+        )
+      }}
+      onMessage={(value) => {
+        setMessage(value)
+        setError('')
+      }}
+      onError={(value) => {
+        setError(value)
+        if (value) setMessage('')
+      }}
+    >
+      <main className="min-h-screen overflow-x-hidden bg-[#f4f6fa] px-3 py-4 text-[#071b3a] sm:px-5 sm:py-6">
       <section className="mx-auto max-w-[1600px] space-y-5">
         <header className="relative overflow-hidden rounded-[2rem] bg-[#071b3a] p-5 text-white shadow-2xl shadow-blue-950/20 sm:p-7">
           <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-blue-500/30 blur-3xl" />
@@ -990,7 +1039,7 @@ export default function DeliveriesManager() {
               </div>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
               <button
                 type="button"
                 onClick={() => loadData()}
@@ -1006,6 +1055,8 @@ export default function DeliveriesManager() {
                 Pedidos
                 <span aria-hidden="true">→</span>
               </Link>
+              <DeliveryDriverHeaderButtons />
+
               <button
                 type="button"
                 onClick={openNewDelivery}
@@ -1688,6 +1739,7 @@ export default function DeliveriesManager() {
           </form>
         </div>
       ) : null}
-    </main>
+      </main>
+    </DeliveryDriverProvider>
   )
 }
