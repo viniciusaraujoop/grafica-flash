@@ -268,12 +268,13 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // ORCALY_SUBDOMAIN_ROUTE_PASSTHROUGH_V1
+  // Apenas a raiz do subdomínio representa a vitrine da empresa.
+  // Rotas reais, como /checkout/[slug], devem seguir para o Next.js.
   const shouldRewriteSubdomain =
     subdomain &&
     !isReservedSubdomain(subdomain) &&
-    !pathname.startsWith('/api') &&
-    !pathname.startsWith('/_next') &&
-    !pathname.includes('.')
+    pathname === '/'
 
   if (shouldRewriteSubdomain) {
     url.pathname = `/site/${subdomain}`
