@@ -1,3 +1,4 @@
+// ORCALY_AFFILIATE_INTEGRATION_V1
 // ORCALY_SUBSCRIPTION_WEBHOOK_V1
 import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
@@ -6,6 +7,9 @@ import { createFinancialEntryOnce } from "@/lib/payments/financial-integration";
 import { createAutomaticPayoutForTransaction, updatePayoutFromTransferEvent } from "@/lib/payments/payout-service";
 import { cleanSensitivePayload, getSupabaseAdmin } from "@/lib/payments/server-context";
 import { handleSubscriptionPaymentEvent } from "@/lib/payments/subscription-event-service";
+import {
+  updateAffiliatePayoutFromTransferEvent,
+} from "@/lib/affiliates/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,11 +53,18 @@ export async function POST(request: NextRequest) {
         payload_hash: hash, payload_sanitized: cleanSensitivePayload(payload), received_at: new Date().toISOString(),
       }, { onConflict: "provider,provider_event_id" });
       const updated = await updatePayoutFromTransferEvent(transfer, eventType);
+      const affiliateUpdated =
+        await updateAffiliatePayoutFromTransferEvent(transfer, eventType);
+      const anyUpdated = updated || affiliateUpdated;
       await supabase.from("payment_webhook_events").update({
-        processing_status: updated ? "processed" : "ignored", processed_at: new Date().toISOString(),
-        error_message: updated ? null : "Repasse nao localizado.",
+        processing_status: anyUpdated ? "processed" : "ignored", processed_at: new Date().toISOString(),
+        error_message: anyUpdated ? null : "Repasse nao localizado.",
       }).eq("provider", "asaas").eq("provider_event_id", eventId);
-      return NextResponse.json({ ok: true, ignored: !updated });
+      return NextResponse.json({
+        ok: true,
+        ignored: !anyUpdated,
+        affiliate: affiliateUpdated,
+      });
     }
 
     const payment = payload.payment && typeof payload.payment === "object" ? payload.payment as JsonRecord : {};

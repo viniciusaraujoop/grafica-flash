@@ -1,160 +1,529 @@
+// ORCALY_OWNER_SUPPORT_CONTROL_V1
 import { NextRequest, NextResponse } from 'next/server'
-import { auditLog, can, fail, getCurrentAdmin, supabaseAdmin } from '@/lib/admin-auth'
+import {
+  PLATFORM_PERMISSION_CATALOG,
+  auditPlatformAction,
+  requirePlatformAdmin,
+  sanitizeSupportPermissions,
+} from '@/lib/platform-admin'
 
-const rolePermissions: Record<string, any> = {
-  super_admin: {
-    all: true,
-    dashboard: true,
-    companies: true,
-    users: true,
-    leads: true,
-    finance: true,
-    bugs: true,
-    scanner: true,
-    team: true,
-    settings: true,
-  },
-  admin: {
-    dashboard: true,
-    companies: true,
-    users: true,
-    leads: true,
-    bugs: true,
-    scanner: true,
-    finance: false,
-    team: false,
-    settings: false,
-  },
-  suporte: {
-    dashboard: true,
-    companies: true,
-    users: false,
-    leads: true,
-    bugs: true,
-    scanner: false,
-    finance: false,
-    team: false,
-    settings: false,
-  },
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+function text(value: unknown) {
+  return String(value || '').trim()
+}
+
+function email(value: unknown) {
+  return text(value).toLowerCase()
+}
+
+function validPassword(value: unknown) {
+  const password = text(value)
+
+  return (
+    password.length >= 10 &&
+    /[A-Za-z]/.test(password) &&
+    /\d/.test(password)
+  )
+}
+
+async function findAuthUserByEmail(
+  supabaseAdmin: any,
+  targetEmail: string,
+) {
+  for (let page = 1; page <= 20; page += 1) {
+    const { data, error } =
+      await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage: 100,
+      })
+
+    if (error) throw error
+
+    const users = data?.users || []
+    const found = users.find(
+      (user: any) =>
+        String(user.email || '').toLowerCase() ===
+        targetEmail,
+    )
+
+    if (found) return found
+    if (users.length < 100) break
+  }
+
+  return null
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    const admin = await getCurrentAdmin(request)
-    if (!admin) return fail('Acesso negado.', 403)
-    if (!can(admin, 'team')) return fail('Sem permissão para equipe admin.', 403)
+  const session = await requirePlatformAdmin(
+    request,
+    'team.manage',
+  )
 
-    const { data, error } = await supabaseAdmin
-      .from('admin_users')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (error) throw error
-
-    return NextResponse.json({ admins: data || [], roles: rolePermissions })
-  } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro ao carregar equipe admin.' }, { status: 500 })
+  if (!session.ok) {
+    return NextResponse.json(
+      { error: session.error },
+      { status: session.status },
+    )
   }
+
+  const { data, error } = await session.supabaseAdmin
+    .from('platform_admins')
+    .select(
+      'id,user_id,email,nome,role,is_active,permissions,area,observacoes,created_by,last_login_at,must_change_password,created_at,updated_at',
+    )
+    .order('created_at', {
+      ascending: true,
+    })
+
+  if (error) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 },
+    )
+  }
+
+  return NextResponse.json({
+    team: data || [],
+    permissionCatalog:
+      PLATFORM_PERMISSION_CATALOG.filter(
+        (item) => item.supportAssignable,
+      ),
+  })
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const admin = await getCurrentAdmin(request)
-    if (!admin) return fail('Acesso negado.', 403)
-    if (admin.role !== 'super_admin') return fail('Apenas super admin pode cadastrar novos admins.', 403)
+  const session = await requirePlatformAdmin(
+    request,
+    'team.manage',
+  )
 
-    const body = await request.json()
-    const nome = String(body.nome || '').trim()
-    const email = String(body.email || '').trim().toLowerCase()
-    const role = String(body.role || 'suporte').trim()
-    const area = String(body.area || '').trim()
-    const observacoes = String(body.observacoes || '').trim()
-    const password = String(body.password || '').trim()
-
-    if (!nome) return fail('Informe o nome.')
-    if (!email.includes('@')) return fail('Informe um e-mail válido.')
-    if (!rolePermissions[role]) return fail('Cargo administrativo inválido.')
-    if (role === 'super_admin' && admin.email !== 'araujovinicius249@gmail.com') return fail('Apenas o dono pode criar outro super admin.')
-    if (password && password.length < 8) return fail('A senha precisa ter pelo menos 8 caracteres.')
-
-    if (password) {
-      const { error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { nome, role, origem: 'admin_orcaly' },
-      })
-
-      if (createError && !createError.message.toLowerCase().includes('already')) {
-        return fail(createError.message)
-      }
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from('admin_users')
-      .upsert({
-        email,
-        nome,
-        role,
-        ativo: true,
-        permissions: rolePermissions[role],
-        area,
-        observacoes,
-        created_by: admin.email,
-      }, { onConflict: 'email' })
-      .select('*')
-      .single()
-
-    if (error) throw error
-
-    await auditLog(admin.email, 'admin_user.upsert', 'admin_user', data.id, email, { role, area })
-
-    return NextResponse.json({ ok: true, admin: data })
-  } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro ao cadastrar admin.' }, { status: 500 })
+  if (!session.ok) {
+    return NextResponse.json(
+      { error: session.error },
+      { status: session.status },
+    )
   }
-}
 
-export async function PATCH(request: NextRequest) {
   try {
-    const admin = await getCurrentAdmin(request)
-    if (!admin) return fail('Acesso negado.', 403)
-    if (admin.role !== 'super_admin') return fail('Apenas super admin pode editar admins.', 403)
+    const body = await request
+      .json()
+      .catch(() => ({}))
+    const action = text(body.action)
+    const targetId = text(body.id)
 
-    const body = await request.json()
-    const id = String(body.id || '')
-    const role = String(body.role || '')
-    const ativo = typeof body.ativo === 'boolean' ? body.ativo : undefined
-    const area = body.area !== undefined ? String(body.area || '') : undefined
-    const observacoes = body.observacoes !== undefined ? String(body.observacoes || '') : undefined
+    if (action === 'create_support') {
+      const targetEmail = email(body.email)
+      const nome = text(body.nome)
+      const password = text(body.password)
+      const observacoes =
+        text(body.observacoes).slice(0, 500) ||
+        null
 
-    if (!id) return fail('Admin não informado.')
+      if (
+        !targetEmail ||
+        !targetEmail.includes('@')
+      ) {
+        return NextResponse.json(
+          { error: 'Informe um e-mail válido.' },
+          { status: 400 },
+        )
+      }
 
-    const update: Record<string, any> = {}
+      if (nome.length < 2) {
+        return NextResponse.json(
+          { error: 'Informe o nome do suporte.' },
+          { status: 400 },
+        )
+      }
 
-    if (role) {
-      if (!rolePermissions[role]) return fail('Cargo inválido.')
-      update.role = role
-      update.permissions = rolePermissions[role]
+      if (!validPassword(password)) {
+        return NextResponse.json(
+          {
+            error:
+              'A senha temporária precisa ter pelo menos 10 caracteres, com letra e número.',
+          },
+          { status: 400 },
+        )
+      }
+
+      const { data: existingAdmin } =
+        await session.supabaseAdmin
+          .from('platform_admins')
+          .select('id,role')
+          .ilike('email', targetEmail)
+          .maybeSingle()
+
+      const authUser = await findAuthUserByEmail(
+        session.supabaseAdmin,
+        targetEmail,
+      )
+
+      if (authUser && !existingAdmin?.id) {
+        return NextResponse.json(
+          {
+            error:
+              'Esse e-mail já pertence a outra conta do Orçaly. Use um e-mail exclusivo para o suporte.',
+          },
+          { status: 409 },
+        )
+      }
+
+      let user = authUser
+
+      if (!user) {
+        const { data, error } =
+          await session.supabaseAdmin.auth.admin.createUser(
+            {
+              email: targetEmail,
+              password,
+              email_confirm: true,
+              app_metadata: {
+                orcaly_role: 'support',
+              },
+              user_metadata: {
+                nome,
+                portal: 'admin',
+                must_change_password: true,
+              },
+            },
+          )
+
+        if (error || !data.user?.id) {
+          throw (
+            error ||
+            new Error(
+              'Não foi possível criar a conta.',
+            )
+          )
+        }
+
+        user = data.user
+      } else {
+        if (
+          existingAdmin?.role &&
+          existingAdmin.role !== 'support'
+        ) {
+          return NextResponse.json(
+            {
+              error:
+                'Esse usuário interno possui outro nível de acesso.',
+            },
+            { status: 409 },
+          )
+        }
+
+        const { data, error } =
+          await session.supabaseAdmin.auth.admin.updateUserById(
+            user.id,
+            {
+              password,
+              email_confirm: true,
+              app_metadata: {
+                ...(user.app_metadata || {}),
+                orcaly_role: 'support',
+              },
+              user_metadata: {
+                ...(user.user_metadata || {}),
+                nome,
+                portal: 'admin',
+                must_change_password: true,
+              },
+            },
+          )
+
+        if (error || !data.user?.id) {
+          throw (
+            error ||
+            new Error(
+              'Não foi possível atualizar a conta.',
+            )
+          )
+        }
+
+        user = data.user
+      }
+
+      const permissions =
+        sanitizeSupportPermissions(
+          body.permissions,
+        )
+
+      const { data: row, error } =
+        await session.supabaseAdmin
+          .from('platform_admins')
+          .upsert(
+            {
+              user_id: user.id,
+              email: targetEmail,
+              nome,
+              role: 'support',
+              is_active: true,
+              permissions,
+              area: 'Suporte',
+              observacoes,
+              created_by: session.admin.email,
+              must_change_password: true,
+              updated_at:
+                new Date().toISOString(),
+            },
+            {
+              onConflict: 'email',
+            },
+          )
+          .select(
+            'id,email,nome,role,is_active,permissions,area,must_change_password,created_at,updated_at',
+          )
+          .single()
+
+      if (error) throw error
+
+      await auditPlatformAction(
+        session.admin.email,
+        'support_created',
+        {
+          targetType: 'platform_admin',
+          targetId: row.id,
+          targetLabel: targetEmail,
+          payload: {
+            permissions,
+          },
+        },
+      )
+
+      return NextResponse.json({
+        ok: true,
+        member: row,
+        message:
+          'Acesso de suporte criado. A senha não foi armazenada.',
+      })
     }
 
-    if (ativo !== undefined) update.ativo = ativo
-    if (area !== undefined) update.area = area
-    if (observacoes !== undefined) update.observacoes = observacoes
+    const { data: target, error: targetError } =
+      await session.supabaseAdmin
+        .from('platform_admins')
+        .select(
+          'id,user_id,email,nome,role,is_active,permissions',
+        )
+        .eq('id', targetId)
+        .maybeSingle()
 
-    const { data, error } = await supabaseAdmin
-      .from('admin_users')
-      .update(update)
-      .eq('id', id)
-      .select('*')
-      .single()
+    if (targetError) throw targetError
 
-    if (error) throw error
+    if (!target?.id) {
+      return NextResponse.json(
+        { error: 'Usuário interno não encontrado.' },
+        { status: 404 },
+      )
+    }
 
-    await auditLog(admin.email, 'admin_user.update', 'admin_user', id, data.email, update)
+    if (target.role === 'owner') {
+      return NextResponse.json(
+        {
+          error:
+            'Contas de dono não podem ser alteradas por esta tela.',
+        },
+        { status: 403 },
+      )
+    }
 
-    return NextResponse.json({ ok: true, admin: data })
+    if (action === 'update_support') {
+      const nome = text(body.nome)
+      const permissions =
+        sanitizeSupportPermissions(
+          body.permissions,
+        )
+      const observacoes =
+        text(body.observacoes).slice(0, 500) ||
+        null
+
+      const { data, error } =
+        await session.supabaseAdmin
+          .from('platform_admins')
+          .update({
+            nome:
+              nome.length >= 2
+                ? nome
+                : target.nome,
+            permissions,
+            observacoes,
+            updated_at:
+              new Date().toISOString(),
+          })
+          .eq('id', target.id)
+          .select(
+            'id,email,nome,role,is_active,permissions,area,observacoes,must_change_password,created_at,updated_at',
+          )
+          .single()
+
+      if (error) throw error
+
+      await auditPlatformAction(
+        session.admin.email,
+        'support_permissions_updated',
+        {
+          targetType: 'platform_admin',
+          targetId: target.id,
+          targetLabel: target.email,
+          payload: {
+            permissions,
+          },
+        },
+      )
+
+      return NextResponse.json({
+        ok: true,
+        member: data,
+      })
+    }
+
+    if (action === 'set_active') {
+      const active = Boolean(body.active)
+
+      const { error } =
+        await session.supabaseAdmin
+          .from('platform_admins')
+          .update({
+            is_active: active,
+            updated_at:
+              new Date().toISOString(),
+          })
+          .eq('id', target.id)
+
+      if (error) throw error
+
+      if (target.user_id) {
+        const authUser =
+          await session.supabaseAdmin.auth.admin.getUserById(
+            target.user_id,
+          )
+
+        if (authUser.data.user?.id) {
+          await session.supabaseAdmin.auth.admin.updateUserById(
+            target.user_id,
+            {
+              app_metadata: {
+                ...(authUser.data.user
+                  .app_metadata || {}),
+                orcaly_role: active
+                  ? 'support'
+                  : 'disabled_support',
+              },
+            },
+          )
+        }
+      }
+
+      await auditPlatformAction(
+        session.admin.email,
+        active
+          ? 'support_activated'
+          : 'support_deactivated',
+        {
+          targetType: 'platform_admin',
+          targetId: target.id,
+          targetLabel: target.email,
+        },
+      )
+
+      return NextResponse.json({
+        ok: true,
+      })
+    }
+
+    if (action === 'reset_password') {
+      const password = text(body.password)
+
+      if (!validPassword(password)) {
+        return NextResponse.json(
+          {
+            error:
+              'A nova senha temporária precisa ter pelo menos 10 caracteres, com letra e número.',
+          },
+          { status: 400 },
+        )
+      }
+
+      if (!target.user_id) {
+        return NextResponse.json(
+          {
+            error:
+              'A conta ainda não está vinculada ao Supabase Auth.',
+          },
+          { status: 409 },
+        )
+      }
+
+      const { data: authData, error } =
+        await session.supabaseAdmin.auth.admin.getUserById(
+          target.user_id,
+        )
+
+      if (error || !authData.user?.id) {
+        throw (
+          error ||
+          new Error('Conta de autenticação ausente.')
+        )
+      }
+
+      const update =
+        await session.supabaseAdmin.auth.admin.updateUserById(
+          target.user_id,
+          {
+            password,
+            app_metadata: {
+              ...(authData.user.app_metadata || {}),
+              orcaly_role: 'support',
+            },
+            user_metadata: {
+              ...(authData.user.user_metadata || {}),
+              must_change_password: true,
+            },
+          },
+        )
+
+      if (update.error) throw update.error
+
+      await session.supabaseAdmin
+        .from('platform_admins')
+        .update({
+          must_change_password: true,
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq('id', target.id)
+
+      await auditPlatformAction(
+        session.admin.email,
+        'support_password_reset',
+        {
+          targetType: 'platform_admin',
+          targetId: target.id,
+          targetLabel: target.email,
+        },
+      )
+
+      return NextResponse.json({
+        ok: true,
+        message:
+          'Senha temporária redefinida. Ela não foi armazenada.',
+      })
+    }
+
+    return NextResponse.json(
+      { error: 'Ação inválida.' },
+      { status: 400 },
+    )
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro ao atualizar admin.' }, { status: 500 })
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível concluir a operação.',
+      },
+      { status: 500 },
+    )
   }
 }

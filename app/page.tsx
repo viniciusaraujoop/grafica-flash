@@ -1,3 +1,4 @@
+// ORCALY_AFFILIATE_INTEGRATION_V1
 'use client'
 
 import Image from 'next/image'
@@ -721,6 +722,7 @@ export default function HomePage() {
               ['#planos', 'Planos'],
               ['#como-funciona', 'Como funciona'],
               ['#contato', 'Fale conosco'],
+              ['/parceiros', 'Seja parceiro'],
             ].map(([href, label]) => (
               <a
                 key={href}
@@ -793,6 +795,7 @@ export default function HomePage() {
                   ['#planos', 'Comparar planos'],
                   ['#como-funciona', 'Como funciona'],
                   ['#contato', 'Fale conosco'],
+                  ['/parceiros', 'Seja parceiro'],
                 ].map(([href, label]) => (
                   <a
                     key={href}

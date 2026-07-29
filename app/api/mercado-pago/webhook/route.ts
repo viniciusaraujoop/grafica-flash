@@ -1,3 +1,4 @@
+// ORCALY_AFFILIATE_INTEGRATION_V1
 import { NextRequest, NextResponse } from "next/server";
 import {
   applyApprovedSubscriptionPayment,
@@ -13,6 +14,9 @@ import {
 import {
   verifyMercadoPagoWebhookSignature,
 } from "@/lib/mercado-pago";
+import {
+  reverseAffiliateCommissionForPayment,
+} from "@/lib/affiliates/server";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -252,6 +256,18 @@ async function processAuthorizedPayment(
       },
     );
   } else {
+    if (
+      ["refunded", "charged_back", "cancelled", "canceled"].includes(
+        paymentStatus,
+      )
+    ) {
+      await reverseAffiliateCommissionForPayment(
+        admin,
+        providerReference,
+        `Pagamento recorrente ${paymentStatus}.`,
+      );
+    }
+
     await recordSubscriptionEvent(admin, {
       companyId: String(found.company.id),
       eventType: "payment_pending",
@@ -359,6 +375,18 @@ async function processPayment(
       },
     );
   } else {
+    if (
+      ["refunded", "charged_back", "cancelled", "canceled"].includes(
+        status,
+      )
+    ) {
+      await reverseAffiliateCommissionForPayment(
+        admin,
+        providerReference,
+        `Pagamento Pix ${status}.`,
+      );
+    }
+
     await recordSubscriptionEvent(admin, {
       companyId: String(found.company.id),
       eventType:

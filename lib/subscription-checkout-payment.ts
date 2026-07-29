@@ -1,3 +1,4 @@
+// ORCALY_AFFILIATE_INTEGRATION_V1
 import "server-only";
 
 import { randomUUID } from "node:crypto";
@@ -16,6 +17,9 @@ import {
   resolveSubscriptionContext,
   type PlanKey,
 } from "@/lib/subscription-service";
+import {
+  reverseAffiliateCommissionForPayment,
+} from "@/lib/affiliates/server";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -182,6 +186,26 @@ async function persistRemoteStatus(
   );
 
   if (remoteStatus !== "approved") {
+    if (
+      alreadyApproved &&
+      ["refunded", "charged_back", "cancelled", "canceled"].includes(
+        remoteStatus,
+      )
+    ) {
+      await reverseAffiliateCommissionForPayment(
+        admin,
+        paymentId,
+        `Pagamento ${remoteStatus} no Mercado Pago.`,
+      ).catch((affiliateError) => {
+        console.error(
+          "orcaly_affiliate_reversal_error",
+          affiliateError instanceof Error
+            ? affiliateError.message
+            : affiliateError,
+        );
+      });
+    }
+
     await admin
       .from("plan_payments")
       .update({

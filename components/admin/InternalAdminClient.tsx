@@ -1,3 +1,4 @@
+// ORCALY_OWNER_SUPPORT_NAV_V1
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
 'use client'
 
@@ -126,7 +127,7 @@ export default function InternalAdminClient({ section }: { section: Section }) {
           <img src="/logo-orcaly.png" alt="Orçaly" className="mx-auto h-12 w-auto object-contain" />
           <h1 className="mt-6 text-3xl font-black tracking-[-0.05em]">Área não encontrada</h1>
           <p className="mt-3 font-bold leading-7 text-slate-500">{error}</p>
-          <Link href="/login" className="mt-6 inline-flex rounded-2xl bg-[#05245c] px-5 py-3 font-black text-white">Ir para login</Link>
+          <Link href="/admin/login" className="mt-6 inline-flex rounded-2xl bg-[#05245c] px-5 py-3 font-black text-white">Ir para login</Link>
         </section>
       </main>
     )
@@ -152,6 +153,17 @@ export default function InternalAdminClient({ section }: { section: Section }) {
               </Link>
             ))}
           </nav>
+          <div className="mt-3 grid gap-2 border-t border-blue-100 pt-3">
+            <Link href="/admin/indicacoes" className="rounded-2xl px-4 py-3 text-sm font-black text-slate-600 hover:bg-blue-50">
+              Programa de parceiros
+            </Link>
+            <Link href="/admin/equipe" className="rounded-2xl px-4 py-3 text-sm font-black text-slate-600 hover:bg-blue-50">
+              Equipe interna
+            </Link>
+            <Link href="/admin/auditoria" className="rounded-2xl px-4 py-3 text-sm font-black text-slate-600 hover:bg-blue-50">
+              Auditoria
+            </Link>
+          </div>
           <Link href="/painel" className="mt-5 block rounded-2xl border border-blue-100 px-4 py-3 text-sm font-black text-[#05245c]">Voltar ao painel</Link>
         </aside>
 

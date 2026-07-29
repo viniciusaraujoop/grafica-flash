@@ -1,3 +1,4 @@
+// ORCALY_AFFILIATE_INTEGRATION_V1
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
@@ -12,6 +13,10 @@ import {
 import {
   createSignupCheckoutToken,
 } from "@/lib/signup-checkout";
+import {
+  recordAffiliateReferral,
+  requestIp,
+} from "@/lib/affiliates/server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -87,6 +92,13 @@ export async function POST(request: NextRequest) {
     const estado = String(body.estado || "").trim().toUpperCase();
     const plano = String(body.plano || "profissional").trim().toLowerCase();
     const marketing_opt_in = Boolean(body.marketing_opt_in);
+    const referral_code = String(
+      body.referral_code || body.ref || "",
+    )
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9_-]/g, "")
+      .slice(0, 32);
 
     const requestedSubdomain = String(
       body.subdomain_slug || empresa_nome,
@@ -150,6 +162,7 @@ export async function POST(request: NextRequest) {
         pix_bonus_days: 7,
       },
       signup_checkout_version: 2,
+      referral_code: referral_code || null,
     };
 
     const { data: leadExistente } = await supabaseAdmin
@@ -230,6 +243,29 @@ export async function POST(request: NextRequest) {
 
     if (!leadId) {
       return erro("Não foi possível preparar o checkout.", 500);
+    }
+
+    if (referral_code) {
+      try {
+        await recordAffiliateReferral({
+          code: referral_code,
+          leadId,
+          customerName: empresa_nome || nome_responsavel,
+          customerEmail: email,
+          customerDocument: cpf_cnpj,
+          customerWhatsapp: whatsapp,
+          plan: plano,
+          ip: requestIp(request),
+          userAgent: request.headers.get("user-agent"),
+        });
+      } catch (affiliateError) {
+        console.error(
+          "orcaly_affiliate_referral_error",
+          affiliateError instanceof Error
+            ? affiliateError.message
+            : affiliateError,
+        );
+      }
     }
 
     const checkout = createSignupCheckoutToken(leadId);

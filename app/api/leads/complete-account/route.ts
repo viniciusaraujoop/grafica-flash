@@ -1,3 +1,4 @@
+// ORCALY_AFFILIATE_INTEGRATION_V1
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
@@ -5,6 +6,7 @@ import {
   normalizeBusinessType,
 } from "@/lib/business-types";
 import { normalizeSubdomainSlug } from "@/lib/slug";
+import { bindAffiliateReferralToCompany } from "@/lib/affiliates/server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -275,6 +277,27 @@ export async function POST(request: NextRequest) {
         converted_company_id: company.id,
       })
       .eq("id", lead.id);
+
+    try {
+      await bindAffiliateReferralToCompany({
+        leadId: String(lead.id),
+        companyId: String(company.id),
+        ownerId: userId,
+        companyEmail: lead.email,
+        companyWhatsapp: lead.whatsapp,
+        plan: companyPlan,
+        trialEndsAt: isCardTrial
+          ? trialEndsAt.toISOString()
+          : new Date(now.getTime() + 7 * DAY_MS).toISOString(),
+      });
+    } catch (affiliateError) {
+      console.error(
+        "orcaly_affiliate_company_binding_error",
+        affiliateError instanceof Error
+          ? affiliateError.message
+          : affiliateError,
+      );
+    }
 
     return NextResponse.json({
       ok: true,

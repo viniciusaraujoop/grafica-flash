@@ -1,3 +1,4 @@
+// ORCALY_AFFILIATE_INTEGRATION_V1
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest } from "next/server";
@@ -6,6 +7,9 @@ import {
   getSubscriptionAccessToken,
   subscriptionMercadoPagoRequest,
 } from "@/lib/payments/subscription/mercado-pago";
+import {
+  createAffiliateCommissionForApprovedPayment,
+} from "@/lib/affiliates/server";
 
 export type PlanKey = "basico" | "profissional" | "premium";
 export type SubscriptionAction =
@@ -972,6 +976,26 @@ export async function applyApprovedSubscriptionPayment(
       access_until: newAccessUntil.toISOString(),
     },
   });
+
+  try {
+    await createAffiliateCommissionForApprovedPayment(
+      admin,
+      updatedCompany,
+      {
+        providerPaymentId: options.providerReference,
+        plan: planKey,
+        amount: options.amount || null,
+        paidAt: now.toISOString(),
+      },
+    );
+  } catch (affiliateError) {
+    console.error(
+      "orcaly_affiliate_commission_error",
+      affiliateError instanceof Error
+        ? affiliateError.message
+        : affiliateError,
+    );
+  }
 
   return updatedCompany;
 }
