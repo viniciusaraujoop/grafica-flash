@@ -77,7 +77,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const supabaseAdmin = createSupabaseAdmin()
     const { data: company } = await supabaseAdmin
       .from('companies')
-      .select('*')
+      .select('nome,slug,subdomain_slug,logo_url,marketplace_banner_url,site_banner_url,banner_url,site_subheadline,site_about_text')
       .or(`slug.eq.${cleanSlug},subdomain_slug.eq.${cleanSlug}`)
       .maybeSingle()
 

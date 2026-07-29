@@ -1,4 +1,5 @@
 import "server-only";
+import { validateCheckoutPayload } from "@/lib/payments/checkout-validation";
 // ORCALY_MP_TRANSPARENT_CHECKOUT_V1
 import {
   createHash,
@@ -830,6 +831,8 @@ async function calculateCheckout(
   slug: string,
   body: CheckoutBody,
 ): Promise<CheckoutCalculation> {
+  // ORCALY_CHECKOUT_VALIDATION_V1
+  validateCheckoutPayload(body, { requireCustomer: false });
   if (
     !Array.isArray(body.items) ||
     body.items.length === 0
@@ -1700,6 +1703,7 @@ export async function createCheckoutPayment(
   body: CheckoutBody,
   request: NextRequest,
 ) {
+  validateCheckoutPayload(body, { requireCustomer: true });
   body.paymentMethod = resolveCheckoutPaymentMethod(body);
 
   if (

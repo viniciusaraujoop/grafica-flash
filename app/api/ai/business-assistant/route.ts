@@ -1,3 +1,6 @@
+import { enforceRateLimit } from '@/lib/security/rate-limit'
+import { readJsonBody, requestBodyErrorResponse } from '@/lib/security/request'
+// ORCALY_AI_LIMITS_V1
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
 
@@ -26,8 +29,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     }
 
-    const body = await request.json()
-    const prompt = String(body.prompt || '').trim()
+    const plan = String(
+      access.company.assinatura_plano ||
+        access.company.plano ||
+        'basico',
+    ).toLowerCase()
+    const dailyLimit =
+      plan === 'premium'
+        ? 600
+        : plan === 'profissional'
+          ? 120
+          : 25
+
+    const burstBlocked = await enforceRateLimit(request, {
+      scope: 'ai-user-minute',
+      identity: requester.id,
+      limit: 10,
+      windowSeconds: 60,
+    })
+    if (burstBlocked) return burstBlocked
+
+    const dailyBlocked = await enforceRateLimit(request, {
+      scope: 'ai-company-daily',
+      identity: access.company.id,
+      limit: dailyLimit,
+      windowSeconds: 86400,
+    })
+    if (dailyBlocked) return dailyBlocked
+
+    const body = await readJsonBody<any>(request, 16 * 1024)
+    const prompt = String(body.prompt || '').trim().slice(0, 8000)
 
     if (!prompt) {
       return NextResponse.json({ error: 'Digite uma solicitação.' }, { status: 400 })
@@ -81,6 +112,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, answer })
   } catch (error) {
+    const bodyError = requestBodyErrorResponse(error)
+    if (bodyError) return bodyError
+
     const message = error instanceof Error ? error.message : 'Erro ao consultar assistente.'
     return NextResponse.json({ error: message }, { status: 500 })
   }

@@ -1,4 +1,5 @@
 import "server-only";
+// ORCALY_SECURITY_HARDENING_V1
 import crypto from "node:crypto";
 import {
   decryptPaymentCredential,
@@ -424,16 +425,17 @@ export function verifyMercadoPagoWebhookSignature(options: {
   xRequestId: string | null;
   dataId: string | null;
   secret: string | undefined;
+  toleranceSeconds?: number;
 }) {
   const {
     xSignature,
     xRequestId,
     dataId,
     secret,
+    toleranceSeconds = 600,
   } = options;
 
-  if (!secret) return true;
-  if (!xSignature || !xRequestId || !dataId) return false;
+  if (!secret || !xSignature || !xRequestId || !dataId) return false;
 
   const parts = Object.fromEntries(
     xSignature.split(",").map((part) => {
@@ -442,14 +444,25 @@ export function verifyMercadoPagoWebhookSignature(options: {
     }),
   );
 
-  const ts = parts.ts;
-  const v1 = parts.v1;
+  const ts = String(parts.ts || "");
+  const v1 = String(parts.v1 || "");
 
-  if (!ts || !v1) return false;
+  if (!/^\d{10,13}$/.test(ts) || !/^[a-f0-9]{64}$/i.test(v1)) {
+    return false;
+  }
+
+  const timestamp = Number(ts);
+  const timestampMs = ts.length >= 13 ? timestamp : timestamp * 1000;
+
+  if (
+    !Number.isFinite(timestampMs) ||
+    Math.abs(Date.now() - timestampMs) > toleranceSeconds * 1000
+  ) {
+    return false;
+  }
 
   const manifest =
     `id:${dataId};request-id:${xRequestId};ts:${ts};`;
-
   const expected = crypto
     .createHmac("sha256", secret)
     .update(manifest)
@@ -457,8 +470,8 @@ export function verifyMercadoPagoWebhookSignature(options: {
 
   try {
     return crypto.timingSafeEqual(
-      Buffer.from(expected),
-      Buffer.from(v1),
+      Buffer.from(expected, "hex"),
+      Buffer.from(v1, "hex"),
     );
   } catch {
     return false;

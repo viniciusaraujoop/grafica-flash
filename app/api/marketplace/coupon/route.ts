@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireSameOrigin } from '@/lib/orcaly-security'
+import { enforceRateLimit } from '@/lib/security/rate-limit'
+import { readJsonBody, requestBodyErrorResponse } from '@/lib/security/request'
+
+// ORCALY_COUPON_SECURITY_V1
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -151,7 +156,17 @@ function validateCoupon(coupon: any, subtotal: number, deliveryFee: number, item
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const originError = requireSameOrigin(request)
+    if (originError) return originError
+
+    const blocked = await enforceRateLimit(request, {
+      scope: 'marketplace-coupon',
+      limit: 30,
+      windowSeconds: 60,
+    })
+    if (blocked) return blocked
+
+    const body = await readJsonBody<any>(request, 64 * 1024)
     const slug = String(body.slug || '').trim()
     const code = normalizeCode(body.codigo || body.code || body.coupon_code)
     const subtotal = money(body.subtotal)
@@ -193,6 +208,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result)
   } catch (error) {
+    const bodyError = requestBodyErrorResponse(error)
+    if (bodyError) return bodyError
+
     const message = error instanceof Error ? error.message : 'Erro ao validar cupom.'
     return NextResponse.json({ error: message }, { status: 500 })
   }

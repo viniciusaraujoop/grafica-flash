@@ -12,21 +12,29 @@ import {
 function extractPaymentId(body: any, url: URL) {
   return String(
     body?.data?.id ||
-    body?.id ||
-    url.searchParams.get('data.id') ||
-    url.searchParams.get('data_id') ||
-    url.searchParams.get('id') ||
-    ''
+      body?.id ||
+      url.searchParams.get('data.id') ||
+      url.searchParams.get('data_id') ||
+      url.searchParams.get('id') ||
+      '',
   )
 }
 
 function parseExternalReference(value: unknown) {
-// ORCALY_COUPON_USAGE_WEBHOOK_V1
   const parts = String(value || '').split(':')
   if (parts.length === 4 && parts[0] === 'orcaly') {
-    return { companyId: parts[1], orderId: parts[2], marketplacePaymentId: parts[3] }
+    return {
+      companyId: parts[1],
+      orderId: parts[2],
+      marketplacePaymentId: parts[3],
+    }
   }
-  return { companyId: '', orderId: '', marketplacePaymentId: '' }
+
+  return {
+    companyId: '',
+    orderId: '',
+    marketplacePaymentId: '',
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -34,20 +42,40 @@ export async function POST(request: NextRequest) {
   const url = new URL(request.url)
   const body = await request.json().catch(() => ({}))
   const paymentId = extractPaymentId(body, url)
-  const marketplacePaymentIdFromUrl = String(url.searchParams.get('marketplace_payment_id') || '')
-  const companyIdFromUrl = String(url.searchParams.get('company_id') || '')
+  const marketplacePaymentIdFromUrl = String(
+    url.searchParams.get('marketplace_payment_id') || '',
+  )
+  const companyIdFromUrl = String(
+    url.searchParams.get('company_id') || '',
+  )
 
   try {
+    const secret = getMarketplaceWebhookSecret()
+
+    if (!secret) {
+      return NextResponse.json(
+        { error: 'Webhook nao configurado.' },
+        { status: 503 },
+      )
+    }
+
     const signatureOk = verifyMercadoPagoWebhookSignature({
       xSignature: request.headers.get('x-signature'),
       xRequestId: request.headers.get('x-request-id'),
       dataId: paymentId,
-      secret: getMarketplaceWebhookSecret(),
+      secret,
     })
 
-    if (!signatureOk) return NextResponse.json({ error: 'Assinatura inválida.' }, { status: 401 })
+    if (!signatureOk) {
+      return NextResponse.json(
+        { error: 'Assinatura invalida.' },
+        { status: 401 },
+      )
+    }
 
-    if (!paymentId) return NextResponse.json({ ok: true, ignored: 'Sem payment id.' })
+    if (!paymentId) {
+      return NextResponse.json({ ok: true, ignored: 'Sem payment id.' })
+    }
 
     let marketplacePayment: any = null
 
@@ -57,6 +85,7 @@ export async function POST(request: NextRequest) {
         .select('*')
         .eq('id', marketplacePaymentIdFromUrl)
         .eq('company_id', companyIdFromUrl)
+        .eq('provider', 'mercado_pago')
         .maybeSingle()
       marketplacePayment = data
     }
@@ -65,13 +94,27 @@ export async function POST(request: NextRequest) {
       const { data } = await supabaseAdmin
         .from('marketplace_payments')
         .select('*')
+        .eq('provider', 'mercado_pago')
         .eq('provider_payment_id', paymentId)
         .maybeSingle()
       marketplacePayment = data
     }
 
     if (!marketplacePayment?.company_id) {
-      return NextResponse.json({ ok: true, ignored: 'Pagamento ainda não registrado no Orçaly.' })
+      return NextResponse.json({
+        ok: true,
+        ignored: 'Pagamento ainda nao registrado no Orcaly.',
+      })
+    }
+
+    if (
+      marketplacePayment.provider_payment_id &&
+      String(marketplacePayment.provider_payment_id) !== paymentId
+    ) {
+      return NextResponse.json(
+        { error: 'Pagamento divergente.' },
+        { status: 409 },
+      )
     }
 
     const { data: setting, error: settingError } = await supabaseAdmin
@@ -82,33 +125,90 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (settingError) throw settingError
-    if (!setting?.access_token) throw new Error('Empresa sem access_token Mercado Pago.')
+    if (!setting?.access_token) {
+      throw new Error('Empresa sem access_token Mercado Pago.')
+    }
 
     const mpPayment: any = await getMercadoPagoPayment(
       unprotectMercadoPagoToken(setting.access_token),
       paymentId,
     )
-    const parsedRef = parseExternalReference(mpPayment.external_reference)
-    const companyId = parsedRef.companyId || marketplacePayment.company_id
-    const orderId = parsedRef.orderId || marketplacePayment.order_id
-    const marketplacePaymentId = parsedRef.marketplacePaymentId || marketplacePayment.id
+    const parsed = parseExternalReference(mpPayment.external_reference)
+
+    if (
+      parsed.companyId &&
+      parsed.companyId !== String(marketplacePayment.company_id)
+    ) {
+      return NextResponse.json(
+        { error: 'Empresa divergente no pagamento.' },
+        { status: 409 },
+      )
+    }
+
+    if (
+      parsed.orderId &&
+      parsed.orderId !== String(marketplacePayment.order_id)
+    ) {
+      return NextResponse.json(
+        { error: 'Pedido divergente no pagamento.' },
+        { status: 409 },
+      )
+    }
+
+    if (
+      parsed.marketplacePaymentId &&
+      parsed.marketplacePaymentId !== String(marketplacePayment.id)
+    ) {
+      return NextResponse.json(
+        { error: 'Transacao divergente.' },
+        { status: 409 },
+      )
+    }
+
+    const companyId = String(marketplacePayment.company_id)
+    const orderId = String(marketplacePayment.order_id)
+    const marketplacePaymentId = String(marketplacePayment.id)
     const mappedStatus = mapMercadoPagoStatus(
       String(mpPayment.status || ''),
     )
-    const paidAt = mappedStatus === 'paid' ? (mpPayment.date_approved || new Date().toISOString()) : null
-    const grossAmount = Number(mpPayment.transaction_amount || marketplacePayment.amount || 0)
-    const feeDetails = Array.isArray(mpPayment.fee_details) ? mpPayment.fee_details : []
-    const providerFeeAmount = feeDetails.reduce(
-      (total: number, fee: any) => total + Math.max(0, Number(fee?.amount || 0)),
-      0
+    const paidAt =
+      mappedStatus === 'paid'
+        ? mpPayment.date_approved || new Date().toISOString()
+        : null
+    const grossAmount = Number(
+      mpPayment.transaction_amount ||
+        marketplacePayment.amount ||
+        0,
     )
-    const commissionAmount = Math.max(0, Number(marketplacePayment.commission_amount || 0))
-    const reportedNetAmount = Number(mpPayment.transaction_details?.net_received_amount || 0)
-    const netAmount = reportedNetAmount > 0
-      ? reportedNetAmount
-      : Math.max(0, Number((grossAmount - providerFeeAmount - commissionAmount).toFixed(2)))
+    const feeDetails = Array.isArray(mpPayment.fee_details)
+      ? mpPayment.fee_details
+      : []
+    const providerFeeAmount = feeDetails.reduce(
+      (total: number, fee: any) =>
+        total + Math.max(0, Number(fee?.amount || 0)),
+      0,
+    )
+    const commissionAmount = Math.max(
+      0,
+      Number(marketplacePayment.commission_amount || 0),
+    )
+    const reportedNetAmount = Number(
+      mpPayment.transaction_details?.net_received_amount || 0,
+    )
+    const netAmount =
+      reportedNetAmount > 0
+        ? reportedNetAmount
+        : Math.max(
+            0,
+            Number(
+              (
+                grossAmount -
+                providerFeeAmount -
+                commissionAmount
+              ).toFixed(2),
+            ),
+          )
 
-    // ORCALY_ATOMIC_STOCK_WEBHOOK_1C2
     const { error: stockError } = await supabaseAdmin.rpc(
       'settle_marketplace_stock',
       {
@@ -116,71 +216,93 @@ export async function POST(request: NextRequest) {
         p_marketplace_payment_id: marketplacePaymentId,
         p_payment_status: mappedStatus,
         p_reason: String(mpPayment.status || mappedStatus),
-      }
+      },
     )
 
     if (stockError) throw stockError
 
-    await supabaseAdmin
-      .from('marketplace_payments')
-      .update({
-        provider_payment_id: String(mpPayment.id || paymentId),
-        provider_status: String(mpPayment.status || '') || null,
-        status: mappedStatus,
-        amount: grossAmount,
-        provider_fee_amount: Number(providerFeeAmount.toFixed(2)),
-        net_amount: Number(netAmount.toFixed(2)),
-        raw_payload: mpPayment,
-        paid_at: paidAt,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', marketplacePaymentId)
-      .eq('company_id', companyId)
-
-    await supabaseAdmin
-      .from('orders')
-      .update({
-        payment_provider: 'mercado_pago',
-        payment_status: mappedStatus,
-        paid_at: paidAt,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', orderId)
-      .eq('company_id', companyId)
-
-    await supabaseAdmin
-      .from('order_payments')
-      .update({
-        provider: 'mercado_pago',
-        provider_payment_id: String(mpPayment.id || paymentId),
-        status: mappedStatus,
-        paid_amount: mappedStatus === 'paid' ? Number(mpPayment.transaction_amount || 0) : 0,
-        remaining_amount: mappedStatus === 'paid' ? 0 : Number(mpPayment.transaction_amount || 0),
-      })
-      .eq('order_id', orderId)
-      .eq('company_id', companyId)
+    await Promise.all([
+      supabaseAdmin
+        .from('marketplace_payments')
+        .update({
+          provider_payment_id: String(mpPayment.id || paymentId),
+          provider_status: String(mpPayment.status || '') || null,
+          status: mappedStatus,
+          amount: grossAmount,
+          provider_fee_amount: Number(providerFeeAmount.toFixed(2)),
+          net_amount: Number(netAmount.toFixed(2)),
+          raw_payload: mpPayment,
+          paid_at: paidAt,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', marketplacePaymentId)
+        .eq('company_id', companyId),
+      supabaseAdmin
+        .from('orders')
+        .update({
+          payment_provider: 'mercado_pago',
+          payment_status: mappedStatus,
+          status:
+            mappedStatus === 'paid'
+              ? 'Recebido'
+              : 'pending_payment',
+          paid_at: paidAt,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId)
+        .eq('company_id', companyId),
+      supabaseAdmin
+        .from('order_payments')
+        .update({
+          provider: 'mercado_pago',
+          provider_payment_id: String(mpPayment.id || paymentId),
+          status: mappedStatus,
+          paid_amount:
+            mappedStatus === 'paid'
+              ? Number(mpPayment.transaction_amount || 0)
+              : 0,
+          remaining_amount:
+            mappedStatus === 'paid'
+              ? 0
+              : Number(mpPayment.transaction_amount || 0),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('order_id', orderId)
+        .eq('company_id', companyId),
+    ])
 
     if (mappedStatus === 'paid') {
-      const { error: couponConsumeError } = await supabaseAdmin.rpc(
+      const { error: couponError } = await supabaseAdmin.rpc(
         'consume_marketplace_coupon',
         {
           p_company_id: companyId,
           p_order_id: orderId,
-        }
+        },
       )
 
-      if (couponConsumeError) throw couponConsumeError
+      if (couponError) throw couponError
 
       await supabaseAdmin
         .from('marketplace_commissions')
-        .update({ status: 'confirmed', confirmed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .update({
+          status: 'confirmed',
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
         .eq('marketplace_payment_id', marketplacePaymentId)
         .eq('company_id', companyId)
         .neq('status', 'confirmed')
-    } else if (['failed', 'canceled', 'refunded', 'charged_back'].includes(mappedStatus)) {
+    } else if (
+      ['failed', 'canceled', 'refunded', 'charged_back'].includes(
+        mappedStatus,
+      )
+    ) {
       await supabaseAdmin
         .from('marketplace_commissions')
-        .update({ status: mappedStatus, updated_at: new Date().toISOString() })
+        .update({
+          status: mappedStatus,
+          updated_at: new Date().toISOString(),
+        })
         .eq('marketplace_payment_id', marketplacePaymentId)
         .eq('company_id', companyId)
         .neq('status', 'confirmed')
@@ -191,10 +313,25 @@ export async function POST(request: NextRequest) {
     if (marketplacePaymentIdFromUrl && companyIdFromUrl) {
       await supabaseAdmin
         .from('marketplace_payments')
-        .update({ last_error: error instanceof Error ? error.message : 'Erro no webhook.', raw_payload: body })
+        .update({
+          last_error:
+            error instanceof Error
+              ? error.message
+              : 'Erro no webhook.',
+          raw_payload: body,
+        })
         .eq('id', marketplacePaymentIdFromUrl)
         .eq('company_id', companyIdFromUrl)
     }
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro no webhook Mercado Pago.' }, { status: 500 })
+
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Erro no webhook Mercado Pago.',
+      },
+      { status: 500 },
+    )
   }
 }

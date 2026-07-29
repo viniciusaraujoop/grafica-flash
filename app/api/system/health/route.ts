@@ -77,8 +77,12 @@ export async function GET(request: NextRequest) {
       {
         key: 'mercado_pago',
         title: 'Mercado Pago',
-        ok: Boolean(process.env.MERCADO_PAGO_ACCESS_TOKEN),
-        description: 'Token de checkout configurado.',
+        ok: Boolean(
+          process.env.MP_MARKETPLACE_CLIENT_ID &&
+          process.env.MP_MARKETPLACE_CLIENT_SECRET &&
+          process.env.MP_MARKETPLACE_WEBHOOK_SECRET
+        ),
+        description: 'Credenciais e segredo do marketplace configurados.',
       },
       {
         key: 'openai',
