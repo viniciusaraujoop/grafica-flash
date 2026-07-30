@@ -59,8 +59,10 @@ type CheckoutData = {
     cardEnabled: boolean;
     publicKey: string;
     lastError?: string | null;
+    connectionRequiresReconnect?: boolean;
   };
 };
+// ORCALY_MP_RECONNECT_MESSAGE_V1
 
 type PixResult = {
   encodedImage?: string;
@@ -920,9 +922,14 @@ export default function CheckoutClient({
 
         {!data.payment.chargesEnabled ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
-            <p className="font-black">Pagamentos ainda não disponíveis</p>
+            <p className="font-black">
+              {data.payment.connectionRequiresReconnect
+                ? "Reconecte o Mercado Pago"
+                : "Pagamentos ainda não disponíveis"}
+            </p>
             <p className="mt-2 text-sm font-semibold leading-6">
-              Esta loja precisa conectar uma conta Mercado Pago antes de receber pedidos pelo marketplace.
+              {data.payment.lastError ||
+                "Esta loja precisa conectar uma conta Mercado Pago antes de receber pedidos pelo marketplace."}
             </p>
           </div>
         ) : null}
@@ -1404,7 +1411,8 @@ export default function CheckoutClient({
                     </div>
                   ) : !data.payment.chargesEnabled ? (
                     <div className="rounded-2xl bg-amber-50 p-4 font-bold text-amber-800">
-                      Esta empresa ainda não ativou os pagamentos online.
+                      {data.payment.lastError ||
+                        "Esta empresa ainda não ativou os pagamentos online."}
                     </div>
                   ) : (
                     <>

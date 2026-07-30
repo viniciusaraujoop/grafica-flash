@@ -8,6 +8,10 @@ import {
 import type { NextRequest } from "next/server";
 import { getPlanConfig } from "@/lib/plans/plan-config";
 import {
+  getMarketplaceClientId,
+} from "@/lib/payments/marketplace/config";
+// ORCALY_MP_APPLICATION_FEE_OAUTH_V1
+import {
   createMercadoPagoPayment,
   getMercadoPagoPayment,
   getOrcalyAppUrl,
@@ -158,6 +162,61 @@ function asRecord(value: unknown): JsonRecord {
   }
 
   return value as JsonRecord;
+}
+
+function marketplacePublicKey() {
+  return text(
+    process.env.NEXT_PUBLIC_MP_MARKETPLACE_PUBLIC_KEY,
+  );
+}
+
+function verifiedMarketplaceOauth(value: unknown) {
+  const metadata = asRecord(value);
+  const configuredClientId = text(
+    process.env.MP_MARKETPLACE_CLIENT_ID,
+  );
+
+  return Boolean(
+    configuredClientId &&
+      metadata.oauth_grant_type === "authorization_code" &&
+      text(metadata.marketplace_client_id) ===
+        configuredClientId,
+  );
+}
+
+function mercadoPagoProviderErrorCode(cause: unknown) {
+  if (!cause || typeof cause !== "object") return 0;
+
+  const providerPayload =
+    "providerPayload" in cause
+      ? asRecord(
+          (
+            cause as {
+              providerPayload?: unknown;
+            }
+          ).providerPayload,
+        )
+      : {};
+  const directCode = Number(
+    providerPayload.code ||
+      providerPayload.status ||
+      0,
+  );
+
+  if (directCode) return directCode;
+
+  for (const rawCause of array(providerPayload.cause)) {
+    const record = asRecord(rawCause);
+    const code = Number(
+      record.code ||
+        record.status ||
+        0,
+    );
+
+    if (code) return code;
+  }
+
+  return 0;
 }
 
 // ORCALY_SERVER_OPTION_VALIDATION_1C1
@@ -694,7 +753,7 @@ async function getSellerAccessToken(
     await supabase
       .from("marketplace_payment_settings")
       .select(
-        "id,access_token,refresh_token,public_key,token_expires_at,onboarding_status,is_active,last_error",
+        "id,access_token,refresh_token,public_key,token_expires_at,onboarding_status,is_active,last_error,provider_metadata_sanitized",
       )
       .eq("company_id", companyId)
       .eq("provider", "mercado_pago")
@@ -710,6 +769,19 @@ async function getSellerAccessToken(
     throw Object.assign(
       new Error(
         "Esta empresa ainda nao conectou uma conta Mercado Pago para receber.",
+      ),
+      { status: 409 },
+    );
+  }
+
+  if (
+    !verifiedMarketplaceOauth(
+      setting.provider_metadata_sanitized,
+    )
+  ) {
+    throw Object.assign(
+      new Error(
+        "Reconecte a conta Mercado Pago pelo painel. A conexão atual não foi validada como OAuth Marketplace.",
       ),
       { status: 409 },
     );
@@ -1327,7 +1399,7 @@ export async function getCheckoutCatalog(
     supabase
       .from("marketplace_payment_settings")
       .select(
-        "access_token,public_key,onboarding_status,account_status,is_active,charges_enabled,pix_enabled,card_enabled,last_error",
+        "access_token,public_key,onboarding_status,account_status,is_active,charges_enabled,pix_enabled,card_enabled,last_error,provider_metadata_sanitized",
       )
       .eq("company_id", companyId)
       .eq("provider", "mercado_pago")
@@ -1338,14 +1410,23 @@ export async function getCheckoutCatalog(
   if (zonesError) throw zonesError;
   if (accountError) throw accountError;
 
-  const publicKey = text(
-    account?.public_key,
-  );
+  const publicKey =
+    marketplacePublicKey();
+  const oauthVerified =
+    verifiedMarketplaceOauth(
+      account?.provider_metadata_sanitized,
+    );
+  const connectionRequiresReconnect =
+    Boolean(
+      account?.access_token &&
+        !oauthVerified,
+    );
 
   const connected = Boolean(
     account?.is_active &&
       account?.access_token &&
       publicKey &&
+      oauthVerified &&
       account?.onboarding_status ===
         "connected",
   );
@@ -1508,7 +1589,12 @@ export async function getCheckoutCatalog(
           : "",
 
       lastError:
-        account?.last_error || null,
+        connectionRequiresReconnect
+          ? "Reconecte a conta Mercado Pago para ativar o split de pagamentos."
+          : !publicKey
+            ? "A chave pública do integrador Mercado Pago não está configurada."
+            : account?.last_error || null,
+      connectionRequiresReconnect,
     },
   };
 }
@@ -2334,6 +2420,42 @@ export async function createCheckoutPayment(
           companyId,
         ),
     ]);
+
+    const providerCode =
+      mercadoPagoProviderErrorCode(
+        cause,
+      );
+    const applicationFeeOauthRejected =
+      providerCode === 2059 ||
+      message
+        .toLowerCase()
+        .includes("application_fee");
+
+    if (applicationFeeOauthRejected) {
+      const reconnectMessage =
+        "A conta Mercado Pago precisa ser reconectada por OAuth usando uma aplicação configurada como Marketplace.";
+
+      await supabase
+        .from(
+          "marketplace_payment_settings",
+        )
+        .update({
+          onboarding_status:
+            "reconnect_required",
+          charges_enabled: false,
+          last_error:
+            reconnectMessage,
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq("company_id", companyId)
+        .eq("provider", "mercado_pago");
+
+      throw Object.assign(
+        new Error(reconnectMessage),
+        { status: 409 },
+      );
+    }
 
     throw cause;
   }
