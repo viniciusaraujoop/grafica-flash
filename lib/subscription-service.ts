@@ -4,6 +4,13 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest } from "next/server";
 import { getCompanySubscriptionAccess } from "@/lib/subscription-access";
 import {
+  buildSubscriptionReference,
+  normalizePlanKey,
+  normalizeSubscriptionProviderStatus,
+  parseSubscriptionReference,
+  type PlanKey,
+} from "@/lib/payments/core/contracts";
+import {
   getSubscriptionAccessToken,
   subscriptionMercadoPagoRequest,
 } from "@/lib/payments/subscription/mercado-pago";
@@ -11,7 +18,7 @@ import {
   createAffiliateCommissionForApprovedPayment,
 } from "@/lib/affiliates/server";
 
-export type PlanKey = "basico" | "profissional" | "premium";
+export type { PlanKey } from "@/lib/payments/core/contracts";
 export type SubscriptionAction =
   | "create"
   | "renew"
@@ -47,7 +54,6 @@ export const ORCALY_PLANS: Record<
   },
 };
 
-const DAY_MS = 86_400_000;
 
 export function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -102,10 +108,7 @@ function isUuid(value: unknown) {
 }
 
 function normalizePlan(value: unknown): PlanKey {
-  if (value === "basico" || value === "profissional" || value === "premium") {
-    return value;
-  }
-  return "profissional";
+  return normalizePlanKey(value);
 }
 
 function normalizeAction(value: unknown): SubscriptionAction {
@@ -119,10 +122,6 @@ function normalizeAction(value: unknown): SubscriptionAction {
     return value;
   }
   return "create";
-}
-
-function addDays(date: Date, days: number) {
-  return new Date(date.getTime() + DAY_MS * days);
 }
 
 function addMonth(date: Date) {
@@ -253,53 +252,6 @@ export async function recordSubscriptionEvent(
   }
 }
 
-async function claimTrial(
-  admin: ReturnType<typeof getSupabaseAdmin>,
-  companyId: string,
-) {
-  const { data: rpcRows, error: rpcError } = await admin.rpc(
-    "claim_company_subscription_trial",
-    { p_company_id: companyId },
-  );
-
-  if (!rpcError) {
-    const row = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows;
-    return row || null;
-  }
-
-  const now = new Date();
-  const trialEndsAt = addDays(now, 7);
-  const { data, error } = await admin
-    .from("companies")
-    .update({
-      trial_started_at: now.toISOString(),
-      trial_ends_at: trialEndsAt.toISOString(),
-      trial_used_at: now.toISOString(),
-      assinatura_status: "trialing",
-      access_until: trialEndsAt.toISOString(),
-      cancel_at_period_end: false,
-      updated_at: now.toISOString(),
-    })
-    .eq("id", companyId)
-    .is("trial_used_at", null)
-    .select("*")
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(
-      "Não foi possível iniciar o teste gratuito. Aplique a migration gerada pelo patcher no Supabase.",
-    );
-  }
-
-  return data || null;
-}
-
-function trialDaysRemaining(company: any) {
-  const trialEnd = validDate(company?.trial_ends_at);
-  if (!trialEnd || trialEnd <= new Date()) return 0;
-  return Math.max(1, Math.ceil((trialEnd.getTime() - Date.now()) / DAY_MS));
-}
-
 function safeCompany(company: any) {
   if (!company) return null;
   const access = getCompanySubscriptionAccess(company);
@@ -389,34 +341,13 @@ async function createRecurringSubscription(
     };
   }
 
-  let workingCompany = company;
-  let freeTrialDays = 0;
-
-  if (!company.trial_used_at) {
-    const claimed = await claimTrial(admin, company.id);
-    if (claimed) {
-      workingCompany = claimed;
-      freeTrialDays = 7;
-      await recordSubscriptionEvent(admin, {
-        companyId: company.id,
-        eventType: "trial_started",
-        oldStatus: company.assinatura_status,
-        newStatus: "trialing",
-        providerReference: `trial:${company.id}`,
-        metadata: { plan: planKey, days: 7 },
-      });
-    }
-  } else {
-    freeTrialDays = trialDaysRemaining(company);
-  }
-
   const { data: paymentRow, error: paymentError } = await admin
     .from("plan_payments")
     .insert({
       company_id: company.id,
       plano: planKey,
       valor: plan.price,
-      status: "subscription_pending",
+      status: "pending",
       tipo: "subscription",
       payment_method: "card_recurring",
       email,
@@ -427,20 +358,18 @@ async function createRecurringSubscription(
 
   if (paymentError) throw paymentError;
 
-  const externalReference = `orcaly_subscription:${company.id}:${planKey}:${paymentRow.id}`;
+  const externalReference = buildSubscriptionReference({
+    kind: "recurring",
+    companyId: company.id,
+    plan: planKey,
+    paymentRowId: paymentRow.id,
+  });
   const autoRecurring: Record<string, unknown> = {
     frequency: 1,
     frequency_type: "months",
     transaction_amount: plan.price,
     currency_id: "BRL",
   };
-
-  if (freeTrialDays > 0) {
-    autoRecurring.free_trial = {
-      frequency: freeTrialDays,
-      frequency_type: "days",
-    };
-  }
 
   let subscription: any;
   try {
@@ -460,7 +389,7 @@ async function createRecurringSubscription(
     await admin
       .from("plan_payments")
       .update({
-        status: "subscription_error",
+        status: "failed",
         updated_at: new Date().toISOString(),
       })
       .eq("id", paymentRow.id);
@@ -475,14 +404,14 @@ async function createRecurringSubscription(
     .update({
       mercado_pago_preapproval_id: subscription.id || null,
       checkout_url: checkoutUrl,
-      status: subscription.status ? `subscription_${subscription.status}` : "subscription_pending",
+      status: normalizeSubscriptionProviderStatus(subscription.status),
       raw_subscription: subscription,
       next_payment_date: subscription.next_payment_date || null,
       updated_at: now,
     })
     .eq("id", paymentRow.id);
 
-  const internalStatus = freeTrialDays > 0 ? "trialing" : "pendente";
+  const internalStatus = "pendente";
   const { data: updatedCompany, error: companyError } = await admin
     .from("companies")
     .update({
@@ -496,7 +425,7 @@ async function createRecurringSubscription(
       mercado_pago_subscription_status: subscription.status || "pending",
       mercado_pago_customer_email: email,
       assinatura_mp_payload: subscription,
-      assinatura_proxima_cobranca: subscription.next_payment_date || workingCompany.trial_ends_at || null,
+      assinatura_proxima_cobranca: subscription.next_payment_date || null,
       cancel_at_period_end: false,
       updated_at: now,
     })
@@ -512,14 +441,11 @@ async function createRecurringSubscription(
     oldStatus: company.assinatura_status,
     newStatus: internalStatus,
     providerReference: subscription.id || paymentRow.id,
-    metadata: { plan: planKey, payment_type: "card_recurring", trial_days: freeTrialDays },
+    metadata: { plan: planKey, payment_type: "card_recurring", trial_days: 0 },
   });
 
   return {
-    message:
-      freeTrialDays > 0
-        ? "Teste gratuito iniciado. Conclua o cadastro do cartão para a cobrança após o período gratuito."
-        : "Assinatura criada. Conclua o cadastro no Mercado Pago.",
+    message: "Assinatura criada. Conclua o cadastro no Mercado Pago.",
     checkout_url: checkoutUrl,
     subscription_status: subscription.status || "pending",
     company: safeCompany(updatedCompany),
@@ -538,40 +464,6 @@ async function createPixPayment(
 
   if (!email || !email.includes("@")) {
     throw new Error("Cadastre um e-mail válido na empresa antes de pagar por Pix.");
-  }
-
-  if (!company.trial_used_at) {
-    const claimed = await claimTrial(admin, company.id);
-    if (!claimed) {
-      throw new Error("O teste gratuito já foi utilizado.");
-    }
-
-    await admin
-      .from("companies")
-      .update({
-        plano: planKey,
-        assinatura_plano: planKey,
-        assinatura_forma_pagamento_preferida: "pix_avulso",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", company.id);
-
-    await recordSubscriptionEvent(admin, {
-      companyId: company.id,
-      eventType: "trial_started",
-      oldStatus: company.assinatura_status,
-      newStatus: "trialing",
-      providerReference: `trial:${company.id}`,
-      metadata: { plan: planKey, payment_type: "pix_avulso", days: 7 },
-    });
-
-    return {
-      trial_started: true,
-      checkout_url: null,
-      message:
-        "Seu teste gratuito de sete dias começou. Nenhuma cobrança Pix foi criada agora.",
-      company: safeCompany(claimed),
-    };
   }
 
   const access = getCompanySubscriptionAccess(company);
@@ -601,7 +493,12 @@ async function createPixPayment(
 
   if (paymentError) throw paymentError;
 
-  const externalReference = `orcaly_subscription_pix:${company.id}:${planKey}:${paymentRow.id}`;
+  const externalReference = buildSubscriptionReference({
+    kind: "pix",
+    companyId: company.id,
+    plan: planKey,
+    paymentRowId: paymentRow.id,
+  });
   const preference = await mercadoPagoPlatformRequest("/checkout/preferences", {
     method: "POST",
     body: JSON.stringify({
@@ -853,18 +750,7 @@ export async function manageCompanySubscription(request: NextRequest, body: any)
 }
 
 export function parseOrcalySubscriptionReference(value: unknown) {
-  const raw = String(value || "").trim();
-  const parts = raw.split(":");
-
-  if (parts[0] === "orcaly_subscription" && isUuid(parts[1])) {
-    return { kind: "recurring" as const, companyId: parts[1], plan: normalizePlan(parts[2]), paymentRowId: parts[3] || null };
-  }
-
-  if (parts[0] === "orcaly_subscription_pix" && isUuid(parts[1])) {
-    return { kind: "pix" as const, companyId: parts[1], plan: normalizePlan(parts[2]), paymentRowId: parts[3] || null };
-  }
-
-  return null;
+  return parseSubscriptionReference(value);
 }
 
 export async function findCompanyForProviderReference(

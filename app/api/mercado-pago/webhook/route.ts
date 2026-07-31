@@ -1,5 +1,6 @@
 // ORCALY_AFFILIATE_INTEGRATION_V1
 import { NextRequest, NextResponse } from "next/server";
+import { mapMercadoPagoStatus } from "@/lib/mercado-pago";
 import {
   applyApprovedSubscriptionPayment,
   findCompanyForProviderReference,
@@ -345,7 +346,7 @@ async function processPayment(
     await admin
       .from("plan_payments")
       .update({
-        status,
+        status: mapMercadoPagoStatus(status),
         mercado_pago_payment_id:
           providerReference,
         payment_method:

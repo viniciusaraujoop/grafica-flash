@@ -1,44 +1,22 @@
 import "server-only";
 import type { NextRequest } from "next/server";
 import {
+  buildSubscriptionReference,
+  normalizePlanKey,
+  normalizeSubscriptionProviderStatus,
+} from "@/lib/payments/core/contracts";
+import {
   getAppUrl,
   mercadoPagoPlatformRequest,
   ORCALY_PLANS,
   recordSubscriptionEvent,
   resolveSubscriptionContext,
-  type PlanKey,
 } from "@/lib/subscription-service";
 
 type JsonRecord = Record<string, unknown>;
 
 function text(value: unknown) {
   return String(value || "").trim();
-}
-
-function normalizePlan(value: unknown): PlanKey {
-  const normalized = text(value).toLowerCase();
-
-  if (
-    normalized === "basico" ||
-    normalized === "básico" ||
-    normalized === "essencial"
-  ) {
-    return "basico";
-  }
-
-  if (
-    normalized === "profissional" ||
-    normalized === "intermediario" ||
-    normalized === "intermediário"
-  ) {
-    return "profissional";
-  }
-
-  if (normalized === "premium") {
-    return "premium";
-  }
-
-  return "profissional";
 }
 
 async function cancelRemoteSubscription(
@@ -101,7 +79,7 @@ export async function createTransparentSubscription(
 
   const company = context.company as JsonRecord;
   const companyId = text(company.id);
-  const planKey = normalizePlan(
+  const planKey = normalizePlanKey(
     body.plan ||
       body.planKey ||
       company.assinatura_plano ||
@@ -155,7 +133,7 @@ export async function createTransparentSubscription(
         company_id: companyId,
         plano: planKey,
         valor: plan.price,
-        status: "subscription_creating",
+        status: "created",
         tipo: "subscription",
         payment_method: "card_recurring",
         provider: "mercado_pago",
@@ -175,8 +153,12 @@ export async function createTransparentSubscription(
     );
   }
 
-  const externalReference =
-    `orcaly_subscription:${companyId}:${planKey}:${paymentRow.id}`;
+  const externalReference = buildSubscriptionReference({
+    kind: "recurring",
+    companyId,
+    plan: planKey,
+    paymentRowId: String(paymentRow.id),
+  });
 
   const autoRecurring: JsonRecord = {
     frequency: 1,
@@ -184,13 +166,6 @@ export async function createTransparentSubscription(
     transaction_amount: plan.price,
     currency_id: "BRL",
   };
-
-  if (trialDays > 0) {
-    autoRecurring.free_trial = {
-      frequency: trialDays,
-      frequency_type: "days",
-    };
-  }
 
   let subscription: JsonRecord;
 
@@ -215,7 +190,7 @@ export async function createTransparentSubscription(
     await context.admin
       .from("plan_payments")
       .update({
-        status: "subscription_error",
+        status: "failed",
         updated_at: new Date().toISOString(),
       })
       .eq("id", paymentRow.id);
@@ -229,7 +204,7 @@ export async function createTransparentSubscription(
     await context.admin
       .from("plan_payments")
       .update({
-        status: "subscription_error",
+        status: "failed",
         raw_subscription: subscription,
         updated_at: new Date().toISOString(),
       })
@@ -257,8 +232,9 @@ export async function createTransparentSubscription(
     await context.admin
       .from("plan_payments")
       .update({
-        status: `subscription_${providerStatus}`,
+        status: normalizeSubscriptionProviderStatus(providerStatus),
         provider: "mercado_pago",
+        external_reference: externalReference,
         provider_subscription_id: subscriptionId,
         mercado_pago_preapproval_id:
           subscriptionId,
