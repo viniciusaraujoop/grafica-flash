@@ -113,10 +113,12 @@ const mercadoPagoToken = getSignupAccessToken();
   return { ok: true, lead_id: leadId, status };
 }
 
-export async function GET(request: NextRequest) {
-  return NextResponse.json(
-    await processPayment(getPaymentIdFromUrl(request)),
-  );
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    route: "mercado-pago-signup-webhook",
+    accepts: ["POST"],
+  });
 }
 
 export async function POST(request: NextRequest) {
