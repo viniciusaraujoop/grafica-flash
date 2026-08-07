@@ -183,31 +183,51 @@ export async function POST(request: NextRequest) {
     const feeDetails = Array.isArray(mpPayment.fee_details)
       ? mpPayment.fee_details
       : []
-    const providerFeeAmount = feeDetails.reduce(
+    const applicationFeeAmount = feeDetails.reduce(
       (total: number, fee: any) =>
-        total + Math.max(0, Number(fee?.amount || 0)),
+        String(fee?.type || '').toLowerCase() === 'application_fee'
+          ? total + Math.max(0, Number(fee?.amount || 0))
+          : total,
       0,
     )
-    const commissionAmount = Math.max(
+    const providerFeeAmount = feeDetails.reduce(
+      (total: number, fee: any) =>
+        String(fee?.type || '').toLowerCase() !== 'application_fee'
+          ? total + Math.max(0, Number(fee?.amount || 0))
+          : total,
       0,
-      Number(marketplacePayment.commission_amount || 0),
+    )
+    const expectedCommissionAmount = Math.max(
+      0,
+      Number(
+        marketplacePayment.platform_fee_amount ||
+          marketplacePayment.commission_amount ||
+          0,
+      ),
     )
     const reportedNetAmount = Number(
       mpPayment.transaction_details?.net_received_amount || 0,
     )
-    const netAmount =
+    const sellerNetAmount =
       reportedNetAmount > 0
-        ? reportedNetAmount
+        ? Number(reportedNetAmount.toFixed(2))
         : Math.max(
             0,
             Number(
               (
                 grossAmount -
                 providerFeeAmount -
-                commissionAmount
+                applicationFeeAmount
               ).toFixed(2),
             ),
           )
+    const splitStatus =
+      mappedStatus === 'paid'
+        ? applicationFeeAmount + 0.005 >= expectedCommissionAmount &&
+          applicationFeeAmount > 0
+          ? 'applied'
+          : 'missing'
+        : 'pending'
 
     const { error: stockError } = await supabaseAdmin.rpc(
       'settle_marketplace_stock',
@@ -230,7 +250,10 @@ export async function POST(request: NextRequest) {
           status: mappedStatus,
           amount: grossAmount,
           provider_fee_amount: Number(providerFeeAmount.toFixed(2)),
-          net_amount: Number(netAmount.toFixed(2)),
+          provider_net_amount: sellerNetAmount,
+          platform_fee_amount: Number(applicationFeeAmount.toFixed(2)),
+          seller_net_amount: sellerNetAmount,
+          split_status: splitStatus,
           raw_payload: mpPayment,
           paid_at: paidAt,
           updated_at: new Date().toISOString(),

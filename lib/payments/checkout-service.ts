@@ -7,9 +7,6 @@ import {
 } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { getPlanConfig } from "@/lib/plans/plan-config";
-import {
-  getMarketplaceClientId,
-} from "@/lib/payments/marketplace/config";
 // ORCALY_MP_APPLICATION_FEE_OAUTH_V1
 import {
   createMercadoPagoPayment,
@@ -1651,6 +1648,58 @@ async function persistPaymentStatus(
   const lastFour = text(
     card.last_four_digits,
   );
+  const feeDetails = array(payment.fee_details)
+    .map((item) => asRecord(item));
+  const platformFeeAmount = money(
+    feeDetails
+      .filter(
+        (fee) =>
+          text(fee.type).toLowerCase() ===
+          "application_fee",
+      )
+      .reduce(
+        (sum, fee) =>
+          sum + Math.max(0, Number(fee.amount || 0)),
+        0,
+      ),
+  );
+  const providerFeeAmount = money(
+    feeDetails
+      .filter(
+        (fee) =>
+          text(fee.type).toLowerCase() !==
+          "application_fee",
+      )
+      .reduce(
+        (sum, fee) =>
+          sum + Math.max(0, Number(fee.amount || 0)),
+        0,
+      ),
+  );
+  const transactionDetails =
+    asRecord(payment.transaction_details);
+  const reportedNetAmount = money(
+    transactionDetails.net_received_amount,
+  );
+  const grossAmount = money(
+    payment.transaction_amount,
+  );
+  const sellerNetAmount =
+    mappedStatus === "paid"
+      ? reportedNetAmount > 0
+        ? reportedNetAmount
+        : money(
+            grossAmount -
+              providerFeeAmount -
+              platformFeeAmount,
+          )
+      : null;
+  const splitStatus =
+    mappedStatus === "paid"
+      ? platformFeeAmount > 0
+        ? "applied"
+        : "missing"
+      : "pending";
 
   await settleMarketplaceStock(
     calculation.supabase,
@@ -1669,6 +1718,20 @@ async function persistPaymentStatus(
         provider_status:
           remoteStatus || null,
         status: mappedStatus,
+        gross_amount:
+          grossAmount || null,
+        amount:
+          grossAmount || null,
+        provider_fee_amount:
+          providerFeeAmount,
+        provider_net_amount:
+          sellerNetAmount,
+        platform_fee_amount:
+          platformFeeAmount,
+        seller_net_amount:
+          sellerNetAmount,
+        split_status:
+          splitStatus,
         raw_payload: payment,
         card_brand:
           methodId || null,

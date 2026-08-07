@@ -70,6 +70,39 @@ function safeRecord(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+
+async function fetchWithPaymentTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = 30000,
+) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(
+    () => controller.abort(),
+    timeoutMs,
+  );
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (cause) {
+    if (
+      cause instanceof DOMException &&
+      cause.name === "AbortError"
+    ) {
+      throw new Error(
+        "O servidor de pagamentos demorou para responder. Tente novamente.",
+      );
+    }
+
+    throw cause;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
 function paymentKind(
   selectedPaymentMethod: unknown,
   formData: Record<string, unknown>,
@@ -199,8 +232,26 @@ function CheckoutContent() {
   }, [query]);
 
   useEffect(() => {
-    void loadCheckout();
+    const timer = window.setTimeout(() => {
+      void loadCheckout();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [loadCheckout]);
+
+  useEffect(() => {
+    if (!checkoutOpen || publicKey) return;
+
+    const timer = window.setTimeout(() => {
+      console.error("signup_public_key_missing");
+      setError(
+        "O checkout de cadastro ainda nÃ£o recebeu a chave pÃºblica do Mercado Pago neste deploy.",
+      );
+      setBrickReady(false);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [checkoutOpen, publicKey]);
 
   useEffect(() => {
     if (
@@ -255,7 +306,7 @@ function CheckoutContent() {
         const identification = safeRecord(payer.identification);
 
         if (kind === "pix") {
-          const response = await fetch("/api/checkout/signup/pix", {
+          const response = await fetchWithPaymentTimeout("/api/checkout/signup/pix", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
@@ -282,7 +333,7 @@ function CheckoutContent() {
         }
 
         if (kind === "card") {
-          const response = await fetch("/api/checkout/signup/card", {
+          const response = await fetchWithPaymentTimeout("/api/checkout/signup/card", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
@@ -324,7 +375,7 @@ function CheckoutContent() {
         setProcessing(false);
       }
     },
-    [checkout?.email, expires, leadId, token],
+    [checkout, expires, leadId, token],
   );
 
   useEffect(() => {
@@ -440,7 +491,18 @@ function CheckoutContent() {
       brickControllerRef.current = controller;
     }
 
-    void renderBrick();
+    void renderBrick().catch((cause) => {
+      console.error("signup_payment_brick_render_error", cause);
+
+      if (!cancelled) {
+        setBrickReady(false);
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "NÃ£o foi possÃ­vel iniciar o pagamento.",
+        );
+      }
+    });
 
     return () => {
       cancelled = true;
