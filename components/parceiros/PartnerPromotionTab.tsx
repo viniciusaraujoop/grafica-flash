@@ -21,42 +21,42 @@ const scripts: ScriptItem[] = [
     channel: "WhatsApp",
     title: "Primeiro contato",
     body:
-      "Oi! Tudo bem? Vi que vocÃª trabalha com [SEGMENTO] e queria te fazer uma pergunta rÃ¡pida: hoje vocÃªs organizam pedidos, clientes e divulgaÃ§Ã£o em um sistema sÃ³ ou acabam usando vÃ¡rias ferramentas? Trabalho com o OrÃ§aly e posso te mostrar uma demonstraÃ§Ã£o bem curta, sem compromisso.",
+      "Oi! Tudo bem? Vi que você trabalha com [SEGMENTO] e queria te fazer uma pergunta rápida: hoje vocês organizam pedidos, clientes e divulgação em um sistema só ou acabam usando várias ferramentas? Trabalho com o Orçaly e posso te mostrar uma demonstração bem curta, sem compromisso.",
   },
   {
     id: "instagram",
     channel: "Instagram / Direct",
     title: "Abordagem curta",
     body:
-      "Oi! Conheci o perfil de vocÃªs e gostei do trabalho. Eu apresento o OrÃ§aly para empresas que querem organizar site, catÃ¡logo, pedidos e operaÃ§Ã£o em um sÃ³ lugar. Posso te mandar uma demonstraÃ§Ã£o rÃ¡pida para vocÃª ver se faria sentido aÃ­?",
+      "Oi! Conheci o perfil de vocês e gostei do trabalho. Eu apresento o Orçaly para empresas que querem organizar site, catálogo, pedidos e operação em um só lugar. Posso te mandar uma demonstração rápida para você ver se faria sentido aí?",
   },
   {
     id: "presencial",
     channel: "Presencial",
     title: "Pitch de 30 segundos",
     body:
-      "Eu trabalho com o OrÃ§aly, uma plataforma que reÃºne ferramentas que o negÃ³cio normalmente usa separadas. Antes de te explicar tudo, queria entender uma coisa: hoje como vocÃªs recebem pedidos e organizam o acompanhamento dos clientes? Se fizer sentido, eu consigo te mostrar o sistema em poucos minutos.",
+      "Eu trabalho com o Orçaly, uma plataforma que reúne ferramentas que o negócio normalmente usa separadas. Antes de te explicar tudo, queria entender uma coisa: hoje como vocês recebem pedidos e organizam o acompanhamento dos clientes? Se fizer sentido, eu consigo te mostrar o sistema em poucos minutos.",
   },
   {
     id: "followup",
     channel: "Follow-up",
     title: "Retomar sem pressionar",
     body:
-      "Oi! Passando sÃ³ para retomar nossa conversa sobre o OrÃ§aly. VocÃª comentou que [DOR DO CLIENTE]. Na demonstraÃ§Ã£o eu te mostrei como a parte de [RECURSO] pode ajudar justamente nisso. Se ainda fizer sentido, posso te enviar o acesso para conhecer melhor.",
+      "Oi! Passando só para retomar nossa conversa sobre o Orçaly. Você comentou que [DOR DO CLIENTE]. Na demonstração eu te mostrei como a parte de [RECURSO] pode ajudar justamente nisso. Se ainda fizer sentido, posso te enviar o acesso para conhecer melhor.",
   },
   {
     id: "organic",
-    channel: "ConteÃºdo orgÃ¢nico",
+    channel: "Conteúdo orgânico",
     title: "Legenda educativa",
     body:
-      "Seu negÃ³cio usa uma ferramenta para pedidos, outra para catÃ¡logo, planilha para financeiro e WhatsApp para lembrar o resto? Centralizar a operaÃ§Ã£o pode reduzir retrabalho e deixar o atendimento mais claro. Estou mostrando o OrÃ§aly para empresas que querem organizar esse fluxo. {LINK}",
+      "Seu negócio usa uma ferramenta para pedidos, outra para catálogo, planilha para financeiro e WhatsApp para lembrar o resto? Centralizar a operação pode reduzir retrabalho e deixar o atendimento mais claro. Estou mostrando o Orçaly para empresas que querem organizar esse fluxo. {LINK}",
   },
   {
     id: "paid",
-    channel: "TrÃ¡fego pago",
-    title: "AnÃºncio direto",
+    channel: "Tráfego pago",
+    title: "Anúncio direto",
     body:
-      "Pedidos, catÃ¡logo, clientes e operaÃ§Ã£o espalhados em vÃ¡rias ferramentas? ConheÃ§a uma forma mais organizada de centralizar a rotina da sua empresa. Veja o OrÃ§aly e teste se faz sentido para o seu negÃ³cio. {LINK}",
+      "Pedidos, catálogo, clientes e operação espalhados em várias ferramentas? Conheça uma forma mais organizada de centralizar a rotina da sua empresa. Veja o Orçaly e teste se faz sentido para o seu negócio. {LINK}",
   },
 ];
 
@@ -92,13 +92,13 @@ export default function PartnerPromotionTab({
         <div className="relative grid gap-6 xl:grid-cols-[1fr_360px] xl:items-end">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.17em] text-cyan-200/70">
-              Central de divulgaÃ§Ã£o
+              Central de divulgação
             </p>
             <h1 className="mt-2 max-w-3xl text-3xl font-black tracking-[-0.05em] sm:text-4xl">
-              VocÃª nÃ£o precisa inventar a venda do zero.
+              Você não precisa inventar a venda do zero.
             </h1>
             <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-white/58">
-              Use roteiros, ideias de campanha, seu link de indicaÃ§Ã£o e um ambiente demonstrativo para apresentar o OrÃ§aly com mais clareza.
+              Use roteiros, ideias de campanha, seu link de indicação e um ambiente demonstrativo para apresentar o Orçaly com mais clareza.
             </p>
           </div>
 
@@ -107,7 +107,7 @@ export default function PartnerPromotionTab({
               Parceiro
             </p>
             <p className="mt-1 text-lg font-black">
-              {partnerName || "Parceiro OrÃ§aly"}
+              {partnerName || "Parceiro Orçaly"}
             </p>
             <p className="mt-3 text-xs font-bold leading-5 text-white/45">
               Personalize os textos antes de enviar. Conversa real converte melhor do que mensagem copiada para cinquenta pessoas.
@@ -119,13 +119,13 @@ export default function PartnerPromotionTab({
       <div className="grid gap-5 xl:grid-cols-[1.08fr_.92fr]">
         <section className="rounded-[1.8rem] border border-white bg-white p-5 shadow-sm sm:p-6">
           <p className="text-xs font-black uppercase tracking-[0.15em] text-[#1359a5]">
-            Demonstrativo OrÃ§aly
+            Demonstrativo Orçaly
           </p>
           <h2 className="mt-2 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">
             Abra o sistema e mostre como ele funciona.
           </h2>
           <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
-            O demonstrativo usa dados totalmente fictÃ­cios. Ele existe apenas para apresentaÃ§Ã£o comercial e nÃ£o cria pedidos, clientes, cobranÃ§as ou alteraÃ§Ãµes reais.
+            O demonstrativo usa dados totalmente fictícios. Ele existe apenas para apresentação comercial e não cria pedidos, clientes, cobranças ou alterações reais.
           </p>
 
           <div className="mt-5 rounded-[1.5rem] border border-violet-100 bg-gradient-to-br from-violet-50 to-blue-50 p-5">
@@ -135,10 +135,10 @@ export default function PartnerPromotionTab({
                   Somente leitura
                 </span>
                 <p className="mt-3 font-black text-[#071b3a]">
-                  VisÃ£o geral, pedidos, produtos, clientes e financeiro
+                  Visão geral, pedidos, produtos, clientes e financeiro
                 </p>
                 <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
-                  Ideal para uma demonstraÃ§Ã£o rÃ¡pida presencial, em chamada ou compartilhando a tela.
+                  Ideal para uma demonstração rápida presencial, em chamada ou compartilhando a tela.
                 </p>
               </div>
 
@@ -148,7 +148,7 @@ export default function PartnerPromotionTab({
                 rel="noreferrer"
                 className="shrink-0 rounded-2xl bg-[#05245c] px-5 py-4 text-center text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#031a43]"
               >
-                Abrir demonstrativo â†—
+                Abrir demonstrativo ↗
               </Link>
             </div>
           </div>
@@ -159,10 +159,10 @@ export default function PartnerPromotionTab({
             Seu link
           </p>
           <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">
-            Link de indicaÃ§Ã£o
+            Link de indicação
           </h2>
           <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
-            Use este endereÃ§o quando a pessoa quiser conhecer o OrÃ§aly de verdade. Ã‰ ele que preserva a atribuiÃ§Ã£o da indicaÃ§Ã£o.
+            Use este endereço quando a pessoa quiser conhecer o Orçaly de verdade. É ele que preserva a atribuição da indicação.
           </p>
 
           <div className="mt-5 break-all rounded-2xl border border-blue-100 bg-[#f7faff] p-4 text-sm font-black text-[#05245c]">
@@ -174,7 +174,7 @@ export default function PartnerPromotionTab({
             onClick={() => void copy("referral-link", referralLink)}
             className="mt-4 w-full rounded-2xl bg-[#05245c] px-5 py-4 text-sm font-black text-white"
           >
-            {copied === "referral-link" ? "âœ“ Link copiado" : "Copiar meu link"}
+            {copied === "referral-link" ? "✓ Link copiado" : "Copiar meu link"}
           </button>
         </section>
       </div>
@@ -185,10 +185,10 @@ export default function PartnerPromotionTab({
             Roteiros prontos
           </p>
           <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">
-            Comece por uma conversa, nÃ£o por um panfleto.
+            Comece por uma conversa, não por um panfleto.
           </h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
-            Os textos abaixo sÃ£o pontos de partida. Troque os campos entre colchetes e adapte a linguagem ao negÃ³cio da pessoa.
+            Os textos abaixo são pontos de partida. Troque os campos entre colchetes e adapte a linguagem ao negócio da pessoa.
           </p>
         </div>
 
@@ -212,7 +212,7 @@ export default function PartnerPromotionTab({
                   onClick={() => void copy(item.id, item.body)}
                   className="shrink-0 rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-black text-[#05245c]"
                 >
-                  {copied === item.id ? "âœ“ Copiado" : "Copiar"}
+                  {copied === item.id ? "✓ Copiado" : "Copiar"}
                 </button>
               </div>
 
@@ -227,19 +227,19 @@ export default function PartnerPromotionTab({
       <div className="grid gap-5 xl:grid-cols-2">
         <section className="rounded-[1.8rem] border border-white bg-white p-5 shadow-sm sm:p-6">
           <p className="text-xs font-black uppercase tracking-[0.15em] text-emerald-600">
-            TrÃ¡fego gratuito
+            Tráfego gratuito
           </p>
           <h2 className="mt-2 text-2xl font-black">
-            Rotina orgÃ¢nica que dÃ¡ contexto Ã  oferta
+            Rotina orgânica que dá contexto à oferta
           </h2>
 
           <div className="mt-5 grid gap-3">
             {[
-              ["1", "Escolha um nicho", "Fale com empresas cuja rotina vocÃª entende. Isso melhora conteÃºdo e abordagem."],
-              ["2", "Publique dores reais", "Mostre problemas de pedidos, atendimento, catÃ¡logo, organizaÃ§Ã£o e retrabalho."],
+              ["1", "Escolha um nicho", "Fale com empresas cuja rotina você entende. Isso melhora conteúdo e abordagem."],
+              ["2", "Publique dores reais", "Mostre problemas de pedidos, atendimento, catálogo, organização e retrabalho."],
               ["3", "Mostre interface", "Grave trechos do demonstrativo explicando um fluxo por vez."],
-              ["4", "Converse", "Responda comentÃ¡rios e directs antes de jogar um link na pessoa."],
-              ["5", "Convide", "Quando houver interesse, envie seu link de indicaÃ§Ã£o para ela conhecer o sistema."],
+              ["4", "Converse", "Responda comentários e directs antes de jogar um link na pessoa."],
+              ["5", "Convide", "Quando houver interesse, envie seu link de indicação para ela conhecer o sistema."],
             ].map(([number, title, detail]) => (
               <div
                 key={number}
@@ -261,19 +261,19 @@ export default function PartnerPromotionTab({
 
         <section className="rounded-[1.8rem] border border-white bg-white p-5 shadow-sm sm:p-6">
           <p className="text-xs font-black uppercase tracking-[0.15em] text-violet-600">
-            TrÃ¡fego pago
+            Tráfego pago
           </p>
           <h2 className="mt-2 text-2xl font-black">
-            Teste pequeno, mensagem especÃ­fica, mediÃ§Ã£o clara
+            Teste pequeno, mensagem específica, medição clara
           </h2>
 
           <div className="mt-5 grid gap-3">
             {[
-              ["PÃºblico", "Comece com um nicho, regiÃ£o ou perfil de negÃ³cio que tenha uma dor identificÃ¡vel."],
-              ["Criativo", "Mostre a situaÃ§Ã£o atual e uma tela do OrÃ§aly que ajude a organizar aquele processo."],
-              ["Oferta", "Convide para conhecer ou testar. NÃ£o prometa faturamento, economia garantida ou resultado impossÃ­vel de comprovar."],
-              ["Destino", "Use seu link de indicaÃ§Ã£o quando a campanha levar para cadastro e mantenha a mesma mensagem do anÃºncio."],
-              ["MÃ©trica", "Acompanhe custo por conversa, cadastro e cliente, nÃ£o apenas curtidas ou visualizaÃ§Ãµes."],
+              ["Público", "Comece com um nicho, região ou perfil de negócio que tenha uma dor identificável."],
+              ["Criativo", "Mostre a situação atual e uma tela do Orçaly que ajude a organizar aquele processo."],
+              ["Oferta", "Convide para conhecer ou testar. Não prometa faturamento, economia garantida ou resultado impossível de comprovar."],
+              ["Destino", "Use seu link de indicação quando a campanha levar para cadastro e mantenha a mesma mensagem do anúncio."],
+              ["Métrica", "Acompanhe custo por conversa, cadastro e cliente, não apenas curtidas ou visualizações."],
             ].map(([title, detail]) => (
               <div
                 key={title}
@@ -291,17 +291,17 @@ export default function PartnerPromotionTab({
 
       <section className="rounded-[1.8rem] border border-red-100 bg-red-50 p-5 sm:p-6">
         <p className="text-xs font-black uppercase tracking-[0.15em] text-red-600">
-          O que nÃ£o fazer
+          O que não fazer
         </p>
         <h2 className="mt-2 text-xl font-black text-red-950">
-          Venda ruim vira cancelamento, reclamaÃ§Ã£o e indicaÃ§Ã£o perdida.
+          Venda ruim vira cancelamento, reclamação e indicação perdida.
         </h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {[
-            "NÃ£o invente funcionalidade que o sistema ainda nÃ£o possui.",
-            "NÃ£o prometa renda, faturamento ou resultado garantido.",
-            "NÃ£o use urgÃªncia, desconto ou escassez falsos.",
-            "NÃ£o faÃ§a spam em massa ou esconda que vocÃª Ã© parceiro do OrÃ§aly.",
+            "Não invente funcionalidade que o sistema ainda não possui.",
+            "Não prometa renda, faturamento ou resultado garantido.",
+            "Não use urgência, desconto ou escassez falsos.",
+            "Não faça spam em massa ou esconda que você é parceiro do Orçaly.",
           ].map((text) => (
             <div
               key={text}

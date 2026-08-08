@@ -7,30 +7,30 @@ import { useState } from "react";
 type DemoTab = "overview" | "orders" | "products" | "clients" | "finance";
 
 const nav: Array<{ id: DemoTab; label: string; icon: string }> = [
-  { id: "overview", label: "VisÃ£o geral", icon: "âŒ‚" },
-  { id: "orders", label: "Pedidos", icon: "â–¤" },
-  { id: "products", label: "Produtos", icon: "â–¡" },
-  { id: "clients", label: "Clientes", icon: "â—Ž" },
+  { id: "overview", label: "Visão geral", icon: "⌂" },
+  { id: "orders", label: "Pedidos", icon: "▤" },
+  { id: "products", label: "Produtos", icon: "□" },
+  { id: "clients", label: "Clientes", icon: "◎" },
   { id: "finance", label: "Financeiro", icon: "$" },
 ];
 
 const orders = [
-  { id: "#1048", customer: "Marina C.", value: "R$ 189,90", status: "Recebido", when: "hÃ¡ 4 min" },
-  { id: "#1047", customer: "JoÃ£o R.", value: "R$ 74,50", status: "Em produÃ§Ã£o", when: "hÃ¡ 18 min" },
-  { id: "#1046", customer: "Amanda S.", value: "R$ 248,00", status: "Pronto", when: "hÃ¡ 42 min" },
-  { id: "#1045", customer: "Carlos M.", value: "R$ 119,90", status: "Entregue", when: "hÃ¡ 1 h" },
+  { id: "#1048", customer: "Marina C.", value: "R$ 189,90", status: "Recebido", when: "há 4 min" },
+  { id: "#1047", customer: "João R.", value: "R$ 74,50", status: "Em produção", when: "há 18 min" },
+  { id: "#1046", customer: "Amanda S.", value: "R$ 248,00", status: "Pronto", when: "há 42 min" },
+  { id: "#1045", customer: "Carlos M.", value: "R$ 119,90", status: "Entregue", when: "há 1 h" },
 ];
 
 const products = [
   { name: "Kit promocional", category: "Mais vendido", price: "R$ 89,90", stock: "24 un." },
-  { name: "Produto personalizado", category: "Sob encomenda", price: "R$ 149,90", stock: "ProduÃ§Ã£o" },
-  { name: "Pacote empresarial", category: "ServiÃ§o", price: "R$ 299,00", stock: "DisponÃ­vel" },
-  { name: "Item rÃ¡pido", category: "CatÃ¡logo", price: "R$ 39,90", stock: "61 un." },
+  { name: "Produto personalizado", category: "Sob encomenda", price: "R$ 149,90", stock: "Produção" },
+  { name: "Pacote empresarial", category: "Serviço", price: "R$ 299,00", stock: "Disponível" },
+  { name: "Item rápido", category: "Catálogo", price: "R$ 39,90", stock: "61 un." },
 ];
 
 const clients = [
   { name: "Marina Costa", detail: "5 pedidos", value: "R$ 684,20", tag: "Recorrente" },
-  { name: "JoÃ£o Rocha", detail: "2 pedidos", value: "R$ 218,40", tag: "Ativo" },
+  { name: "João Rocha", detail: "2 pedidos", value: "R$ 218,40", tag: "Ativo" },
   { name: "Amanda Silva", detail: "8 pedidos", value: "R$ 1.492,70", tag: "VIP" },
   { name: "Carlos Melo", detail: "1 pedido", value: "R$ 119,90", tag: "Novo" },
 ];
@@ -63,7 +63,7 @@ export default function PartnerSystemDemo() {
   return (
     <main className="min-h-screen bg-[#eef3f8] text-[#071b3a]">
       <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-center text-xs font-black text-amber-800">
-        AMBIENTE DE DEMONSTRAÃ‡ÃƒO Â· DADOS FICTÃCIOS Â· NENHUMA ALTERAÃ‡ÃƒO Ã‰ SALVA
+        AMBIENTE DE DEMONSTRAÇÃO · DADOS FICTÍCIOS · NENHUMA ALTERAÇÃO É SALVA
       </div>
 
       <header className="sticky top-0 z-30 border-b border-blue-100 bg-white/95 backdrop-blur-xl">
@@ -71,7 +71,7 @@ export default function PartnerSystemDemo() {
           <Link href="/parceiros">
             <Image
               src="/logo-orcaly.png"
-              alt="OrÃ§aly"
+              alt="Orçaly"
               width={170}
               height={50}
               priority
@@ -101,7 +101,7 @@ export default function PartnerSystemDemo() {
             </p>
             <p className="mt-2 text-lg font-black">Studio Aurora</p>
             <p className="mt-1 text-xs font-bold text-white/40">
-              Dados criados apenas para apresentaÃ§Ã£o
+              Dados criados apenas para apresentação
             </p>
           </div>
 
@@ -134,7 +134,7 @@ export default function PartnerSystemDemo() {
               Seguro para apresentar
             </p>
             <p className="mt-1 text-[11px] font-bold leading-5 text-white/40">
-              BotÃµes e dados desta tela nÃ£o atingem banco, pagamentos ou empresas reais.
+              Botões e dados desta tela não atingem banco, pagamentos ou empresas reais.
             </p>
           </div>
         </aside>
@@ -146,13 +146,13 @@ export default function PartnerSystemDemo() {
                 <div className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-cyan-300/15 blur-3xl" />
                 <div className="relative">
                   <p className="text-xs font-black uppercase tracking-[0.17em] text-cyan-200/70">
-                    VisÃ£o operacional
+                    Visão operacional
                   </p>
                   <h1 className="mt-2 max-w-4xl text-3xl font-black tracking-[-0.055em] sm:text-4xl">
-                    Bom dia. Sua empresa estÃ¡ em movimento.
+                    Bom dia. Sua empresa está em movimento.
                   </h1>
                   <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-white/55">
-                    A ideia do OrÃ§aly Ã© reunir as informaÃ§Ãµes que o empreendedor normalmente espalha entre planilhas, mensagens e ferramentas diferentes.
+                    A ideia do Orçaly é reunir as informações que o empreendedor normalmente espalha entre planilhas, mensagens e ferramentas diferentes.
                   </p>
                 </div>
               </section>
@@ -161,7 +161,7 @@ export default function PartnerSystemDemo() {
                 <Metric label="Pedidos hoje" value="18" detail="+4 desde ontem" />
                 <Metric label="Faturamento do dia" value="R$ 2.846" detail="dados ilustrativos" />
                 <Metric label="Clientes ativos" value="327" detail="base organizada" />
-                <Metric label="PendÃªncias" value="6" detail="itens para acompanhar" />
+                <Metric label="Pendências" value="6" detail="itens para acompanhar" />
               </div>
 
               <div className="grid gap-5 xl:grid-cols-[1.1fr_.9fr]">
@@ -190,10 +190,10 @@ export default function PartnerSystemDemo() {
                       >
                         <div>
                           <p className="font-black">
-                            {order.id} Â· {order.customer}
+                            {order.id} · {order.customer}
                           </p>
                           <p className="mt-1 text-xs font-bold text-slate-400">
-                            {order.when} Â· {order.status}
+                            {order.when} · {order.status}
                           </p>
                         </div>
                         <p className="font-black text-[#05245c]">{order.value}</p>
@@ -204,16 +204,16 @@ export default function PartnerSystemDemo() {
 
                 <section className="rounded-[1.7rem] border border-white bg-white p-5 shadow-sm">
                   <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
-                    Fluxo da operaÃ§Ã£o
+                    Fluxo da operação
                   </p>
                   <h2 className="mt-1 text-xl font-black">Do pedido ao acompanhamento</h2>
 
                   <div className="mt-5 grid gap-3">
                     {[
                       ["01", "Pedido recebido", "Cliente entra no fluxo organizado."],
-                      ["02", "Equipe acompanha", "Status e informaÃ§Ãµes ficam centralizados."],
-                      ["03", "Cliente Ã© registrado", "HistÃ³rico ajuda em novas vendas e atendimento."],
-                      ["04", "GestÃ£o enxerga", "Indicadores resumem a operaÃ§Ã£o."],
+                      ["02", "Equipe acompanha", "Status e informações ficam centralizados."],
+                      ["03", "Cliente é registrado", "Histórico ajuda em novas vendas e atendimento."],
+                      ["04", "Gestão enxerga", "Indicadores resumem a operação."],
                     ].map(([number, title, detail]) => (
                       <div
                         key={number}
@@ -274,7 +274,7 @@ export default function PartnerSystemDemo() {
               </div>
 
               <div className="mt-5 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm font-bold text-amber-800">
-                DemonstraÃ§Ã£o: clicar, editar ou mudar status aqui nÃ£o produz nenhuma alteraÃ§Ã£o real.
+                Demonstração: clicar, editar ou mudar status aqui não produz nenhuma alteração real.
               </div>
             </section>
           ) : null}
@@ -282,7 +282,7 @@ export default function PartnerSystemDemo() {
           {tab === "products" ? (
             <section className="rounded-[1.8rem] border border-white bg-white p-5 shadow-sm sm:p-6">
               <p className="text-xs font-black uppercase tracking-[0.15em] text-[#1359a5]">
-                CatÃ¡logo e produtos
+                Catálogo e produtos
               </p>
               <h1 className="mt-2 text-3xl font-black tracking-[-0.05em]">
                 Produtos organizados para vender e operar.
@@ -321,7 +321,7 @@ export default function PartnerSystemDemo() {
                 Clientes
               </p>
               <h1 className="mt-2 text-3xl font-black tracking-[-0.05em]">
-                HistÃ³rico para atender melhor e vender novamente.
+                Histórico para atender melhor e vender novamente.
               </h1>
 
               <div className="mt-6 grid gap-3">
@@ -341,7 +341,7 @@ export default function PartnerSystemDemo() {
                       <div>
                         <p className="font-black">{client.name}</p>
                         <p className="mt-1 text-xs font-bold text-slate-400">
-                          {client.detail} Â· {client.tag}
+                          {client.detail} · {client.tag}
                         </p>
                       </div>
                     </div>
@@ -359,25 +359,25 @@ export default function PartnerSystemDemo() {
                   Financeiro
                 </p>
                 <h1 className="mt-2 text-3xl font-black tracking-[-0.05em]">
-                  Uma visÃ£o simples do que entrou, saiu e estÃ¡ previsto.
+                  Uma visão simples do que entrou, saiu e está previsto.
                 </h1>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <Metric label="Entradas do mÃªs" value="R$ 24,8 mil" detail="dados fictÃ­cios" />
-                  <Metric label="SaÃ­das" value="R$ 9,4 mil" detail="custos demonstrativos" />
+                  <Metric label="Entradas do mês" value="R$ 24,8 mil" detail="dados fictícios" />
+                  <Metric label="Saídas" value="R$ 9,4 mil" detail="custos demonstrativos" />
                   <Metric label="A receber" value="R$ 5,7 mil" detail="pedidos em aberto" />
                   <Metric label="Saldo projetado" value="R$ 15,4 mil" detail="exemplo visual" />
                 </div>
               </section>
 
               <section className="rounded-[1.8rem] border border-white bg-white p-5 shadow-sm sm:p-6">
-                <p className="font-black">Ãšltimos lanÃ§amentos</p>
+                <p className="font-black">Últimos lançamentos</p>
                 <div className="mt-4 grid gap-2">
                   {[
                     ["Pedido #1048", "Entrada", "+ R$ 189,90"],
-                    ["Fornecedor de material", "SaÃ­da", "- R$ 420,00"],
+                    ["Fornecedor de material", "Saída", "- R$ 420,00"],
                     ["Pedido #1046", "Entrada", "+ R$ 248,00"],
-                    ["ServiÃ§o recorrente", "SaÃ­da", "- R$ 99,90"],
+                    ["Serviço recorrente", "Saída", "- R$ 99,90"],
                   ].map(([title, type, amount]) => (
                     <div
                       key={`${title}-${amount}`}
@@ -404,7 +404,7 @@ export default function PartnerSystemDemo() {
           ) : null}
 
           <div className="mt-5 rounded-2xl border border-violet-100 bg-violet-50 p-4 text-center text-xs font-black text-violet-700">
-            Este ambiente Ã© apenas um demonstrativo comercial do OrÃ§aly. Todos os nomes, valores e operaÃ§Ãµes exibidos sÃ£o fictÃ­cios.
+            Este ambiente é apenas um demonstrativo comercial do Orçaly. Todos os nomes, valores e operações exibidos são fictícios.
           </div>
         </section>
       </div>

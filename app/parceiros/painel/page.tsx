@@ -267,10 +267,10 @@ export default function ParceirosPainelPage() {
   const available = Number(dashboard.stats.available || 0);
   const minimum = Number(dashboard.program.minimumPayout || 50);
   const nav = [
-    ["overview", "VisÃ£o geral"],
-    ["referrals", "IndicaÃ§Ãµes"],
+    ["overview", "Visão geral"],
+    ["referrals", "Indicações"],
     ["courses", "Cursos"],
-    ["promotion", "DivulgaÃ§Ã£o"],
+    ["promotion", "Divulgação"],
     ["payments", "Pagamentos e Pix"],
     ["ranking", "Ranking"],
   ];
