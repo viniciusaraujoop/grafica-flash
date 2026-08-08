@@ -27,14 +27,41 @@ export async function POST(
   request: NextRequest,
 ) {
   const url = new URL(request.url);
+  const explicitEnvironment =
+    url.searchParams.get("environment");
   const environment =
-    getAsaasEnvironment(
-      url.searchParams.get("environment"),
-    );
+    explicitEnvironment
+      ? getAsaasEnvironment(
+          explicitEnvironment,
+        )
+      : process.env.VERCEL_ENV === "preview"
+        ? "sandbox"
+        : "production";
   const config =
     getAsaasConfig(environment);
 
   if (!config.webhookToken) {
+    console.warn(
+      "[ASAAS_WEBHOOK_CONFIG_MISSING]",
+      JSON.stringify({
+        environment,
+        vercelEnv:
+          process.env.VERCEL_ENV || null,
+        hasExplicitEnvironment:
+          Boolean(explicitEnvironment),
+        hasSandboxWebhookToken:
+          Boolean(
+            process.env
+              .ASAAS_SANDBOX_WEBHOOK_TOKEN,
+          ),
+        hasProductionWebhookToken:
+          Boolean(
+            process.env
+              .ASAAS_MARKETPLACE_WEBHOOK_TOKEN,
+          ),
+      }),
+    );
+
     return NextResponse.json(
       {
         error:
