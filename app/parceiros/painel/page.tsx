@@ -16,6 +16,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import PartnerCoursesTab from "@/components/parceiros/PartnerCoursesTab";
 import PartnerPromotionTab from "@/components/parceiros/PartnerPromotionTab";
+import PartnerGrowthHub from "@/components/parceiros/PartnerGrowthHub";
 
 type ReferralRow = {
   id: string;
@@ -125,6 +126,7 @@ export default function ParceirosPainelPage() {
   const [tab, setTab] = useState<
     | "overview"
     | "referrals"
+    | "growth"
     | "courses"
     | "promotion"
     | "payments"
@@ -269,6 +271,7 @@ export default function ParceirosPainelPage() {
   const nav = [
     ["overview", "Visão geral"],
     ["referrals", "Indicações"],
+    ["growth", "Central Comercial"],
     ["courses", "Cursos"],
     ["promotion", "Divulgação"],
     ["payments", "Pagamentos e Pix"],
@@ -546,6 +549,13 @@ export default function ParceirosPainelPage() {
             </section>
           ) : null}
 
+          {tab === "growth" ? (
+            <PartnerGrowthHub
+              partnerName={dashboard.profile.name}
+              referralLink={dashboard.profile.referralLink}
+              commissionRate={dashboard.program.commissionRate}
+            />
+          ) : null}
           {tab === "courses" ? (
             <PartnerCoursesTab />
           ) : null}

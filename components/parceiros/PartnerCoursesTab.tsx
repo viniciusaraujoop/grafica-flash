@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 type Lesson = {
   id: string;
@@ -1212,6 +1213,55 @@ function allLessonIds(course: Course) {
 function totalMinutes(course: Course) {
   return course.lessons.reduce((sum, lesson) => sum + lesson.minutes, 0);
 }
+async function partnerCourseToken() {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token || "";
+}
+
+async function syncCourseLesson(
+  courseId: string,
+  lessonId: string,
+  complete: boolean,
+) {
+  const accessToken = await partnerCourseToken();
+  if (!accessToken) return;
+
+  await fetch("/api/parceiros/workspace", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      action: complete ? "complete_lesson" : "uncomplete_lesson",
+      courseId,
+      lessonId,
+    }),
+  });
+}
+
+async function syncWholeCourse(
+  courseId: string,
+  lessonIds: string[],
+  complete: boolean,
+) {
+  const accessToken = await partnerCourseToken();
+  if (!accessToken) return;
+
+  await fetch("/api/parceiros/workspace", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      action: "set_course_lessons",
+      courseId,
+      lessonIds,
+      complete,
+    }),
+  });
+}
 
 export default function PartnerCoursesTab() {
   const [selectedId, setSelectedId] = useState(courses[0].id);
@@ -1246,6 +1296,40 @@ export default function PartnerCoursesTab() {
       } catch {
         // Progresso local corrompido não deve quebrar a academia.
       }
+      // ORCALY_PARTNER_REMOTE_PROGRESS
+      void (async () => {
+        try {
+          const accessToken = await partnerCourseToken();
+          if (!accessToken) return;
+
+          const response = await fetch("/api/parceiros/workspace", {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+            cache: "no-store",
+          });
+
+          if (!response.ok) return;
+
+          const payload = (await response.json()) as {
+            courseProgress?: Array<{
+              lesson_id?: string;
+            }>;
+          };
+
+          const remoteIds = (payload.courseProgress || [])
+            .map((row) => String(row.lesson_id || ""))
+            .filter(Boolean);
+
+          if (remoteIds.length) {
+            setCompletedLessons((current) => {
+              return new Set([...current, ...remoteIds]);
+            });
+          }
+        } catch {
+          // A Academia continua utilizável mesmo sem sincronização remota.
+        }
+      })();
     }, 0);
 
     return () => {
@@ -1313,20 +1397,23 @@ export default function PartnerCoursesTab() {
 
   function toggleLessonComplete(lessonId: string) {
     const next = new Set(completedLessons);
+    const completing = !next.has(lessonId);
 
-    if (next.has(lessonId)) {
-      next.delete(lessonId);
-    } else {
+    if (completing) {
       next.add(lessonId);
+    } else {
+      next.delete(lessonId);
     }
 
     persist(next);
+    void syncCourseLesson(selected.id, lessonId, completing);
   }
 
   function toggleCourseComplete(course: Course) {
     const next = new Set(completedLessons);
     const ids = allLessonIds(course);
     const allDone = ids.every((id) => next.has(id));
+    const completing = !allDone;
 
     for (const id of ids) {
       if (allDone) {
@@ -1337,6 +1424,7 @@ export default function PartnerCoursesTab() {
     }
 
     persist(next);
+    void syncWholeCourse(course.id, ids, completing);
   }
 
   return (

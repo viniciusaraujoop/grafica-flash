@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getPanelModulesForBusinessType,
   panelGroupLabels,
@@ -992,6 +992,20 @@ export default function PartnerSystemDemo() {
   const [notice, setNotice] = useState(
     "Modo demonstração: navegue livremente. Nenhum dado real será alterado.",
   );
+  // ORCALY_DEMO_TRAINING_MODE
+  const [trainingMode, setTrainingMode] = useState(false);
+  const [visitedRoutes, setVisitedRoutes] = useState<Set<string>>(
+    new Set(["/painel/inicio"]),
+  );
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      setTrainingMode(params.get("training") === "1");
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const company: DemoCompany = useMemo(
     () => ({
@@ -1024,6 +1038,7 @@ export default function PartnerSystemDemo() {
     }
 
     setPathname(href);
+    setVisitedRoutes((current) => new Set([...current, href]));
     setNotice(`Visualizando ${pageTitle(href, modules)} em modo somente leitura.`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1035,6 +1050,7 @@ export default function PartnerSystemDemo() {
   function changeSegment(next: BusinessSegment) {
     setSegment(next);
     setPathname("/painel/inicio");
+    setVisitedRoutes(new Set(["/painel/inicio"]));
     setNotice(
       `Cenário alterado para ${scenarioNames[next]}. O menu acompanha o segmento do Orçaly.`,
     );
@@ -1045,6 +1061,18 @@ export default function PartnerSystemDemo() {
     routeDescriptions[pathname] ||
     modules.find((panelItem) => panelItem.href === pathname)?.description ||
     "Explore esta área usando dados fictícios e sem qualquer alteração real.";
+  const trainingMissionRoutes = [
+    "/painel/pedidos",
+    "/painel/crm",
+    "/painel/site",
+    "/painel/financeiro",
+  ];
+  const trainingCompleted = trainingMissionRoutes.filter((route) =>
+    visitedRoutes.has(route),
+  ).length;
+  const trainingProgress = Math.round(
+    (trainingCompleted / trainingMissionRoutes.length) * 100,
+  );
 
   return (
     <main className="min-h-screen bg-[#eef3f8]">
@@ -1094,6 +1122,40 @@ export default function PartnerSystemDemo() {
         </div>
       </div>
 
+      {trainingMode ? (
+        <section className="border-b border-violet-200 bg-violet-50 px-4 py-4">
+          <div className="mx-auto grid max-w-[1700px] gap-4 lg:grid-cols-[1fr_360px] lg:items-center">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-700">
+                Treino de demonstração ativo
+              </p>
+              <h2 className="mt-1 text-lg font-black text-violet-950">
+                Missão: conduza uma demo sem passear por todos os menus.
+              </h2>
+              <p className="mt-1 text-xs font-semibold leading-5 text-violet-800/70">
+                Visite Pedidos, CRM, Minha Vitrine e Financeiro. Durante uma apresentação real, escolha apenas as áreas ligadas à dor do cliente.
+              </p>
+            </div>
+            <div className="rounded-xl border border-violet-200 bg-white p-4">
+              <div className="flex items-center justify-between text-xs font-black text-violet-800">
+                <span>Progresso da missão</span>
+                <span>{trainingCompleted}/{trainingMissionRoutes.length}</span>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-violet-100">
+                <div
+                  className="h-full rounded-full bg-violet-600 transition-all duration-500"
+                  style={{ width: `${trainingProgress}%` }}
+                />
+              </div>
+              <p className="mt-2 text-xs font-bold text-violet-700">
+                {trainingProgress === 100
+                  ? "Missão concluída. Agora tente repetir a demo em menos de cinco minutos."
+                  : "Navegue pelas áreas da missão usando o menu."}
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : null}
       <div
         className="orcaly-panel-adaptive min-h-screen lg:grid lg:grid-cols-[288px_minmax(0,1fr)]"
         data-orcaly-panel="adaptive-v1-demo"
