@@ -1348,16 +1348,9 @@ async function calculateCheckout(
       companyRecord.plan,
   );
 
-  // A taxa da plataforma estÃ¡ temporariamente pausada.
-  // Mantemos o percentual configurado no plano para
-  // permitir reativaÃ§Ã£o futura sem alterar os planos.
-  const configuredFeePercent =
-    plan.marketplaceFeePercent;
-  const platformFeeEnabled = false;
+  // Marketplace fee is active and follows the seller plan.
   const feePercent =
-    platformFeeEnabled
-      ? configuredFeePercent
-      : 0;
+    plan.marketplaceFeePercent;
   const commissionAmount = money(
     total * (feePercent / 100),
   );
