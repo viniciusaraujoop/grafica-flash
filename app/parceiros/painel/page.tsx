@@ -14,8 +14,69 @@ import {
   useState,
 } from "react";
 import { supabase } from "@/lib/supabase";
+import PartnerCoursesTab from "@/components/parceiros/PartnerCoursesTab";
+import PartnerPromotionTab from "@/components/parceiros/PartnerPromotionTab";
 
-type Dashboard = Record<string, any>;
+type ReferralRow = {
+  id: string;
+  customer_name_masked: string;
+  customer_email_masked: string;
+  status: string;
+  registered_at: string | null;
+  trial_ends_at: string | null;
+  plan: string;
+  commission_expected: number;
+};
+
+type PayoutRow = {
+  id: string;
+  amount: number;
+  requested_at: string | null;
+  status: string;
+};
+
+type RankingRow = {
+  id: string;
+  position: number;
+  name: string;
+  conversions: number;
+  score: number;
+};
+
+type PayoutAccount = {
+  holderName: string;
+  pixKeyType: string;
+  pixKeyMasked: string;
+  isVerified: boolean;
+};
+
+type Dashboard = {
+  profile: {
+    id: string;
+    name: string;
+    code: string;
+    referralLink: string;
+    debtBalance: number;
+  };
+  stats: {
+    clicks: number;
+    referrals: number;
+    future: number;
+    hold: number;
+    available: number;
+    paid: number;
+  };
+  program: {
+    commissionRate: number;
+    minimumPayout: number;
+  };
+  payoutAccount: PayoutAccount | null;
+  referrals: ReferralRow[];
+  payouts: PayoutRow[];
+  ranking: {
+    top: RankingRow[];
+  };
+};
 
 function money(value: unknown) {
   return Number(value || 0).toLocaleString("pt-BR", {
@@ -62,7 +123,12 @@ export default function ParceirosPainelPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [tab, setTab] = useState<
-    "overview" | "referrals" | "payments" | "ranking"
+    | "overview"
+    | "referrals"
+    | "courses"
+    | "promotion"
+    | "payments"
+    | "ranking"
   >("overview");
   const [pix, setPix] = useState({
     pixKeyType: "CPF",
@@ -102,7 +168,13 @@ export default function ParceirosPainelPage() {
   }, [router]);
 
   useEffect(() => {
-    void load();
+    const timer = window.setTimeout(() => {
+      void load();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [load]);
 
   async function action(
@@ -195,8 +267,10 @@ export default function ParceirosPainelPage() {
   const available = Number(dashboard.stats.available || 0);
   const minimum = Number(dashboard.program.minimumPayout || 50);
   const nav = [
-    ["overview", "Visão geral"],
-    ["referrals", "Indicações"],
+    ["overview", "VisÃ£o geral"],
+    ["referrals", "IndicaÃ§Ãµes"],
+    ["courses", "Cursos"],
+    ["promotion", "DivulgaÃ§Ã£o"],
     ["payments", "Pagamentos e Pix"],
     ["ranking", "Ranking"],
   ];
@@ -396,7 +470,7 @@ export default function ParceirosPainelPage() {
                   </button>
                 </div>
                 <div className="mt-4 grid gap-2">
-                  {dashboard.referrals.slice(0, 5).map((row: any) => (
+                  {dashboard.referrals.slice(0, 5).map((row: ReferralRow) => (
                     <div
                       key={row.id}
                       className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-[#f8faff] p-4"
@@ -434,7 +508,7 @@ export default function ParceirosPainelPage() {
                 Dados pessoais aparecem mascarados para proteger o cliente.
               </p>
               <div className="mt-6 grid gap-3">
-                {dashboard.referrals.map((row: any) => (
+                {dashboard.referrals.map((row: ReferralRow) => (
                   <article
                     key={row.id}
                     className="rounded-[1.4rem] border border-slate-200 bg-[#f8faff] p-4"
@@ -472,7 +546,18 @@ export default function ParceirosPainelPage() {
             </section>
           ) : null}
 
-          {tab === "payments" ? (
+          {tab === "courses" ? (
+            <PartnerCoursesTab />
+          ) : null}
+
+          {tab === "promotion" ? (
+            <PartnerPromotionTab
+              referralLink={dashboard.profile.referralLink}
+              partnerName={dashboard.profile.name}
+            />
+          ) : null}
+
+{tab === "payments" ? (
             <div className="grid gap-5 xl:grid-cols-[.9fr_1.1fr]">
               <section data-partner-card className="partner-fade-up rounded-[1.8rem] border border-white bg-white p-5 shadow-sm">
                 <p className="text-xs font-black uppercase tracking-[0.15em] text-[#1359a5]">
@@ -603,7 +688,7 @@ export default function ParceirosPainelPage() {
                   </div>
                 ) : null}
                 <div className="mt-5 grid gap-3">
-                  {dashboard.payouts.map((row: any) => (
+                  {dashboard.payouts.map((row: PayoutRow) => (
                     <article
                       key={row.id}
                       className="rounded-[1.3rem] border border-slate-200 p-4"
@@ -640,7 +725,7 @@ export default function ParceirosPainelPage() {
                 A pontuação considera clientes pagos, plano e permanência.
               </p>
               <div className="mt-6 grid gap-3">
-                {dashboard.ranking.top.map((row: any) => (
+                {dashboard.ranking.top.map((row: RankingRow) => (
                   <article
                     key={row.id}
                     className={`flex items-center justify-between gap-4 rounded-[1.4rem] border p-4 ${
