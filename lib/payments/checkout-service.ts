@@ -2369,7 +2369,8 @@ export async function createCheckoutPayment(
     notification_url:
       `${appUrl}/api/marketplace/payments/webhook/mercado-pago` +
       `?company_id=${encodeURIComponent(companyId)}` +
-      `&marketplace_payment_id=${encodeURIComponent(transactionId)}`,
+      `&marketplace_payment_id=${encodeURIComponent(transactionId)}` +
+      `&source_news=webhooks`,
     statement_descriptor: "ORCALY",
     binary_mode: false,
     metadata: {

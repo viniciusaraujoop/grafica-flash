@@ -59,10 +59,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const xSignature = request.headers.get('x-signature')
+    const xRequestId = request.headers.get('x-request-id')
+    const signatureDataIdRaw = String(
+      url.searchParams.get('data.id') ||
+        url.searchParams.get('data_id') ||
+        paymentId ||
+        '',
+    )
+    const signatureDataId = /[a-z]/i.test(signatureDataIdRaw)
+      ? signatureDataIdRaw.toLowerCase()
+      : signatureDataIdRaw
+
+    if (!xSignature || !xRequestId) {
+      return NextResponse.json({
+        ok: true,
+        ignored: 'Notificacao legada sem assinatura.',
+      })
+    }
+
     const signatureOk = verifyMercadoPagoWebhookSignature({
-      xSignature: request.headers.get('x-signature'),
-      xRequestId: request.headers.get('x-request-id'),
-      dataId: paymentId,
+      xSignature,
+      xRequestId,
+      dataId: signatureDataId,
       secret,
     })
 
