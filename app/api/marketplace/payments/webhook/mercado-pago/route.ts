@@ -183,12 +183,40 @@ export async function POST(request: NextRequest) {
     const feeDetails = Array.isArray(mpPayment.fee_details)
       ? mpPayment.fee_details
       : []
-    const applicationFeeAmount = feeDetails.reduce(
+    const chargesDetails = Array.isArray(mpPayment.charges_details)
+      ? mpPayment.charges_details
+      : []
+    const applicationFeeFromFees = feeDetails.reduce(
       (total: number, fee: any) =>
         String(fee?.type || '').toLowerCase() === 'application_fee'
           ? total + Math.max(0, Number(fee?.amount || 0))
           : total,
       0,
+    )
+    const applicationFeeFromCharges = chargesDetails.reduce(
+      (total: number, charge: any) => {
+        const name = String(charge?.name || '').toLowerCase()
+        const from = String(charge?.accounts?.from || '').toLowerCase()
+        const to = String(charge?.accounts?.to || '').toLowerCase()
+
+        if (
+          name !== 'third_payment' ||
+          from !== 'collector' ||
+          to !== 'marketplace_owner'
+        ) {
+          return total
+        }
+
+        return total + Math.max(
+          0,
+          Number(charge?.amounts?.original || 0),
+        )
+      },
+      0,
+    )
+    const applicationFeeAmount = Math.max(
+      applicationFeeFromFees,
+      applicationFeeFromCharges,
     )
     const providerFeeAmount = feeDetails.reduce(
       (total: number, fee: any) =>
@@ -221,21 +249,38 @@ export async function POST(request: NextRequest) {
               ).toFixed(2),
             ),
           )
+    const splitApplied =
+      mappedStatus !== 'paid' ||
+      expectedCommissionAmount <= 0 ||
+      (
+        applicationFeeAmount > 0 &&
+        applicationFeeAmount + 0.005 >=
+          expectedCommissionAmount
+      )
     const splitStatus =
       mappedStatus === 'paid'
-        ? applicationFeeAmount + 0.005 >= expectedCommissionAmount &&
-          applicationFeeAmount > 0
+        ? splitApplied
           ? 'applied'
           : 'missing'
         : 'pending'
+    const effectiveStatus =
+      mappedStatus === 'paid' && !splitApplied
+        ? 'pending'
+        : mappedStatus
+    const effectivePaidAt =
+      effectiveStatus === 'paid'
+        ? paidAt
+        : null
 
     const { error: stockError } = await supabaseAdmin.rpc(
       'settle_marketplace_stock',
       {
         p_company_id: companyId,
         p_marketplace_payment_id: marketplacePaymentId,
-        p_payment_status: mappedStatus,
-        p_reason: String(mpPayment.status || mappedStatus),
+        p_payment_status: effectiveStatus,
+        p_reason: splitApplied
+          ? String(mpPayment.status || effectiveStatus)
+          : 'payment_paid_without_confirmed_application_fee',
       },
     )
 
@@ -247,15 +292,19 @@ export async function POST(request: NextRequest) {
         .update({
           provider_payment_id: String(mpPayment.id || paymentId),
           provider_status: String(mpPayment.status || '') || null,
-          status: mappedStatus,
+          status: effectiveStatus,
           amount: grossAmount,
           provider_fee_amount: Number(providerFeeAmount.toFixed(2)),
           provider_net_amount: sellerNetAmount,
           platform_fee_amount: Number(applicationFeeAmount.toFixed(2)),
           seller_net_amount: sellerNetAmount,
           split_status: splitStatus,
+          last_error:
+            mappedStatus === 'paid' && !splitApplied
+              ? 'Pagamento aprovado sem confirmaÃ§Ã£o da taxa do marketplace.'
+              : null,
           raw_payload: mpPayment,
-          paid_at: paidAt,
+          paid_at: effectivePaidAt,
           updated_at: new Date().toISOString(),
         })
         .eq('id', marketplacePaymentId)
@@ -264,12 +313,12 @@ export async function POST(request: NextRequest) {
         .from('orders')
         .update({
           payment_provider: 'mercado_pago',
-          payment_status: mappedStatus,
+          payment_status: effectiveStatus,
           status:
-            mappedStatus === 'paid'
+            effectiveStatus === 'paid'
               ? 'Recebido'
               : 'pending_payment',
-          paid_at: paidAt,
+          paid_at: effectivePaidAt,
           updated_at: new Date().toISOString(),
         })
         .eq('id', orderId)
@@ -279,13 +328,13 @@ export async function POST(request: NextRequest) {
         .update({
           provider: 'mercado_pago',
           provider_payment_id: String(mpPayment.id || paymentId),
-          status: mappedStatus,
+          status: effectiveStatus,
           paid_amount:
-            mappedStatus === 'paid'
+            effectiveStatus === 'paid'
               ? Number(mpPayment.transaction_amount || 0)
               : 0,
           remaining_amount:
-            mappedStatus === 'paid'
+            effectiveStatus === 'paid'
               ? 0
               : Number(mpPayment.transaction_amount || 0),
           updated_at: new Date().toISOString(),
@@ -294,7 +343,7 @@ export async function POST(request: NextRequest) {
         .eq('company_id', companyId),
     ])
 
-    if (mappedStatus === 'paid') {
+    if (mappedStatus === 'paid' && splitApplied) {
       const { error: couponError } = await supabaseAdmin.rpc(
         'consume_marketplace_coupon',
         {

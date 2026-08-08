@@ -411,12 +411,11 @@ async function createRecurringSubscription(
     })
     .eq("id", paymentRow.id);
 
-  const internalStatus = "pendente";
+  const internalStatus =
+    company.assinatura_status || "pendente";
   const { data: updatedCompany, error: companyError } = await admin
     .from("companies")
     .update({
-      plano: planKey,
-      assinatura_plano: planKey,
       assinatura_status: internalStatus,
       assinatura_forma_pagamento_preferida: "cartao_recorrente",
       assinatura_auto_recorrente: false,
@@ -552,8 +551,6 @@ async function createPixPayment(
   await admin
     .from("companies")
     .update({
-      plano: planKey,
-      assinatura_plano: planKey,
       assinatura_forma_pagamento_preferida: "pix_avulso",
       assinatura_checkout_url: checkoutUrl,
       assinatura_pix_avulso_status: "pending",

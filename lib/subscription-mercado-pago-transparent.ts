@@ -225,7 +225,8 @@ export async function createTransparentSubscription(
     subscription.next_payment_date ||
       trialEndsAt,
   );
-  const internalStatus = "pendente";
+  const internalStatus =
+    text(company.assinatura_status) || "pendente";
   const now = new Date().toISOString();
 
   const { error: paymentUpdateError } =
@@ -257,8 +258,6 @@ export async function createTransparentSubscription(
   }
 
   const companyUpdate: JsonRecord = {
-    plano: planKey,
-    assinatura_plano: planKey,
     assinatura_status: internalStatus,
     assinatura_inicio:
       company.assinatura_inicio || now,

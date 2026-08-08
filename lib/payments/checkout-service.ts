@@ -1650,7 +1650,9 @@ async function persistPaymentStatus(
   );
   const feeDetails = array(payment.fee_details)
     .map((item) => asRecord(item));
-  const platformFeeAmount = money(
+  const chargesDetails = array(payment.charges_details)
+    .map((item) => asRecord(item));
+  const applicationFeeFromFees = money(
     feeDetails
       .filter(
         (fee) =>
@@ -1662,6 +1664,38 @@ async function persistPaymentStatus(
           sum + Math.max(0, Number(fee.amount || 0)),
         0,
       ),
+  );
+  const applicationFeeFromCharges = money(
+    chargesDetails
+      .filter((charge) => {
+        const accounts = asRecord(charge.accounts);
+
+        return (
+          text(charge.name).toLowerCase() ===
+            "third_payment" &&
+          text(accounts.from).toLowerCase() ===
+            "collector" &&
+          text(accounts.to).toLowerCase() ===
+            "marketplace_owner"
+        );
+      })
+      .reduce((sum, charge) => {
+        const amounts = asRecord(charge.amounts);
+
+        return (
+          sum +
+          Math.max(
+            0,
+            Number(amounts.original || 0),
+          )
+        );
+      }, 0),
+  );
+  const platformFeeAmount = money(
+    Math.max(
+      applicationFeeFromFees,
+      applicationFeeFromCharges,
+    ),
   );
   const providerFeeAmount = money(
     feeDetails
@@ -1684,6 +1718,51 @@ async function persistPaymentStatus(
   const grossAmount = money(
     payment.transaction_amount,
   );
+
+  const {
+    data: splitExpectation,
+    error: splitExpectationError,
+  } = await calculation.supabase
+    .from("marketplace_payments")
+    .select(
+      "commission_amount,platform_fee_amount",
+    )
+    .eq("id", transaction.id)
+    .eq(
+      "company_id",
+      calculation.companyId,
+    )
+    .maybeSingle();
+
+  if (splitExpectationError) {
+    throw splitExpectationError;
+  }
+
+  const expectedPlatformFee = money(
+    splitExpectation?.commission_amount ||
+      splitExpectation?.platform_fee_amount ||
+      0,
+  );
+
+  const splitApplied =
+    mappedStatus !== "paid" ||
+    expectedPlatformFee <= 0 ||
+    (
+      platformFeeAmount > 0 &&
+      platformFeeAmount + 0.005 >=
+        expectedPlatformFee
+    );
+
+  const effectiveStatus =
+    mappedStatus === "paid" && !splitApplied
+      ? "pending"
+      : mappedStatus;
+
+  const effectivePaidAt =
+    effectiveStatus === "paid"
+      ? paidAt
+      : null;
+
   const sellerNetAmount =
     mappedStatus === "paid"
       ? reportedNetAmount > 0
@@ -1696,7 +1775,7 @@ async function persistPaymentStatus(
       : null;
   const splitStatus =
     mappedStatus === "paid"
-      ? platformFeeAmount > 0
+      ? splitApplied
         ? "applied"
         : "missing"
       : "pending";
@@ -1705,8 +1784,10 @@ async function persistPaymentStatus(
     calculation.supabase,
     calculation.companyId,
     transaction.id,
-    mappedStatus,
-    remoteStatus || mappedStatus,
+    effectiveStatus,
+    splitApplied
+      ? remoteStatus || effectiveStatus
+      : "payment_paid_without_confirmed_application_fee",
   );
 
   await Promise.all([
@@ -1717,7 +1798,7 @@ async function persistPaymentStatus(
           paymentId || null,
         provider_status:
           remoteStatus || null,
-        status: mappedStatus,
+        status: effectiveStatus,
         gross_amount:
           grossAmount || null,
         amount:
@@ -1732,12 +1813,16 @@ async function persistPaymentStatus(
           sellerNetAmount,
         split_status:
           splitStatus,
+        last_error:
+          mappedStatus === "paid" && !splitApplied
+            ? "Pagamento aprovado sem confirmaÃ§Ã£o da taxa do marketplace."
+            : null,
         raw_payload: payment,
         card_brand:
           methodId || null,
         card_last4:
           lastFour || null,
-        paid_at: paidAt,
+        paid_at: effectivePaidAt,
         updated_at:
           new Date().toISOString(),
       })
@@ -1754,12 +1839,12 @@ async function persistPaymentStatus(
         payment_provider:
           "mercado_pago",
         payment_status:
-          mappedStatus,
+          effectiveStatus,
         status:
-          mappedStatus === "paid"
+          effectiveStatus === "paid"
             ? "Recebido"
             : "pending_payment",
-        paid_at: paidAt,
+        paid_at: effectivePaidAt,
         updated_at:
           new Date().toISOString(),
       })
@@ -1777,22 +1862,22 @@ async function persistPaymentStatus(
           paymentId || null,
         provider_status:
           remoteStatus || null,
-        status: mappedStatus,
+        status: effectiveStatus,
         paid_amount:
-          mappedStatus === "paid"
+          effectiveStatus === "paid"
             ? Number(
                 payment.transaction_amount ||
                   0,
               )
             : 0,
         remaining_amount:
-          mappedStatus === "paid"
+          effectiveStatus === "paid"
             ? 0
             : Number(
                 payment.transaction_amount ||
                   0,
               ),
-        paid_at: paidAt,
+        paid_at: effectivePaidAt,
         updated_at:
           new Date().toISOString(),
       })
@@ -1803,7 +1888,10 @@ async function persistPaymentStatus(
       ),
   ]);
 
-  if (mappedStatus === "paid") {
+  if (
+    mappedStatus === "paid" &&
+    splitApplied
+  ) {
     const { error: couponConsumeError } =
       await calculation.supabase.rpc(
         "consume_marketplace_coupon",
@@ -1841,9 +1929,9 @@ async function persistPaymentStatus(
   }
 
   return {
-    mappedStatus,
+    mappedStatus: effectiveStatus,
     remoteStatus,
-    paidAt,
+    paidAt: effectivePaidAt,
   };
 }
 
