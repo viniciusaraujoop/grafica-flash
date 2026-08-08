@@ -1347,8 +1347,17 @@ async function calculateCheckout(
       companyRecord.plano ||
       companyRecord.plan,
   );
-  const feePercent =
+
+  // A taxa da plataforma estÃ¡ temporariamente pausada.
+  // Mantemos o percentual configurado no plano para
+  // permitir reativaÃ§Ã£o futura sem alterar os planos.
+  const configuredFeePercent =
     plan.marketplaceFeePercent;
+  const platformFeeEnabled = false;
+  const feePercent =
+    platformFeeEnabled
+      ? configuredFeePercent
+      : 0;
   const commissionAmount = money(
     total * (feePercent / 100),
   );
@@ -2364,8 +2373,6 @@ export async function createCheckoutPayment(
       )}`.slice(0, 120),
     external_reference:
       externalReference,
-    application_fee:
-      calculation.commissionAmount,
     notification_url:
       `${appUrl}/api/marketplace/payments/webhook/mercado-pago` +
       `?company_id=${encodeURIComponent(companyId)}` +
@@ -2416,6 +2423,13 @@ export async function createCheckoutPayment(
       },
     },
   };
+
+  if (
+    calculation.commissionAmount > 0
+  ) {
+    paymentPayload.application_fee =
+      calculation.commissionAmount;
+  }
 
   if (
     body.paymentMethod === "PIX"
