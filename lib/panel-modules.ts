@@ -545,7 +545,7 @@ const modules: Array<Omit<PanelModule, 'icon'>> = [
     href: '/painel/whatsapp',
     group: 'presenca_digital',
     segments: allSegments,
-    status: 'active',
+    status: 'hidden',
     requiredPlan: null,
     requiresActiveSubscription: true,
     iconName: 'whatsapp',
