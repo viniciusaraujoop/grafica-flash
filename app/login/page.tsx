@@ -522,33 +522,36 @@ export default function LoginPage() {
     const savedEmail = window.localStorage.getItem(
       'orcaly_login_email',
     )
-
-    if (savedEmail) {
-      setEmail(savedEmail)
-    }
-
     const params = new URLSearchParams(window.location.search)
 
-    if (params.get('expired') === '1') {
+    const frame = window.requestAnimationFrame(() => {
+      if (savedEmail) {
+        setEmail(savedEmail)
+      }
+
+      if (params.get('expired') === '1') {
+        setTipoMensagem('info')
+        setMensagem(
+          'Sua sessão expirou. Entre novamente para continuar.',
+        )
+        return
+      }
+
+      if (params.get('renovar') === '1') {
+        setTipoMensagem('info')
+        setMensagem(
+          'Entre para renovar sua assinatura e reativar seu painel.',
+        )
+        return
+      }
+
       setTipoMensagem('info')
       setMensagem(
-        'Sua sessão expirou. Entre novamente para continuar.',
+        'Entre para acessar o painel da sua empresa.',
       )
-      return
-    }
+    })
 
-    if (params.get('renovar') === '1') {
-      setTipoMensagem('info')
-      setMensagem(
-        'Entre para renovar sua assinatura e reativar seu painel.',
-      )
-      return
-    }
-
-    setTipoMensagem('info')
-    setMensagem(
-      'Entre para acessar o painel da sua empresa.',
-    )
+    return () => window.cancelAnimationFrame(frame)
   }, [])
 
   useEffect(() => {
@@ -684,13 +687,53 @@ export default function LoginPage() {
         })
       }
 
+      const accessToken = data.session?.access_token
+
+      if (!accessToken) {
+        setTipoMensagem('erro')
+        setMensagem(
+          'Não foi possível validar a sessão da sua conta. Entre novamente.',
+        )
+        setCarregando(false)
+        return
+      }
+
+      const accessResponse = await fetch('/api/company/current', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        cache: 'no-store',
+      })
+
+      const accessPayload = (await accessResponse
+        .json()
+        .catch(() => ({}))) as {
+        company?: { id?: string | null } | null
+        error?: string
+      }
+
+      if (!accessResponse.ok) {
+        setTipoMensagem('erro')
+        setMensagem(
+          accessPayload.error ||
+            'Não foi possível verificar a empresa vinculada à sua conta.',
+        )
+        setCarregando(false)
+        return
+      }
+
+      if (!accessPayload.company?.id) {
+        setTipoMensagem('info')
+        setMensagem(
+          'Sua conta ainda não está vinculada a uma empresa. Vamos concluir seu cadastro.',
+        )
+        router.replace('/cadastro')
+        return
+      }
+
       setTipoMensagem('sucesso')
       setMensagem(
         'Acesso validado. Abrindo seu painel...',
-      )
-
-      await new Promise((resolve) =>
-        window.setTimeout(resolve, 180),
       )
 
       router.replace(getSafeNextPath())
