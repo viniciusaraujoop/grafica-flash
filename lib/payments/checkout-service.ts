@@ -1710,7 +1710,7 @@ async function syncPaidOrderArtifacts(
           amount: grossAmount,
           data_competencia:
             paidAt.slice(0, 10),
-          status: "recebido",
+          status: "pago",
           forma_pagamento:
             paymentMethod,
           payment_method:

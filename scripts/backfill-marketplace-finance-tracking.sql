@@ -71,7 +71,7 @@ select
     mp.updated_at,
     mp.created_at
   )::date,
-  'recebido',
+  'pago',
   coalesce(
     nullif(mp.payment_method, ''),
     nullif(o.payment_method, ''),
