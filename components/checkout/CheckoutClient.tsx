@@ -243,6 +243,7 @@ export default function CheckoutClient({
   const [notice, setNotice] = useState("");
   const [paymentId, setPaymentId] = useState("");
   const [orderId, setOrderId] = useState("");
+  const [trackingUrl, setTrackingUrl] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
   const [preparedTotal, setPreparedTotal] = useState<number | null>(null);
   const [pix, setPix] = useState<PixResult | null>(null);
@@ -338,27 +339,31 @@ export default function CheckoutClient({
           observation: String(item.observation || ""),
         }));
 
-      if (imported.length) setCart(imported);
+      const restoreTimer = window.setTimeout(() => {
+        if (imported.length) setCart(imported);
 
-      if (parsed.customer) {
-        setCustomer((current) => ({
-          ...current,
-          ...parsed.customer,
-        }));
-      }
+        if (parsed.customer) {
+          setCustomer((current) => ({
+            ...current,
+            ...parsed.customer,
+          }));
+        }
 
-      if (parsed.delivery) {
-        setDelivery((current) => ({
-          ...current,
-          ...parsed.delivery,
-        }));
-      }
+        if (parsed.delivery) {
+          setDelivery((current) => ({
+            ...current,
+            ...parsed.delivery,
+          }));
+        }
 
-      if (parsed.couponCode) {
-        setCouponCode(parsed.couponCode);
-      }
+        if (parsed.couponCode) {
+          setCouponCode(parsed.couponCode);
+        }
 
-      window.sessionStorage.removeItem(key);
+        window.sessionStorage.removeItem(key);
+      }, 0);
+
+      return () => window.clearTimeout(restoreTimer);
     } catch {
       window.sessionStorage.removeItem(key);
     }
@@ -384,6 +389,23 @@ export default function CheckoutClient({
 
       setPaymentStatus(nextStatus);
 
+      const nextTrackingUrl = String(
+        payload.trackingUrl ||
+          trackingUrl ||
+          "",
+      );
+
+      if (
+        nextStatus === "paid" &&
+        nextTrackingUrl
+      ) {
+        window.clearInterval(timer);
+        window.location.assign(
+          nextTrackingUrl,
+        );
+        return;
+      }
+
       if (
         [
           "paid",
@@ -398,7 +420,7 @@ export default function CheckoutClient({
     }, 5000);
 
     return () => window.clearInterval(timer);
-  }, [paymentId, slug]);
+  }, [paymentId, slug, trackingUrl]);
 
   const productMap = useMemo(
     () =>
@@ -444,8 +466,11 @@ export default function CheckoutClient({
 
   useEffect(() => {
     if (!data || cart.length === 0) {
-      setPreparedTotal(null);
-      return;
+      const resetTimer = window.setTimeout(() => {
+        setPreparedTotal(null);
+      }, 0);
+
+      return () => window.clearTimeout(resetTimer);
     }
 
     const controller = new AbortController();
@@ -575,14 +600,27 @@ export default function CheckoutClient({
         setPaymentStatus(nextStatus);
         setPaymentId(String(payload.paymentId || ""));
         setOrderId(String(payload.orderId || ""));
+        const nextTrackingUrl = String(
+          payload.trackingUrl || "",
+        );
+        setTrackingUrl(nextTrackingUrl);
         setPix(payload.pix || null);
         setNotice(
           nextStatus === "paid"
-            ? "Pagamento aprovado. O pedido foi enviado."
+            ? "Pagamento aprovado. Abrindo o acompanhamento do pedido..."
             : paymentMethod === "PIX"
               ? "Pix gerado."
               : "Pagamento enviado para análise.",
         );
+
+        if (
+          nextStatus === "paid" &&
+          nextTrackingUrl
+        ) {
+          window.location.assign(
+            nextTrackingUrl,
+          );
+        }
       } catch (cause) {
         setNotice("");
         setError(
@@ -789,6 +827,7 @@ export default function CheckoutClient({
     setPaymentStatus("");
     setPaymentId("");
     setOrderId("");
+    setTrackingUrl("");
     setPaymentOpen(true);
 
     window.setTimeout(() => {

@@ -1617,6 +1617,270 @@ export async function prepareCheckoutPayment(
   };
 }
 
+// ORCALY_ORDER_TRACKING_FINANCE_V1
+async function getOrderTracking(
+  supabase: CheckoutCalculation["supabase"],
+  orderId: string,
+) {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("customer_portal_token")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  const trackingToken = text(
+    data?.customer_portal_token,
+  );
+
+  return {
+    trackingToken,
+    trackingUrl: trackingToken
+      ? `/pedido/${encodeURIComponent(
+          trackingToken,
+        )}`
+      : "",
+  };
+}
+
+async function syncPaidOrderArtifacts(
+  calculation: Pick<
+    CheckoutCalculation,
+    "supabase" | "companyId"
+  >,
+  transaction: {
+    id: string;
+    orderId: string;
+  },
+  payment: JsonRecord,
+  paidAt: string,
+) {
+  const { data: order, error: orderError } =
+    await calculation.supabase
+      .from("orders")
+      .select(
+        "id,customer_name,nome,customer_phone,telefone,produto,total,total_amount,payment_method,delivery_type,delivery_fee,delivery_zone_id,address,neighborhood,complement,reference_point",
+      )
+      .eq("id", transaction.orderId)
+      .eq(
+        "company_id",
+        calculation.companyId,
+      )
+      .maybeSingle();
+
+  if (orderError) throw orderError;
+  if (!order) return;
+
+  const customerName = text(
+    order.customer_name || order.nome,
+  ) || "Cliente";
+  const grossAmount = money(
+    payment.transaction_amount ||
+      order.total_amount ||
+      order.total,
+  );
+  const paymentMethod =
+    text(
+      payment.payment_method_id ||
+        order.payment_method,
+    ) || "Mercado Pago";
+  const code = transaction.orderId
+    .slice(0, 8)
+    .toUpperCase();
+  const financialDescription =
+    `Venda #${code} - ${customerName}`;
+
+  const { error: financialError } =
+    await calculation.supabase
+      .from("financial_transactions")
+      .upsert(
+        {
+          id: transaction.id,
+          company_id:
+            calculation.companyId,
+          tipo: "entrada",
+          type: "income",
+          categoria: "Venda",
+          descricao:
+            financialDescription,
+          description:
+            financialDescription,
+          valor: grossAmount,
+          amount: grossAmount,
+          data_competencia:
+            paidAt.slice(0, 10),
+          status: "recebido",
+          forma_pagamento:
+            paymentMethod,
+          payment_method:
+            paymentMethod,
+          fornecedor_cliente:
+            customerName,
+          order_id:
+            transaction.orderId,
+          origem:
+            "marketplace_checkout",
+          paid_at: paidAt,
+          notes:
+            "Venda online confirmada pelo Mercado Pago.",
+          raw_data: {
+            marketplace_payment_id:
+              transaction.id,
+            provider_payment_id:
+              text(payment.id) || null,
+            provider:
+              "mercado_pago",
+          },
+          updated_at:
+            new Date().toISOString(),
+        },
+        {
+          onConflict: "id",
+        },
+      );
+
+  if (financialError) {
+    throw financialError;
+  }
+
+  if (
+    text(order.delivery_type).toLowerCase() !==
+    "delivery"
+  ) {
+    return;
+  }
+
+  let neighborhood =
+    text(order.neighborhood);
+
+  if (
+    !neighborhood &&
+    order.delivery_zone_id
+  ) {
+    const { data: zone } =
+      await calculation.supabase
+        .from("delivery_zones")
+        .select("name")
+        .eq(
+          "id",
+          String(order.delivery_zone_id),
+        )
+        .eq(
+          "company_id",
+          calculation.companyId,
+        )
+        .maybeSingle();
+
+    neighborhood = text(zone?.name);
+  }
+
+  const deliveryPayload = {
+    company_id:
+      calculation.companyId,
+    order_id:
+      transaction.orderId,
+    customer_name:
+      customerName,
+    customer_phone:
+      text(
+        order.customer_phone ||
+          order.telefone,
+      ) || null,
+    address:
+      text(order.address) || null,
+    neighborhood:
+      neighborhood || null,
+    delivery_zone_id:
+      order.delivery_zone_id || null,
+    delivery_fee:
+      money(order.delivery_fee),
+    status:
+      "waiting_preparation",
+    notes:
+      [
+        text(order.complement)
+          ? `Complemento: ${text(
+              order.complement,
+            )}`
+          : "",
+        text(order.reference_point)
+          ? `Referencia: ${text(
+              order.reference_point,
+            )}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" | ") || null,
+    updated_at:
+      new Date().toISOString(),
+  };
+
+  const {
+    data: existingDelivery,
+    error: existingError,
+  } = await calculation.supabase
+    .from("deliveries")
+    .select("id,status")
+    .eq(
+      "company_id",
+      calculation.companyId,
+    )
+    .eq(
+      "order_id",
+      transaction.orderId,
+    )
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (existingDelivery?.id) {
+    const existingStatus =
+      text(existingDelivery.status);
+
+    const patch = {
+      ...deliveryPayload,
+      ...(existingStatus &&
+      ![
+        "aguardando_pagamento",
+        "pending_payment",
+      ].includes(existingStatus)
+        ? { status: existingStatus }
+        : {}),
+    };
+
+    const { error } =
+      await calculation.supabase
+        .from("deliveries")
+        .update(patch)
+        .eq(
+          "id",
+          String(existingDelivery.id),
+        );
+
+    if (error) throw error;
+    return;
+  }
+
+  // O id deterministico evita duas entregas se o webhook
+  // e a consulta de status confirmarem o mesmo pagamento juntos.
+  const { error: deliveryError } =
+    await calculation.supabase
+      .from("deliveries")
+      .upsert(
+        {
+          id: transaction.orderId,
+          ...deliveryPayload,
+        },
+        { onConflict: "id" },
+      );
+
+  if (deliveryError) {
+    throw deliveryError;
+  }
+}
+
 async function persistPaymentStatus(
   calculation: Pick<
     CheckoutCalculation,
@@ -1894,6 +2158,14 @@ async function persistPaymentStatus(
     mappedStatus === "paid" &&
     splitApplied
   ) {
+    await syncPaidOrderArtifacts(
+      calculation,
+      transaction,
+      payment,
+      effectivePaidAt ||
+        new Date().toISOString(),
+    );
+
     const { error: couponConsumeError } =
       await calculation.supabase.rpc(
         "consume_marketplace_coupon",
@@ -2017,6 +2289,11 @@ export async function createCheckoutPayment(
         "object"
         ? (existing.raw_payload as JsonRecord)
         : {};
+    const tracking =
+      await getOrderTracking(
+        supabase,
+        String(existing.order_id),
+      );
 
     return {
       repeated: true,
@@ -2029,6 +2306,10 @@ export async function createCheckoutPayment(
         existing.gross_amount ||
           existing.amount,
       ),
+      trackingToken:
+        tracking.trackingToken,
+      trackingUrl:
+        tracking.trackingUrl,
       pix:
         body.paymentMethod === "PIX"
           ? pixData(raw)
@@ -2094,11 +2375,21 @@ export async function createCheckoutPayment(
           null,
         checkout_idempotency_key:
           key,
+        customer_portal_token:
+          randomUUID(),
         delivery_type:
           body.delivery?.type ||
           "pickup",
+        delivery_zone_id:
+          calculation.deliveryZoneId,
+        address:
+          body.delivery?.address || null,
+        complement:
+          body.delivery?.complement || null,
+        reference_point:
+          body.delivery?.reference || null,
       })
-      .select("id")
+      .select("id,customer_portal_token")
       .single();
 
   if (orderError || !order?.id) {
@@ -2112,6 +2403,11 @@ export async function createCheckoutPayment(
   }
 
   const orderId = String(order.id);
+  const trackingToken =
+    text(order.customer_portal_token);
+  const trackingUrl = trackingToken
+    ? `/pedido/${encodeURIComponent(trackingToken)}`
+    : "";
 
   const { error: itemsError } =
     await supabase
@@ -2167,40 +2463,8 @@ export async function createCheckoutPayment(
     );
   }
 
-  if (
-    body.delivery?.type === "delivery"
-  ) {
-    await supabase
-      .from("deliveries")
-      .insert({
-        order_id: orderId,
-        company_id: companyId,
-        delivery_zone_id:
-          calculation.deliveryZoneId,
-        customer_name:
-          body.customer.name,
-        customer_phone:
-          body.customer.phone,
-        endereco:
-          body.delivery.address ||
-          "",
-        address:
-          body.delivery.address ||
-          "",
-        complemento:
-          body.delivery.complement ||
-          "",
-        referencia:
-          body.delivery.reference ||
-          "",
-        taxa:
-          calculation.deliveryFee,
-        delivery_fee:
-          calculation.deliveryFee,
-        status:
-          "aguardando_pagamento",
-      });
-  }
+  // A entrega e criada somente depois da confirmacao
+  // do pagamento, evitando pedidos nao pagos na central.
 
   const transactionId =
     randomUUID();
@@ -2526,6 +2790,8 @@ export async function createCheckoutPayment(
       total: calculation.total,
       commissionAmount:
         calculation.commissionAmount,
+      trackingToken,
+      trackingUrl,
       pix:
         body.paymentMethod === "PIX"
           ? pixData(payment)
@@ -2651,6 +2917,12 @@ export async function getCheckoutPaymentStatus(
     );
   }
 
+  const tracking =
+    await getOrderTracking(
+      supabase,
+      String(transaction.order_id),
+    );
+
   if (
     terminalStatus(
       transaction.status,
@@ -2667,7 +2939,13 @@ export async function getCheckoutPaymentStatus(
       ),
     );
 
-    return transaction;
+    return {
+      ...transaction,
+      trackingToken:
+        tracking.trackingToken,
+      trackingUrl:
+        tracking.trackingUrl,
+    };
   }
 
   const accessToken =
@@ -2698,5 +2976,9 @@ export async function getCheckoutPaymentStatus(
     providerStatus:
       status.remoteStatus,
     paidAt: status.paidAt,
+    trackingToken:
+      tracking.trackingToken,
+    trackingUrl:
+      tracking.trackingUrl,
   };
 }

@@ -30,6 +30,7 @@ type FinancialItem = {
   competenceDate: string
   dueDate: string
   createdAt: string
+  paidAt: string
   invoiceNumber: string
   invoiceSeries: string
   documentUrl: string
@@ -190,6 +191,20 @@ function formatDate(value: string) {
   return date.toLocaleDateString('pt-BR')
 }
 
+function formatTime(value: string) {
+  if (!value) return 'Horário não informado'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return 'Horário não informado'
+  }
+
+  return date.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 function normalizeStatus(value: unknown) {
   const status = asString(value, 'pendente').toLowerCase()
 
@@ -277,6 +292,7 @@ function normalizeTransaction(row: DbRow): FinancialItem {
     competenceDate: asString(row.data_competencia || row.issue_date || row.created_at, ''),
     dueDate: asString(row.due_date || row.vencimento || row.data_competencia, ''),
     createdAt: asString(row.created_at, ''),
+    paidAt: asString(row.paid_at, ''),
     invoiceNumber: asString(row.number || row.nota_numero, ''),
     invoiceSeries: asString(row.series || row.nota_serie, ''),
     documentUrl: asString(row.pdf_url || row.xml_url || row.documento_url, ''),
@@ -527,15 +543,24 @@ export default function FinancialAreaClient({ mode }: { mode: FinanceMode }) {
   }
 
   useEffect(() => {
-    void loadData()
+    const timeout = window.setTimeout(() => {
+      void loadData()
+    }, 0)
+
+    return () => window.clearTimeout(timeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    setForm(defaultForm(mode))
-    setDocumentFile(null)
-    setShowForm(false)
-    setQuery('')
-    setStatusFilter('todos')
+    const timeout = window.setTimeout(() => {
+      setForm(defaultForm(mode))
+      setDocumentFile(null)
+      setShowForm(false)
+      setQuery('')
+      setStatusFilter('todos')
+    }, 0)
+
+    return () => window.clearTimeout(timeout)
   }, [mode])
 
   const monthItems = useMemo(() => {
@@ -1066,7 +1091,9 @@ function FinancialList({
 
             <div className="text-sm font-bold text-slate-500">
               <p>{formatDate(item.dueDate || item.competenceDate)}</p>
-              <p className="mt-1 text-xs text-slate-400">{item.dueDate ? 'Vencimento' : 'Competência'}</p>
+              <p className="mt-1 text-xs text-slate-400">
+                {formatTime(item.paidAt || item.createdAt)}
+              </p>
             </div>
 
             <p className={`text-base font-black ${item.kind === 'entrada' || item.kind === 'receber' ? 'text-emerald-700' : 'text-red-700'}`}>
