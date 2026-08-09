@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 export type PanelPremiumCompany = {
   id?: string | null
@@ -125,6 +126,11 @@ export default function PanelPremiumHeader({
   const publicUrl = publicSlug ? `https://${publicSlug}.${rootDomain}` : ''
   const parts = pathname.split('/').filter(Boolean).slice(1)
 
+  async function logout() {
+    await supabase.auth.signOut()
+    window.location.assign('/login')
+  }
+
   return (
     <header className="panel-adaptive-header">
       <div className="panel-adaptive-header-copy min-w-0">
@@ -175,6 +181,16 @@ export default function PanelPremiumHeader({
             <span aria-hidden="true">&#8599;</span>
           </Link>
         ) : null}
+
+        <button
+          type="button"
+          onClick={() => void logout()}
+          className="inline-flex min-h-[2.9rem] items-center justify-center rounded-[0.95rem] border border-red-100 bg-white px-4 py-3 text-xs font-black text-red-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-red-50"
+          aria-label="Sair da conta"
+          title="Sair da conta"
+        >
+          Sair
+        </button>
       </div>
     </header>
   )
