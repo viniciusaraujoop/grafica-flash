@@ -34,6 +34,227 @@ const STORAGE_KEY = "orcaly-partner-academy-v2";
 
 const courses: Course[] = [
   {
+    id: "orcaly-master",
+    category: "Produto e estratégia",
+    title: "Especialista em Orçaly: produto, operação e demonstração",
+    description:
+      "Conheça o Orçaly como um consultor: entenda os fluxos, conecte recursos a dores reais e saiba demonstrar a plataforma sem depender de decorar menus.",
+    level: "Fundamentos",
+    objectives: [
+      "Explicar o Orçaly como uma plataforma integrada, e não como uma lista de funções.",
+      "Relacionar vitrine, pedidos, clientes, pagamentos, financeiro e operação em um único fluxo.",
+      "Escolher o que demonstrar de acordo com o segmento e a necessidade do cliente.",
+      "Recomendar recursos e planos sem prometer o que não foi confirmado.",
+    ],
+    lessons: [
+      {
+        id: "orcaly-master-fluxo",
+        title: "O mapa do Orçaly: do visitante à operação",
+        minutes: 15,
+        summary:
+          "O Orçaly conecta presença digital, venda, atendimento, pagamento e operação. Antes de vender módulos, aprenda a enxergar a jornada inteira.",
+        concept: [
+          "A vitrine pública é a porta de entrada: apresenta itens, serviços ou cardápio e conduz o cliente para uma ação comercial.",
+          "Pedidos, clientes, pagamentos e financeiro existem como partes do mesmo processo. O valor aparece quando a informação deixa de ficar espalhada.",
+          "Depois da venda, o fluxo muda conforme a operação: retirada, entrega, produção ou acompanhamento de serviço.",
+        ],
+        steps: [
+          "Comece pelo que o consumidor vê.",
+          "Mostre o que entra no painel da empresa.",
+          "Conecte pagamento e financeiro à venda.",
+          "Termine na etapa operacional correta para o segmento.",
+        ],
+        example: {
+          title: "Uma história em vez de um tour",
+          scenario:
+            "A empresa usa rede social, mensagens, planilha e anotações separadas.",
+          response:
+            "Mostre uma jornada: cliente encontra a vitrine → escolhe → faz o pedido → a empresa acompanha → o pagamento é confirmado → a venda aparece no financeiro → o pedido segue para a operação.",
+        },
+        mistakes: [
+          "Abrir o menu e explicar item por item sem contexto.",
+          "Prometer que todos os segmentos usam exatamente o mesmo fluxo.",
+          "Apresentar função futura ou oculta como se estivesse disponível para todos.",
+        ],
+        exercise:
+          "Desenhe o fluxo visitante → vitrine → pedido → pagamento → financeiro → operação e explique em até 90 segundos.",
+        lifeSkill:
+          "Pensar em fluxos, e não em telas, melhora demonstrações, suporte e análise de processos.",
+      },
+      {
+        id: "orcaly-master-vitrine",
+        title: "Vitrine, itens e experiência de compra",
+        minutes: 16,
+        summary:
+          "Aprenda a mostrar como a empresa organiza o que vende e transforma isso em uma experiência pública mais profissional.",
+        concept: [
+          "Itens da Vitrine concentram produtos ou serviços, imagens, preços, disponibilidade e informações comerciais.",
+          "Minha Vitrine organiza a presença pública do negócio e a forma como o consumidor conhece a oferta.",
+          "A apresentação muda de acordo com o segmento: catálogo, loja, cardápio ou serviços devem ser demonstrados no contexto certo.",
+        ],
+        steps: [
+          "Descubra como a empresa apresenta a oferta hoje.",
+          "Mostre a organização dos itens.",
+          "Abra a experiência pública correspondente.",
+          "Conecte organização interna com facilidade para o consumidor.",
+        ],
+        example: {
+          title: "Loja que responde preço manualmente",
+          scenario:
+            "A equipe manda fotos e preços toda vez que alguém pergunta.",
+          response:
+            "Mostre a vitrine e explique que parte da consulta pode acontecer sem depender de repetir o mesmo atendimento em várias conversas.",
+        },
+        mistakes: [
+          "Falar só de beleza visual.",
+          "Prometer que a vitrine elimina atendimento humano.",
+          "Começar por configuração antes de mostrar utilidade.",
+        ],
+        exercise:
+          "Prepare uma demo de três minutos: item cadastrado → vitrine → ação do cliente.",
+        lifeSkill:
+          "Demonstrar pela jornada do usuário é útil em vendas, produto e atendimento.",
+      },
+      {
+        id: "orcaly-master-comercial",
+        title: "Pedidos, CRM, follow-up, propostas e cupons",
+        minutes: 18,
+        summary:
+          "Entenda como o núcleo comercial organiza contexto entre interesse, negociação, pedido e acompanhamento.",
+        concept: [
+          "Pedidos centralizam solicitações e permitem acompanhar o andamento do que entrou para a empresa.",
+          "Clientes/CRM e follow-up ajudam a manter histórico e próximos contatos, reduzindo dependência da memória.",
+          "Propostas organizam negociações que ainda não viraram pedido; cupons apoiam campanhas e regras de desconto quando fizer sentido.",
+        ],
+        steps: [
+          "Descubra se a dor está em captar, acompanhar, negociar ou executar.",
+          "Mostre CRM/follow-up quando o problema é perder contexto.",
+          "Mostre propostas quando existe negociação antes do pedido.",
+          "Mostre pedidos quando o problema está depois da venda.",
+        ],
+        example: {
+          title: "Gráfica com orçamento perdido",
+          scenario:
+            "Orçamentos aprovados se perdem entre mensagens e produção.",
+          response:
+            "Conecte proposta → pedido → acompanhamento. CRM aparece como apoio, não como protagonista se a dor principal está depois da aprovação.",
+        },
+        mistakes: [
+          "Mostrar todos os módulos comerciais com a mesma profundidade.",
+          "Confundir lead, proposta e pedido.",
+          "Usar cupom como argumento principal para qualquer negócio.",
+        ],
+        exercise:
+          "Crie três casos fictícios e escolha qual módulo comercial mostraria primeiro em cada um.",
+        lifeSkill:
+          "Mapear etapas comerciais ajuda a encontrar gargalos em qualquer funil de vendas.",
+      },
+      {
+        id: "orcaly-master-pagamentos",
+        title: "Checkout, pagamentos e confirmação da compra",
+        minutes: 18,
+        summary:
+          "Entenda o caminho de uma venda online e saiba diferenciar pedido criado, pagamento pendente e pagamento aprovado.",
+        concept: [
+          "O checkout conduz o consumidor pelos meios de pagamento configurados e a confirmação depende do retorno real do provedor integrado.",
+          "Uma venda aprovada pode atualizar o pedido, alimentar registros financeiros e liberar a experiência de acompanhamento do comprador.",
+          "Taxas, disponibilidade de métodos e regras do provedor devem ser apresentadas com transparência e verificadas na configuração vigente.",
+        ],
+        steps: [
+          "Mostre o cliente chegando ao checkout.",
+          "Explique a diferença entre criar pedido e confirmar pagamento.",
+          "Mostre a venda aprovada no painel.",
+          "Mostre a confirmação e o acompanhamento do comprador quando aplicável.",
+        ],
+        example: {
+          title: "Pedido criado não é pagamento recebido",
+          scenario:
+            "O cliente pergunta se qualquer Pix enviado já coloca o pedido como pago.",
+          response:
+            "Explique que a automação depende da integração e da confirmação do provedor; não trate qualquer comprovante externo como confirmação automática.",
+        },
+        mistakes: [
+          "Dizer que todo pagamento é aprovado instantaneamente.",
+          "Esconder dependência do provedor.",
+          "Confundir pedido registrado com pagamento aprovado.",
+        ],
+        exercise:
+          "Explique em 60 segundos: pedido criado → pagamento pendente → pagamento aprovado → confirmação.",
+        lifeSkill:
+          "Separar estados e confirmações reduz erros em qualquer processo financeiro.",
+      },
+      {
+        id: "orcaly-master-financeiro-operacao",
+        title: "Financeiro, produção, retirada e entregas",
+        minutes: 20,
+        summary:
+          "Aprenda a mostrar o que acontece depois da venda, conectando receita e operação sem inventar etapas que não pertencem ao pedido.",
+        concept: [
+          "Vendas aprovadas podem gerar entradas financeiras vinculadas ao pedido, com cliente, valor, forma e horário.",
+          "Retirada e entrega são fluxos diferentes; um pedido para retirada não precisa virar uma entrega com motorista.",
+          "Quando existe entrega, a operação pode usar endereço, região, taxa, status e dados do entregador conforme o que estiver registrado.",
+          "Alguns segmentos usam produção ou outras etapas específicas. A demonstração deve seguir o fluxo disponível para aquela empresa.",
+        ],
+        steps: [
+          "Comece numa venda já confirmada.",
+          "Mostre a entrada correspondente no Financeiro.",
+          "Identifique se é retirada, entrega, produção ou outro fluxo.",
+          "Mostre a atualização que o responsável e o comprador enxergam.",
+        ],
+        example: {
+          title: "Food com entrega",
+          scenario:
+            "O restaurante quer reduzir perguntas sobre andamento.",
+          response:
+            "Mostre pedido confirmado → operação → entrega → acompanhamento. Dados como entregador e placa aparecem quando a entrega já possui essa atribuição.",
+        },
+        mistakes: [
+          "Colocar retirada dentro de Entregas como se houvesse motorista.",
+          "Prometer rastreio com dados que a operação não registrou.",
+          "Apresentar o Financeiro como sistema contábil completo.",
+        ],
+        exercise:
+          "Desenhe o pós-venda de food, loja e gráfica e destaque o que muda entre eles.",
+        lifeSkill:
+          "Rastreabilidade entre origem, dinheiro e execução é base de gestão operacional.",
+      },
+      {
+        id: "orcaly-master-demo",
+        title: "Demonstração por segmento e recomendação responsável",
+        minutes: 20,
+        summary:
+          "O produto é o mesmo, mas a história precisa mudar conforme a dor, o segmento e os recursos realmente disponíveis.",
+        concept: [
+          "Gráfica e personalizados tendem a valorizar proposta, pedido e produção; food e loja tendem a valorizar vitrine, compra, pagamento e entrega; serviços podem priorizar clientes, proposta e acompanhamento.",
+          "Uma demo forte prova o fluxo principal com poucas áreas e deixa módulos secundários para aprofundamento.",
+          "Alguns recursos dependem do plano e da configuração vigente. Consulte a oferta atual antes de afirmar preço ou disponibilidade.",
+        ],
+        steps: [
+          "Confirme uma dor principal.",
+          "Escolha no máximo três áreas para a primeira demo.",
+          "Conte uma história com começo, mudança de estado e resultado.",
+          "Recomende apenas o que atende a necessidade atual e explique o motivo.",
+        ],
+        example: {
+          title: "Três demos, um produto",
+          scenario:
+            "Você fala com uma gráfica, uma hamburgueria e uma loja.",
+          response:
+            "Gráfica: proposta → pedido → produção. Food: vitrine/cardápio → pedido → pagamento → entrega. Loja: itens → vitrine → compra → financeiro.",
+        },
+        mistakes: [
+          "Usar a mesma ordem de telas para todo mundo.",
+          "Começar pela assinatura antes de provar valor.",
+          "Empurrar o plano mais caro sem necessidade.",
+        ],
+        exercise:
+          "Grave três demos de cinco minutos para segmentos diferentes, usando no máximo três áreas principais em cada uma.",
+        lifeSkill:
+          "Adaptar narrativa ao contexto é essencial em vendas, ensino e apresentações executivas.",
+      },
+    ],
+  },
+  {
     id: "produto",
     category: "Produto",
     title: "Domine o Orçaly antes de vender",
@@ -1206,6 +1427,99 @@ const courses: Course[] = [
   },
 ];
 
+function coursePresentation(course: Course) {
+  const presentations: Record<
+    string,
+    {
+      emoji: string;
+      promise: string;
+      accent: string;
+      audience: string;
+    }
+  > = {
+    "orcaly-master": {
+      emoji: "🧭",
+      promise:
+        "Saia capaz de explicar e demonstrar o Orçaly como consultor, conectando produto, venda e operação.",
+      accent: "from-blue-600 to-cyan-500",
+      audience: "Domínio do produto",
+    },
+    produto: {
+      emoji: "🧩",
+      promise:
+        "Pare de vender menus e aprenda a transformar funções em valor percebido.",
+      accent: "from-indigo-600 to-violet-500",
+      audience: "Base de produto",
+    },
+    consultiva: {
+      emoji: "🎯",
+      promise:
+        "Diagnostique antes de oferecer e conduza conversas com mais precisão.",
+      accent: "from-cyan-600 to-blue-500",
+      audience: "Base comercial",
+    },
+    psicologia: {
+      emoji: "🧠",
+      promise:
+        "Entenda atenção, risco, confiança e escolha sem recorrer a manipulação.",
+      accent: "from-violet-600 to-fuchsia-500",
+      audience: "Comportamento de compra",
+    },
+    virtual: {
+      emoji: "💬",
+      promise:
+        "Conduza conversas digitais curtas, humanas e orientadas ao próximo passo.",
+      accent: "from-sky-600 to-cyan-500",
+      audience: "Prospecção digital",
+    },
+    objecoes: {
+      emoji: "🛡️",
+      promise:
+        "Investigue objeções e converse sobre preço sem confronto ou desconto automático.",
+      accent: "from-amber-500 to-orange-500",
+      audience: "Negociação",
+    },
+    persuasao: {
+      emoji: "🗣️",
+      promise:
+        "Construa mensagens convincentes com clareza, contraste, narrativa e ética.",
+      accent: "from-fuchsia-600 to-violet-500",
+      audience: "Comunicação",
+    },
+    organico: {
+      emoji: "🌱",
+      promise:
+        "Crie aquisição orgânica baseada em contexto, conteúdo e conversa.",
+      accent: "from-emerald-600 to-teal-500",
+      audience: "Aquisição orgânica",
+    },
+    pago: {
+      emoji: "📣",
+      promise:
+        "Entenda campanhas, funil e métricas para não transformar anúncio em aposta.",
+      accent: "from-rose-600 to-orange-500",
+      audience: "Mídia paga",
+    },
+    demo: {
+      emoji: "🎬",
+      promise:
+        "Conduza demos curtas, bilaterais e ligadas à dor real do cliente.",
+      accent: "from-blue-700 to-indigo-500",
+      audience: "Demonstração",
+    },
+  };
+
+  return (
+    presentations[course.id] || {
+      emoji: "🎓",
+      promise:
+        "Desenvolva uma competência comercial aplicável em situações reais.",
+      accent: "from-slate-700 to-blue-600",
+      audience: course.category,
+    }
+  );
+}
+
 function allLessonIds(course: Course) {
   return course.lessons.map((lesson) => lesson.id);
 }
@@ -1427,410 +1741,502 @@ export default function PartnerCoursesTab() {
     void syncWholeCourse(course.id, ids, completing);
   }
 
-  return (
-    <div className="partner-fade-up space-y-5">
-      <section className="relative overflow-hidden rounded-[2rem] bg-[#071b3a] p-5 text-white shadow-xl sm:p-7">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/25 blur-3xl" />
+  const selectedMeta = coursePresentation(selected);
+  const totalAcademyMinutes = courses.reduce(
+    (sum, course) => sum + totalMinutes(course),
+    0,
+  );
+  const totalCompletedCourses = courses.filter((course) =>
+    allLessonIds(course).every((id) => completedLessons.has(id)),
+  ).length;
 
-        <div className="relative grid gap-6 lg:grid-cols-[1fr_310px] lg:items-end">
+  return (
+    <div className="partner-fade-up space-y-6">
+      <style>{`
+        @keyframes premiumCourseEnter {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes premiumCoursePulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.025); }
+        }
+        .premium-course-enter { animation: premiumCourseEnter .38s ease-out both; }
+        .premium-course-card:hover .premium-course-icon {
+          animation: premiumCoursePulse .65s ease-in-out;
+        }
+      `}</style>
+
+      <section className="premium-course-enter relative overflow-hidden rounded-[2rem] bg-[#071b3a] p-5 text-white shadow-2xl shadow-blue-950/15 sm:p-8">
+        <div className="pointer-events-none absolute -right-20 -top-24 h-80 w-80 rounded-full bg-blue-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-16 h-72 w-72 rounded-full bg-violet-500/20 blur-3xl" />
+
+        <div className="relative grid gap-8 xl:grid-cols-[1fr_360px] xl:items-end">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.17em] text-cyan-200/70">
-              Academia do Parceiro
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.17em] text-cyan-100">
+                Formação profissional
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.17em] text-white/70">
+                teoria + prática + revisão
+              </span>
+            </div>
+            <h2 className="mt-5 max-w-4xl text-3xl font-black tracking-[-0.055em] sm:text-5xl">
+              Formação comercial organizada para dominar, não apenas consumir.
+            </h2>
+            <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-white/60 sm:text-base">
+              Comece pelo domínio do Orçaly, avance por vendas, psicologia, comunicação,
+              aquisição, negociação e demonstração. Cada formação tem objetivo, sequência,
+              prática e progresso visível.
             </p>
-            <h1 className="mt-2 max-w-4xl text-3xl font-black tracking-[-0.05em] sm:text-4xl">
-              Formação comercial para vender melhor e comunicar melhor.
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-white/58">
-              Conteúdo pensado para o Orçaly, mas com fundamentos de vendas,
-              psicologia, comunicação, marketing e negociação que continuam úteis
-              para a vida profissional.
-            </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {[
+                "Aulas estruturadas",
+                "Casos práticos",
+                "Exercícios",
+                "Recuperação ativa",
+                "Progresso sincronizado",
+              ].map((item) => (
+                <span
+                  key={item}
+                  className="rounded-full bg-white/[0.08] px-3 py-2 text-xs font-black text-white/70"
+                >
+                  ✓ {item}
+                </span>
+              ))}
+            </div>
           </div>
 
-          <div className="rounded-[1.4rem] border border-white/10 bg-white/[0.07] p-4">
-            <div className="flex items-center justify-between text-xs font-black">
-              <span>Progresso geral</span>
-              <span>{overallProgress}%</span>
+          <div className="rounded-[1.55rem] border border-white/10 bg-white/[0.08] p-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100/60">
+              Sua formação
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {[
+                [String(courses.length), "formações"],
+                [String(totalLessons), "aulas"],
+                [`${Math.round(totalAcademyMinutes / 60)}h`, "de conteúdo"],
+                [`${overallProgress}%`, "concluído"],
+              ].map(([value, label]) => (
+                <div key={label} className="rounded-2xl bg-white/[0.08] p-4">
+                  <p className="text-3xl font-black">{value}</p>
+                  <p className="mt-1 text-xs font-bold text-white/45">{label}</p>
+                </div>
+              ))}
             </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-cyan-300 transition-all duration-500"
+                className="h-full rounded-full bg-cyan-300 transition-all duration-700"
                 style={{ width: `${overallProgress}%` }}
               />
             </div>
-            <p className="mt-3 text-xs font-bold text-white/45">
-              {completedLessons.size} de {totalLessons} aulas concluídas. O
-              progresso fica salvo neste navegador.
+            <p className="mt-3 text-xs font-semibold leading-5 text-white/45">
+              {totalCompletedCourses} de {courses.length} formações concluídas.
             </p>
           </div>
         </div>
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[390px_1fr]">
-        <section className="h-fit rounded-[1.8rem] border border-white bg-white p-3 shadow-sm xl:sticky xl:top-24">
-          <div className="px-3 py-3">
-            <p className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">
-              Trilhas
-            </p>
-            <h2 className="mt-1 text-xl font-black text-[#071b3a]">
-              Escolha o que quer dominar
-            </h2>
-          </div>
+      <section className="premium-course-enter rounded-[1.8rem] border border-white bg-white p-5 shadow-sm sm:p-6">
+        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#1359a5]">
+          Mapa de formação
+        </p>
+        <h3 className="mt-1 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">
+          Veja todos os cursos sem procurar por eles.
+        </h3>
+        <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
+          A sequência recomendada começa pelo produto e pela venda consultiva.
+          Depois, aprofunde as competências que mais afetam sua rotina comercial.
+        </p>
 
-          <div className="grid gap-2">
-            {courses.map((course, index) => {
-              const active = course.id === selected.id;
-              const done = course.lessons.filter((lesson) =>
-                completedLessons.has(lesson.id),
-              ).length;
-              const progress = Math.round(
-                (done / course.lessons.length) * 100,
-              );
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {courses.map((course, index) => {
+            const meta = coursePresentation(course);
+            const done = course.lessons.filter((lesson) =>
+              completedLessons.has(lesson.id),
+            ).length;
+            const progress = Math.round(
+              (done / course.lessons.length) * 100,
+            );
+            const active = course.id === selected.id;
 
-              return (
-                <button
-                  key={course.id}
-                  type="button"
-                  onClick={() => selectCourse(course.id)}
-                  className={`rounded-[1.25rem] border p-4 text-left transition ${
-                    active
-                      ? "border-[#05245c] bg-[#05245c] text-white shadow-lg"
-                      : "border-slate-100 bg-[#f8faff] text-[#071b3a] hover:border-blue-200 hover:bg-blue-50"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <span
-                      className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl text-xs font-black ${
-                        active
-                          ? "bg-white/15 text-white"
-                          : progress === 100
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-white text-[#05245c]"
-                      }`}
-                    >
-                      {progress === 100 ? "✓" : index + 1}
-                    </span>
-
-                    <span className="min-w-0 flex-1">
-                      <span
-                        className={`block text-[10px] font-black uppercase tracking-[0.13em] ${
-                          active ? "text-cyan-200/70" : "text-slate-400"
-                        }`}
-                      >
-                        {course.category} · {course.level}
-                      </span>
-                      <strong className="mt-1 block text-sm leading-5">
-                        {course.title}
-                      </strong>
-                      <span
-                        className={`mt-2 block text-[11px] font-bold ${
-                          active ? "text-white/45" : "text-slate-400"
-                        }`}
-                      >
-                        {course.lessons.length} aulas · {totalMinutes(course)} min
-                        · {progress}%
-                      </span>
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="min-w-0 rounded-[1.8rem] border border-white bg-white p-5 shadow-sm sm:p-7">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.13em] text-[#1359a5]">
-                  {selected.category}
-                </span>
-                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">
-                  {selected.level}
-                </span>
-                <span className="rounded-full bg-violet-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.13em] text-violet-600">
-                  {selected.lessons.length} aulas · {totalMinutes(selected)} min
-                </span>
-              </div>
-
-              <h2 className="mt-3 max-w-4xl text-3xl font-black tracking-[-0.045em] text-[#071b3a]">
-                {selected.title}
-              </h2>
-              <p className="mt-3 max-w-4xl text-sm font-semibold leading-6 text-slate-500">
-                {selected.description}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => toggleCourseComplete(selected)}
-              className={`shrink-0 rounded-2xl px-4 py-3 text-sm font-black transition ${
-                selectedProgress === 100
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-[#05245c] text-white hover:bg-[#031a43]"
-              }`}
-            >
-              {selectedProgress === 100
-                ? "✓ Curso concluído"
-                : "Marcar curso completo"}
-            </button>
-          </div>
-
-          <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_260px]">
-            <div className="rounded-[1.4rem] border border-blue-100 bg-[#f7faff] p-5">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-[#1359a5]">
-                O que você vai dominar
-              </p>
-              <ul className="mt-4 grid gap-3">
-                {selected.objectives.map((objective) => (
-                  <li
-                    key={objective}
-                    className="flex gap-3 text-sm font-semibold leading-6 text-slate-600"
-                  >
-                    <span className="mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#05245c] text-[10px] font-black text-white">
-                      ✓
-                    </span>
-                    {objective}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="rounded-[1.4rem] border border-violet-100 bg-violet-50 p-5">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">
-                Progresso do curso
-              </p>
-              <p className="mt-3 text-4xl font-black tracking-[-0.05em] text-violet-950">
-                {selectedProgress}%
-              </p>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-violet-100">
-                <div
-                  className="h-full rounded-full bg-violet-600 transition-all duration-500"
-                  style={{ width: `${selectedProgress}%` }}
-                />
-              </div>
-              <p className="mt-3 text-xs font-bold leading-5 text-violet-800/65">
-                {selectedCompleted} de {selected.lessons.length} aulas
-                concluídas.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-7">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
-                Aulas
-              </p>
-              <h3 className="mt-1 text-xl font-black text-[#071b3a]">
-                Clique em uma aula para estudar
-              </h3>
-              <p className="mt-1 text-sm font-semibold text-slate-500">
-                Cada aula inclui explicação, método, exemplo, erros comuns,
-                exercício e aplicação para a vida.
-              </p>
-            </div>
-
-            <div className="mt-5 grid gap-3">
-              {selected.lessons.map((lesson, index) => {
-                const isOpen = openLessonId === lesson.id;
-                const isDone = completedLessons.has(lesson.id);
-
-                return (
-                  <article
-                    key={lesson.id}
-                    className={`overflow-hidden rounded-[1.45rem] border transition ${
-                      isOpen
-                        ? "border-blue-200 bg-white shadow-md"
-                        : "border-slate-100 bg-[#fbfcfe]"
+            return (
+              <button
+                key={course.id}
+                type="button"
+                onClick={() => selectCourse(course.id)}
+                className={`premium-course-card group relative overflow-hidden rounded-[1.55rem] border p-5 text-left transition duration-300 hover:-translate-y-1 ${
+                  active
+                    ? "border-[#05245c] bg-[#071b3a] text-white shadow-xl shadow-blue-950/10"
+                    : "border-slate-100 bg-[#fbfcff] text-[#071b3a] hover:border-blue-100 hover:bg-white hover:shadow-lg"
+                }`}
+              >
+                <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${meta.accent}`} />
+                <div className="flex items-start justify-between gap-4">
+                  <span className="premium-course-icon text-3xl">{meta.emoji}</span>
+                  <span
+                    className={`rounded-full px-3 py-1.5 text-[10px] font-black ${
+                      active
+                        ? "bg-white/10 text-cyan-100"
+                        : progress === 100
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-blue-50 text-[#05245c]"
                     }`}
                   >
-                    <button
-                      type="button"
-                      aria-expanded={isOpen}
-                      onClick={() =>
-                        setOpenLessonId((current) =>
-                          current === lesson.id ? null : lesson.id,
-                        )
-                      }
-                      className="flex w-full items-center gap-4 p-4 text-left sm:p-5"
-                    >
-                      <span
-                        className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-sm font-black transition ${
-                          isDone
-                            ? "bg-emerald-100 text-emerald-700"
-                            : isOpen
-                              ? "bg-[#05245c] text-white"
-                              : "bg-blue-50 text-[#05245c]"
-                        }`}
-                      >
-                        {isDone ? "✓" : index + 1}
+                    {progress === 100 ? "✓ concluído" : `${progress}%`}
+                  </span>
+                </div>
+
+                <p className={`mt-5 text-[10px] font-black uppercase tracking-[0.14em] ${
+                  active ? "text-cyan-200/65" : "text-slate-400"
+                }`}>
+                  {String(index + 1).padStart(2, "0")} · {course.category} · {course.level}
+                </p>
+                <h4 className="mt-2 text-lg font-black leading-6">{course.title}</h4>
+                <p className={`mt-2 line-clamp-3 text-xs font-semibold leading-5 ${
+                  active ? "text-white/55" : "text-slate-500"
+                }`}>
+                  {meta.promise}
+                </p>
+                <div className="mt-5 flex items-center justify-between gap-3">
+                  <span className={`text-[10px] font-black ${
+                    active ? "text-white/45" : "text-slate-400"
+                  }`}>
+                    {course.lessons.length} aulas · {totalMinutes(course)} min
+                  </span>
+                  <span className={`text-xs font-black ${
+                    active ? "text-cyan-200" : "text-[#05245c]"
+                  }`}>
+                    {active ? "Estudando →" : "Abrir curso →"}
+                  </span>
+                </div>
+                <div className={`mt-4 h-1.5 overflow-hidden rounded-full ${
+                  active ? "bg-white/10" : "bg-slate-100"
+                }`}>
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${
+                      active ? "bg-cyan-300" : "bg-[#1359a5]"
+                    }`}
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="premium-course-enter overflow-hidden rounded-[2rem] border border-white bg-white shadow-sm">
+        <div className={`bg-gradient-to-r ${selectedMeta.accent} p-[1px]`}>
+          <div className="rounded-t-[calc(2rem-1px)] bg-[#071b3a] p-5 text-white sm:p-7">
+            <div className="grid gap-6 xl:grid-cols-[1fr_320px] xl:items-end">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-3xl">{selectedMeta.emoji}</span>
+                  <span className="rounded-full bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-cyan-100">
+                    {selected.category}
+                  </span>
+                  <span className="rounded-full bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/60">
+                    {selected.level}
+                  </span>
+                </div>
+                <h3 className="mt-4 max-w-4xl text-3xl font-black tracking-[-0.05em] sm:text-4xl">
+                  {selected.title}
+                </h3>
+                <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-white/60">
+                  {selected.description}
+                </p>
+                <p className="mt-4 max-w-3xl rounded-2xl border border-white/10 bg-white/[0.07] p-4 text-sm font-black leading-6 text-cyan-50">
+                  Resultado esperado: {selectedMeta.promise}
+                </p>
+              </div>
+
+              <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.08] p-5">
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-white/45">
+                      Progresso do curso
+                    </p>
+                    <p className="mt-2 text-4xl font-black">{selectedProgress}%</p>
+                  </div>
+                  <p className="text-right text-xs font-black text-cyan-100">
+                    {selectedCompleted}/{selected.lessons.length}<br />aulas
+                  </p>
+                </div>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-cyan-300 transition-all duration-700"
+                    style={{ width: `${selectedProgress}%` }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleCourseComplete(selected)}
+                  className="mt-4 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-xs font-black text-white transition hover:bg-white/15"
+                >
+                  {selectedProgress === 100
+                    ? "Reabrir formação"
+                    : "Marcar formação como concluída"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid xl:grid-cols-[330px_minmax(0,1fr)]">
+          <aside className="border-b border-slate-100 bg-[#f8faff] p-4 xl:border-b-0 xl:border-r xl:p-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+              O que você vai dominar
+            </p>
+            <div className="mt-3 grid gap-2">
+              {selected.objectives.map((objective) => (
+                <div key={objective} className="flex gap-3 rounded-2xl bg-white p-3">
+                  <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-emerald-100 text-[10px] font-black text-emerald-700">
+                    ✓
+                  </span>
+                  <p className="text-xs font-semibold leading-5 text-slate-600">
+                    {objective}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-6 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+              Currículo
+            </p>
+            <div className="mt-3 grid gap-2">
+              {selected.lessons.map((lesson, index) => {
+                const active = openLessonId === lesson.id;
+                const done = completedLessons.has(lesson.id);
+
+                return (
+                  <button
+                    key={lesson.id}
+                    type="button"
+                    onClick={() => setOpenLessonId(lesson.id)}
+                    className={`flex items-start gap-3 rounded-2xl border p-3 text-left transition ${
+                      active
+                        ? "border-blue-200 bg-white shadow-sm"
+                        : "border-transparent hover:border-blue-100 hover:bg-white"
+                    }`}
+                  >
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl text-[10px] font-black ${
+                      done
+                        ? "bg-emerald-100 text-emerald-700"
+                        : active
+                          ? "bg-[#05245c] text-white"
+                          : "bg-white text-slate-500"
+                    }`}>
+                      {done ? "✓" : index + 1}
+                    </span>
+                    <span>
+                      <strong className="line-clamp-2 block text-xs leading-5 text-[#071b3a]">
+                        {lesson.title}
+                      </strong>
+                      <span className="mt-1 block text-[10px] font-bold text-slate-400">
+                        {lesson.minutes} min
                       </span>
-
-                      <span className="min-w-0 flex-1">
-                        <span className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-400">
-                          Aula {index + 1} · {lesson.minutes} min
-                        </span>
-                        <strong className="mt-1 block text-base leading-6 text-[#071b3a]">
-                          {lesson.title}
-                        </strong>
-                        <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">
-                          {lesson.summary}
-                        </span>
-                      </span>
-
-                      <span
-                        className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-lg font-black text-[#05245c] transition-transform duration-300 ${
-                          isOpen ? "rotate-45" : ""
-                        }`}
-                      >
-                        +
-                      </span>
-                    </button>
-
-                    <div
-                      className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-                        isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-                      }`}
-                    >
-                      <div className="min-h-0 overflow-hidden">
-                        <div className="border-t border-slate-100 p-4 sm:p-6">
-                          <section className="rounded-[1.3rem] border border-blue-100 bg-blue-50/60 p-5">
-                            <p className="text-xs font-black uppercase tracking-[0.14em] text-[#1359a5]">
-                              Entenda o conceito
-                            </p>
-                            <div className="mt-4 grid gap-3">
-                              {lesson.concept.map((paragraph) => (
-                                <p
-                                  key={paragraph}
-                                  className="text-sm font-semibold leading-7 text-slate-600"
-                                >
-                                  {paragraph}
-                                </p>
-                              ))}
-                            </div>
-                          </section>
-
-                          <div className="mt-4 grid gap-4 xl:grid-cols-2">
-                            <section className="rounded-[1.3rem] border border-slate-100 bg-white p-5">
-                              <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
-                                Passo a passo
-                              </p>
-                              <div className="mt-4 grid gap-3">
-                                {lesson.steps.map((step, stepIndex) => (
-                                  <div
-                                    key={step}
-                                    className="flex gap-3 rounded-xl bg-[#f8faff] p-3"
-                                  >
-                                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#05245c] text-[10px] font-black text-white">
-                                      {stepIndex + 1}
-                                    </span>
-                                    <p className="text-sm font-semibold leading-6 text-slate-600">
-                                      {step}
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                            </section>
-
-                            <section className="rounded-[1.3rem] border border-emerald-100 bg-emerald-50 p-5">
-                              <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
-                                Exemplo prático
-                              </p>
-                              <h4 className="mt-3 font-black text-emerald-950">
-                                {lesson.example.title}
-                              </h4>
-                              <p className="mt-2 text-sm font-semibold leading-6 text-emerald-900/70">
-                                <strong>Cenário:</strong>{" "}
-                                {lesson.example.scenario}
-                              </p>
-                              <p className="mt-3 rounded-xl bg-white/75 p-4 text-sm font-semibold leading-6 text-emerald-950/75">
-                                <strong>Como agir:</strong>{" "}
-                                {lesson.example.response}
-                              </p>
-                            </section>
-                          </div>
-
-                          <div className="mt-4 grid gap-4 xl:grid-cols-[.9fr_1.1fr]">
-                            <section className="rounded-[1.3rem] border border-red-100 bg-red-50 p-5">
-                              <p className="text-xs font-black uppercase tracking-[0.14em] text-red-600">
-                                Erros comuns
-                              </p>
-                              <ul className="mt-4 grid gap-3">
-                                {lesson.mistakes.map((mistake) => (
-                                  <li
-                                    key={mistake}
-                                    className="flex gap-3 text-sm font-semibold leading-6 text-red-900/70"
-                                  >
-                                    <span className="mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-red-100 text-[10px] font-black text-red-700">
-                                      ×
-                                    </span>
-                                    {mistake}
-                                  </li>
-                                ))}
-                              </ul>
-                            </section>
-
-                            <section className="rounded-[1.3rem] border border-amber-100 bg-amber-50 p-5">
-                              <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-700">
-                                Exercício
-                              </p>
-                              <p className="mt-3 text-sm font-bold leading-7 text-amber-950/75">
-                                {lesson.exercise}
-                              </p>
-                            </section>
-                          </div>
-
-                          <section className="mt-4 rounded-[1.3rem] border border-violet-100 bg-violet-50 p-5">
-                            <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">
-                              Leve para a vida
-                            </p>
-                            <p className="mt-3 text-sm font-semibold leading-7 text-violet-950/70">
-                              {lesson.lifeSkill}
-                            </p>
-                          </section>
-
-                          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <p className="text-xs font-bold text-slate-400">
-                              Estude, pratique e só então marque a aula como
-                              concluída.
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => toggleLessonComplete(lesson.id)}
-                              className={`rounded-2xl px-5 py-3 text-sm font-black transition ${
-                                isDone
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "bg-[#05245c] text-white hover:bg-[#031a43]"
-                              }`}
-                            >
-                              {isDone
-                                ? "✓ Aula concluída"
-                                : "Marcar aula como concluída"}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
+                    </span>
+                  </button>
                 );
               })}
             </div>
-          </div>
+          </aside>
 
-          <div className="mt-7 rounded-[1.5rem] border border-emerald-100 bg-emerald-50 p-5 sm:p-6">
-            <p className="font-black text-emerald-900">
-              Princípio da Academia do Parceiro
-            </p>
-            <p className="mt-2 max-w-4xl text-sm font-semibold leading-7 text-emerald-900/70">
-              O objetivo não é formar alguém que saiba repetir frases prontas.
-              É desenvolver raciocínio comercial, comunicação, ética, capacidade
-              de diagnóstico e pensamento crítico. Um parceiro que aprende isso
-              vende melhor hoje e também leva as habilidades para qualquer
-              carreira ou negócio no futuro.
-            </p>
+          <div className="min-w-0 p-4 sm:p-6 xl:p-8">
+            {selected.lessons.map((lesson, index) => {
+              if (openLessonId !== lesson.id) return null;
+
+              const isDone = completedLessons.has(lesson.id);
+              const nextLesson = selected.lessons[index + 1] || null;
+
+              return (
+                <article key={lesson.id} className="premium-course-enter">
+                  <div className="border-b border-slate-100 pb-6">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1359a5]">
+                      Aula {index + 1} de {selected.lessons.length} · {lesson.minutes} min
+                    </p>
+                    <h4 className="mt-2 max-w-4xl text-3xl font-black tracking-[-0.05em] text-[#071b3a]">
+                      {lesson.title}
+                    </h4>
+                    <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-500">
+                      {lesson.summary}
+                    </p>
+                  </div>
+
+                  <section className="mt-6 rounded-[1.6rem] border border-violet-100 bg-violet-50 p-5">
+                    <p className="text-xs font-black uppercase tracking-[0.15em] text-violet-700">
+                      Mapa de fixação
+                    </p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      {[
+                        ["01", "Entender", "Construa o modelo mental."],
+                        ["02", "Aplicar", "Use o método em um caso."],
+                        ["03", "Recuperar", "Tente lembrar sem reler."],
+                        ["04", "Revisar", "Consolide depois da prática."],
+                      ].map(([number, title, detail]) => (
+                        <div key={number} className="rounded-2xl bg-white p-4">
+                          <span className="text-[10px] font-black text-violet-400">{number}</span>
+                          <p className="mt-2 text-sm font-black text-violet-950">{title}</p>
+                          <p className="mt-1 text-xs font-semibold leading-5 text-violet-900/55">{detail}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="mt-5 rounded-[1.6rem] border border-blue-100 bg-blue-50/55 p-5 sm:p-6">
+                    <p className="text-xs font-black uppercase tracking-[0.15em] text-[#1359a5]">
+                      1. Entenda o conceito
+                    </p>
+                    <div className="mt-4 grid gap-4">
+                      {lesson.concept.map((paragraph, paragraphIndex) => (
+                        <div key={paragraph} className="flex gap-4 rounded-2xl bg-white p-4">
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[#05245c] text-xs font-black text-white">
+                            {paragraphIndex + 1}
+                          </span>
+                          <p className="text-sm font-semibold leading-7 text-slate-600">{paragraph}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <div className="mt-5 grid gap-5 xl:grid-cols-2">
+                    <section className="rounded-[1.6rem] border border-slate-100 bg-white p-5 shadow-sm">
+                      <p className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">
+                        2. Método passo a passo
+                      </p>
+                      <div className="mt-4 grid gap-3">
+                        {lesson.steps.map((step, stepIndex) => (
+                          <div key={step} className="flex gap-3 rounded-2xl bg-[#f8faff] p-4">
+                            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[#071b3a] text-xs font-black text-white">
+                              {stepIndex + 1}
+                            </span>
+                            <p className="text-sm font-semibold leading-6 text-slate-600">{step}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+
+                    <section className="rounded-[1.6rem] border border-emerald-100 bg-emerald-50 p-5">
+                      <p className="text-xs font-black uppercase tracking-[0.15em] text-emerald-700">
+                        Caso prático
+                      </p>
+                      <h5 className="mt-3 text-lg font-black text-emerald-950">
+                        {lesson.example.title}
+                      </h5>
+                      <p className="mt-3 text-sm font-semibold leading-6 text-emerald-950/65">
+                        <strong>Cenário:</strong> {lesson.example.scenario}
+                      </p>
+                      <div className="mt-4 rounded-2xl bg-white p-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.13em] text-emerald-600">
+                          Como agir
+                        </p>
+                        <p className="mt-2 text-sm font-semibold leading-7 text-emerald-950/75">
+                          {lesson.example.response}
+                        </p>
+                      </div>
+                    </section>
+                  </div>
+
+                  <div className="mt-5 grid gap-5 xl:grid-cols-[.9fr_1.1fr]">
+                    <section className="rounded-[1.6rem] border border-red-100 bg-red-50 p-5">
+                      <p className="text-xs font-black uppercase tracking-[0.15em] text-red-600">
+                        Armadilhas
+                      </p>
+                      <div className="mt-4 grid gap-3">
+                        {lesson.mistakes.map((mistake) => (
+                          <div key={mistake} className="flex gap-3 rounded-2xl bg-white/70 p-3">
+                            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-red-100 text-[10px] font-black text-red-700">
+                              ×
+                            </span>
+                            <p className="text-sm font-semibold leading-6 text-red-950/70">{mistake}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+
+                    <section className="rounded-[1.6rem] border border-amber-100 bg-amber-50 p-5">
+                      <p className="text-xs font-black uppercase tracking-[0.15em] text-amber-700">
+                        3. Aplicação imediata
+                      </p>
+                      <p className="mt-3 text-base font-black leading-7 text-amber-950">
+                        {lesson.exercise}
+                      </p>
+                      <p className="mt-4 rounded-2xl bg-white p-4 text-xs font-semibold leading-5 text-amber-950/65">
+                        Tente executar antes de marcar a aula como concluída. Ler gera familiaridade;
+                        aplicar gera habilidade.
+                      </p>
+                    </section>
+                  </div>
+
+                  <section className="mt-5 rounded-[1.6rem] border border-[#d7e6ff] bg-[#f5f8ff] p-5 sm:p-6">
+                    <p className="text-xs font-black uppercase tracking-[0.15em] text-[#1359a5]">
+                      4. Recuperação ativa
+                    </p>
+                    <h5 className="mt-1 text-xl font-black text-[#071b3a]">
+                      Feche a aula tentando lembrar, não relendo.
+                    </h5>
+                    <div className="mt-4 grid gap-3 md:grid-cols-3">
+                      {[
+                        "Resuma a ideia principal desta aula em uma frase.",
+                        "Qual erro desta aula você mais precisa evitar?",
+                        `Como você aplicaria o método em: ${lesson.example.scenario}`,
+                      ].map((prompt, promptIndex) => (
+                        <div key={prompt} className="rounded-2xl border border-blue-100 bg-white p-4">
+                          <span className="text-[10px] font-black text-blue-400">
+                            PERGUNTA {promptIndex + 1}
+                          </span>
+                          <p className="mt-2 text-sm font-black leading-6 text-[#071b3a]">{prompt}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="mt-5 rounded-[1.6rem] border border-violet-100 bg-violet-50 p-5">
+                    <p className="text-xs font-black uppercase tracking-[0.15em] text-violet-700">
+                      Leve para a vida profissional
+                    </p>
+                    <p className="mt-3 text-sm font-semibold leading-7 text-violet-950/70">
+                      {lesson.lifeSkill}
+                    </p>
+                  </section>
+
+                  <div className="mt-6 flex flex-col gap-4 rounded-[1.6rem] border border-slate-100 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-black text-[#071b3a]">Fechamento da aula</p>
+                      <p className="mt-1 text-xs font-semibold leading-5 text-slate-400">
+                        Pratique, recupere de memória e então registre a conclusão.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <button
+                        type="button"
+                        onClick={() => toggleLessonComplete(lesson.id)}
+                        className={`rounded-2xl px-5 py-3 text-sm font-black transition hover:-translate-y-0.5 ${
+                          isDone
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-[#05245c] text-white"
+                        }`}
+                      >
+                        {isDone ? "✓ Aula concluída" : "Concluir aula"}
+                      </button>
+                      {nextLesson ? (
+                        <button
+                          type="button"
+                          onClick={() => setOpenLessonId(nextLesson.id)}
+                          className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-black text-[#05245c] transition hover:-translate-y-0.5"
+                        >
+                          Próxima aula →
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }

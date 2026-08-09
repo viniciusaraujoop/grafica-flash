@@ -803,8 +803,6 @@ export default function PartnerAcademyV3({
     useState<Record<string, number[]>>({});
   const [focusMode, setFocusMode] =
     useState(false);
-  const [showLibrary, setShowLibrary] =
-    useState(false);
   const [feedback, setFeedback] =
     useState("");
   const [celebrating, setCelebrating] =
@@ -1134,12 +1132,12 @@ export default function PartnerAcademyV3({
                 Academia 3.0
               </span>
               <span className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-violet-100">
-                microlições + prática
+                formação + treino + prática
               </span>
             </div>
 
             <h1 className="mt-4 max-w-4xl text-3xl font-black tracking-[-0.05em] sm:text-5xl">
-              Treine vendas sem transformar estudo em castigo.
+              Formação comercial completa, prática e construída para resultado real.
             </h1>
 
             <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-white/60 sm:text-base">
@@ -1189,6 +1187,37 @@ export default function PartnerAcademyV3({
             </p>
           </div>
         </div>
+      </section>
+
+      <section className="academy-enter overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-sm">
+        <div className="border-b border-blue-50 bg-[#f7faff] p-5 sm:p-6">
+          <p className="text-xs font-black uppercase tracking-[0.15em] text-[#1359a5]">
+            Formação completa
+          </p>
+          <h2 className="mt-1 text-3xl font-black tracking-[-0.05em] text-[#071b3a]">
+            Os cursos são a formação principal, não um conteúdo escondido.
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
+            Domínio do Orçaly, vendas, psicologia, negociação, aquisição e demonstração
+            ficam visíveis logo no início. O treino de cinco minutos vem depois como reforço.
+          </p>
+        </div>
+        <div className="p-3 sm:p-4">
+          <PartnerCoursesTab />
+        </div>
+      </section>
+
+      <section className="academy-enter rounded-[1.8rem] border border-violet-100 bg-violet-50 p-5 sm:p-6">
+        <p className="text-xs font-black uppercase tracking-[0.15em] text-violet-700">
+          Treino rápido
+        </p>
+        <h2 className="mt-1 text-2xl font-black tracking-[-0.04em] text-violet-950">
+          Transforme conhecimento em reflexo comercial.
+        </h2>
+        <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-violet-900/60">
+          Use os sprints nos dias corridos: uma ideia, uma missão e uma miniprova.
+          Eles reforçam os cursos completos, não substituem a formação.
+        </p>
       </section>
 
       <section className="academy-enter grid gap-3 sm:grid-cols-2">
@@ -1654,47 +1683,6 @@ export default function PartnerAcademyV3({
         </div>
       </article>
 
-      <section className="academy-enter rounded-[1.8rem] border border-white bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.15em] text-violet-600">
-              Biblioteca avançada
-            </p>
-            <h2 className="mt-1 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">
-              Quer aprofundar? O conteúdo
-              completo continua aqui.
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
-              Os cursos longos, exemplos,
-              exercícios e fundamentos
-              existentes não foram removidos.
-              Use depois do treino guiado ou
-              quando quiser estudar um tema em
-              profundidade.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() =>
-              setShowLibrary(
-                (current) => !current,
-              )
-            }
-            className="rounded-2xl border border-violet-100 bg-violet-50 px-5 py-3 text-sm font-black text-violet-700 transition hover:-translate-y-0.5"
-          >
-            {showLibrary
-              ? "Fechar biblioteca"
-              : "Abrir biblioteca completa"}
-          </button>
-        </div>
-      </section>
-
-      {showLibrary ? (
-        <div className="academy-enter">
-          <PartnerCoursesTab />
-        </div>
-      ) : null}
     </div>
   );
 }
