@@ -14,7 +14,7 @@ import {
   useState,
 } from "react";
 import { supabase } from "@/lib/supabase";
-import PartnerCoursesTab from "@/components/parceiros/PartnerCoursesTab";
+import PartnerAcademyV3 from "@/components/parceiros/PartnerAcademyV3";
 import PartnerPromotionTab from "@/components/parceiros/PartnerPromotionTab";
 import PartnerGrowthHub from "@/components/parceiros/PartnerGrowthHub";
 
@@ -272,7 +272,7 @@ export default function ParceirosPainelPage() {
     ["overview", "Visão geral"],
     ["referrals", "Indicações"],
     ["growth", "Central Comercial"],
-    ["courses", "Cursos"],
+    ["courses", "Academia"],
     ["promotion", "Divulgação"],
     ["payments", "Pagamentos e Pix"],
     ["ranking", "Ranking"],
@@ -557,7 +557,7 @@ export default function ParceirosPainelPage() {
             />
           ) : null}
           {tab === "courses" ? (
-            <PartnerCoursesTab />
+            <PartnerAcademyV3 partnerName={dashboard.profile.name} />
           ) : null}
 
           {tab === "promotion" ? (
