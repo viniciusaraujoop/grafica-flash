@@ -896,6 +896,12 @@ export default function HomePage() {
             <DashboardPreview segment={selectedSegment} />
           </div>
         </div>
+        <div className="relative mx-auto w-full max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
+          <p className="text-center text-xs font-semibold leading-5 text-[#607895] sm:text-sm lg:text-left">
+            <strong className="font-black text-[#05245c]">Pagamentos online processados exclusivamente pelo Mercado Pago.</strong>{' '}
+            Os recebimentos online realizados pelo marketplace do Orçaly são processados pela infraestrutura do Mercado Pago, oferecendo mais segurança e confiabilidade nas transações.
+          </p>
+        </div>
       </section>
 
       <section className="border-y border-blue-100 bg-white">

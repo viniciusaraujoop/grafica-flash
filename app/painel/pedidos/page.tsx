@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getOrderStatusVisual, isOrderPaid } from '@/lib/order-status'
+import { buildOrderWhatsAppLink, hasOrderWhatsAppPhone } from '@/lib/order-whatsapp'
 
 type Order = {
   id: string
@@ -53,16 +54,6 @@ function dataCurta(value?: string | null) {
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(date)
 }
 
-function phoneOnly(value?: string | null) {
-  return String(value || '').replace(/\D/g, '')
-}
-
-function whatsappLink(phone?: string | null, text?: string) {
-  const clean = phoneOnly(phone)
-  if (!clean) return '#'
-  const finalPhone = clean.startsWith('55') ? clean : `55${clean}`
-  return `https://wa.me/${finalPhone}?text=${encodeURIComponent(text || 'Olá! Vim falar sobre meu pedido.')}`
-}
 
 export default function PedidosPage() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -383,10 +374,10 @@ export default function PedidosPage() {
                     </select>
 
                     <a
-                      href={whatsappLink(order.telefone, `Olá, ${order.nome || ''}! Vim falar sobre seu pedido: ${order.produto || ''}.`)}
+                      href={buildOrderWhatsAppLink(order)}
                       target="_blank"
                       rel="noreferrer"
-                      className={`rounded-2xl px-4 py-3 text-center text-sm font-black text-white ${phoneOnly(order.telefone) ? 'bg-[#05245c]' : 'pointer-events-none bg-slate-300'}`}
+                      className={`rounded-2xl px-4 py-3 text-center text-sm font-black text-white ${hasOrderWhatsAppPhone(order) ? 'bg-[#05245c]' : 'pointer-events-none bg-slate-300'}`}
                     >
                       Chamar no WhatsApp
                     </a>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { getAccessTokenClient } from '@/lib/current-company-client'
 import { getOrderStatusVisual, isOrderPaid } from '@/lib/order-status'
+import { buildOrderWhatsAppLink, hasOrderWhatsAppPhone } from '@/lib/order-whatsapp'
 
 const statusFlow = ['Recebido', 'Em análise', 'Aprovado', 'Em produção', 'Pronto', 'Entregue']
 
@@ -38,16 +39,6 @@ function inputDate(value?: string | null) {
   return date.toISOString().slice(0, 16)
 }
 
-function phoneOnly(value?: string | null) {
-  return String(value || '').replace(/\D/g, '')
-}
-
-function whatsappLink(phone?: string | null, text?: string) {
-  const clean = phoneOnly(phone)
-  if (!clean) return '#'
-  const finalPhone = clean.startsWith('55') ? clean : `55${clean}`
-  return `https://wa.me/${finalPhone}?text=${encodeURIComponent(text || 'Olá! Vim falar sobre meu pedido.')}`
-}
 
 export default function PedidoDetalheProPage() {
   const params = useParams()
@@ -411,7 +402,7 @@ export default function PedidoDetalheProPage() {
                 </button>
                 <button onClick={createTask} className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-sm font-black text-[#05245c]">Transformar em tarefa</button>
                 <button onClick={createProposal} className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-sm font-black text-[#05245c]">Criar proposta</button>
-                <a href={whatsappLink(order.telefone, `Olá, ${order.nome || ''}! Vim falar sobre seu pedido: ${order.produto || ''}.`)} target="_blank" rel="noreferrer" className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-sm font-black text-[#05245c]">Enviar WhatsApp</a>
+                <a href={buildOrderWhatsAppLink(order)} target="_blank" rel="noreferrer" className={`rounded-2xl border border-blue-100 px-5 py-4 text-sm font-black ${hasOrderWhatsAppPhone(order) ? 'bg-white text-[#05245c]' : 'pointer-events-none bg-slate-100 text-slate-400'}`}>Enviar WhatsApp</a>
                 {fileUrl ? <a href={fileUrl} target="_blank" rel="noreferrer" className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-sm font-black text-[#05245c]">Abrir arquivo</a> : null}
               </div>
             </div>
