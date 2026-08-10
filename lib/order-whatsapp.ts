@@ -1,6 +1,7 @@
 // ORCALY_ORDER_WHATSAPP_MESSAGE_V1
 // ORCALY_ORDER_WHATSAPP_UNICODE_V2
 // ORCALY_ORDER_WHATSAPP_PERCENT_EMOJI_V3
+// ORCALY_ORDER_WHATSAPP_TEXT_ONLY_V5
 
 type UnknownRecord = Record<string, unknown>
 
@@ -436,44 +437,44 @@ export function buildOrderWhatsAppMessage(
   const items = buildItemsSection(order)
 
   const lines: string[] = [
-    `Olá, *${customerName}*! __EMOJI_WAVE__`,
+    `Olá, *${customerName}*! `,
     '',
     'Tudo bem? Estamos entrando em contato para falar sobre o seu pedido. Para facilitar, deixamos o resumo completo logo abaixo:',
     '',
     '━━━━━━━━━━━━━━━━━━',
-    `__EMOJI_PACKAGE__ *PEDIDO #${orderNumber}*`,
+    `*PEDIDO #${orderNumber}*`,
     '━━━━━━━━━━━━━━━━━━',
   ]
 
   if (purchaseDate.date) {
     lines.push(
-      `__EMOJI_CALENDAR__ *Data da compra:* ${purchaseDate.date}`,
+      `*Data da compra:* ${purchaseDate.date}`,
     )
   }
 
   if (purchaseDate.time) {
     lines.push(
-      `__EMOJI_CLOCK__ *Horário da compra:* ${purchaseDate.time}`,
+      `*Horário da compra:* ${purchaseDate.time}`,
     )
   }
 
-  lines.push(`__EMOJI_PIN__ *Status do pedido:* ${orderStatus}`)
+  lines.push(`*Status do pedido:* ${orderStatus}`)
 
   if (paymentStatus) {
     lines.push(
-      `__EMOJI_CARD__ *Status do pagamento:* ${paymentStatus}`,
+      `*Status do pagamento:* ${paymentStatus}`,
     )
   }
 
   const deadline = formatDateTime(order.prazo_entrega)
 
   if (deadline) {
-    lines.push(`__EMOJI_STOPWATCH__ *Prazo previsto:* ${deadline}`)
+    lines.push(`*Prazo previsto:* ${deadline}`)
   }
 
   pushSection(
     lines,
-    '__EMOJI_BAGS__ *ITENS DO PEDIDO*',
+    '*ITENS DO PEDIDO*',
     items,
   )
 
@@ -503,43 +504,43 @@ export function buildOrderWhatsAppMessage(
 
   if (deliveryType) {
     deliveryRows.push(
-      `__EMOJI_TRUCK__ *Modalidade:* ${deliveryType}`,
+      `*Modalidade:* ${deliveryType}`,
     )
   }
 
   if (address) {
-    deliveryRows.push(`__EMOJI_LOCATION__ *Endereço:* ${address}`)
+    deliveryRows.push(`*Endereço:* ${address}`)
   }
 
   if (neighborhood) {
     deliveryRows.push(
-      `__EMOJI_HOUSES__ *Bairro:* ${neighborhood}`,
+      `*Bairro:* ${neighborhood}`,
     )
   }
 
   if (complement) {
     deliveryRows.push(
-      `__EMOJI_HOME__ *Complemento:* ${complement}`,
+      `*Complemento:* ${complement}`,
     )
   }
 
   if (referencePoint) {
     deliveryRows.push(
-      `__EMOJI_COMPASS__ *Ponto de referência:* ${referencePoint}`,
+      `*Ponto de referência:* ${referencePoint}`,
     )
   }
 
   if (deliveryFee > 0) {
     deliveryRows.push(
-      `__EMOJI_SCOOTER__ *Taxa de entrega:* ${money(deliveryFee)}`,
+      `*Taxa de entrega:* ${money(deliveryFee)}`,
     )
   }
 
   pushSection(
     lines,
     deliveryType
-      ? `__EMOJI_TRUCK__ *${deliveryType.toUpperCase()}*`
-      : '__EMOJI_TRUCK__ *ENTREGA / RETIRADA*',
+      ? `*${deliveryType.toUpperCase()}*`
+      : '*ENTREGA / RETIRADA*',
     deliveryRows,
   )
 
@@ -581,55 +582,55 @@ export function buildOrderWhatsAppMessage(
 
   if (paymentMethod) {
     paymentRows.push(
-      `__EMOJI_CARD__ *Forma de pagamento:* ${paymentMethod}`,
+      `*Forma de pagamento:* ${paymentMethod}`,
     )
   }
 
   if (installments > 1) {
     paymentRows.push(
-      `__EMOJI_RECEIPT__ *Parcelas:* ${installments}x`,
+      `*Parcelas:* ${installments}x`,
     )
   }
 
   if (subtotal > 0) {
     paymentRows.push(
-      `__EMOJI_MONEYBAG__ *Subtotal:* ${money(subtotal)}`,
+      `*Subtotal:* ${money(subtotal)}`,
     )
   }
 
   if (discount > 0) {
     paymentRows.push(
-      `__EMOJI_LABEL__ *Desconto:* -${money(discount)}`,
+      `*Desconto:* -${money(discount)}`,
     )
   }
 
   if (coupon) {
     paymentRows.push(
-      `__EMOJI_TICKET__ *Cupom:* ${coupon}`,
+      `*Cupom:* ${coupon}`,
     )
   }
 
   if (deliveryFee > 0) {
     paymentRows.push(
-      `__EMOJI_SCOOTER__ *Entrega:* ${money(deliveryFee)}`,
+      `*Entrega:* ${money(deliveryFee)}`,
     )
   }
 
   if (total > 0) {
     paymentRows.push(
-      `__EMOJI_DOLLAR__ *TOTAL DO PEDIDO:* *${money(total)}*`,
+      `*TOTAL DO PEDIDO:* *${money(total)}*`,
     )
   }
 
   if (changeFor > 0) {
     paymentRows.push(
-      `__EMOJI_WINGS__ *Troco para:* ${money(changeFor)}`,
+      `*Troco para:* ${money(changeFor)}`,
     )
   }
 
   pushSection(
     lines,
-    '__EMOJI_MONEYBAG__ *PAGAMENTO E VALORES*',
+    '*PAGAMENTO E VALORES*',
     paymentRows,
   )
 
@@ -640,7 +641,7 @@ export function buildOrderWhatsAppMessage(
   if (customerNotes) {
     pushSection(
       lines,
-      '__EMOJI_MEMO__ *OBSERVAÇÕES DO PEDIDO*',
+      '*OBSERVAÇÕES DO PEDIDO*',
       [customerNotes],
     )
   }
@@ -648,7 +649,7 @@ export function buildOrderWhatsAppMessage(
   lines.push('')
   lines.push('━━━━━━━━━━━━━━━━━━')
   lines.push(
-    'Se precisar corrigir alguma informação ou tiver alguma dúvida, pode responder por aqui. __EMOJI_SMILE__',
+    'Se precisar corrigir alguma informação ou tiver alguma dúvida, pode responder por aqui. ',
   )
 
   return lines.join('\n')
@@ -664,41 +665,5 @@ export function buildOrderWhatsAppLink(
   const message =
     buildOrderWhatsAppMessage(orderValue)
 
-  const encodedText = encodeURIComponent(message)
-
-  const emojiUrlMap: Record<string, string> = {
-    __EMOJI_WAVE__: '%F0%9F%91%8B',
-    __EMOJI_PACKAGE__: '%F0%9F%93%A6',
-    __EMOJI_CALENDAR__: '%F0%9F%93%85',
-    __EMOJI_CLOCK__: '%F0%9F%95%92',
-    __EMOJI_PIN__: '%F0%9F%93%8C',
-    __EMOJI_CARD__: '%F0%9F%92%B3',
-    __EMOJI_STOPWATCH__: '%E2%8F%B1%EF%B8%8F',
-    __EMOJI_BAGS__: '%F0%9F%9B%8D%EF%B8%8F',
-    __EMOJI_TRUCK__: '%F0%9F%9A%9A',
-    __EMOJI_LOCATION__: '%F0%9F%93%8D',
-    __EMOJI_HOUSES__: '%F0%9F%8F%98%EF%B8%8F',
-    __EMOJI_HOME__: '%F0%9F%8F%A0',
-    __EMOJI_COMPASS__: '%F0%9F%A7%AD',
-    __EMOJI_SCOOTER__: '%F0%9F%9B%B5',
-    __EMOJI_RECEIPT__: '%F0%9F%A7%BE',
-    __EMOJI_MONEYBAG__: '%F0%9F%92%B0',
-    __EMOJI_LABEL__: '%F0%9F%8F%B7%EF%B8%8F',
-    __EMOJI_TICKET__: '%F0%9F%8E%9F%EF%B8%8F',
-    __EMOJI_DOLLAR__: '%F0%9F%92%B5',
-    __EMOJI_WINGS__: '%F0%9F%92%B8',
-    __EMOJI_MEMO__: '%F0%9F%93%9D',
-    __EMOJI_SMILE__: '%F0%9F%98%8A',
-  }
-
-  const finalText = Object.entries(emojiUrlMap).reduce(
-    (current, [placeholder, encodedEmoji]) =>
-      current.replaceAll(
-        encodeURIComponent(placeholder),
-        encodedEmoji,
-      ),
-    encodedText,
-  )
-
-  return `https://wa.me/${phone}?text=${finalText}`
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
 }
