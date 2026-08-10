@@ -1,4 +1,5 @@
 // ORCALY_ORDER_WHATSAPP_MESSAGE_V1
+// ORCALY_ORDER_WHATSAPP_UNICODE_V2
 
 type UnknownRecord = Record<string, unknown>
 
@@ -434,44 +435,44 @@ export function buildOrderWhatsAppMessage(
   const items = buildItemsSection(order)
 
   const lines: string[] = [
-    `Olá, *${customerName}*! 👋`,
+    `Olá, *${customerName}*! \u{1F44B}`,
     '',
     'Tudo bem? Estamos entrando em contato para falar sobre o seu pedido. Para facilitar, deixamos o resumo completo logo abaixo:',
     '',
     '━━━━━━━━━━━━━━━━━━',
-    `📦 *PEDIDO #${orderNumber}*`,
+    `\u{1F4E6} *PEDIDO #${orderNumber}*`,
     '━━━━━━━━━━━━━━━━━━',
   ]
 
   if (purchaseDate.date) {
     lines.push(
-      `📅 *Data da compra:* ${purchaseDate.date}`,
+      `\u{1F4C5} *Data da compra:* ${purchaseDate.date}`,
     )
   }
 
   if (purchaseDate.time) {
     lines.push(
-      `🕒 *Horário da compra:* ${purchaseDate.time}`,
+      `\u{1F552} *Horário da compra:* ${purchaseDate.time}`,
     )
   }
 
-  lines.push(`📌 *Status do pedido:* ${orderStatus}`)
+  lines.push(`\u{1F4CC} *Status do pedido:* ${orderStatus}`)
 
   if (paymentStatus) {
     lines.push(
-      `💳 *Status do pagamento:* ${paymentStatus}`,
+      `\u{1F4B3} *Status do pagamento:* ${paymentStatus}`,
     )
   }
 
   const deadline = formatDateTime(order.prazo_entrega)
 
   if (deadline) {
-    lines.push(`⏱️ *Prazo previsto:* ${deadline}`)
+    lines.push(`\u{23F1}\u{FE0F} *Prazo previsto:* ${deadline}`)
   }
 
   pushSection(
     lines,
-    '🛍️ *ITENS DO PEDIDO*',
+    '\u{1F6CD}\u{FE0F} *ITENS DO PEDIDO*',
     items,
   )
 
@@ -501,43 +502,43 @@ export function buildOrderWhatsAppMessage(
 
   if (deliveryType) {
     deliveryRows.push(
-      `🚚 *Modalidade:* ${deliveryType}`,
+      `\u{1F69A} *Modalidade:* ${deliveryType}`,
     )
   }
 
   if (address) {
-    deliveryRows.push(`📍 *Endereço:* ${address}`)
+    deliveryRows.push(`\u{1F4CD} *Endereço:* ${address}`)
   }
 
   if (neighborhood) {
     deliveryRows.push(
-      `🏘️ *Bairro:* ${neighborhood}`,
+      `\u{1F3D8}\u{FE0F} *Bairro:* ${neighborhood}`,
     )
   }
 
   if (complement) {
     deliveryRows.push(
-      `🏠 *Complemento:* ${complement}`,
+      `\u{1F3E0} *Complemento:* ${complement}`,
     )
   }
 
   if (referencePoint) {
     deliveryRows.push(
-      `🧭 *Ponto de referência:* ${referencePoint}`,
+      `\u{1F9ED} *Ponto de referência:* ${referencePoint}`,
     )
   }
 
   if (deliveryFee > 0) {
     deliveryRows.push(
-      `🛵 *Taxa de entrega:* ${money(deliveryFee)}`,
+      `\u{1F6F5} *Taxa de entrega:* ${money(deliveryFee)}`,
     )
   }
 
   pushSection(
     lines,
     deliveryType
-      ? `🚚 *${deliveryType.toUpperCase()}*`
-      : '🚚 *ENTREGA / RETIRADA*',
+      ? `\u{1F69A} *${deliveryType.toUpperCase()}*`
+      : '\u{1F69A} *ENTREGA / RETIRADA*',
     deliveryRows,
   )
 
@@ -579,55 +580,55 @@ export function buildOrderWhatsAppMessage(
 
   if (paymentMethod) {
     paymentRows.push(
-      `💳 *Forma de pagamento:* ${paymentMethod}`,
+      `\u{1F4B3} *Forma de pagamento:* ${paymentMethod}`,
     )
   }
 
   if (installments > 1) {
     paymentRows.push(
-      `🧾 *Parcelas:* ${installments}x`,
+      `\u{1F9FE} *Parcelas:* ${installments}x`,
     )
   }
 
   if (subtotal > 0) {
     paymentRows.push(
-      `💰 *Subtotal:* ${money(subtotal)}`,
+      `\u{1F4B0} *Subtotal:* ${money(subtotal)}`,
     )
   }
 
   if (discount > 0) {
     paymentRows.push(
-      `🏷️ *Desconto:* -${money(discount)}`,
+      `\u{1F3F7}\u{FE0F} *Desconto:* -${money(discount)}`,
     )
   }
 
   if (coupon) {
     paymentRows.push(
-      `🎟️ *Cupom:* ${coupon}`,
+      `\u{1F39F}\u{FE0F} *Cupom:* ${coupon}`,
     )
   }
 
   if (deliveryFee > 0) {
     paymentRows.push(
-      `🛵 *Entrega:* ${money(deliveryFee)}`,
+      `\u{1F6F5} *Entrega:* ${money(deliveryFee)}`,
     )
   }
 
   if (total > 0) {
     paymentRows.push(
-      `💵 *TOTAL DO PEDIDO:* *${money(total)}*`,
+      `\u{1F4B5} *TOTAL DO PEDIDO:* *${money(total)}*`,
     )
   }
 
   if (changeFor > 0) {
     paymentRows.push(
-      `💸 *Troco para:* ${money(changeFor)}`,
+      `\u{1F4B8} *Troco para:* ${money(changeFor)}`,
     )
   }
 
   pushSection(
     lines,
-    '💰 *PAGAMENTO E VALORES*',
+    '\u{1F4B0} *PAGAMENTO E VALORES*',
     paymentRows,
   )
 
@@ -638,7 +639,7 @@ export function buildOrderWhatsAppMessage(
   if (customerNotes) {
     pushSection(
       lines,
-      '📝 *OBSERVAÇÕES DO PEDIDO*',
+      '\u{1F4DD} *OBSERVAÇÕES DO PEDIDO*',
       [customerNotes],
     )
   }
@@ -646,7 +647,7 @@ export function buildOrderWhatsAppMessage(
   lines.push('')
   lines.push('━━━━━━━━━━━━━━━━━━')
   lines.push(
-    'Se precisar corrigir alguma informação ou tiver alguma dúvida, pode responder por aqui. 😊',
+    'Se precisar corrigir alguma informação ou tiver alguma dúvida, pode responder por aqui. \u{1F60A}',
   )
 
   return lines.join('\n')
