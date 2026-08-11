@@ -369,6 +369,45 @@ export default function HomeAiChat() {
           animation: orcalyTypingDotV2 1.1s ease-in-out infinite;
         }
 
+        /* ORCALY_HOME_CHAT_MOBILE_RESPONSIVE_V3 */
+        @media (max-width: 639px) {
+          section[role="dialog"][aria-label="Assistente virtual do Orçaly"] {
+            left: 0.5rem !important;
+            right: 0.5rem !important;
+            bottom: 5.4rem !important;
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            max-height: calc(100dvh - 6.3rem) !important;
+            border-radius: 1.4rem !important;
+          }
+
+          section[role="dialog"][aria-label="Assistente virtual do Orçaly"] header {
+            padding: 1rem !important;
+          }
+
+          section[role="dialog"][aria-label="Assistente virtual do Orçaly"] > div {
+            min-width: 0;
+            max-width: 100%;
+          }
+
+          section[role="dialog"][aria-label="Assistente virtual do Orçaly"] p,
+          section[role="dialog"][aria-label="Assistente virtual do Orçaly"] a,
+          section[role="dialog"][aria-label="Assistente virtual do Orçaly"] button {
+            overflow-wrap: anywhere;
+          }
+
+          section[role="dialog"][aria-label="Assistente virtual do Orçaly"] input {
+            min-width: 0;
+            max-width: 100%;
+          }
+
+          button[aria-label="Abrir assistente virtual do Orçaly"] {
+            width: 3.5rem !important;
+            height: 3.5rem !important;
+            font-size: 1.5rem !important;
+          }
+        }
         @media (prefers-reduced-motion: reduce) {
           .orcaly-home-chat-enter-v2,
           .orcaly-home-chat-pulse-v2,

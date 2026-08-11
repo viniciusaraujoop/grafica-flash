@@ -683,6 +683,254 @@ export default function HomePage() {
           contain-intrinsic-size: 1px 820px;
         }
 
+        /* ORCALY_HOME_MOBILE_RESPONSIVE_V3 */
+        html,
+        body {
+          width: 100%;
+          max-width: 100%;
+          overflow-x: clip;
+        }
+
+        main {
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+        }
+
+        main *,
+        main *::before,
+        main *::after {
+          box-sizing: border-box;
+        }
+
+        main img,
+        main video,
+        main canvas,
+        main svg {
+          max-width: 100%;
+        }
+
+        main [class*="grid"] > *,
+        main [class*="flex"] > * {
+          min-width: 0;
+        }
+
+        main article,
+        main nav,
+        main form,
+        main details {
+          min-width: 0;
+          max-width: 100%;
+        }
+
+        main input,
+        main textarea,
+        main select,
+        main button,
+        main a {
+          min-width: 0;
+          max-width: 100%;
+        }
+
+        main [class*="overflow-x-auto"] {
+          max-width: 100%;
+          overscroll-behavior-x: contain;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .orcaly-fade-up,
+        .orcaly-float,
+        .orcaly-section,
+        .orcaly-section > div {
+          min-width: 0;
+          max-width: 100%;
+        }
+
+        @supports not (overflow: clip) {
+          html,
+          body {
+            overflow-x: hidden;
+          }
+        }
+
+        @media (max-width: 639px) {
+          html,
+          body {
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+          }
+
+          body {
+            position: relative;
+          }
+
+          main {
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+          }
+
+          main header,
+          main section,
+          main footer {
+            max-width: 100vw;
+          }
+
+          .orcaly-section {
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+          }
+
+          main header > div:first-child {
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+          }
+
+          main header img {
+            width: auto !important;
+            max-width: 9.25rem !important;
+            height: auto !important;
+          }
+
+          main h1,
+          main h2,
+          main h3 {
+            max-width: 100%;
+            overflow-wrap: anywhere;
+          }
+
+          main h1 {
+            font-size: clamp(2.05rem, 10vw, 2.7rem) !important;
+            line-height: 1.02 !important;
+            letter-spacing: -0.05em !important;
+          }
+
+          main h2 {
+            font-size: clamp(1.85rem, 8.6vw, 2.35rem) !important;
+            line-height: 1.06 !important;
+            letter-spacing: -0.045em !important;
+          }
+
+          main h3 {
+            overflow-wrap: anywhere;
+          }
+
+          main p,
+          main li {
+            overflow-wrap: break-word;
+          }
+
+          .orcaly-float {
+            width: 100%;
+            max-width: 100%;
+          }
+
+          .orcaly-float > * {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+          }
+
+          main [class*="max-w-7xl"],
+          main [class*="max-w-5xl"],
+          main [class*="max-w-4xl"],
+          main [class*="max-w-3xl"],
+          main [class*="max-w-2xl"],
+          main [class*="max-w-xl"] {
+            max-width: 100%;
+          }
+
+          main [class*="absolute"] {
+            max-width: none;
+          }
+
+          main footer {
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+          }
+
+          main footer a[href^="mailto:"] {
+            overflow-wrap: anywhere;
+            word-break: break-word;
+          }
+
+          main > div[class*="fixed"][class*="bottom-0"] {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+            padding-bottom: max(0.5rem, env(safe-area-inset-bottom)) !important;
+          }
+
+          #mobile-navigation {
+            max-height: calc(100dvh - 68px);
+            overflow-y: auto;
+          }
+
+          #mobile-navigation > nav {
+            max-height: calc(100dvh - 92px);
+            overflow-y: auto;
+          }
+        }
+
+        @media (max-width: 340px) {
+          main [class~="grid-cols-3"] {
+            grid-template-columns: minmax(0, 1fr) !important;
+          }
+
+          main [class~="grid-cols-2"] {
+            grid-template-columns: minmax(0, 1fr) !important;
+          }
+
+          main h1 {
+            font-size: 2rem !important;
+          }
+
+          main h2 {
+            font-size: 1.8rem !important;
+          }
+        }
+        /* ORCALY_HOME_MOBILE_MENU_FIX_V4 */
+        @media (max-width: 639px) {
+          main > header {
+            z-index: 90 !important;
+            overflow: visible !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            background: rgba(255, 255, 255, 0.98) !important;
+          }
+
+          #mobile-navigation {
+            position: fixed !important;
+            inset: auto 0 0 0 !important;
+            top: 68px !important;
+            width: 100vw !important;
+            height: calc(100dvh - 68px) !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            padding: 0.75rem !important;
+            z-index: 9999 !important;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+          }
+
+          #mobile-navigation > nav {
+            position: relative !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            max-height: calc(100dvh - 92px) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            margin: 0 auto !important;
+            z-index: 1 !important;
+          }
+
+          #mobile-navigation a {
+            width: 100%;
+          }
+        }
         @media (prefers-reduced-motion: reduce) {
           html {
             scroll-behavior: auto;
