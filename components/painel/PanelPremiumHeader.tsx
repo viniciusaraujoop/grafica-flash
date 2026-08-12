@@ -14,6 +14,12 @@ export type PanelPremiumCompany = {
   assinatura_plano?: string | null
   plano?: string | null
   assinatura_status?: string | null
+  is_founder?: boolean | null
+  founder_number?: number | null
+  founder_price_cents?: number | null
+  founder_trial_ends_at?: string | null
+  founder_price_ends_at?: string | null
+  founder_welcome_seen_at?: string | null
 }
 
 const routeLabels: Record<string, string> = {
@@ -152,6 +158,12 @@ export default function PanelPremiumHeader({
           <span className="panel-adaptive-segment-badge">
             {normalizeSegment(company.business_type || company.site_template)}
           </span>
+          {company.is_founder === true &&
+          typeof company.founder_number === 'number' ? (
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
+              Founder #{String(company.founder_number).padStart(2, '0')}
+            </span>
+          ) : null}
         </div>
 
         <p>{description}</p>

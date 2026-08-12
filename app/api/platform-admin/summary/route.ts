@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // ORCALY_OWNER_SUPPORT_CONTROL_V1
+// ORCALY_OWNER_BACKOFFICE_V2
 import { NextRequest, NextResponse } from 'next/server'
 import {
   canPlatform,
-  requirePlatformAdmin,
+  requireOfficialPlatformOwner,
 } from '@/lib/platform-admin'
 import {
   getMarketplaceCommissionForCompany,
@@ -14,10 +15,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await requirePlatformAdmin(
-      request,
-      'dashboard.view',
-    )
+    const auth = await requireOfficialPlatformOwner(request)
 
     if (!auth.ok) {
       return NextResponse.json(

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import PanelSidebar from '@/components/painel/PanelSidebar'
 import PanelPremiumHeader, { type PanelPremiumCompany } from '@/components/painel/PanelPremiumHeader'
 import PanelAdaptiveOverview from '@/components/painel/PanelAdaptiveOverview'
+import FounderWelcomeModal from '@/components/painel/FounderWelcomeModal'
 
 export default function PanelPremiumShell({
   company,
@@ -19,6 +20,7 @@ export default function PanelPremiumShell({
       className="orcaly-panel-adaptive min-h-screen lg:grid lg:grid-cols-[288px_minmax(0,1fr)]"
       data-orcaly-panel="adaptive-v1"
     >
+      <FounderWelcomeModal company={company} />
       <PanelSidebar company={company} />
 
       <div className="panel-adaptive-content min-w-0">

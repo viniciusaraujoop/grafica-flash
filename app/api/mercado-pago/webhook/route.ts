@@ -123,6 +123,15 @@ async function processPreapproval(resourceId: string) {
     hasFutureAccess
   ) {
     internalStatus = "cancel_at_period_end";
+  } else if (
+    company.is_founder === true &&
+    remoteStatus === "authorized"
+  ) {
+    internalStatus =
+      company.assinatura_status === "ativa" &&
+      hasFutureAccess
+        ? "ativa"
+        : "pendente";
   } else if (remoteStatus === "authorized") {
     internalStatus = "ativa";
   } else if (
@@ -242,20 +251,45 @@ async function processAuthorizedPayment(
     text(subscription?.next_payment_date) || null;
 
   if (paymentStatus === "approved") {
-    await applyApprovedSubscriptionPayment(
-      admin,
-      found.company,
-      {
-        plan: found.parsed?.plan,
-        providerReference,
-        preapprovalId,
-        nextPaymentDate,
-        paymentType: "card_recurring",
-        amount: positiveNumberOrNull(
-          payment.transaction_amount,
-        ),
-      },
-    );
+    if (found.company.is_founder === true) {
+      if (!preapprovalId) {
+        throw new Error(
+          "Pagamento Founder sem preapproval_id.",
+        );
+      }
+
+      const { error: founderPaymentError } =
+        await admin.rpc(
+          "record_founder_payment_approved",
+          {
+            p_company_id: found.company.id,
+            p_subscription_id: preapprovalId,
+            p_payment_id: providerReference,
+            p_next_payment_date: nextPaymentDate,
+            p_provider_payload:
+              subscription || authorizedPayment,
+          },
+        );
+
+      if (founderPaymentError) {
+        throw founderPaymentError;
+      }
+    } else {
+      await applyApprovedSubscriptionPayment(
+        admin,
+        found.company,
+        {
+          plan: found.parsed?.plan,
+          providerReference,
+          preapprovalId,
+          nextPaymentDate,
+          paymentType: "card_recurring",
+          amount: positiveNumberOrNull(
+            payment.transaction_amount,
+          ),
+        },
+      );
+    }
   } else {
     if (
       ["refunded", "charged_back", "cancelled", "canceled"].includes(

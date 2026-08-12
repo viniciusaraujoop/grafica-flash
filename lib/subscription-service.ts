@@ -275,6 +275,18 @@ function safeCompany(company: any) {
     trial_used_at: company.trial_used_at || null,
     cancel_at_period_end: Boolean(company.cancel_at_period_end),
     access_until: access.accessUntil,
+    is_founder: company.is_founder === true,
+    founder_number: company.founder_number ?? null,
+    founder_price_cents: company.founder_price_cents ?? null,
+    founder_trial_ends_at: company.founder_trial_ends_at || null,
+    founder_price_ends_at: company.founder_price_ends_at || null,
+    founder_price_converted_at: company.founder_price_converted_at || null,
+    provider_subscription_id:
+      company.provider_subscription_id ||
+      company.mercado_pago_subscription_id ||
+      null,
+    founder_billing_setup_at: company.founder_billing_setup_at || null,
+    founder_billing_authorized_at: company.founder_billing_authorized_at || null,
     access,
   };
 }
@@ -690,7 +702,16 @@ export async function syncCompanySubscription(request: NextRequest) {
 
   if (access.isTrial) internalStatus = "trialing";
   else if (company.cancel_at_period_end && access.hasAccess) internalStatus = "cancel_at_period_end";
-  else if (remoteStatus === "authorized") internalStatus = "ativa";
+  else if (
+    company.is_founder === true &&
+    remoteStatus === "authorized"
+  ) {
+    internalStatus =
+      company.assinatura_status === "ativa" &&
+      access.hasAccess
+        ? "ativa"
+        : "pendente";
+  } else if (remoteStatus === "authorized") internalStatus = "ativa";
   else if (["canceled", "cancelled"].includes(remoteStatus)) {
     internalStatus = access.hasAccess ? "cancel_at_period_end" : "cancelada";
   } else if (remoteStatus === "paused") internalStatus = "past_due";
@@ -736,6 +757,12 @@ export async function manageCompanySubscription(request: NextRequest, body: any)
 
   if (action === "history") {
     return getHistory(context.admin, context.company.id);
+  }
+
+  if (context.company.is_founder === true) {
+    throw new Error(
+      "Empresas Founder usam o fluxo de cobrança Founder para evitar assinatura duplicada.",
+    );
   }
 
   const paymentType = String(body?.paymentType || body?.payment_type || "card").toLowerCase();

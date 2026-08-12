@@ -1,4 +1,5 @@
 // ORCALY_OWNER_SUPPORT_CONTROL_V1
+// ORCALY_OWNER_BACKOFFICE_V2
 import { NextRequest, NextResponse } from 'next/server'
 import {
   affiliateStatusCode,
@@ -9,6 +10,7 @@ import {
   auditPlatformAction,
   canPlatform,
   platformCapabilities,
+  requireOfficialPlatformOwner,
   requirePlatformAdmin,
   type PlatformPermission,
 } from '@/lib/platform-admin'
@@ -40,10 +42,7 @@ const ACTION_PERMISSIONS: Record<
 }
 
 export async function GET(request: NextRequest) {
-  const session = await requirePlatformAdmin(
-    request,
-    'affiliates.view',
-  )
+  const session = await requireOfficialPlatformOwner(request)
 
   if (!session.ok) {
     return NextResponse.json(

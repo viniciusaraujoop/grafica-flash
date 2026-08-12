@@ -328,7 +328,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (
+      target.role !== 'support' &&
+      target.role !== 'prospector'
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'Esse nível de acesso não pode ser alterado por esta tela.',
+        },
+        { status: 403 },
+      )
+    }
+
     if (action === 'update_support') {
+      if (target.role !== 'support') {
+        return NextResponse.json(
+          {
+            error:
+              'Permissões de Prospector são fixadas pelo perfil comercial.',
+          },
+          { status: 403 },
+        )
+      }
+
       const nome = text(body.nome)
       const permissions =
         sanitizeSupportPermissions(
@@ -380,6 +403,10 @@ export async function POST(request: NextRequest) {
 
     if (action === 'set_active') {
       const active = Boolean(body.active)
+      const managedRole =
+        target.role === 'prospector'
+          ? 'prospector'
+          : 'support'
 
       const { error } =
         await session.supabaseAdmin
@@ -407,8 +434,8 @@ export async function POST(request: NextRequest) {
                 ...(authUser.data.user
                   .app_metadata || {}),
                 orcaly_role: active
-                  ? 'support'
-                  : 'disabled_support',
+                  ? managedRole
+                  : 'disabled_' + managedRole,
               },
             },
           )
@@ -418,8 +445,8 @@ export async function POST(request: NextRequest) {
       await auditPlatformAction(
         session.admin.email,
         active
-          ? 'support_activated'
-          : 'support_deactivated',
+          ? managedRole + '_activated'
+          : managedRole + '_deactivated',
         {
           targetType: 'platform_admin',
           targetId: target.id,
@@ -433,6 +460,16 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'reset_password') {
+      if (target.role !== 'support') {
+        return NextResponse.json(
+          {
+            error:
+              'O Owner não redefine a senha do Prospector. O acesso comercial usa senha escolhida pelo próprio usuário.',
+          },
+          { status: 403 },
+        )
+      }
+
       const password = text(body.password)
 
       if (!validPassword(password)) {

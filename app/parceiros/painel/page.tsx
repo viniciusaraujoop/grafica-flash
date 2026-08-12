@@ -17,6 +17,7 @@ import { supabase } from "@/lib/supabase";
 import PartnerAcademyV3 from "@/components/parceiros/PartnerAcademyV3";
 import PartnerPromotionTab from "@/components/parceiros/PartnerPromotionTab";
 import PartnerGrowthHub from "@/components/parceiros/PartnerGrowthHub";
+import ChangePasswordCard from "@/components/auth/ChangePasswordCard";
 
 type ReferralRow = {
   id: string;
@@ -130,6 +131,7 @@ export default function ParceirosPainelPage() {
     | "courses"
     | "promotion"
     | "payments"
+    | "settings"
     | "ranking"
   >("overview");
   const [pix, setPix] = useState({
@@ -275,6 +277,7 @@ export default function ParceirosPainelPage() {
     ["courses", "Academia"],
     ["promotion", "Divulgação"],
     ["payments", "Pagamentos e Pix"],
+    ["settings", "Configurações"],
     ["ranking", "Ranking"],
   ];
 
@@ -723,6 +726,31 @@ export default function ParceirosPainelPage() {
             </div>
           ) : null}
 
+          {/* ORCALY_SELF_PASSWORD_SETTINGS_V1 */}
+          {tab === "settings" ? (
+            <div className="grid gap-5">
+              <section
+                data-partner-card
+                className="partner-fade-up rounded-[1.8rem] border border-white bg-white p-5 shadow-sm sm:p-6"
+              >
+                <p className="text-xs font-black uppercase tracking-[0.15em] text-[#1359a5]">
+                  Configurações
+                </p>
+                <h1 className="mt-2 text-3xl font-black tracking-[-0.05em]">
+                  Minha conta
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
+                  Gerencie a segurança do seu login de indicador sem alterar dados de comissão, Pix ou indicações.
+                </p>
+              </section>
+
+              <ChangePasswordCard
+                compact
+                title="Senha do Portal de Parceiros"
+                description="Confirme a senha atual antes de definir a nova senha deste login."
+              />
+            </div>
+          ) : null}
           {tab === "ranking" ? (
             <section className="rounded-[1.8rem] border border-white bg-white p-5 shadow-sm sm:p-6">
               <p className="text-xs font-black uppercase tracking-[0.15em] text-[#1359a5]">

@@ -196,7 +196,7 @@ export default function AdminEquipePage() {
     [team],
   );
   const supports = useMemo(
-    () => team.filter((item) => item.role !== "owner"),
+    () => team.filter((item) => item.role === "support"),
     [team],
   );
 
@@ -242,6 +242,12 @@ export default function AdminEquipePage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
+              <Link
+                href="/admin/equipe/comercial"
+                className="rounded-2xl border border-cyan-200/20 bg-cyan-300/10 px-4 py-3 text-sm font-black text-cyan-100"
+              >
+                Equipe comercial
+              </Link>
               <Link
                 href="/admin"
                 className="rounded-2xl border border-white/15 px-4 py-3 text-sm font-black text-white"
@@ -462,7 +468,9 @@ export default function AdminEquipePage() {
                           >
                             {member.role === "owner"
                               ? "Dono"
-                              : "Suporte"}
+                              : member.role === "prospector"
+                                ? "Prospector"
+                                : "Suporte"}
                           </span>
                           <span
                             className={`rounded-full px-3 py-1.5 text-[10px] font-black ${
@@ -510,7 +518,7 @@ export default function AdminEquipePage() {
                         )}
                       </div>
 
-                      {member.role !== "owner" ? (
+                      {member.role === "support" ? (
                         <div className="flex flex-wrap gap-2">
                           <button
                             type="button"

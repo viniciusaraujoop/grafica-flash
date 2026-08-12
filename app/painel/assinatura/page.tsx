@@ -1,5 +1,5 @@
-import MercadoPagoSubscriptionCheckout from "@/components/subscription/MercadoPagoSubscriptionCheckout";
+import SubscriptionExperience from "@/components/subscription/SubscriptionExperience";
 
 export default function AssinaturaPage() {
-  return <MercadoPagoSubscriptionCheckout />;
+  return <SubscriptionExperience />;
 }

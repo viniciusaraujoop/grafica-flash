@@ -78,6 +78,16 @@ export async function createTransparentSubscription(
   }
 
   const company = context.company as JsonRecord;
+
+  if (company.is_founder === true) {
+    throw Object.assign(
+      new Error(
+        "Empresas Founder usam o fluxo de cobrança Founder para evitar assinatura duplicada.",
+      ),
+      { status: 409 },
+    );
+  }
+
   const companyId = text(company.id);
   const planKey = normalizePlanKey(
     body.plan ||

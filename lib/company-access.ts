@@ -52,9 +52,35 @@ export async function getRequester(
 
 export function assinaturaEstaAtiva(company: Record<string, unknown> | null) {
   if (!company) return false
-  if (company.assinatura_status !== 'ativa') return false
+
+  const status = String(company.assinatura_status || '').toLowerCase()
+
+  if (status === 'trialing') {
+    const trialEnd =
+      company.trial_ends_at ||
+      company.founder_trial_ends_at ||
+      company.assinatura_expira_em
+
+    if (!trialEnd) return false
+
+    const expiresAt = new Date(String(trialEnd))
+    return (
+      !Number.isNaN(expiresAt.getTime()) &&
+      expiresAt > new Date()
+    )
+  }
+
+  if (status !== 'ativa') return false
   if (!company.assinatura_expira_em) return true
-  return new Date(String(company.assinatura_expira_em)) > new Date()
+
+  const expiresAt = new Date(
+    String(company.assinatura_expira_em),
+  )
+
+  return (
+    !Number.isNaN(expiresAt.getTime()) &&
+    expiresAt > new Date()
+  )
 }
 
 export function permissionsByRole(
@@ -88,14 +114,17 @@ async function getAdminRole(
   if (!normalized) return null
 
   const { data, error } = await supabaseAdmin
-    .from('admin_users')
-    .select('role,ativo')
-    .eq('ativo', true)
+    .from('platform_admins')
+    .select('role,is_active')
+    .eq('is_active', true)
     .ilike('email', normalized)
     .maybeSingle()
 
   if (error) throw error
-  return data?.role || null
+
+  return data?.role
+    ? String(data.role).trim().toLowerCase()
+    : null
 }
 
 export async function getCompanyAccess(
@@ -104,7 +133,9 @@ export async function getCompanyAccess(
   email?: string | null,
 ) {
   const adminRole = await getAdminRole(supabaseAdmin, email)
-  const isAdminMaster = adminRole === 'super_admin'
+  const isAdminMaster =
+    adminRole === 'owner' ||
+    adminRole === 'super_admin'
 
   if (!isUuid(userId)) {
     return {
