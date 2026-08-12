@@ -29,7 +29,64 @@ export default function SupportBackofficeClient() {
     if (!response.ok) { if ([401,403].includes(response.status)) { router.replace('/parceiros/login'); return }; setError(payload.error || 'Não foi possível carregar o suporte.'); setLoading(false); return }
     setData(payload); setLoading(false)
   }, [router])
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    let ignore = false
+
+    void token()
+      .then(async (access) => {
+        if (ignore) return
+
+        if (!access) {
+          router.replace('/parceiros/login')
+          return
+        }
+
+        const response = await fetch(
+          '/api/admin/support-center',
+          {
+            headers: {
+              Authorization: `Bearer ${access}`,
+            },
+            cache: 'no-store',
+          },
+        )
+
+        const payload = await response
+          .json()
+          .catch(() => ({}))
+
+        if (ignore) return
+
+        if (!response.ok) {
+          if ([401, 403].includes(response.status)) {
+            router.replace('/parceiros/login')
+            return
+          }
+
+          setError(
+            payload.error ||
+              'Não foi possível carregar o suporte.',
+          )
+          setLoading(false)
+          return
+        }
+
+        setData(payload)
+        setLoading(false)
+      })
+      .catch(() => {
+        if (ignore) return
+
+        setError(
+          'Não foi possível carregar o suporte.',
+        )
+        setLoading(false)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [router])
   async function logout() { await supabase.auth.signOut(); router.replace('/parceiros/login') }
 
   const subscribers = data?.subscribers || []
