@@ -1,0 +1,66 @@
+﻿**********************
+Início da transcrição do Windows PowerShell
+Hora de início: 20260808141745
+Nome de Usuário: VININZIN\arauj
+Executar como Usuário: VININZIN\arauj
+Nome da Configuração: 
+Computador: VININZIN (Microsoft Windows NT 10.0.26200.0)
+Aplicativo Host: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\continuar-hardening-orcaly-v6.ps1
+ID do Processo: 9296
+PSVersion: 5.1.26100.8875
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.8875
+BuildVersion: 10.0.26100.8875
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
+==> Validando estado deixado pelo hardening V3
+Branch: agent/hardening-orcaly-2026-08-08
+Migration: supabase/migrations/20260808165913_affiliate_workspace_server_authority.sql
+Arquivos modificados no working tree: 71
+ORCALY_V3_STATE_OK=1
+
+==> Corrigindo autoinspecao do scanner de seguranca
+[OK] scanner usa escapes Unicode ASCII
+
+==> Desversionando artefatos temporarios antes do scan atual
+Artefatos desversionados: 0
+
+==> Scanner de credenciais corrigido - arquivos atualmente rastreados
+CURRENT_SECRET_SCAN_OK=1
+PORTUGUESE_PLACEHOLDER_FILTER_OK=1
+
+==> Scanner de credenciais corrigido - historico Git
+GIT_SECRET_HISTORY_SCAN_OK=1
+
+==> Reparando apenas sequencias reais de mojibake em arquivos rastreados
+Arquivos UTF-8 reparados: 0
+
+==> Preservando padroes legados de mojibake sem literais corrompidos
+
+
+
+
+LEGACY_MOJIBAKE_PATTERNS_ESCAPED_OK=1
+
+==> Validando sintaxe do scanner de seguranca
+
+
+==> Varredura estatica de seguranca em todos os arquivos rastreados
+
+SECURITY_STATIC_SCAN_OK=1
+
+==> ESLint completo
+
+PS>TerminatingError(): "Comando falhou (1): C:\Program Files\nodejs\npm.cmd run lint"
+
+ORCALY_HARDENING_V6_FAILED=1
+Comando falhou (1): C:\Program Files\nodejs\npm.cmd run lint
+
+**********************
+Fim da transcrição do Windows PowerShell
+Hora de término: 20260808141937
+**********************

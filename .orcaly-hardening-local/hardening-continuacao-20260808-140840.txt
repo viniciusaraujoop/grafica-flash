@@ -1,0 +1,398 @@
+﻿**********************
+Início da transcrição do Windows PowerShell
+Hora de início: 20260808140841
+Nome de Usuário: VININZIN\arauj
+Executar como Usuário: VININZIN\arauj
+Nome da Configuração: 
+Computador: VININZIN (Microsoft Windows NT 10.0.26200.0)
+Aplicativo Host: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\continuar-hardening-orcaly-v4.ps1
+ID do Processo: 13916
+PSVersion: 5.1.26100.8875
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.8875
+BuildVersion: 10.0.26100.8875
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
+==> Validando estado deixado pelo hardening V3
+Branch: agent/hardening-orcaly-2026-08-08
+Migration: supabase/migrations/20260808165913_affiliate_workspace_server_authority.sql
+Arquivos modificados no working tree: 58
+ORCALY_V3_STATE_OK=1
+
+==> Corrigindo autoinspecao do scanner de seguranca
+[OK] scanner usa escapes Unicode ASCII
+
+==> Desversionando artefatos temporarios antes do scan atual
+[UNTRACK] .orcaly-checkout-asaas/20260723-174839/build.log
+[UNTRACK] .orcaly-cupons-backup-20260728193111/app/api/public-site/[slug]/route.ts
+[UNTRACK] .orcaly-cupons-backup-20260728193111/app/painel/cupons/page.tsx
+[UNTRACK] .orcaly-cupons-backup-20260728193111/components/public-site/FoodMarketplaceCatalog.tsx
+[UNTRACK] .orcaly-cupons-backup-20260728193111/components/public-site/PublicSiteRenderer.tsx
+[UNTRACK] .orcaly-cupons-backup-20260728193111/components/public-site/SegmentMarketplaceCatalog.tsx
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/audit-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/build-after.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/build-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/changed-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/created-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/database-plan.sql
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/execution.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/lint-after.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/lint-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/manifest.txt
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/restored-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/rollback-plan.md
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/sandbox-validation.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/schema-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-131252/unresolved-items.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/audit-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/build-after.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/build-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/changed-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/created-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/execution.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/lint-after.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/lint-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/manifest.txt
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/restored-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/rollback-plan.md
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/sandbox-validation.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/schema-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134434/unresolved-items.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/audit-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/build-after.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/build-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/changed-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/created-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/execution.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/lint-after.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/lint-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/manifest.txt
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/restored-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/rollback-plan.md
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/sandbox-validation.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/schema-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-134707/unresolved-items.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142100/audit-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142100/build-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142100/execution.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142100/schema-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/audit-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/build-after.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/build-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/changed-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/created-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/database-plan.sql
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/execution.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/lint-after.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/lint-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/manifest.txt
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/restored-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/rollback-plan.md
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/sandbox-validation.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/schema-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142131/unresolved-items.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/audit-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/build-after.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/build-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/changed-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/created-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/execution.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/lint-after.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/lint-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/manifest.txt
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/restored-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/rollback-plan.md
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/sandbox-validation.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/schema-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142346/unresolved-items.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/audit-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/build-after.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/build-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/changed-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/created-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/execution.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/lint-after.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/lint-before.log
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/manifest.txt
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/restored-files.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/rollback-plan.md
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/sandbox-validation.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/schema-before.json
+[UNTRACK] .orcaly-migration/migracao-asaas-20260723-142527/unresolved-items.json
+[UNTRACK] .orcaly-mp-checkout-backup-20260728195237/app/api/marketplace/payments/mercado-pago/callback/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728195237/app/api/marketplace/payments/mercado-pago/disconnect/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728195237/app/api/marketplace/payments/settings/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728195237/app/api/marketplace/payments/webhook/mercado-pago/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728195237/app/api/public-site/[slug]/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728195237/components/checkout/CheckoutClient.tsx
+[UNTRACK] .orcaly-mp-checkout-backup-20260728195237/components/painel/MarketplacePaymentsPanel.tsx
+[UNTRACK] .orcaly-mp-checkout-backup-20260728195237/lib/payments/checkout-service.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200554/app/api/marketplace/payments/mercado-pago/callback/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200554/app/api/marketplace/payments/mercado-pago/disconnect/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200554/app/api/marketplace/payments/settings/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200554/app/api/marketplace/payments/webhook/mercado-pago/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200554/app/api/public-site/[slug]/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200554/components/checkout/CheckoutClient.tsx
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200554/components/painel/MarketplacePaymentsPanel.tsx
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200554/lib/payments/checkout-service.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200554/supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200634/app/api/marketplace/payments/mercado-pago/callback/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200634/app/api/marketplace/payments/mercado-pago/disconnect/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200634/app/api/marketplace/payments/settings/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200634/app/api/marketplace/payments/webhook/mercado-pago/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200634/app/api/public-site/[slug]/route.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200634/components/checkout/CheckoutClient.tsx
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200634/components/painel/MarketplacePaymentsPanel.tsx
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200634/lib/payments/checkout-service.ts
+[UNTRACK] .orcaly-mp-checkout-backup-20260728200634/supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql
+[UNTRACK] .orcaly-qa/20260718-201152/build.log
+[UNTRACK] .orcaly-qa/20260718-201152/lint.log
+[UNTRACK] .orcaly-qa/20260718-201152/qa-operacional.log
+[UNTRACK] .orcaly-qa/20260718-201152/server-stderr.log
+[UNTRACK] .orcaly-qa/20260718-201152/server-stdout.log
+[UNTRACK] adicionar-chat-ia-home-orcaly-v2.ps1
+[UNTRACK] adicionar-chat-ia-home-orcaly-v3.ps1
+[UNTRACK] adicionar-chat-ia-home-orcaly-v4.ps1
+[UNTRACK] adicionar-chat-ia-home-orcaly.ps1
+[UNTRACK] adicionar-documento-e-mercado-pago-unico-orcaly.ps1
+[UNTRACK] adicionar-entregadores-historico-entregas-orcaly.ps1
+[UNTRACK] aplicar-painel-premium-orcaly-v2.ps1
+[UNTRACK] aprimorar-chat-ia-home-orcaly-v2.ps1
+[UNTRACK] aprimorar-cursos-parceiros-v2.ps1
+[UNTRACK] ativar-checkout-transparente-mercado-pago-orcaly-r2.ps1
+[UNTRACK] atualizar-mercado-pago-e-deploy.ps1
+[UNTRACK] auditar-mercado-pago-transparente-orcaly.ps1
+[UNTRACK] auditar-qa-mvp-orcaly-v2.ps1
+[UNTRACK] auditar-qa-mvp-orcaly.ps1
+[UNTRACK] auditoria-mercado-pago-transparente-20260726-123004.txt
+[UNTRACK] commit-deploy-ajustes-painel-pagamentos-orcaly.ps1
+[UNTRACK] commit-deploy-central-entregas-orcaly.ps1
+[UNTRACK] commit-deploy-entregadores-historico-orcaly.ps1
+[UNTRACK] commit-deploy-home-chat-ia-seguranca-orcaly-v2.ps1
+[UNTRACK] commit-deploy-home-chat-ia-seguranca-orcaly-v3.ps1
+[UNTRACK] commit-deploy-home-chat-ia-seguranca-orcaly-v4.ps1
+[UNTRACK] commit-deploy-home-chat-ia-seguranca-orcaly.ps1
+[UNTRACK] commit-deploy-login-signature-orcaly-v2.ps1
+[UNTRACK] commit-deploy-login-signature-orcaly.ps1
+[UNTRACK] commit-deploy-parceiros-painel-dono-orcaly-v2.ps1
+[UNTRACK] commit-deploy-parceiros-painel-dono-orcaly-v3.ps1
+[UNTRACK] commit-deploy-parceiros-painel-dono-orcaly.ps1
+[UNTRACK] commit-deploy-seguranca-completa-orcaly.ps1
+[UNTRACK] commit-e-deploy-checkout-mercado-pago-orcaly.ps1
+[UNTRACK] commit-e-deploy-checkouts-mercado-pago-orcaly.ps1
+[UNTRACK] commit-push-deploy-producao-orcaly-r2.ps1
+[UNTRACK] configurar-3-fluxos-mercado-pago-orcaly-v2.ps1
+[UNTRACK] configurar-3-fluxos-mercado-pago-orcaly.ps1
+[UNTRACK] configurar-asaas-marketplace-orcaly-v2.ps1
+[UNTRACK] configurar-asaas-marketplace-orcaly-v3.ps1
+[UNTRACK] configurar-asaas-marketplace-orcaly-v4.ps1
+[UNTRACK] configurar-asaas-marketplace-orcaly.ps1
+[UNTRACK] configurar-credenciais-mercado-pago-orcaly.ps1
+[UNTRACK] consolidar-assinatura-painel-orcaly.ps1
+[UNTRACK] continuar-commit-deploy-central-entregas-orcaly.ps1
+[UNTRACK] continuar-cutover-marketplace-orcaly.ps1
+[UNTRACK] corrigir-3-erros-pagamentos-orcaly.ps1
+[UNTRACK] corrigir-ambiente-webhook-asaas-preview.ps1
+[UNTRACK] corrigir-application-fee-mercado-pago-orcaly-v2.ps1
+[UNTRACK] corrigir-application-fee-mercado-pago-orcaly-v3.ps1
+[UNTRACK] corrigir-application-fee-mercado-pago-orcaly-v4.ps1
+[UNTRACK] corrigir-application-fee-mercado-pago-orcaly-v5.ps1
+[UNTRACK] corrigir-application-fee-mercado-pago-orcaly-v6.ps1
+[UNTRACK] corrigir-application-fee-mercado-pago-orcaly-v7.ps1
+[UNTRACK] corrigir-application-fee-mercado-pago-orcaly.ps1
+[UNTRACK] corrigir-autorizacao-pix-assinatura-orcaly.ps1
+[UNTRACK] corrigir-centro-parceiros-crlf.ps1
+[UNTRACK] corrigir-centro-parceiros-v3.ps1
+[UNTRACK] corrigir-checkout-null-signup-orcaly.ps1
+[UNTRACK] corrigir-cpf-cnpj-segmento-recebimentos-orcaly-v2.ps1
+[UNTRACK] corrigir-cpf-cnpj-segmento-recebimentos-orcaly.ps1
+[UNTRACK] corrigir-create-proposal-payload.ps1
+[UNTRACK] corrigir-cupons-loading-orcaly.ps1
+[UNTRACK] corrigir-defaults-site-business-types.ps1
+[UNTRACK] corrigir-definitivo-cabecalho-entregas-orcaly.ps1
+[UNTRACK] corrigir-e-aplicar-documento-mercado-pago-unico-orcaly.ps1
+[UNTRACK] corrigir-empresadata-produtos-segmentos.ps1
+[UNTRACK] corrigir-faturamento-pago-e-status-pedidos-orcaly.ps1
+[UNTRACK] corrigir-getMenuByBusinessType-business-types.ps1
+[UNTRACK] corrigir-item-texto-public-site.ps1
+[UNTRACK] corrigir-known-existing-panel-routes.ps1
+[UNTRACK] corrigir-layout-campos-cupons-orcaly.ps1
+[UNTRACK] corrigir-layout-duplicate-logo-url.ps1
+[UNTRACK] corrigir-lead-id-checkout-orcaly.ps1
+[UNTRACK] corrigir-lint-subconta-asaas.ps1
+[UNTRACK] corrigir-loop-checkout-subdominio-orcaly-v2.ps1
+[UNTRACK] corrigir-loop-checkout-subdominio-orcaly.ps1
+[UNTRACK] corrigir-module-demo-espelhada-v2.ps1
+[UNTRACK] corrigir-module-group-presenca.ps1
+[UNTRACK] corrigir-module-group-relatorios.ps1
+[UNTRACK] corrigir-modulo-placeholder-found-type.ps1
+[UNTRACK] corrigir-normalize-testimonials-fallback.ps1
+[UNTRACK] corrigir-notification-url-pix-orcaly.ps1
+[UNTRACK] corrigir-onboarding-company-type.ps1
+[UNTRACK] corrigir-ordem-token-webhook-cadastro-orcaly.ps1
+[UNTRACK] corrigir-pagamentos-orcaly.ps1
+[UNTRACK] corrigir-painel-page-syntax.ps1
+[UNTRACK] corrigir-panel-module-icon.ps1
+[UNTRACK] corrigir-panel-modules-exports.ps1
+[UNTRACK] corrigir-pedidos-painel-orcaly.ps1
+[UNTRACK] corrigir-plano-e-split-estrito-orcaly-v2.ps1
+[UNTRACK] corrigir-plano-e-split-estrito-orcaly-v3.ps1
+[UNTRACK] corrigir-plano-e-split-estrito-orcaly.ps1
+[UNTRACK] corrigir-presenca-forcado-scan.ps1
+[UNTRACK] corrigir-produto-undefined.ps1
+[UNTRACK] corrigir-public-site-benefits-types.ps1
+[UNTRACK] corrigir-public-site-testimonials-texto.ps1
+[UNTRACK] corrigir-rota-assinatura-painel-orcaly.ps1
+[UNTRACK] corrigir-seguranca-completa-orcaly-v2.ps1
+[UNTRACK] corrigir-seguranca-completa-orcaly-v3.ps1
+[UNTRACK] corrigir-seguranca-completa-orcaly.ps1
+[UNTRACK] corrigir-sem-erros-central-entregas-orcaly.ps1
+[UNTRACK] corrigir-setup-company-type.ps1
+[UNTRACK] corrigir-tipagem-webhook-assinatura-orcaly.ps1
+[UNTRACK] corrigir-tipos-webhook-assinatura-orcaly-v2.ps1
+[UNTRACK] corrigir-utf8-centro-parceiros.ps1
+[UNTRACK] corrigir-utf8-checkout-orcaly.ps1
+[UNTRACK] corrigir-utf8-e-titulo-entregas-orcaly.ps1
+[UNTRACK] corrigir-webhook-marketplace-mercado-pago-v4.ps1
+[UNTRACK] corrigir-webhook-marketplace-mercado-pago-v5.ps1
+[UNTRACK] corrigir-whatsapp-link-url-type.ps1
+[UNTRACK] definir-painel-inicio-apos-login-orcaly.ps1
+[UNTRACK] endurecer-acesso-admin-dono-orcaly.ps1
+[UNTRACK] erro-build-vercel.log
+[UNTRACK] erro-pagamentos-completo.log
+[UNTRACK] espelhar-demo-orcaly-somente-leitura.ps1
+[UNTRACK] estabilizar-modulos-fase1-orcaly.ps1
+[UNTRACK] fase-1-mercado-pago-transparente-oauth-orcaly.ps1
+[UNTRACK] fase-2-assinatura-mercado-pago-transparente-orcaly.ps1
+[UNTRACK] fase-3-marketplace-mercado-pago-transparente-orcaly.ps1
+[UNTRACK] fechar-isolamento-3-credenciais-mercado-pago.ps1
+[UNTRACK] finalizar-central-parceiros-react-purity-v2.ps1
+[UNTRACK] finalizar-central-parceiros-react-purity.ps1
+[UNTRACK] finalizar-centro-parceiros-tipado.ps1
+[UNTRACK] finalizar-correcao-pagamentos-orcaly.ps1
+[UNTRACK] finalizar-correcoes-pagamentos-orcaly-v2.ps1
+[UNTRACK] finalizar-correcoes-pagamentos-orcaly.ps1
+[UNTRACK] finalizar-demo-espelhada-orcaly.ps1
+[UNTRACK] finalizar-remocao-asaas-e-taxa-zero.ps1
+[UNTRACK] finalizar-taxa-zero-sem-asaas-v2.ps1
+[UNTRACK] finalizar-utf8-centro-parceiros.ps1
+[UNTRACK] forcar-checkout-unificado-orcaly-corrigido.ps1
+[UNTRACK] forcar-checkout-unificado-orcaly.ps1
+[UNTRACK] gerar-qa-operacional-orcaly.ps1
+[UNTRACK] gerar-zip-orcaly.ps1
+[UNTRACK] implementar-asaas-webhook-fase1.ps1
+[UNTRACK] implementar-central-parceiros-completa.ps1
+[UNTRACK] implementar-centro-parceiros-cursos-divulgacao-demo.ps1
+[UNTRACK] implementar-checkout-asaas-grafica-flash.ps1
+[UNTRACK] implementar-checkout-asaas-orcaly.ps1
+[UNTRACK] implementar-login-dono-controle-parceiros-orcaly-v2.ps1
+[UNTRACK] implementar-login-dono-controle-parceiros-orcaly-v3.ps1
+[UNTRACK] implementar-login-dono-controle-parceiros-orcaly-v4.ps1
+[UNTRACK] implementar-login-dono-controle-parceiros-orcaly-v5.ps1
+[UNTRACK] implementar-login-dono-controle-parceiros-orcaly.ps1
+[UNTRACK] implementar-programa-parceiros-60-orcaly-v2.ps1
+[UNTRACK] implementar-programa-parceiros-60-orcaly-v3.ps1
+[UNTRACK] implementar-programa-parceiros-60-orcaly-v4.ps1
+[UNTRACK] implementar-programa-parceiros-60-orcaly.ps1
+[UNTRACK] instalar-auditoria-modulos-painel-orcaly.ps1
+[UNTRACK] instalar-cadastro-onboarding-inteligente-orcaly.ps1
+[UNTRACK] instalar-catalogo-painel-premium-fase1-orcaly.ps1
+[UNTRACK] instalar-catalogo-premium-fase1-orcaly.ps1
+[UNTRACK] instalar-correcoes-qa-criticos-altos-orcaly.ps1
+[UNTRACK] instalar-editor-site-visual-sem-json-orcaly.ps1
+[UNTRACK] instalar-fase1-funcoes-sem-redesenhar-orcaly.ps1
+[UNTRACK] instalar-financeiro-operacao-fase1-orcaly.ps1
+[UNTRACK] instalar-financeiro-split-orcaly.ps1
+[UNTRACK] instalar-food-funcional-fase1-orcaly.ps1
+[UNTRACK] instalar-home-segmentos-premium-orcaly.ps1
+[UNTRACK] instalar-login-premium-segmentos-orcaly.ps1
+[UNTRACK] instalar-modulos-segmentos-food-mvp-orcaly.ps1
+[UNTRACK] instalar-notificacoes-inteligentes-orcaly.ps1
+[UNTRACK] instalar-operacao-inteligente-orcaly.ps1
+[UNTRACK] instalar-organizacao-pro-orcaly.ps1
+[UNTRACK] instalar-painel-command-center-segmentos-orcaly.ps1
+[UNTRACK] instalar-painel-menu-operacao-followup-fase1-orcaly.ps1
+[UNTRACK] instalar-painel-pro-orcaly.ps1
+[UNTRACK] instalar-painel-whatsapp-pro-orcaly.ps1
+[UNTRACK] instalar-pedidos-pro-v2-orcaly.ps1
+[UNTRACK] instalar-pedidos-produtos-pro-orcaly.ps1
+[UNTRACK] instalar-pre-validacao-orcaly.ps1
+[UNTRACK] instalar-segmentos-modulos-painel-orcaly.ps1
+[UNTRACK] instalar-sites-premium-segmentos-orcaly.ps1
+[UNTRACK] instalar-whatsapp-pedidos-status-orcaly.ps1
+[UNTRACK] integrar-assinatura-webhook-orcaly.ps1
+[UNTRACK] isolar-tres-fluxos-mercado-pago-orcaly.ps1
+[UNTRACK] limpar-ruido-qa-e-auditar-mvp-orcaly.ps1
+[UNTRACK] melhorar-checkout-cadastro-orcaly.ps1
+[UNTRACK] melhorar-pagamentos-assinatura-orcaly.ps1
+[UNTRACK] migrar-checkout-mercado-pago-para-asaas-orcaly.ps1
+[UNTRACK] migrar-env-isolado-mercado-pago-vercel-orcaly.ps1
+[UNTRACK] orcaly-payment-flows-phase1.mjs
+[UNTRACK] orcaly-payment-flows-phase1.ps1
+[UNTRACK] orcaly-payment-flows-phase1.zip
+[UNTRACK] orcaly-payment-flows-phase1/README.md
+[UNTRACK] orcaly-payment-flows-phase1/orcaly-payment-flows-phase1.mjs
+[UNTRACK] orcaly-payment-flows-phase1/orcaly-payment-flows-phase1.ps1
+[UNTRACK] padronizar-checkout-cadastro-marketplace-orcaly.ps1
+[UNTRACK] pausar-taxa-marketplace-e-remover-asaas.ps1
+[UNTRACK] publicar-checkout-unificado-github-vercel.ps1
+[UNTRACK] publicar-fase-1-mercado-pago-producao-orcaly.ps1
+[UNTRACK] publicar-fases-2-3-mercado-pago-transparente-orcaly.ps1
+[UNTRACK] qa-mvp-lint-20260726-223311.txt
+[UNTRACK] qa-orcaly-20260726-222134/env-output.json
+[UNTRACK] qa-orcaly-20260726-222547/env-output.json
+[UNTRACK] qa-orcaly-20260726-222547/relatorio-qa-orcaly.txt
+[UNTRACK] qa-orcaly-20260726-222547/resumo-qa-orcaly.json
+[UNTRACK] reativar-subconta-asaas-sandbox.ps1
+[UNTRACK] recuperar-e-corrigir-pagamentos-orcaly-v2.ps1
+[UNTRACK] recuperar-e-corrigir-pagamentos-orcaly-v3.ps1
+[UNTRACK] recuperar-e-corrigir-pagamentos-orcaly-v4.ps1
+[UNTRACK] recuperar-e-corrigir-pagamentos-orcaly.ps1
+[UNTRACK] redesenhar-assinatura-payment-brick-orcaly.ps1
+[UNTRACK] reformular-central-pagamentos-orcaly-v2.ps1
+[UNTRACK] remodelar-carrinho-responsivo-orcaly-v3.ps1
+[UNTRACK] remover-rota-legada-e-finalizar-isolamento.ps1
+[UNTRACK] remover-ultimo-link-formas-pagamento-orcaly.ps1
+[UNTRACK] repaginar-central-entregas-orcaly.ps1
+[UNTRACK] repaginar-configuracoes-orcaly.ps1
+[UNTRACK] repaginar-cupons-e-incluir-na-vitrine-orcaly-r2.ps1
+[UNTRACK] repaginar-financeiro-organizado-orcaly.ps1
+[UNTRACK] repaginar-home-responsiva-orcaly-v2.ps1
+[UNTRACK] repaginar-home-responsiva-orcaly.ps1
+[UNTRACK] repaginar-login-empresarial-orcaly.ps1
+[UNTRACK] repaginar-login-signature-orcaly-v3.ps1
+[UNTRACK] repaginar-pagamentos-premium-orcaly.ps1
+[UNTRACK] repaginar-painel-adaptativo-orcaly.ps1
+[UNTRACK] repaginar-painel-inicio-compacto-orcaly.ps1
+[UNTRACK] reparar-build-cpf-cnpj-orcaly.ps1
+[UNTRACK] reparar-mercado-pago-transparente-fase-1-orcaly.ps1
+[UNTRACK] restaurar-entregas-utf8-e-titulo-branco-orcaly.ps1
+[UNTRACK] restaurar-link-site-orcaly.ps1
+[UNTRACK] resultado-pagamentos-v3.log
+[UNTRACK] resultado-pagamentos-v4.log
+[UNTRACK] revisar-e-reescrever-webhook-assinatura-orcaly.ps1
+[UNTRACK] validar-producao-parceiros-painel-dono-orcaly.ps1
+[UNTRACK] vincular-orcaly-projeto-vercel-existente.ps1
+Artefatos desversionados: 350
+
+==> Scanner de credenciais corrigido - arquivos atualmente rastreados
+CURRENT_SECRET_SCAN_OK=1
+
+==> Scanner de credenciais corrigido - historico Git
+
+Possiveis credenciais reais no historico:
+[SECRET-HISTORY] commit 538fdad233f060ba22c98128e134d4a78c4d4a61 :: env_secret_assignment:SUPABASE_SERVICE_ROLE_KEY
+[SECRET-HISTORY] commit ebe8135200af937f234edf7f3a351b05dd55de51 :: env_secret_assignment:SUPABASE_SERVICE_ROLE_KEY
+Nenhum valor foi impresso.
+
+ORCALY_HARDENING_CONTINUATION_FAILED=1
+O historico Git possui possivel credencial real. Rotacao e saneamento sao obrigatorios antes de push.
+
+**********************
+Fim da transcrição do Windows PowerShell
+Hora de término: 20260808140939
+**********************

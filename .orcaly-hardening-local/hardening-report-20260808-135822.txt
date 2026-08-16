@@ -1,0 +1,48 @@
+﻿**********************
+Início da transcrição do Windows PowerShell
+Hora de início: 20260808135822
+Nome de Usuário: VININZIN\arauj
+Executar como Usuário: VININZIN\arauj
+Nome da Configuração: 
+Computador: VININZIN (Microsoft Windows NT 10.0.26200.0)
+Aplicativo Host: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\orcaly-hardening-completo-v3.ps1
+ID do Processo: 1252
+PSVersion: 5.1.26100.8875
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.8875
+BuildVersion: 10.0.26100.8875
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
+==> Validando repositorio e branch
+Repositorio: C:/Users/arauj/grafica-flash
+Branch atual: agent/hardening-orcaly-2026-08-08
+Branch de hardening: agent/hardening-orcaly-2026-08-08
+
+==> Criando backup local dos arquivos que serao alterados
+
+==> Executando patcher tipado e protegido contra substituicoes ambiguas
+
+
+
+==> Criando migration pelo Supabase CLI
+
+Migration: supabase/migrations/20260808165913_affiliate_workspace_server_authority.sql
+
+==> Procurando credenciais acidentais no conteudo rastreado e no historico Git
+[SECRET-SUSPECT] arquivo rastreado: .env.example
+[SECRET-SUSPECT] arquivo rastreado: CONFIGURACAO-MIGRACAO-ASAAS-ORCALY.md
+[SECRET-SUSPECT] arquivo rastreado: CONFIGURAR-CHECKOUT-ASAAS-GRAFICA-FLASH.md
+[SECRET-SUSPECT] arquivo rastreado: implementar-checkout-asaas-grafica-flash.ps1
+Nenhum valor de credencial foi impresso por seguranca.
+
+ORCALY_HARDENING_FAILED=1
+Foi detectado possivel segredo versionado no Git. Pare antes do push: a credencial precisa ser rotacionada e o historico precisa ser saneado.
+
+**********************
+Fim da transcrição do Windows PowerShell
+Hora de término: 20260808135945
+**********************

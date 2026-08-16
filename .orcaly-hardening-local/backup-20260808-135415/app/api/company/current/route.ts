@@ -1,0 +1,44 @@
+import { NextRequest, NextResponse } from 'next/server'
+import {
+  assinaturaEstaAtiva,
+  getCompanyAccess,
+  getRequester,
+  getSupabaseAdmin,
+} from '@/lib/company-access'
+
+export async function GET(request: NextRequest) {
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    const requester = await getRequester(request, supabaseAdmin)
+
+    if (!requester) {
+      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+    }
+
+    const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
+
+    return NextResponse.json({
+      user: {
+        id: requester.id,
+        email: requester.email,
+      },
+      company: access.company,
+      role: access.role,
+      assinatura_ativa: assinaturaEstaAtiva(access.company),
+      is_admin_master: access.isAdminMaster,
+      permissions: {
+        is_owner: access.isOwner,
+        can_manage: access.canManage,
+        can_finance: access.canFinance,
+        can_config: access.canConfig,
+        can_products: access.canProducts,
+        can_proposal: access.canProposal,
+        can_subscription: access.canSubscription,
+        can_production: access.canProduction,
+      },
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Erro ao buscar empresa atual.'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}

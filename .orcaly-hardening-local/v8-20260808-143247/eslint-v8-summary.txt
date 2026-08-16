@@ -1,0 +1,539 @@
+ESLINT_TOTAL_ERRORS=250
+ESLINT_TOTAL_WARNINGS=87
+
+RULES:
+208	error :: @typescript-eslint/no-explicit-any
+41	warning :: @typescript-eslint/no-unused-vars
+37	warning :: @next/next/no-img-element
+34	error :: react-hooks/set-state-in-effect
+9	warning :: react-hooks/exhaustive-deps
+6	error :: react/no-unescaped-entities
+1	error :: react-hooks/immutability
+1	error :: prefer-const
+
+FILES:
+
+C:\Users\arauj\grafica-flash\app\api\admin\dashboard\route.ts :: errors=33 warnings=0
+  error	4:26	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	9:27	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	16:33	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	61:29	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	61:44	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	79:50	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	80:54	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	81:63	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	82:53	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	83:57	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	84:65	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	85:51	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	85:136	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	86:49	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	86:132	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	104:39	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	105:57	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	106:56	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	108:23	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	109:46	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	124:49	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	126:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	131:30	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	140:26	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	148:50	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	149:51	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	150:51	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	151:46	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	152:46	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	154:51	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	154:60	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	161:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	162:46	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\admin\scan\route.ts :: errors=26 warnings=1
+  error	7:25	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	11:25	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	16:27	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  warning	21:10	@typescript-eslint/no-unused-vars	'safe' is defined but never used.
+  error	41:14	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	63:35	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	69:35	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	190:19	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	191:50	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	192:48	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	193:51	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	195:37	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	196:33	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	202:36	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	203:33	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	209:33	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	374:47	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	399:47	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	404:26	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	449:28	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	544:32	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	594:34	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	620:26	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	668:26	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	743:40	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	743:51	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	770:54	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\painel\clientes\page.tsx :: errors=14 warnings=1
+  error	10:12	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	11:14	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	12:10	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	13:14	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	69:30	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	99:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	228:48	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	235:53	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	242:45	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	249:49	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	288:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  warning	289:6	react-hooks/exhaustive-deps	React Hook useEffect has a missing dependency: 'carregar'. Either include it or remove the dependency array.
+  error	649:54	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	667:50	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	679:64	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\lib\whatsapp-notifications.ts :: errors=12 warnings=0
+  error	4:22	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	10:26	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	48:64	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	57:121	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	101:14	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	102:12	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	103:15	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	136:18	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	208:14	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	209:12	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	265:14	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	266:15	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\painel\produtos\[id]\page.tsx :: errors=11 warnings=2
+  error	26:45	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	39:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	81:13	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  warning	82:6	react-hooks/exhaustive-deps	React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array.
+  error	84:41	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	85:26	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	313:83	react/no-unescaped-entities	`"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.
+  error	313:88	react/no-unescaped-entities	`"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.
+  error	313:90	react/no-unescaped-entities	`"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.
+  error	313:98	react/no-unescaped-entities	`"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.
+  error	313:100	react/no-unescaped-entities	`"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.
+  error	313:106	react/no-unescaped-entities	`"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.
+  warning	350:19	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\app\api\propostas\[token]\route.ts :: errors=8 warnings=0
+  error	35:43	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	35:58	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	41:14	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	59:49	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	109:53	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	109:68	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	109:81	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	156:37	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\components\admin\OwnerControlCenter.tsx :: errors=7 warnings=0
+  error	16:28	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	119:14	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	121:14	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	223:15	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	233:15	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	246:15	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	641:30	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\lib\orcaly-smart-notifications.ts :: errors=7 warnings=0
+  error	3:22	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	80:29	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	91:37	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	101:35	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	114:10	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	179:30	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	240:12	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\painel\pedidos\[id]\page.tsx :: errors=6 warnings=1
+  error	56:38	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	57:44	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	58:44	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	122:13	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  warning	123:6	react-hooks/exhaustive-deps	React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array.
+  error	125:41	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	126:24	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\lib\whatsapp.ts :: errors=6 warnings=0
+  error	3:22	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	65:66	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	164:164	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	180:59	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	180:74	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	180:111	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\painel\producao\page.tsx :: errors=5 warnings=2
+  warning	24:10	@typescript-eslint/no-unused-vars	'company' is assigned a value but never used.
+  error	24:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	25:40	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  warning	26:10	@typescript-eslint/no-unused-vars	'members' is assigned a value but never used.
+  error	26:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	67:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  error	70:64	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\cliente\[token]\page.tsx :: errors=5 warnings=1
+  error	19:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	20:40	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	21:46	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	22:36	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	47:16	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  warning	48:6	react-hooks/exhaustive-deps	React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array.
+
+C:\Users\arauj\grafica-flash\app\painel\auditoria\page.tsx :: errors=5 warnings=0
+  error	14:40	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	15:36	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	47:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  error	69:47	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	87:71	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\painel\notificacoes\inteligentes\page.tsx :: errors=5 warnings=0
+  error	7:32	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	32:48	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	64:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  error	67:41	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	229:54	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\painel\tarefas\page.tsx :: errors=5 warnings=0
+  error	16:38	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	61:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  error	164:115	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	167:29	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	182:29	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\admin\scanner\page.tsx :: errors=4 warnings=0
+  error	28:36	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	29:36	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	36:44	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	69:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\cadastro\page.tsx :: errors=3 warnings=2
+  warning	10:3	@typescript-eslint/no-unused-vars	'normalizeBusinessType' is defined but never used.
+  error	236:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  error	302:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  error	309:7	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  warning	522:15	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\app\painel\configuracoes\equipe\page.tsx :: errors=3 warnings=1
+  warning	31:10	@typescript-eslint/no-unused-vars	'company' is assigned a value but never used.
+  error	31:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	89:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  error	121:70	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\painel\crm\page.tsx :: errors=3 warnings=1
+  warning	18:10	@typescript-eslint/no-unused-vars	'etapaLabel' is defined but never used.
+  error	28:38	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	45:33	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	82:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\painel\propostas\page.tsx :: errors=3 warnings=1
+  warning	58:10	@typescript-eslint/no-unused-vars	'company' is assigned a value but never used.
+  error	58:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	70:64	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	91:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\admin\seguranca\page.tsx :: errors=3 warnings=0
+  error	20:40	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	21:46	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	57:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\api\admin\affiliates\route.ts :: errors=3 warnings=0
+  error	77:30	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	106:21	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	150:24	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\company\team\route.ts :: errors=3 warnings=0
+  error	150:33	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	282:22	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	348:34	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\orders\[id]\create-proposal\route.ts :: errors=3 warnings=0
+  error	40:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	72:20	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	77:28	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\orders\[id]\route.ts :: errors=3 warnings=0
+  error	42:28	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	43:32	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	111:25	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\products\[id]\route.ts :: errors=3 warnings=0
+  error	59:29	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	63:28	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	64:32	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\whatsapp\webhook\route.ts :: errors=3 warnings=0
+  error	5:29	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	61:48	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	95:51	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\painel\whatsapp\page.tsx :: errors=3 warnings=0
+  error	119:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	265:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  error	459:87	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\lib\current-company-client.ts :: errors=3 warnings=0
+  error	3:52	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	24:58	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	62:52	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\lib\orcaly-audit.ts :: errors=3 warnings=0
+  error	3:22	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	13:30	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	44:30	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\arte\[token]\page.tsx :: errors=2 warnings=3
+  error	9:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	54:16	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  warning	55:6	react-hooks/exhaustive-deps	React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array.
+  warning	90:33	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	98:13	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\app\admin\equipe\page.tsx :: errors=2 warnings=1
+  warning	5:8	@typescript-eslint/no-unused-vars	'Image' is defined but never used.
+  error	17:28	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	100:10	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\painel\pedidos\page.tsx :: errors=2 warnings=1
+  warning	74:10	@typescript-eslint/no-unused-vars	'companyId' is assigned a value but never used.
+  error	125:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  error	199:9	react-hooks/immutability	Error: This value cannot be modified
+
+C:\Users\arauj\grafica-flash\app\painel\proposta\[id]\page.tsx :: errors=2 warnings=1
+  error	37:29	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	181:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  warning	182:6	react-hooks/exhaustive-deps	React Hook useEffect has a missing dependency: 'carregar'. Either include it or remove the dependency array.
+
+C:\Users\arauj\grafica-flash\app\admin\auditoria\page.tsx :: errors=2 warnings=0
+  error	15:27	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	135:10	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\admin\indicacoes\page.tsx :: errors=2 warnings=0
+  error	15:28	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	208:10	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\admin\leads\page.tsx :: errors=2 warnings=0
+  error	6:13	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	47:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\api\admin\leads\route.ts :: errors=2 warnings=0
+  error	4:31	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	47:41	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\admin\team\route.ts :: errors=2 warnings=0
+  error	34:18	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	48:14	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\crm\leads\[id]\route.ts :: errors=2 warnings=0
+  error	50:28	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	66:32	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\tasks\[id]\route.ts :: errors=2 warnings=0
+  error	26:28	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	39:32	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\painel\notificacoes\page.tsx :: errors=2 warnings=0
+  error	15:54	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+  error	46:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\painel\orcamento\[id]\page.tsx :: errors=1 warnings=4
+  error	253:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+  warning	254:6	react-hooks/exhaustive-deps	React Hook useEffect has a missing dependency: 'carregarOrcamento'. Either include it or remove the dependency array.
+  warning	272:11	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	334:17	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	340:17	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\app\admin\login\page.tsx :: errors=1 warnings=0
+  error	36:7	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\api\ai\business-assistant\route.ts :: errors=1 warnings=0
+  error	68:37	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\ai\orcamento\route.ts :: errors=1 warnings=0
+  error	132:17	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\business-type\apply\route.ts :: errors=1 warnings=0
+  error	35:34	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\crm\leads\route.ts :: errors=1 warnings=0
+  error	6:26	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\notifications\route.ts :: errors=1 warnings=0
+  error	35:47	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\notifications\smart-settings\route.ts :: errors=1 warnings=0
+  error	91:34	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\onboarding\progress\route.ts :: errors=1 warnings=0
+  error	24:34	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\onboarding\status\route.ts :: errors=1 warnings=0
+  error	4:41	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\orders\repeat\route.ts :: errors=1 warnings=0
+  error	75:52	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\producao\update\route.ts :: errors=1 warnings=0
+  error	20:34	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\system\health\route.ts :: errors=1 warnings=0
+  error	4:42	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\tasks\route.ts :: errors=1 warnings=0
+  error	5:26	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\whatsapp\order-status\route.ts :: errors=1 warnings=0
+  error	20:16	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\api\whatsapp\settings\route.ts :: errors=1 warnings=0
+  error	5:26	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\app\login\page.tsx :: errors=1 warnings=0
+  error	527:7	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\page.tsx :: errors=1 warnings=0
+  error	620:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\painel\cupons\page.tsx :: errors=1 warnings=0
+  error	263:10	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\painel\inicio\page.tsx :: errors=1 warnings=0
+  error	463:10	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\painel\orcamento-inteligente\page.tsx :: errors=1 warnings=0
+  error	48:5	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\painel\segmento\page.tsx :: errors=1 warnings=0
+  error	70:10	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\app\parceiros\login\page.tsx :: errors=1 warnings=0
+  error	40:7	react-hooks/set-state-in-effect	Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\arauj\grafica-flash\lib\affiliates\server.ts :: errors=1 warnings=0
+  error	1881:23	prefer-const	'error' is never reassigned. Use 'const' instead.
+
+C:\Users\arauj\grafica-flash\proxy.ts :: errors=1 warnings=0
+  error	14:13	@typescript-eslint/no-explicit-any	Unexpected any. Specify a different type.
+
+C:\Users\arauj\grafica-flash\components\public-site\PremiumCatalog.tsx :: errors=0 warnings=17
+  warning	45:7	@typescript-eslint/no-unused-vars	'filterLabels' is assigned a value but never used.
+  warning	121:9	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	150:10	@typescript-eslint/no-unused-vars	'ProductCard' is defined but never used.
+  warning	223:10	@typescript-eslint/no-unused-vars	'ProductDetailModal' is defined but never used.
+  warning	255:19	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	328:18	@typescript-eslint/no-unused-vars	'setSearch' is assigned a value but never used.
+  warning	329:20	@typescript-eslint/no-unused-vars	'setCategory' is assigned a value but never used.
+  warning	330:18	@typescript-eslint/no-unused-vars	'setFilter' is assigned a value but never used.
+  warning	331:16	@typescript-eslint/no-unused-vars	'setSort' is assigned a value but never used.
+  warning	332:10	@typescript-eslint/no-unused-vars	'selected' is assigned a value but never used.
+  warning	332:20	@typescript-eslint/no-unused-vars	'setSelected' is assigned a value but never used.
+  warning	344:9	@typescript-eslint/no-unused-vars	'suggestedCategories' is assigned a value but never used.
+  warning	345:9	@typescript-eslint/no-unused-vars	'featuredProducts' is assigned a value but never used.
+  warning	350:9	@typescript-eslint/no-unused-vars	'filteredProducts' is assigned a value but never used.
+  warning	365:9	@typescript-eslint/no-unused-vars	'actionLabel' is assigned a value but never used.
+  warning	366:9	@typescript-eslint/no-unused-vars	'title' is assigned a value but never used.
+  warning	367:9	@typescript-eslint/no-unused-vars	'text' is assigned a value but never used.
+
+C:\Users\arauj\grafica-flash\components\public-site\PublicSiteRenderer.tsx :: errors=0 warnings=9
+  warning	3:10	@typescript-eslint/no-unused-vars	'useMemo' is defined but never used.
+  warning	150:10	@typescript-eslint/no-unused-vars	'primaryProductImage' is defined but never used.
+  warning	174:12	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	184:10	@typescript-eslint/no-unused-vars	'ProductCard' is defined but never used.
+  warning	268:10	@typescript-eslint/no-unused-vars	'showMobile' is assigned a value but never used.
+  warning	268:22	@typescript-eslint/no-unused-vars	'setShowMobile' is assigned a value but never used.
+  warning	290:9	@typescript-eslint/no-unused-vars	'categories' is assigned a value but never used.
+  warning	349:17	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	450:17	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\components\public-site\FoodMarketplaceCatalog.tsx :: errors=0 warnings=6
+  warning	257:10	@typescript-eslint/no-unused-vars	'calculateItem' is defined but never used.
+  warning	441:15	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	547:22	@typescript-eslint/no-unused-vars	'setSubmitting' is assigned a value but never used.
+  warning	549:10	@typescript-eslint/no-unused-vars	'result' is assigned a value but never used.
+  warning	585:9	@typescript-eslint/no-unused-vars	'deliveryFee' is assigned a value but never used.
+  warning	884:25	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\app\painel\layout.tsx :: errors=0 warnings=3
+  warning	104:15	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	345:11	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	360:11	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\app\proposta\[token]\page.tsx :: errors=0 warnings=3
+  warning	214:32	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	267:19	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	311:17	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\components\admin\InternalAdminClient.tsx :: errors=0 warnings=2
+  warning	127:11	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	147:11	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\components\painel\PanelSidebar.tsx :: errors=0 warnings=2
+  warning	61:19	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	88:19	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\components\public-site\SegmentMarketplaceCatalog.tsx :: errors=0 warnings=2
+  warning	257:22	@typescript-eslint/no-unused-vars	'setSubmitting' is assigned a value but never used.
+  warning	289:9	@typescript-eslint/no-unused-vars	'deliveryFee' is assigned a value but never used.
+
+C:\Users\arauj\grafica-flash\components\site\ProductMediaGallery.tsx :: errors=0 warnings=2
+  warning	23:9	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+  warning	33:13	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\app\api\checkout\lead\route.ts :: errors=0 warnings=1
+  warning	6:24	@typescript-eslint/no-unused-vars	'requestBodyErrorResponse' is defined but never used.
+
+C:\Users\arauj\grafica-flash\app\checkout\falha\page.tsx :: errors=0 warnings=1
+  warning	7:9	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\app\checkout\pendente\page.tsx :: errors=0 warnings=1
+  warning	7:9	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\app\checkout\sucesso\page.tsx :: errors=0 warnings=1
+  warning	42:9	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\app\pagamento\erro\page.tsx :: errors=0 warnings=1
+  warning	20:9	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\app\pagamento\pendente\page.tsx :: errors=0 warnings=1
+  warning	20:9	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\app\pagamento\sucesso\page.tsx :: errors=0 warnings=1
+  warning	20:9	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\components\financeiro\FinancialAreaClient.tsx :: errors=0 warnings=1
+  warning	535:6	react-hooks/exhaustive-deps	React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array.
+
+C:\Users\arauj\grafica-flash\components\food\DeliveryDriverOperations.tsx :: errors=0 warnings=1
+  warning	413:3	@typescript-eslint/no-unused-vars	'deliveries' is defined but never used.
+
+C:\Users\arauj\grafica-flash\components\painel\MarketplacePaymentsPanel.tsx :: errors=0 warnings=1
+  warning	193:31	react-hooks/exhaustive-deps	React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array.
+
+C:\Users\arauj\grafica-flash\components\painel\PanelPremiumHeader.tsx :: errors=0 warnings=1
+  warning	158:15	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\components\painel\PanelSegmentSidebar.tsx :: errors=0 warnings=1
+  warning	51:15	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\components\public-site\SegmentHeroPanel.tsx :: errors=0 warnings=1
+  warning	147:33	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\components\site-builder\LogoUploader.tsx :: errors=0 warnings=1
+  warning	97:13	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\components\subscription\AsaasSubscriptionPayment.tsx :: errors=0 warnings=1
+  warning	211:15	@next/next/no-img-element	Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element
+
+C:\Users\arauj\grafica-flash\lib\security\rate-limit.ts :: errors=0 warnings=1
+  warning	53:11	@typescript-eslint/no-unused-vars	'remaining' is assigned a value but never used.
+
+C:\Users\arauj\grafica-flash\lib\segment-modules.ts :: errors=0 warnings=1
+  warning	240:10	@typescript-eslint/no-unused-vars	'globalSegments' is defined but never used.
+
+C:\Users\arauj\grafica-flash\lib\signup-checkout.ts :: errors=0 warnings=1
+  warning	14:7	@typescript-eslint/no-unused-vars	'DAY_MS' is assigned a value but never used.

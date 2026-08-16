@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
+import { isFeatureEnabled } from '@/lib/foundation/feature-flags.server'
+import { buildIdempotencyKey } from '@/lib/foundation/operational-events'
+import { emitOperationalEvent } from '@/lib/foundation/operational-events.server'
 import { createAuditLog, createNotification } from '@/lib/orcaly-audit'
 import { notifyOrderStatus } from '@/lib/whatsapp-notifications'
 
@@ -22,6 +25,11 @@ const allowedFields = [
   'observacoes',
 ]
 
+type OrderUpdate = Record<string, unknown> & {
+  status?: string
+  updated_at: string
+}
+
 async function getAccess(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
   const requester = await getRequester(request, supabaseAdmin)
@@ -39,8 +47,8 @@ async function getAccess(request: NextRequest) {
   return { supabaseAdmin, requester, access }
 }
 
-function cleanUpdate(body: any) {
-  const update: Record<string, any> = {}
+function cleanUpdate(body: Record<string, unknown>): OrderUpdate {
+  const update: Record<string, unknown> = {}
 
   for (const field of allowedFields) {
     if (body[field] !== undefined) update[field] = body[field]
@@ -50,6 +58,7 @@ function cleanUpdate(body: any) {
   if (update.valor_total !== undefined) update.valor_total = Number(update.valor_total || 0)
   if (update.prazo_entrega === '') update.prazo_entrega = null
   if (update.responsavel_id === '') update.responsavel_id = null
+  if (update.status !== undefined) update.status = String(update.status)
 
   if (update.status === 'Aprovado') update.aprovado_em = new Date().toISOString()
   if (update.status === 'Entregue') update.entregue_em = new Date().toISOString()
@@ -57,7 +66,7 @@ function cleanUpdate(body: any) {
 
   update.updated_at = new Date().toISOString()
 
-  return update
+  return update as OrderUpdate
 }
 
 export async function GET(request: NextRequest, context: Context) {
@@ -88,7 +97,7 @@ export async function PATCH(request: NextRequest, context: Context) {
     const result = await getAccess(request)
     if ('error' in result && result.error) return result.error
 
-    const body = await request.json()
+    const body = await request.json() as Record<string, unknown>
     const update = cleanUpdate(body)
 
     const { data: previous } = await result.supabaseAdmin
@@ -108,7 +117,7 @@ export async function PATCH(request: NextRequest, context: Context) {
 
     if (error) throw error
 
-    let whatsappResult: any = null
+    let whatsappResult: unknown = null
 
     if (update.status && update.status !== previous?.status) {
       await result.supabaseAdmin
@@ -120,8 +129,43 @@ export async function PATCH(request: NextRequest, context: Context) {
           new_status: update.status,
           changed_by: result.requester!.id,
           changed_by_email: result.requester!.email || null,
-          note: body.note || null,
+          note: typeof body.note === 'string' ? body.note : null,
         })
+
+      const operationalEventsEnabled = await isFeatureEnabled(
+        'operational_events',
+        {
+          companyId: result.access!.company.id,
+          supabase: result.supabaseAdmin,
+        },
+      )
+
+      if (operationalEventsEnabled) {
+        await emitOperationalEvent(
+          result.supabaseAdmin,
+          {
+            companyId: result.access!.company.id,
+            entityType: 'order',
+            entityId: id,
+            eventType: 'order.status_changed',
+            actorType: 'user',
+            actorId: result.requester!.id,
+            visibility: 'internal',
+            metadata: {
+              old_status: String(previous?.status || ''),
+              new_status: String(update.status),
+            },
+            idempotencyKey: buildIdempotencyKey(
+              'order',
+              id,
+              'status_changed',
+              previous?.updated_at || previous?.created_at || 'legacy',
+            ),
+            requestId: request.headers.get('x-request-id'),
+          },
+          { failureMode: 'best_effort' },
+        )
+      }
 
       await createNotification(result.supabaseAdmin, {
         company_id: result.access!.company.id,

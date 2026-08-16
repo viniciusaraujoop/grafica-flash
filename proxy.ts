@@ -24,12 +24,14 @@ function secureResponse(response: NextResponse, request: NextRequest, cookies: C
   const secured = applySecurityHeaders(applyCookies(response, cookies), request)
   const pathname = request.nextUrl.pathname
   const internal = pathname === '/admin' || pathname.startsWith('/admin/') || pathname === '/suporte' || pathname.startsWith('/suporte/') || pathname === '/api/admin' || pathname.startsWith('/api/admin/') || pathname === '/api/platform-admin' || pathname.startsWith('/api/platform-admin/')
-  if (internal) {
+  const customerPortal = pathname === '/acompanhar' || pathname.startsWith('/acompanhar/') || pathname === '/api/customer-portal' || pathname.startsWith('/api/customer-portal/')
+  if (internal || customerPortal) {
     secured.headers.set('Cache-Control', 'private, no-store, no-cache, max-age=0, must-revalidate')
     secured.headers.set('Pragma', 'no-cache')
     secured.headers.set('Expires', '0')
     secured.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet')
   }
+  if (customerPortal) secured.headers.set('Referrer-Policy', 'no-referrer')
   return secured
 }
 function normalizedRole(value: unknown) {

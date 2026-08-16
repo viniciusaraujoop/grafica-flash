@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "noEmit": false,
+    "outDir": "../../.next/customer-portal-tests",
+    "rootDir": "../..",
+    "incremental": false,
+    "isolatedModules": false,
+    "allowJs": false
+  },
+  "include": [
+    "./*.test.ts",
+    "../../lib/customer-portal/contracts.ts",
+    "../../lib/customer-portal/tokens.ts",
+    "../../lib/customer-portal/dto.ts",
+    "../../lib/business-types.ts",
+    "../../lib/order-status.ts"
+  ]
+}

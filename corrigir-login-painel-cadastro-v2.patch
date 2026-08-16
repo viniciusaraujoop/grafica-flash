@@ -1,0 +1,66 @@
+diff --git a/app/login/page.tsx b/app/login/page.tsx
+--- a/app/login/page.tsx
++++ b/app/login/page.tsx
+@@ -3,18 +3,58 @@
+         data.session?.refresh_token
+       ) {
+         await supabase.auth.setSession({
+           access_token: data.session.access_token,
+           refresh_token: data.session.refresh_token,
+         })
+       }
+ 
++      const accessToken = data.session?.access_token
++
++      if (!accessToken) {
++        setTipoMensagem('erro')
++        setMensagem(
++          'Não foi possível validar a sessão da sua conta. Entre novamente.',
++        )
++        setCarregando(false)
++        return
++      }
++
++      const accessResponse = await fetch('/api/company/current', {
++        headers: {
++          Authorization: `Bearer ${accessToken}`,
++        },
++        cache: 'no-store',
++      })
++
++      const accessPayload = (await accessResponse
++        .json()
++        .catch(() => ({}))) as {
++        company?: { id?: string | null } | null
++        error?: string
++      }
++
++      if (!accessResponse.ok) {
++        setTipoMensagem('erro')
++        setMensagem(
++          accessPayload.error ||
++            'Não foi possível verificar a empresa vinculada à sua conta.',
++        )
++        setCarregando(false)
++        return
++      }
++
++      if (!accessPayload.company?.id) {
++        setTipoMensagem('info')
++        setMensagem(
++          'Sua conta ainda não está vinculada a uma empresa. Vamos concluir seu cadastro.',
++        )
++        router.replace('/cadastro')
++        return
++      }
++
+       setTipoMensagem('sucesso')
+       setMensagem(
+         'Acesso validado. Abrindo seu painel...',
+       )
+ 
+-      await new Promise((resolve) =>
+-        window.setTimeout(resolve, 180),
+-      )
+-
+       router.replace(getSafeNextPath())

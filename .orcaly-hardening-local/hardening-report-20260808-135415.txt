@@ -1,0 +1,40 @@
+﻿**********************
+Início da transcrição do Windows PowerShell
+Hora de início: 20260808135416
+Nome de Usuário: VININZIN\arauj
+Executar como Usuário: VININZIN\arauj
+Nome da Configuração: 
+Computador: VININZIN (Microsoft Windows NT 10.0.26200.0)
+Aplicativo Host: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\orcaly-hardening-completo-v2.ps1
+ID do Processo: 6628
+PSVersion: 5.1.26100.8875
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.8875
+BuildVersion: 10.0.26100.8875
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
+==> Validando repositorio e branch
+Repositorio: C:/Users/arauj/grafica-flash
+Branch atual: fix/unify-payment-flows-phase-1
+
+Branch de hardening: agent/hardening-orcaly-2026-08-08
+
+==> Criando backup local dos arquivos que serao alterados
+
+==> Executando patcher tipado e protegido contra substituicoes ambiguas
+
+
+PS>TerminatingError(): "Comando falhou (1): C:\Program Files\nodejs\node.exe C:\Users\arauj\grafica-flash\.orcaly-hardening-local\hardening-patcher.mjs"
+Patcher falhou. Restaurando apenas os arquivos alvo...
+
+ORCALY_HARDENING_FAILED=1
+Comando falhou (1): C:\Program Files\nodejs\node.exe C:\Users\arauj\grafica-flash\.orcaly-hardening-local\hardening-patcher.mjs
+
+**********************
+Fim da transcrição do Windows PowerShell
+Hora de término: 20260808135418
+**********************

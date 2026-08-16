@@ -7,6 +7,9 @@
                     "build":  "next build",
                     "start":  "next start",
                     "lint":  "eslint",
+                    "test":  "npm run test:foundation && npm run test:customer-portal",
+                    "test:foundation":  "tsc -p tests/foundation/tsconfig.json && node --test .next/foundation-tests/tests/foundation/*.test.js",
+                    "test:customer-portal":  "tsc -p tests/customer-portal/tsconfig.json && node --test .next/customer-portal-tests/tests/customer-portal/*.test.js",
                     "security:check":  "node scripts/security-check.mjs",
                     "verify:payments":  "node scripts/verify-payment-flow-boundaries.mjs",
                     "verify:payment-credentials":  "node scripts/auditar-isolamento-pagamentos.cjs"

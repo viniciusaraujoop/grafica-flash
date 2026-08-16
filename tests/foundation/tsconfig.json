@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "noEmit": false,
+    "outDir": "../../.next/foundation-tests",
+    "rootDir": "../..",
+    "incremental": false,
+    "isolatedModules": false,
+    "allowJs": false
+  },
+  "include": [
+    "./*.test.ts",
+    "../../lib/foundation/contracts.ts",
+    "../../lib/foundation/feature-flags.ts",
+    "../../lib/foundation/permissions.ts",
+    "../../lib/foundation/operational-events.ts"
+  ]
+}

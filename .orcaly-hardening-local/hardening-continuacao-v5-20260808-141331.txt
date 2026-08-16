@@ -1,0 +1,71 @@
+﻿**********************
+Início da transcrição do Windows PowerShell
+Hora de início: 20260808141332
+Nome de Usuário: VININZIN\arauj
+Executar como Usuário: VININZIN\arauj
+Nome da Configuração: 
+Computador: VININZIN (Microsoft Windows NT 10.0.26200.0)
+Aplicativo Host: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\continuar-hardening-orcaly-v5.ps1
+ID do Processo: 12732
+PSVersion: 5.1.26100.8875
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.8875
+BuildVersion: 10.0.26100.8875
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
+==> Validando estado deixado pelo hardening V3
+Branch: agent/hardening-orcaly-2026-08-08
+Migration: supabase/migrations/20260808165913_affiliate_workspace_server_authority.sql
+Arquivos modificados no working tree: 58
+ORCALY_V3_STATE_OK=1
+
+==> Corrigindo autoinspecao do scanner de seguranca
+[OK] scanner usa escapes Unicode ASCII
+
+==> Desversionando artefatos temporarios antes do scan atual
+Artefatos desversionados: 0
+
+==> Scanner de credenciais corrigido - arquivos atualmente rastreados
+CURRENT_SECRET_SCAN_OK=1
+PORTUGUESE_PLACEHOLDER_FILTER_OK=1
+
+==> Scanner de credenciais corrigido - historico Git
+GIT_SECRET_HISTORY_SCAN_OK=1
+
+==> Reparando apenas sequencias reais de mojibake em arquivos rastreados
+[UTF8] app/api/checkout/plano/route.ts
+[UTF8] app/api/marketplace/payments/webhook/mercado-pago/route.ts
+[UTF8] components/checkout/SignupCheckout.tsx
+[UTF8] components/subscription/MercadoPagoSubscriptionCheckout.tsx
+[UTF8] lib/payments/checkout-service.ts
+[UTF8] lib/payments/core/contracts.ts
+[UTF8] scripts/auditar-isolamento-pagamentos.cjs
+[UTF8] scripts/corrigir-bugs-qa-criticos-altos.cjs
+[UTF8] scripts/corrigir-layout-duplicate-logo-url.cjs
+[UTF8] scripts/corrigir-module-group-relatorios.cjs
+[UTF8] scripts/corrigir-modulo-placeholder-found-type.cjs
+[UTF8] scripts/corrigir-panel-module-icon.cjs
+[UTF8] scripts/corrigir-presenca-forcado-scan.cjs
+[UTF8] scripts/verify-payment-flow-boundaries.mjs
+[UTF8] supabase/migrations/20260723213000_checkout_asaas_pix_payout.sql
+[UTF8] supabase/migrations/20260730212000_unify_payment_domain_phase_1.sql
+Arquivos UTF-8 reparados: 16
+
+==> Validando sintaxe do scanner de seguranca
+
+
+==> Varredura estatica de seguranca em todos os arquivos rastreados
+
+PS>TerminatingError(): "Comando falhou (1): C:\Program Files\nodejs\node.exe scripts/security-check.mjs"
+
+ORCALY_HARDENING_V5_FAILED=1
+Comando falhou (1): C:\Program Files\nodejs\node.exe scripts/security-check.mjs
+
+**********************
+Fim da transcrição do Windows PowerShell
+Hora de término: 20260808141414
+**********************

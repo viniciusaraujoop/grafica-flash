@@ -1,0 +1,360 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import { useParams } from 'next/navigation'
+import SignaturePad from '@/components/SignaturePad'
+
+type Proposta = {
+  id: string
+  token: string
+  titulo: string | null
+  proposta_numero?: string | null
+  cliente_nome: string | null
+  cliente_whatsapp: string | null
+  valor_total: number | null
+  valor_desconto?: number | null
+  valor_sinal: number | null
+  pix_payload?: string | null
+  pix_valor?: number | null
+  prazo: string | null
+  condicoes: string | null
+  introducao?: string | null
+  valid_until?: string | null
+  status: string | null
+  itens: Array<{ nome: string; quantidade?: number; valor?: number; preco_unitario?: number; respostas?: Record<string, any> }>
+  approval_hash?: string | null
+  approved_at?: string | null
+  signature_data_url?: string | null
+}
+
+type Empresa = {
+  nome: string
+  logo_url: string | null
+  whatsapp: string | null
+  instagram?: string | null
+  site_primary_color?: string | null
+  site_accent_color?: string | null
+  marketplace_endereco?: string | null
+  atendimento_horario?: string | null
+}
+
+function moeda(valor: number) {
+  return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+function limparTelefone(valor: string | null | undefined) {
+  return (valor || '').replace(/\D/g, '')
+}
+
+function linkWhatsapp(numero: string | null | undefined, texto: string) {
+  const limpo = limparTelefone(numero)
+  if (!limpo) return ''
+  const final = limpo.startsWith('55') ? limpo : `55${limpo}`
+  return `https://wa.me/${final}?text=${encodeURIComponent(texto)}`
+}
+
+function dataBR(data?: string | null) {
+  if (!data) return ''
+  return new Date(data).toLocaleDateString('pt-BR')
+}
+
+function statusLabel(status?: string | null) {
+  const labels: Record<string, string> = {
+    rascunho: 'Rascunho',
+    enviado: 'Enviado',
+    visto: 'Visualizado',
+    aprovado: 'Aprovado',
+    alteracao_solicitada: 'Alteração solicitada',
+    recusado: 'Recusado',
+    expirado: 'Expirado',
+    cancelado: 'Cancelado',
+    pago_sinal: 'Sinal pago',
+    convertido: 'Convertido',
+  }
+
+  return labels[status || ''] || status || 'Sem status'
+}
+
+export default function PropostaPage() {
+  const params = useParams<{ token: string }>()
+  const token = Array.isArray(params?.token) ? params.token[0] : params?.token
+
+  const [proposta, setProposta] = useState<Proposta | null>(null)
+  const [empresa, setEmpresa] = useState<Empresa | null>(null)
+  const [config, setConfig] = useState<any>({})
+  const [events, setEvents] = useState<any[]>([])
+  const [carregando, setCarregando] = useState(true)
+  const [mensagem, setMensagem] = useState('')
+  const [aba, setAba] = useState<'aprovar' | 'alteracao' | 'recusar'>('aprovar')
+  const [enviando, setEnviando] = useState(false)
+  const [form, setForm] = useState({
+    nome: '',
+    documento: '',
+    observacao: '',
+    mensagem: '',
+    motivo: '',
+    aceitou_termos: false,
+    assinatura_data_url: '',
+  })
+
+  const primary = empresa?.site_primary_color || '#05245c'
+
+  async function carregar() {
+    setCarregando(true)
+
+    const res = await fetch(`/api/propostas/${token}`)
+    const dados = await res.json()
+
+    if (!res.ok) {
+      setMensagem(dados.error || 'Proposta não encontrada.')
+      setCarregando(false)
+      return
+    }
+
+    setProposta(dados.proposta)
+    setEmpresa(dados.empresa)
+    setConfig(dados.config || {})
+    setEvents(dados.events || [])
+    setForm((current) => ({ ...current, nome: dados.proposta?.cliente_nome || current.nome }))
+    setCarregando(false)
+  }
+
+  useEffect(() => {
+    if (token) carregar()
+  }, [token])
+
+  const podeResponder = useMemo(() => {
+    return proposta && ['enviado', 'visto', 'alteracao_solicitada'].includes(proposta.status || '')
+  }, [proposta])
+
+  async function responder(acao: 'aprovar' | 'alteracao' | 'recusar') {
+    setMensagem('')
+    setEnviando(true)
+
+    const payload =
+      acao === 'aprovar'
+        ? {
+            acao,
+            nome: form.nome,
+            documento: form.documento,
+            observacao: form.observacao,
+            aceitou_termos: form.aceitou_termos,
+            assinatura_data_url: form.assinatura_data_url,
+          }
+        : acao === 'alteracao'
+          ? { acao, nome: form.nome, mensagem: form.mensagem }
+          : { acao, nome: form.nome, motivo: form.motivo }
+
+    const res = await fetch(`/api/propostas/${token}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    const dados = await res.json()
+
+    if (!res.ok) {
+      setMensagem(dados.error || 'Erro ao responder proposta.')
+      setEnviando(false)
+      return
+    }
+
+    setMensagem(acao === 'aprovar' ? 'Proposta aprovada e assinada com sucesso.' : acao === 'alteracao' ? 'Solicitação de alteração enviada.' : 'Recusa registrada.')
+    await carregar()
+    setEnviando(false)
+  }
+
+  async function copyPix() {
+    if (!proposta?.pix_payload) return
+    await navigator.clipboard.writeText(proposta.pix_payload)
+    setMensagem('PIX copia e cola copiado.')
+  }
+
+  if (carregando) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff]">
+        <div className="rounded-[2rem] bg-white p-8 shadow-xl">Carregando proposta...</div>
+      </main>
+    )
+  }
+
+  if (!proposta || !empresa) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4">
+        <div className="rounded-[2rem] bg-white p-8 text-center shadow-xl">
+          <p className="text-3xl font-black text-[#071b3a]">Proposta não encontrada</p>
+          <p className="mt-3 font-bold text-slate-500">{mensagem}</p>
+        </div>
+      </main>
+    )
+  }
+
+  const whats = linkWhatsapp(empresa.whatsapp, `Olá! Quero falar sobre a proposta ${proposta.proposta_numero || proposta.titulo || proposta.token}.`)
+  const pix = proposta.pix_payload
+  const pixValor = Number(proposta.pix_valor || proposta.valor_sinal || 0)
+
+  return (
+    <main className="min-h-screen bg-[#f5f8ff] px-4 py-6 text-slate-950 print:bg-white">
+      <section className="mx-auto max-w-6xl">
+        <header className="overflow-hidden rounded-[2.5rem] border border-blue-100 bg-white p-6 text-center shadow-xl shadow-blue-950/5 print:shadow-none">
+          {empresa.logo_url && <img src={empresa.logo_url} alt={empresa.nome} className="mx-auto mb-4 h-20 w-20 rounded-3xl object-cover" />}
+          <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: primary }}>Seu orçamento está pronto</p>
+          <h1 className="mt-3 text-4xl font-black tracking-[-0.05em] text-[#071b3a] sm:text-5xl">
+            {proposta.titulo || `Proposta de ${empresa.nome}`}
+          </h1>
+          <p className="mt-3 text-lg font-bold text-slate-500">{empresa.nome}</p>
+
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <span className="rounded-full bg-blue-50 px-4 py-2 text-sm font-black" style={{ color: primary }}>{statusLabel(proposta.status)}</span>
+            {proposta.proposta_numero && <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-600">Nº {proposta.proposta_numero}</span>}
+            {proposta.valid_until && <span className="rounded-full bg-amber-50 px-4 py-2 text-sm font-black text-amber-700">Válida até {dataBR(proposta.valid_until)}</span>}
+          </div>
+
+          {config.allow_print_pdf !== false && (
+            <button onClick={() => window.print()} className="mt-5 rounded-2xl bg-slate-100 px-5 py-3 font-black text-slate-700 print:hidden">
+              Imprimir / salvar PDF
+            </button>
+          )}
+        </header>
+
+        {mensagem && <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-center text-sm font-bold print:hidden" style={{ color: primary }}>{mensagem}</div>}
+
+        <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_390px]">
+          <div className="grid gap-5">
+            <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5 print:shadow-none">
+              <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: primary }}>Resumo</p>
+              {proposta.introducao && <p className="mt-4 whitespace-pre-line font-bold leading-8 text-slate-600">{proposta.introducao}</p>}
+
+              <div className="mt-5 grid gap-3">
+                {proposta.itens?.map((item, index) => (
+                  <div key={`${item.nome}-${index}`} className="rounded-3xl border border-blue-50 bg-blue-50 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-black text-[#071b3a]">{item.nome}</p>
+                        {item.quantidade && <p className="mt-1 text-sm font-bold text-slate-500">Quantidade: {item.quantidade}</p>}
+                      </div>
+                      {item.valor !== undefined && <p className="font-black" style={{ color: primary }}>{moeda(Number(item.valor))}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5 print:shadow-none">
+              <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: primary }}>Condições</p>
+              <div className="mt-4 grid gap-3">
+                {proposta.prazo && <p className="font-bold text-slate-600"><b>Prazo:</b> {proposta.prazo}</p>}
+                {proposta.condicoes && <p className="whitespace-pre-line font-bold leading-8 text-slate-600">{proposta.condicoes}</p>}
+              </div>
+
+              {proposta.signature_data_url && (
+                <div className="mt-6 rounded-2xl bg-slate-50 p-4">
+                  <p className="text-sm font-black text-slate-700">Assinatura digital</p>
+                  <img src={proposta.signature_data_url} alt="Assinatura" className="mt-3 h-32 rounded-xl border border-slate-200 bg-white object-contain" />
+                  <p className="mt-2 text-xs font-bold text-slate-500">Aprovado em {dataBR(proposta.approved_at)}</p>
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5 print:hidden">
+              <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: primary }}>Histórico</p>
+              <div className="mt-5 grid gap-3">
+                {events.length === 0 && <p className="font-bold text-slate-500">Nenhum evento registrado ainda.</p>}
+                {events.map((event) => (
+                  <div key={event.id} className="rounded-2xl bg-[#f5f8ff] p-4">
+                    <p className="font-black text-[#071b3a]">{event.event_type}</p>
+                    <p className="mt-1 text-sm font-bold text-slate-500">{new Date(event.created_at).toLocaleString('pt-BR')}</p>
+                    {event.note && <p className="mt-2 text-sm font-bold text-slate-600">{event.note}</p>}
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <aside className="h-fit rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5 lg:sticky lg:top-5 print:shadow-none">
+            <p className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: primary }}>Valores</p>
+            <p className="mt-4 text-sm font-bold text-slate-500">Valor total</p>
+            <p className="text-4xl font-black text-[#071b3a]">{moeda(Number(proposta.valor_total || 0))}</p>
+
+            {Number(proposta.valor_desconto || 0) > 0 && (
+              <>
+                <p className="mt-4 text-sm font-bold text-slate-500">Desconto</p>
+                <p className="text-2xl font-black text-emerald-700">- {moeda(Number(proposta.valor_desconto))}</p>
+              </>
+            )}
+
+            {Number(proposta.valor_sinal || 0) > 0 && (
+              <>
+                <p className="mt-4 text-sm font-bold text-slate-500">Sinal para iniciar</p>
+                <p className="text-2xl font-black text-emerald-700">{moeda(Number(proposta.valor_sinal))}</p>
+              </>
+            )}
+
+            {pix && (
+              <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 print:hidden">
+                <p className="font-black text-emerald-800">PIX do sinal</p>
+                <p className="mt-1 text-sm font-bold text-emerald-700">{moeda(pixValor)}</p>
+                <img alt="QR Code Pix" className="mx-auto mt-4 h-52 w-52 rounded-2xl bg-white p-2" src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(pix)}`} />
+                <textarea readOnly value={pix} className="mt-3 h-20 w-full resize-none rounded-2xl border border-emerald-200 bg-white p-3 text-xs font-bold outline-none" />
+                <button onClick={copyPix} className="mt-3 w-full rounded-2xl bg-emerald-600 px-5 py-3 font-black text-white">Copiar PIX</button>
+              </div>
+            )}
+
+            {proposta.approval_hash && (
+              <div className="mt-6 rounded-2xl bg-slate-100 p-4">
+                <p className="text-sm font-black text-slate-700">Comprovante de aprovação</p>
+                <p className="mt-2 break-all text-xs font-bold text-slate-500">{proposta.approval_hash}</p>
+              </div>
+            )}
+
+            {podeResponder && (
+              <div className="mt-6 print:hidden">
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    ['aprovar', 'Aprovar'],
+                    ['alteracao', 'Alterar'],
+                    ['recusar', 'Recusar'],
+                  ].map(([id, label]) => (
+                    <button key={id} onClick={() => setAba(id as any)} className={`rounded-2xl px-3 py-3 text-xs font-black ${aba === id ? 'text-white' : 'bg-slate-100 text-slate-600'}`} style={aba === id ? { background: primary } : undefined}>{label}</button>
+                  ))}
+                </div>
+
+                {aba === 'aprovar' && (
+                  <div className="mt-4 grid gap-3">
+                    <input value={form.nome} onChange={(e) => setForm((v) => ({ ...v, nome: e.target.value }))} placeholder="Seu nome" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+                    <input value={form.documento} onChange={(e) => setForm((v) => ({ ...v, documento: e.target.value }))} placeholder="CPF/CNPJ" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+                    <textarea value={form.observacao} onChange={(e) => setForm((v) => ({ ...v, observacao: e.target.value }))} placeholder="Observação opcional" rows={3} className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+                    {config.require_drawn_signature !== false && <SignaturePad value={form.assinatura_data_url} onChange={(value) => setForm((v) => ({ ...v, assinatura_data_url: value }))} />}
+                    <label className="flex gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-600">
+                      <input type="checkbox" checked={form.aceitou_termos} onChange={(e) => setForm((v) => ({ ...v, aceitou_termos: e.target.checked }))} />
+                      Li e aceito as condições desta proposta.
+                    </label>
+                    <button disabled={enviando} onClick={() => responder('aprovar')} className="rounded-2xl px-5 py-4 font-black text-white disabled:opacity-60" style={{ background: primary }}>Aprovar e assinar</button>
+                  </div>
+                )}
+
+                {aba === 'alteracao' && (
+                  <div className="mt-4 grid gap-3">
+                    <input value={form.nome} onChange={(e) => setForm((v) => ({ ...v, nome: e.target.value }))} placeholder="Seu nome" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+                    <textarea value={form.mensagem} onChange={(e) => setForm((v) => ({ ...v, mensagem: e.target.value }))} placeholder="O que precisa alterar?" rows={5} className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+                    <button disabled={enviando} onClick={() => responder('alteracao')} className="rounded-2xl bg-amber-500 px-5 py-4 font-black text-white disabled:opacity-60">Solicitar alteração</button>
+                  </div>
+                )}
+
+                {aba === 'recusar' && (
+                  <div className="mt-4 grid gap-3">
+                    <input value={form.nome} onChange={(e) => setForm((v) => ({ ...v, nome: e.target.value }))} placeholder="Seu nome" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+                    <textarea value={form.motivo} onChange={(e) => setForm((v) => ({ ...v, motivo: e.target.value }))} placeholder="Motivo da recusa" rows={5} className="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+                    <button disabled={enviando} onClick={() => responder('recusar')} className="rounded-2xl bg-red-600 px-5 py-4 font-black text-white disabled:opacity-60">Recusar proposta</button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {whats && <a href={whats} target="_blank" rel="noreferrer" className="mt-4 block rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-center font-black print:hidden" style={{ color: primary }}>Falar no WhatsApp</a>}
+          </aside>
+        </div>
+      </section>
+    </main>
+  )
+}

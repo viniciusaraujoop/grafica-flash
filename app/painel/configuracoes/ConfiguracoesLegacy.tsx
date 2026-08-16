@@ -6,6 +6,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { businessTypes, getBusinessTypeConfig } from '@/lib/business-types'
 import { getCompanyPublicUrl, getRootDomain, normalizeCompanySlug } from '@/lib/company-url'
+import ChangePasswordCard from '@/components/auth/ChangePasswordCard'
 
 type Member = {
   id: string
@@ -884,6 +885,27 @@ Controle dados da empresa, site e equipe. Pagamentos ficam no menu próprio para
           </div>
         )}
 
+        {/* ORCALY_SELF_PASSWORD_SETTINGS_V1 */}
+        <div className="mt-6">
+          <div className="mb-4">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#05245c]">
+              Conta
+            </p>
+            <h2
+              data-settings-section
+              className="mt-2 text-2xl font-black"
+            >
+              Segurança da conta
+            </h2>
+            <p className="mt-2 text-sm font-bold text-slate-500">
+              Altere somente a senha do usuário que está conectado neste navegador.
+            </p>
+          </div>
+          <ChangePasswordCard
+            title="Senha de acesso ao Orçaly"
+            description="A alteração vale para este login. Funcionários e outros usuários continuam com as próprias credenciais."
+          />
+        </div>
         {tab !== 'equipe' && (
           <div className="sticky bottom-4 mt-6 rounded-[1.5rem] border border-blue-100 bg-white/95 p-3 shadow-2xl shadow-blue-950/10 backdrop-blur">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
