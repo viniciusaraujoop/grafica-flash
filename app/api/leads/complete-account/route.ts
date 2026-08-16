@@ -7,6 +7,7 @@ import {
 } from "@/lib/business-types";
 import { normalizeSubdomainSlug } from "@/lib/slug";
 import { bindAffiliateReferralToCompany } from "@/lib/affiliates/server";
+import { createDefaultSiteForCompany } from "@/lib/site/create-default-site.server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -262,11 +263,12 @@ export async function POST(request: NextRequest) {
     const company = await insertCompany(companyPayload);
 
     try {
-      await supabaseAdmin.rpc("create_default_site_for_company", {
-        p_company_id: company.id,
-      });
-    } catch (rpcError) {
-      console.error("[Orçaly Cadastro] Falha ao criar site padrão:", rpcError);
+      await createDefaultSiteForCompany(supabaseAdmin, company.id);
+    } catch (siteError) {
+      console.error(
+        "orcaly_default_site_creation_error",
+        siteError instanceof Error ? siteError.message : "unknown_error",
+      );
     }
 
     await supabaseAdmin

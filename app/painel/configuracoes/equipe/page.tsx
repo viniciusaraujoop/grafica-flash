@@ -28,7 +28,6 @@ const cargoDescricao: Record<string, string> = {
 
 export default function ConfiguracoesEquipeCorrigidaPage() {
   const [token, setToken] = useState('')
-  const [company, setCompany] = useState<any>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -57,19 +56,6 @@ export default function ConfiguracoesEquipeCorrigidaPage() {
 
     setToken(accessToken)
 
-    try {
-      const currentRes = await fetch('/api/company/current', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
-      const currentPayload = await currentRes.json()
-
-      if (currentRes.ok) {
-        setCompany(currentPayload.company)
-      }
-    } catch {
-      setCompany(null)
-    }
-
     const res = await fetch('/api/company/team', {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
@@ -86,7 +72,11 @@ export default function ConfiguracoesEquipeCorrigidaPage() {
   }
 
   useEffect(() => {
-    carregar()
+    const timeout = window.setTimeout(() => {
+      void carregar()
+    }, 0)
+
+    return () => window.clearTimeout(timeout)
   }, [])
 
   async function criarFuncionario(event: FormEvent<HTMLFormElement>) {
@@ -118,7 +108,7 @@ export default function ConfiguracoesEquipeCorrigidaPage() {
     setSaving(false)
   }
 
-  async function alterarFuncionario(id: string, data: Record<string, any>) {
+  async function alterarFuncionario(id: string, data: Record<string, unknown>) {
     setErro('')
     setMessage('')
 
@@ -218,7 +208,7 @@ export default function ConfiguracoesEquipeCorrigidaPage() {
 
               <label className="grid gap-2">
                 <span className="text-sm font-black text-slate-700">Senha inicial</span>
-                <input value={form.senha} onChange={(e) => setForm((v) => ({ ...v, senha: e.target.value }))} placeholder="Mínimo 6 caracteres" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
+                <input value={form.senha} onChange={(e) => setForm((v) => ({ ...v, senha: e.target.value }))} placeholder="Mínimo 8 caracteres" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 font-bold outline-none" />
               </label>
 
               <label className="grid gap-2">

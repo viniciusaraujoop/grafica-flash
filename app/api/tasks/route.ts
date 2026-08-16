@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
 import { createAuditLog, createNotification } from '@/lib/orcaly-audit'
+import {
+  InternalTaskReferenceError,
+  validateInternalTaskReferences,
+} from '@/lib/tasks/internal-task-validation.server'
 
-function cleanTask(body: any) {
+function cleanTask(body: Record<string, unknown>) {
   const titulo = String(body.titulo || '').trim()
   if (!titulo) throw new Error('Informe o título da tarefa.')
 
@@ -11,11 +15,11 @@ function cleanTask(body: any) {
     descricao: String(body.descricao || '').trim() || null,
     status: String(body.status || 'pendente'),
     prioridade: String(body.prioridade || 'media'),
-    due_at: body.due_at || null,
-    responsavel_id: body.responsavel_id || null,
-    crm_lead_id: body.crm_lead_id || null,
-    order_id: body.order_id || null,
-    proposal_id: body.proposal_id || null,
+    due_at: body.due_at ? String(body.due_at) : null,
+    responsavel_id: body.responsavel_id ? String(body.responsavel_id) : null,
+    crm_lead_id: body.crm_lead_id ? String(body.crm_lead_id) : null,
+    order_id: body.order_id ? String(body.order_id) : null,
+    proposal_id: body.proposal_id ? String(body.proposal_id) : null,
   }
 }
 
@@ -71,11 +75,17 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const payload = cleanTask(body)
+    const references = await validateInternalTaskReferences(
+      result.supabaseAdmin,
+      result.companyAccess!.company.id,
+      payload,
+    )
 
     const { data, error } = await result.supabaseAdmin
       .from('internal_tasks')
       .insert({
         ...payload,
+        ...references,
         company_id: result.companyAccess!.company.id,
         created_by: result.requester!.id,
       })
@@ -106,6 +116,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, task: data })
   } catch (error) {
+    if (error instanceof InternalTaskReferenceError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
     const message = error instanceof Error ? error.message : 'Erro ao criar tarefa.'
     return NextResponse.json({ error: message }, { status: 500 })
   }

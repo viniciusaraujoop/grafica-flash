@@ -14,7 +14,9 @@
                     "verify:payments":  "node scripts/verify-payment-flow-boundaries.mjs",
                     "verify:payment-credentials":  "node scripts/auditar-isolamento-pagamentos.cjs",
                     "recovery:assert-staging":  "node scripts/run-recovery-supabase.mjs --check",
-                    "recovery:db:push":  "node scripts/run-recovery-supabase.mjs db push"
+                    "recovery:db:push":  "node scripts/run-recovery-supabase.mjs db push",
+                    "recovery:config:push":  "node scripts/run-recovery-supabase.mjs config push --project-ref hdlqlvqsugnacijcokrg",
+                    "recovery:verify-baseline":  "node scripts/verify-recovery-baseline.mjs"
                 },
     "dependencies":  {
                          "@supabase/supabase-js":  "^2.108.1",

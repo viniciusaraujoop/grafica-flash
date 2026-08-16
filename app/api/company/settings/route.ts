@@ -116,7 +116,7 @@ async function getRequester(request: NextRequest) {
   return data.user
 }
 
-async function getCompanyForUser(userId: string, email?: string) {
+async function getCompanyForUser(userId: string) {
   if (!isUuid(userId)) return { company: null, requesterRole: null }
 
   const { data: ownCompany } = await supabaseAdmin
@@ -144,18 +144,6 @@ async function getCompanyForUser(userId: string, email?: string) {
       .maybeSingle()
 
     return { company, requesterRole: member.cargo || 'funcionario' }
-  }
-
-  if (email?.toLowerCase() === 'araujovinicius249@gmail.com') {
-    const { data: firstCompany } = await supabaseAdmin
-      .from('companies')
-      .select('*')
-      .eq('slug', 'grafica-flash')
-      .maybeSingle()
-
-    if (firstCompany?.id) {
-      return { company: firstCompany, requesterRole: 'dono' }
-    }
   }
 
   return { company: null, requesterRole: null }
@@ -202,7 +190,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
     }
 
-    const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
+    const { company, requesterRole } = await getCompanyForUser(requester.id)
 
     if (!company?.id || !isUuid(company.id)) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
@@ -211,7 +199,7 @@ export async function GET(request: NextRequest) {
     const checkSubdomain = request.nextUrl.searchParams.get('check_subdomain')
 
     if (checkSubdomain !== null) {
-      if (requesterRole !== 'dono' && requester.email?.toLowerCase() !== 'araujovinicius249@gmail.com') {
+      if (requesterRole !== 'dono') {
         return NextResponse.json({ error: 'Você não tem permissão para verificar este link.' }, { status: 403 })
       }
 
@@ -268,13 +256,13 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
     }
 
-    const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
+    const { company, requesterRole } = await getCompanyForUser(requester.id)
 
     if (!company?.id || !isUuid(company.id)) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     }
 
-    if (requesterRole !== 'dono' && requester.email?.toLowerCase() !== 'araujovinicius249@gmail.com') {
+    if (requesterRole !== 'dono') {
       return NextResponse.json({ error: 'Você não tem permissão para alterar as configurações da empresa.' }, { status: 403 })
     }
 

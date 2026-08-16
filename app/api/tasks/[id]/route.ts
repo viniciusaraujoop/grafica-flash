@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
 import { createAuditLog } from '@/lib/orcaly-audit'
+import {
+  InternalTaskReferenceError,
+  validateInternalTaskReferences,
+} from '@/lib/tasks/internal-task-validation.server'
 
 type Context = {
   params: Promise<{ id: string }>
@@ -23,7 +27,7 @@ async function access(request: NextRequest) {
   return { supabaseAdmin, requester, companyAccess }
 }
 
-function cleanUpdate(body: any) {
+function cleanUpdate(body: Record<string, unknown>) {
   const allowed = [
     'titulo',
     'descricao',
@@ -36,7 +40,7 @@ function cleanUpdate(body: any) {
     'proposal_id',
   ]
 
-  const update: Record<string, any> = {}
+  const update: Record<string, unknown> = {}
 
   for (const field of allowed) {
     if (body[field] !== undefined) update[field] = body[field]
@@ -57,6 +61,12 @@ export async function PATCH(request: NextRequest, context: Context) {
 
     const body = await request.json()
     const update = cleanUpdate(body)
+    const references = await validateInternalTaskReferences(
+      result.supabaseAdmin,
+      result.companyAccess!.company.id,
+      update,
+    )
+    Object.assign(update, references)
 
     const { data, error } = await result.supabaseAdmin
       .from('internal_tasks')
@@ -80,6 +90,9 @@ export async function PATCH(request: NextRequest, context: Context) {
 
     return NextResponse.json({ ok: true, task: data })
   } catch (error) {
+    if (error instanceof InternalTaskReferenceError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
     const message = error instanceof Error ? error.message : 'Erro ao atualizar tarefa.'
     return NextResponse.json({ error: message }, { status: 500 })
   }

@@ -46,6 +46,16 @@ forbidText(
   'Super admin fixo no acesso da empresa',
 )
 forbidText(
+  'app/api/company/settings/route.ts',
+  'araujovinicius249@gmail.com',
+  'Bypass fixo nas configurações da empresa',
+)
+forbidText(
+  'app/api/company/team/route.ts',
+  'araujovinicius249@gmail.com',
+  'Bypass fixo na gestão de equipe',
+)
+forbidText(
   'lib/company-access.ts',
   'shouldAttachOwner',
   'Vinculo automatico por e-mail ainda ativo',
@@ -71,12 +81,12 @@ requireText(
   'Consulta dinamica dos produtos continua sem tipagem',
 )
 requireText(
-  'supabase/migrations/20260729133000_orcaly_security_hardening.sql',
+  'supabase/migrations_legacy/20260729133000_orcaly_security_hardening.sql',
   'revoke all privileges on table public.%I from anon',
   'Revogacao de privilegios anonimos ausente',
 )
 requireText(
-  'supabase/migrations/20260729133000_orcaly_security_hardening.sql',
+  'supabase/migrations_legacy/20260729133000_orcaly_security_hardening.sql',
   'drop policy if exists "Público cria pedido em empresa ativa"',
   'Politica publica de pedidos ainda nao foi removida',
 )

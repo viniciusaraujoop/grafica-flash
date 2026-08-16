@@ -57,12 +57,21 @@ if (command.length === 1 && command[0] === '--check') {
 
 const isAllowedPush = command[0] === 'db' && command[1] === 'push'
 const allowedFlags = new Set(['--dry-run'])
+const isAllowedConfigPush =
+  command.length === 4 &&
+  command[0] === 'config' &&
+  command[1] === 'push' &&
+  command[2] === '--project-ref' &&
+  command[3] === EXPECTED_STAGING_REF
 
 if (
-  !isAllowedPush ||
-  command.slice(2).some((argument) => !allowedFlags.has(argument))
+  (!isAllowedPush ||
+    command.slice(2).some((argument) => !allowedFlags.has(argument))) &&
+  !isAllowedConfigPush
 ) {
-  abort('somente `db push` e `db push --dry-run` sao permitidos por este wrapper')
+  abort(
+    'somente `db push`, `db push --dry-run` e o config push exato do staging sao permitidos por este wrapper',
+  )
 }
 
 const localCli = join(
