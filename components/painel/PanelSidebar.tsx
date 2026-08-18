@@ -65,7 +65,7 @@ function ChevronIcon({ className = '' }: { className?: string }) {
 function ArrowIcon() {
   return (
     <svg
-      className={styles.navArrow}
+      className={`h-4 w-4 ${styles.navArrow}`}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
