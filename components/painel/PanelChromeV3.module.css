@@ -1,15 +1,39 @@
+.shell {
+  position: relative;
+  background:
+    radial-gradient(circle at 82% 0%, rgba(63, 132, 214, 0.14), transparent 28rem),
+    linear-gradient(180deg, #eaf0f7 0%, #f4f7fb 42%, #edf2f7 100%) !important;
+}
+
+.content {
+  min-height: 100vh;
+}
+
+.topLine {
+  display: none !important;
+}
+
+.pageSlot {
+  padding: 0.9rem 1rem 2rem !important;
+}
+
+.pageWidth {
+  width: min(100%, 1540px) !important;
+}
+
 .enter {
-  animation: chrome-enter 320ms ease-out both;
+  animation: chrome-enter 340ms cubic-bezier(.2,.75,.2,1) both;
 }
 
 .mobileBar {
   position: sticky;
   top: 0;
-  z-index: 75;
-  border-bottom: 1px solid rgba(205, 220, 238, 0.92) !important;
-  background: rgba(255, 255, 255, 0.96) !important;
-  box-shadow: 0 8px 26px rgba(8, 31, 68, 0.06);
-  backdrop-filter: blur(18px);
+  z-index: 80;
+  border: 0 !important;
+  background:
+    radial-gradient(circle at 12% -20%, rgba(56, 148, 236, 0.28), transparent 12rem),
+    linear-gradient(135deg, #061a3b 0%, #0b3b82 100%) !important;
+  box-shadow: 0 12px 30px rgba(4, 24, 55, 0.18);
 }
 
 .mobileDetails {
@@ -19,7 +43,7 @@
 .mobileSummary {
   min-height: 3.35rem;
   border-radius: 1rem;
-  transition: background 160ms ease, transform 160ms ease;
+  transition: transform 160ms ease, background 160ms ease;
 }
 
 .mobileSummary:active {
@@ -27,28 +51,35 @@
 }
 
 .mobileLogo {
-  box-shadow: 0 6px 18px rgba(8, 31, 68, 0.08);
+  border: 1px solid rgba(255,255,255,.22) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+}
+
+.mobileLogoFallback {
+  background: rgba(255,255,255,.13) !important;
 }
 
 .mobileMenuButton {
   display: inline-flex;
-  min-width: 5rem;
+  min-width: 4.8rem;
   min-height: 2.5rem;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
-  border: 1px solid #d8e4f2;
-  border-radius: 0.85rem;
-  background: #f2f7fd;
-  color: #164f94;
-  font-size: 0.7rem;
+  gap: .4rem;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: .85rem;
+  background: rgba(255,255,255,.1);
+  padding: .55rem .7rem;
+  color: #fff;
+  font-size: .68rem;
   font-weight: 900;
-  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+  backdrop-filter: blur(12px);
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
 }
 
 .mobileDetails[open] .mobileMenuButton {
-  border-color: #c3d8ef;
-  background: #eaf3fd;
+  border-color: rgba(255,255,255,.3);
+  background: rgba(255,255,255,.17);
 }
 
 .mobileChevron {
@@ -61,45 +92,45 @@
 
 .mobilePanel {
   position: absolute;
-  top: calc(100% + 0.65rem);
-  right: -1rem;
-  left: -1rem;
-  z-index: 90;
-  max-height: calc(100vh - 5.4rem);
+  top: calc(100% + .65rem);
+  right: -.75rem;
+  left: -.75rem;
+  z-index: 95;
+  max-height: calc(100vh - 9rem);
   overflow-y: auto;
   border: 1px solid #d9e4f1 !important;
-  border-radius: 0 0 1.25rem 1.25rem !important;
-  background: rgba(249, 252, 255, 0.985) !important;
-  padding: 0.85rem !important;
-  box-shadow: 0 22px 54px rgba(7, 30, 66, 0.16) !important;
-  backdrop-filter: blur(20px);
+  border-radius: 1.35rem !important;
+  background: rgba(250,252,255,.985) !important;
+  padding: .85rem !important;
+  box-shadow: 0 28px 70px rgba(7,30,66,.24) !important;
+  backdrop-filter: blur(22px);
   scrollbar-width: thin;
   scrollbar-color: #c7d7e9 transparent;
-  animation: mobile-panel-enter 210ms ease-out both;
+  animation: mobile-panel-enter 220ms cubic-bezier(.2,.75,.2,1) both;
 }
 
 .mobilePanelHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.8rem;
+  gap: .75rem;
+  margin-bottom: .8rem;
   border-bottom: 1px solid #e5ecf5;
-  padding: 0.2rem 0.25rem 0.75rem;
+  padding: .2rem .25rem .75rem;
 }
 
 .mobilePanelHeader strong {
   display: block;
   color: #10233f;
-  font-size: 0.82rem;
+  font-size: .82rem;
   font-weight: 900;
 }
 
 .mobilePanelHeader small {
   display: block;
-  margin-top: 0.1rem;
+  margin-top: .1rem;
   color: #74869d;
-  font-size: 0.65rem;
+  font-size: .63rem;
   font-weight: 700;
 }
 
@@ -107,97 +138,149 @@
   flex: 0 0 auto;
   border-radius: 999px;
   background: #eaf3fd;
-  padding: 0.35rem 0.6rem;
+  padding: .35rem .6rem;
   color: #245f9f;
-  font-size: 0.62rem;
+  font-size: .6rem;
   font-weight: 900;
 }
 
 .desktopSidebar {
-  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  position: sticky;
+  top: .75rem;
+  align-self: start;
+  height: calc(100vh - 1.5rem);
+  min-height: 0 !important;
+  margin: .75rem 0 .75rem .75rem;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 1.55rem;
   background:
-    radial-gradient(circle at 12% 0, rgba(60, 148, 226, 0.22), transparent 18rem),
-    linear-gradient(180deg, #061a3b 0%, #08234d 54%, #06152f 100%) !important;
-  box-shadow: 12px 0 38px rgba(4, 20, 47, 0.15) !important;
+    radial-gradient(circle at 18% -2%, rgba(64,151,232,.28), transparent 18rem),
+    radial-gradient(circle at 100% 88%, rgba(36,93,172,.22), transparent 20rem),
+    linear-gradient(180deg, #061a3b 0%, #082752 54%, #06172f 100%) !important;
+  box-shadow: 0 22px 60px rgba(5,25,55,.22) !important;
+}
+
+.desktopInner {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .desktopBrand {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-  padding: 1.1rem !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  padding: 1rem .9rem .9rem !important;
 }
 
 .desktopBrandLink {
   border-radius: 1rem;
-  padding: 0.35rem;
+  padding: .4rem;
   transition: background 160ms ease, transform 160ms ease;
 }
 
 .desktopBrandLink:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255,255,255,.055);
   transform: translateY(-1px);
 }
 
 .desktopLogo {
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14) !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,.17) !important;
+}
+
+.desktopLogoFallback {
+  background: rgba(255,255,255,.11) !important;
 }
 
 .desktopCompanyName {
-  color: #ffffff !important;
+  color: #fff !important;
 }
 
 .desktopPlan {
-  color: rgba(204, 222, 244, 0.68) !important;
+  color: rgba(187,215,245,.58) !important;
 }
 
 .segmentCard {
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  background: rgba(255, 255, 255, 0.055) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  margin-top: .75rem;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: .9rem;
+  background: rgba(255,255,255,.05);
+  padding: .62rem .7rem;
+}
+
+.segmentPulse {
+  width: .55rem;
+  height: .55rem;
+  flex: 0 0 auto;
+  border: 2px solid rgba(255,255,255,.18);
+  border-radius: 999px;
+  background: #4fd1a4;
+  box-shadow: 0 0 0 4px rgba(79,209,164,.08), 0 0 18px rgba(79,209,164,.4);
 }
 
 .segmentEyebrow {
-  color: rgba(173, 207, 243, 0.66) !important;
+  color: rgba(170,205,241,.55) !important;
+  font-size: .52rem;
+  font-weight: 900;
+  letter-spacing: .15em;
+  text-transform: uppercase;
 }
 
 .segmentTitle {
-  color: #ffffff !important;
-}
-
-.segmentDescription {
-  color: rgba(201, 219, 241, 0.58) !important;
+  margin-top: .08rem;
+  color: #fff !important;
+  font-size: .72rem;
+  font-weight: 900;
 }
 
 .sidebarScroll {
-  padding: 0.85rem !important;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: .75rem .7rem 1rem !important;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  scrollbar-color: rgba(255,255,255,.17) transparent;
 }
 
 .nav {
   display: grid;
-  gap: 1rem;
+  gap: .95rem;
+}
+
+.groupLabel {
+  margin-bottom: .38rem;
+  padding-inline: .55rem;
+  font-size: .55rem;
+  font-weight: 900;
+  letter-spacing: .16em;
+  text-transform: uppercase;
 }
 
 .groupLabelDesktop {
-  color: rgba(196, 216, 240, 0.56) !important;
+  color: rgba(184,209,239,.46) !important;
 }
 
 .groupLabelMobile {
-  color: #8997a9 !important;
+  color: #8a99ab !important;
 }
 
 .navItems {
   display: grid;
-  gap: 0.22rem !important;
+  gap: .16rem !important;
 }
 
 .navLink {
   display: block;
-  min-height: 3rem;
-  border-radius: 0.9rem !important;
-  padding: 0.58rem 0.65rem !important;
-  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease, box-shadow 150ms ease !important;
+  min-height: 2.75rem;
+  border: 1px solid transparent;
+  border-radius: .82rem !important;
+  padding: .46rem .52rem !important;
+  transition: transform 150ms ease, background 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease !important;
 }
 
 .navLink:hover {
@@ -205,62 +288,60 @@
 }
 
 .navLinkDesktopIdle {
-  border-color: transparent !important;
-  color: rgba(220, 233, 249, 0.72) !important;
+  color: rgba(221,234,249,.67) !important;
 }
 
 .navLinkDesktopIdle:hover {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  background: rgba(255, 255, 255, 0.065) !important;
-  color: white !important;
+  border-color: rgba(255,255,255,.08) !important;
+  background: rgba(255,255,255,.055) !important;
+  color: #fff !important;
 }
 
 .navLinkDesktopActive {
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  background: linear-gradient(135deg, rgba(51, 130, 214, 0.92), rgba(27, 83, 158, 0.96)) !important;
-  color: white !important;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.17) !important;
+  border-color: rgba(255,255,255,.15) !important;
+  background: linear-gradient(135deg, rgba(56,139,224,.98), rgba(29,86,165,.96)) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.08) !important;
 }
 
 .navLinkMobileIdle {
-  border-color: transparent !important;
-  color: #596b82 !important;
+  color: #566a82 !important;
 }
 
 .navLinkMobileIdle:hover {
   border-color: #dce7f3 !important;
-  background: white !important;
+  background: #fff !important;
   color: #174e93 !important;
 }
 
 .navLinkMobileActive {
   border-color: #174e93 !important;
-  background: linear-gradient(135deg, #0c3e88, #175fae) !important;
-  color: white !important;
-  box-shadow: 0 10px 22px rgba(11, 58, 131, 0.18) !important;
+  background: linear-gradient(135deg, #0b3d87, #1765ba) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 22px rgba(11,58,131,.18) !important;
 }
 
 .navRow {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 0.65rem;
+  gap: .58rem;
 }
 
 .navIcon {
   display: grid;
-  width: 2rem;
-  height: 2rem;
+  width: 1.85rem;
+  height: 1.85rem;
   flex: 0 0 auto;
   place-items: center;
-  border-radius: 0.66rem;
-  background: rgba(255, 255, 255, 0.07);
-  font-size: 0.92rem;
-  transition: background 150ms ease, transform 150ms ease;
+  border-radius: .58rem;
+  background: rgba(255,255,255,.06);
+  font-size: .84rem;
+  transition: transform 150ms ease, background 150ms ease;
 }
 
 .navLink:hover .navIcon {
-  transform: scale(1.04);
+  transform: scale(1.05) rotate(-2deg);
 }
 
 .navLinkMobileIdle .navIcon {
@@ -269,7 +350,7 @@
 
 .navLinkMobileActive .navIcon,
 .navLinkDesktopActive .navIcon {
-  background: rgba(255, 255, 255, 0.13);
+  background: rgba(255,255,255,.13);
 }
 
 .navCopy {
@@ -280,7 +361,7 @@
 .navLabel {
   display: block;
   overflow: hidden;
-  font-size: 0.77rem;
+  font-size: .72rem;
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -289,27 +370,28 @@
 .navDescription {
   display: block;
   overflow: hidden;
-  margin-top: 0.12rem;
-  color: rgba(192, 214, 239, 0.48);
-  font-size: 0.6rem;
+  margin-top: .08rem;
+  color: rgba(191,213,239,.42);
+  font-size: .55rem;
   font-weight: 650;
-  line-height: 1.35;
+  line-height: 1.28;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .navLinkMobileIdle .navDescription {
-  color: #92a0b1;
+  color: #93a0b0;
 }
 
 .navLinkMobileActive .navDescription,
 .navLinkDesktopActive .navDescription {
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(255,255,255,.62);
 }
 
 .navArrow {
+  width: .85rem;
+  height: .85rem;
   flex: 0 0 auto;
-  color: currentColor;
   opacity: 0;
   transform: translateX(-4px);
   transition: opacity 150ms ease, transform 150ms ease;
@@ -318,105 +400,137 @@
 .navLink:hover .navArrow,
 .navLinkDesktopActive .navArrow,
 .navLinkMobileActive .navArrow {
-  opacity: 0.7;
+  opacity: .7;
   transform: translateX(0);
 }
 
 .header {
-  min-height: 94px !important;
-  gap: 1rem !important;
-  border-bottom: 1px solid rgba(206, 220, 237, 0.9) !important;
-  background: rgba(255, 255, 255, 0.94) !important;
-  padding: 0.9rem clamp(1rem, 2.15vw, 1.75rem) !important;
-  box-shadow: 0 10px 30px rgba(8, 31, 68, 0.055) !important;
-  backdrop-filter: blur(20px);
+  position: sticky !important;
+  top: .75rem !important;
+  z-index: 65 !important;
+  min-height: 106px !important;
+  margin: .75rem .75rem 0 !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 1.55rem !important;
+  background:
+    radial-gradient(circle at 82% -30%, rgba(72,157,239,.32), transparent 22rem),
+    linear-gradient(135deg, #071a3a 0%, #0b3d83 58%, #12569e 100%) !important;
+  padding: .95rem 1.1rem !important;
+  box-shadow: 0 20px 50px rgba(7,30,66,.18) !important;
+  backdrop-filter: blur(22px);
 }
 
 .breadcrumb {
-  gap: 0.34rem !important;
-  color: #8492a5 !important;
-  font-size: 0.66rem !important;
+  gap: .32rem !important;
+  color: rgba(204,222,242,.48) !important;
+  font-size: .6rem !important;
 }
 
 .breadcrumbLink {
-  color: #456887 !important;
+  color: rgba(223,237,252,.72) !important;
   font-weight: 800;
 }
 
+.breadcrumbLink:hover {
+  color: #fff !important;
+}
+
 .titleRow {
-  gap: 0.55rem !important;
-  margin-top: 0.32rem !important;
+  gap: .5rem !important;
+  margin-top: .3rem !important;
 }
 
 .kicker {
-  color: #8090a5 !important;
-  font-size: 0.58rem !important;
-  letter-spacing: 0.17em !important;
+  color: rgba(180,210,241,.58) !important;
+  font-size: .53rem !important;
+  letter-spacing: .18em !important;
 }
 
 .title {
-  color: #10233f !important;
-  font-size: clamp(1.35rem, 2.1vw, 1.8rem) !important;
+  color: #fff !important;
+  font-size: clamp(1.38rem, 2.1vw, 1.9rem) !important;
+  text-shadow: 0 1px 18px rgba(0,0,0,.08);
 }
 
 .description {
-  max-width: 52rem !important;
-  margin-top: 0.28rem !important;
-  color: #6a7c92 !important;
-  font-size: 0.78rem !important;
+  max-width: 48rem !important;
+  margin-top: .26rem !important;
+  color: rgba(219,233,249,.66) !important;
+  font-size: .74rem !important;
   font-weight: 650;
 }
 
 .segmentBadge {
-  min-height: 1.65rem !important;
-  border-color: #d4e2f1 !important;
-  background: #f1f6fc !important;
-  padding: 0.22rem 0.58rem !important;
-  color: #35699f !important;
-  font-size: 0.62rem !important;
+  min-height: 1.6rem !important;
+  border-color: rgba(255,255,255,.14) !important;
+  background: rgba(255,255,255,.09) !important;
+  padding: .2rem .55rem !important;
+  color: #dcebfb !important;
+  font-size: .58rem !important;
+  backdrop-filter: blur(10px);
 }
 
 .founderBadge {
-  min-height: 1.65rem;
   display: inline-flex;
+  min-height: 1.6rem;
   align-items: center;
+  border: 1px solid rgba(255,211,113,.3);
   border-radius: 999px;
-  border: 1px solid #f0d9a1;
-  background: #fff8e8;
-  padding: 0.22rem 0.58rem;
-  color: #9a6000;
-  font-size: 0.6rem;
+  background: rgba(255,193,61,.12);
+  padding: .2rem .55rem;
+  color: #ffe19b;
+  font-size: .57rem;
   font-weight: 900;
-  letter-spacing: 0.1em;
+  letter-spacing: .1em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .headerActions {
-  gap: 0.5rem !important;
+  gap: .48rem !important;
 }
 
 .companyCard {
-  min-width: 11rem !important;
-  max-width: 16rem !important;
-  border-color: #dce6f1 !important;
-  border-radius: 0.9rem !important;
-  padding: 0.42rem 0.56rem !important;
-  box-shadow: 0 7px 20px rgba(8, 31, 68, 0.05) !important;
+  min-width: 10.5rem !important;
+  max-width: 15rem !important;
+  border-color: rgba(255,255,255,.14) !important;
+  border-radius: .95rem !important;
+  background: rgba(255,255,255,.09) !important;
+  padding: .42rem .55rem !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 8px 22px rgba(0,0,0,.08) !important;
+  backdrop-filter: blur(12px);
+}
+
+.companyCard strong {
+  color: #fff !important;
+}
+
+.companyCard small {
+  color: rgba(221,235,250,.62) !important;
 }
 
 .companyLogo {
-  width: 2.15rem !important;
-  height: 2.15rem !important;
-  border-radius: 0.7rem !important;
+  width: 2.12rem !important;
+  height: 2.12rem !important;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: .68rem !important;
+  background: rgba(255,255,255,.95) !important;
 }
 
 .openSite {
   min-height: 2.65rem !important;
-  border-radius: 0.85rem !important;
-  padding: 0.62rem 0.78rem !important;
-  font-size: 0.7rem !important;
-  box-shadow: 0 8px 20px rgba(11, 59, 134, 0.17) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-radius: .88rem !important;
+  background: #fff !important;
+  padding: .62rem .78rem !important;
+  color: #0c428b !important;
+  font-size: .68rem !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,.13) !important;
+}
+
+.openSite:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 14px 30px rgba(0,0,0,.18) !important;
 }
 
 .logout {
@@ -425,62 +539,116 @@
   min-height: 2.65rem !important;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  border: 1px solid #f2d7d4 !important;
-  border-radius: 0.85rem !important;
-  background: #fff !important;
-  padding: 0.62rem 0.75rem !important;
-  color: #b42318 !important;
-  font-size: 0.7rem;
+  gap: .38rem;
+  border: 1px solid rgba(255,255,255,.13) !important;
+  border-radius: .88rem !important;
+  background: rgba(255,255,255,.08) !important;
+  padding: .62rem .72rem !important;
+  color: #ffe2df !important;
+  font-size: .68rem;
   font-weight: 900;
-  box-shadow: 0 6px 18px rgba(8, 31, 68, 0.04);
-  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+  backdrop-filter: blur(10px);
+  transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
 }
 
 .logout:hover {
-  border-color: #efc4bf !important;
-  background: #fff7f6 !important;
+  border-color: rgba(255,255,255,.22) !important;
+  background: rgba(255,255,255,.14) !important;
   transform: translateY(-1px);
 }
 
+.mobileDock {
+  position: fixed;
+  right: .7rem;
+  bottom: calc(.65rem + env(safe-area-inset-bottom));
+  left: .7rem;
+  z-index: 92;
+  display: none;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: .25rem;
+  border: 1px solid rgba(203,216,232,.92);
+  border-radius: 1.25rem;
+  background: rgba(255,255,255,.92);
+  padding: .35rem;
+  box-shadow: 0 20px 50px rgba(7,30,66,.2);
+  backdrop-filter: blur(20px);
+}
+
+.dockLink {
+  display: flex;
+  min-width: 0;
+  min-height: 3.6rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .18rem;
+  border-radius: .95rem;
+  color: #7a899d;
+  font-size: .56rem;
+  font-weight: 850;
+  transition: transform 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.dockLink:active {
+  transform: scale(.96);
+}
+
+.dockIcon {
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  place-items: center;
+}
+
+.dockIcon svg {
+  width: 1.18rem;
+  height: 1.18rem;
+}
+
+.dockLinkActive {
+  background: linear-gradient(135deg, #0c438f, #196bc1);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(20,87,169,.18);
+}
+
 @keyframes chrome-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-7px) scale(.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes mobile-panel-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.99);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+  from { opacity: 0; transform: translateY(-8px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (min-width: 1024px) {
+  .content {
+    padding-bottom: .75rem;
   }
 }
 
 @media (max-width: 1180px) {
   .companyCard {
-    min-width: 10rem !important;
-    max-width: 13rem !important;
+    min-width: 9.5rem !important;
+    max-width: 12rem !important;
   }
-
   .description {
-    max-width: 40rem !important;
+    max-width: 34rem !important;
   }
 }
 
 @media (max-width: 1023px) {
+  .pageSlot {
+    padding: .75rem .7rem 6.8rem !important;
+  }
+
   .header {
     position: relative !important;
+    top: auto !important;
     min-height: auto !important;
-    padding: 0.9rem 1rem !important;
+    margin: .7rem .7rem 0 !important;
+    border-radius: 1.3rem !important;
+    padding: .85rem .9rem !important;
   }
 
   .headerActions {
@@ -491,26 +659,28 @@
     min-width: 0 !important;
     max-width: 18rem !important;
   }
+
+  .mobileDock {
+    display: grid;
+  }
 }
 
 @media (max-width: 760px) {
   .header {
-    gap: 0.7rem !important;
-    padding: 0.78rem 0.85rem !important;
+    gap: .7rem !important;
+    padding: .8rem !important;
   }
 
   .breadcrumb {
     max-width: 100%;
     flex-wrap: nowrap !important;
     overflow-x: auto;
-    padding-bottom: 0.15rem;
+    padding-bottom: .12rem;
     scrollbar-width: none;
     white-space: nowrap;
   }
 
-  .breadcrumb::-webkit-scrollbar {
-    display: none;
-  }
+  .breadcrumb::-webkit-scrollbar { display: none; }
 
   .titleRow {
     align-items: center !important;
@@ -527,9 +697,9 @@
 
   .headerActions {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0,1fr) auto auto;
     align-items: stretch !important;
-    gap: 0.45rem !important;
+    gap: .42rem !important;
   }
 
   .companyCard {
@@ -543,22 +713,21 @@
     width: auto !important;
     min-width: 2.65rem;
     min-height: 2.65rem !important;
-    padding-inline: 0.7rem !important;
-  }
-
-  .desktopPlan {
-    font-size: 0.62rem !important;
+    padding-inline: .68rem !important;
   }
 }
 
 @media (max-width: 520px) {
-  .headerActions {
-    grid-template-columns: minmax(0, 1fr) 2.65rem 2.65rem;
+  .pageSlot {
+    padding-inline: .6rem !important;
   }
 
-  .companyCard {
-    width: auto !important;
-    max-width: none !important;
+  .header {
+    margin-inline: .6rem !important;
+  }
+
+  .headerActions {
+    grid-template-columns: minmax(0,1fr) 2.65rem 2.65rem;
   }
 
   .openSite,
@@ -573,11 +742,17 @@
   }
 
   .mobileMenuButton {
-    min-width: 4.5rem;
+    min-width: 4.35rem;
   }
 
   .navDescription {
     white-space: normal;
+  }
+
+  .mobileDock {
+    right: .5rem;
+    left: .5rem;
+    border-radius: 1.15rem;
   }
 }
 
@@ -595,7 +770,8 @@
   .logout,
   .mobileChevron,
   .navIcon,
-  .navArrow {
+  .navArrow,
+  .dockLink {
     transition: none !important;
   }
 }
