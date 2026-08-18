@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { getPanelModulesForBusinessType, panelGroupLabels, type PanelModuleGroup } from '@/lib/panel-modules'
 import { getBusinessTypeConfig } from '@/lib/business-types'
 import styles from './PanelChromeV3.module.css'
+import contrast from './PanelContrastV4.module.css'
 
 type PanelSidebarCompany = {
   nome?: string | null
@@ -75,7 +76,7 @@ export default function PanelSidebar({ company }: { company: PanelSidebarCompany
               )}
               <div className="min-w-0">
                 <p className="truncate text-sm font-black tracking-[-0.02em] text-white">{company.nome || 'Orçaly'}</p>
-                <p className="mt-0.5 truncate text-[10px] font-bold text-blue-100/70">{config.label} · {plan}</p>
+                <p className={`mt-0.5 truncate text-[10px] font-bold ${contrast.mobileMetaContrast}`}>{config.label} · {plan}</p>
               </div>
             </div>
             <span className={styles.mobileMenuButton}><span>Menu</span><ChevronIcon className={`h-4 w-4 ${styles.mobileChevron}`} /></span>
@@ -102,13 +103,13 @@ export default function PanelSidebar({ company }: { company: PanelSidebarCompany
               )}
               <div className="min-w-0 flex-1">
                 <p className={`truncate text-[15px] font-black tracking-[-0.03em] ${styles.desktopCompanyName}`}>{company.nome || 'Orçaly'}</p>
-                <p className={`mt-0.5 truncate text-[10px] font-bold uppercase tracking-[0.12em] ${styles.desktopPlan}`}>{plan}</p>
+                <p className={`mt-0.5 truncate text-[10px] font-bold uppercase tracking-[0.12em] ${styles.desktopPlan} ${contrast.desktopPlanContrast}`}>{plan}</p>
               </div>
             </Link>
 
-            <div className={styles.segmentCard}>
+            <div className={`${styles.segmentCard} ${contrast.segmentCardContrast}`}>
               <span className={styles.segmentPulse} aria-hidden="true" />
-              <div className="min-w-0"><p className={styles.segmentEyebrow}>Workspace</p><p className={styles.segmentTitle}>{config.label}</p></div>
+              <div className="min-w-0"><p className={`${styles.segmentEyebrow} ${contrast.segmentEyebrowContrast}`}>Workspace</p><p className={`${styles.segmentTitle} ${contrast.segmentTitleContrast}`}>{config.label}</p></div>
             </div>
           </div>
 
@@ -128,7 +129,7 @@ export default function PanelSidebar({ company }: { company: PanelSidebarCompany
 
 function DockLink({ href, label, icon, pathname }: { href: string; label: string; icon: 'home' | 'orders' | 'products' | 'store'; pathname: string }) {
   const active = activeFor(pathname, href)
-  return <Link href={href} aria-current={active ? 'page' : undefined} className={`${styles.dockLink} ${active ? styles.dockLinkActive : ''}`}><span className={styles.dockIcon}><DockIcon name={icon} /></span><span>{label}</span></Link>
+  return <Link href={href} aria-current={active ? 'page' : undefined} className={`${styles.dockLink} ${contrast.dockLinkContrast} ${active ? styles.dockLinkActive : ''}`}><span className={styles.dockIcon}><DockIcon name={icon} /></span><span>{label}</span></Link>
 }
 
 function SidebarGroups({ pathname, modules, mobile = false }: { pathname: string; modules: ReturnType<typeof getPanelModulesForBusinessType>; mobile?: boolean }) {
@@ -139,16 +140,20 @@ function SidebarGroups({ pathname, modules, mobile = false }: { pathname: string
         if (!items.length) return null
         return (
           <section key={group}>
-            <p className={`${styles.groupLabel} ${mobile ? styles.groupLabelMobile : styles.groupLabelDesktop}`}>{panelGroupLabels[group]}</p>
+            <p className={`${styles.groupLabel} ${mobile ? `${styles.groupLabelMobile} ${contrast.groupLabelMobileContrast}` : `${styles.groupLabelDesktop} ${contrast.groupLabelDesktopContrast}`}`}>{panelGroupLabels[group]}</p>
             <div className={styles.navItems}>
               {items.map((module) => {
                 const active = activeFor(pathname, module.href)
                 const stateClass = mobile ? active ? styles.navLinkMobileActive : styles.navLinkMobileIdle : active ? styles.navLinkDesktopActive : styles.navLinkDesktopIdle
+                const contrastStateClass = !mobile && !active ? contrast.navLinkDesktopIdleContrast : ''
+                const descriptionContrastClass = mobile
+                  ? active ? contrast.navDescriptionMobileActiveContrast : contrast.navDescriptionMobileContrast
+                  : active ? contrast.navDescriptionDesktopActiveContrast : contrast.navDescriptionDesktopContrast
                 return (
-                  <Link key={`${module.id}-${module.href}`} href={module.href} aria-current={active ? 'page' : undefined} className={`${styles.navLink} ${stateClass}`}>
+                  <Link key={`${module.id}-${module.href}`} href={module.href} aria-current={active ? 'page' : undefined} className={`${styles.navLink} ${stateClass} ${contrastStateClass}`}>
                     <span className={styles.navRow}>
                       <span className={styles.navIcon} aria-hidden="true">{module.icon}</span>
-                      <span className={styles.navCopy}><span className={styles.navLabel}>{module.label}</span><span className={styles.navDescription}>{module.description}</span></span>
+                      <span className={styles.navCopy}><span className={`${styles.navLabel} ${!mobile ? contrast.navLabelDesktopContrast : ''}`}>{module.label}</span><span className={`${styles.navDescription} ${descriptionContrastClass}`}>{module.description}</span></span>
                       <ArrowIcon />
                     </span>
                   </Link>
