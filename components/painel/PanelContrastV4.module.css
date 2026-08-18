@@ -131,6 +131,27 @@
   font-weight: 900 !important;
 }
 
+.dashboardContrast :global(.panel-adaptive-page-canvas) [class*="text-blue-100/"] {
+  color: #eaf5ff !important;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.12);
+}
+
+.dashboardContrast :global(.panel-adaptive-page-canvas) [class~="text-slate-400"] {
+  color: #66788d !important;
+}
+
+.dashboardContrast :global(.panel-adaptive-page-canvas) [class~="text-slate-300"] {
+  color: #8293a6 !important;
+}
+
+.dashboardContrast :global(.panel-adaptive-page-canvas) [class*="bg-white/10"] {
+  background-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+.dashboardContrast :global(.panel-adaptive-page-canvas) [class*="ring-white/15"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.28) !important;
+}
+
 @media (max-width: 760px) {
   .breadcrumbContrast {
     color: #e4f1ff !important;
