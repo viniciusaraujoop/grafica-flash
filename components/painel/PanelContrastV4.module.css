@@ -73,17 +73,23 @@
   color: #e4f2ff !important;
 }
 
+.desktopSidebarContrast {
+  background: linear-gradient(180deg, #04142c 0%, #062348 54%, #05172f 100%) !important;
+  border-color: rgba(156, 197, 238, 0.18) !important;
+  box-shadow: 0 24px 64px rgba(3, 18, 42, 0.28) !important;
+}
+
 .desktopPlanContrast {
   color: #d8ebff !important;
 }
 
 .segmentCardContrast {
-  border-color: rgba(255, 255, 255, 0.14) !important;
-  background: rgba(255, 255, 255, 0.085) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 .segmentEyebrowContrast {
-  color: #b8dcff !important;
+  color: #c8e4ff !important;
 }
 
 .segmentTitleContrast {
@@ -92,43 +98,75 @@
 }
 
 .groupLabelDesktopContrast {
-  color: #b7cee8 !important;
+  color: #d3e5f7 !important;
+  font-size: 0.59rem !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.14em !important;
 }
 
 .groupLabelMobileContrast {
-  color: #62758c !important;
+  color: #52677f !important;
+  font-weight: 900 !important;
 }
 
 .navLinkDesktopIdleContrast {
-  color: #f0f6ff !important;
+  color: #f7fbff !important;
+  border-color: rgba(255, 255, 255, 0.035) !important;
+}
+
+.navLinkDesktopIdleContrast:hover {
+  border-color: rgba(164, 208, 250, 0.18) !important;
+  background: rgba(255, 255, 255, 0.09) !important;
+  color: #ffffff !important;
+}
+
+.navLinkDesktopActiveContrast {
+  border-color: rgba(196, 226, 255, 0.42) !important;
+  background: linear-gradient(135deg, #1e69c7 0%, #15549f 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
 }
 
 .navLabelDesktopContrast {
   color: inherit !important;
+  font-size: 0.82rem !important;
   font-weight: 950 !important;
+  letter-spacing: -0.012em;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.14);
+}
+
+.navIconDesktopContrast {
+  background: rgba(255, 255, 255, 0.115) !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.navIconDesktopActiveContrast {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
 }
 
 .navDescriptionDesktopContrast {
-  color: #bdd1e8 !important;
-  font-weight: 700 !important;
+  color: #c9dced !important;
+  font-weight: 750 !important;
 }
 
 .navDescriptionDesktopActiveContrast {
-  color: #edf7ff !important;
+  color: #f2f8ff !important;
 }
 
 .navDescriptionMobileContrast {
-  color: #66788d !important;
-  font-weight: 700 !important;
+  color: #5f7288 !important;
+  font-weight: 750 !important;
 }
 
 .navDescriptionMobileActiveContrast {
-  color: #eef7ff !important;
+  color: #f2f8ff !important;
 }
 
 .dockLinkContrast {
-  color: #53677f !important;
-  font-weight: 900 !important;
+  color: #465d77 !important;
+  font-weight: 950 !important;
 }
 
 .dashboardContrast :global(.panel-adaptive-page-canvas) [class*="text-blue-100/"] {
@@ -150,6 +188,13 @@
 
 .dashboardContrast :global(.panel-adaptive-page-canvas) [class*="ring-white/15"] {
   --tw-ring-color: rgba(255, 255, 255, 0.28) !important;
+}
+
+@media (min-width: 1024px) {
+  .navDescriptionDesktopContrast,
+  .navDescriptionDesktopActiveContrast {
+    display: none !important;
+  }
 }
 
 @media (max-width: 760px) {
