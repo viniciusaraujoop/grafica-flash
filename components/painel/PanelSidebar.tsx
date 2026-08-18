@@ -94,15 +94,15 @@ export default function PanelSidebar({ company }: { company: PanelSidebarCompany
 
       <aside className={`panel-sidebar-desktop-legacy hidden lg:block ${styles.desktopSidebar} ${contrast.desktopSidebarContrast} ${styles.enter}`}>
         <div className={styles.desktopInner}>
-          <div className={styles.desktopBrand}>
+          <div className={`${styles.desktopBrand} ${contrast.desktopBrandContrast}`}>
             <Link href="/painel/site" className={`flex items-center gap-3 ${styles.desktopBrandLink}`}>
               {company.logo_url ? (
-                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white ${styles.desktopLogo}`}><img src={company.logo_url} alt={company.nome || 'Logo'} className="max-h-[76%] max-w-[76%] object-contain" /></span>
+                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white ${styles.desktopLogo} ${contrast.desktopLogoContrast}`}><img src={company.logo_url} alt={company.nome || 'Logo'} className="max-h-[76%] max-w-[76%] object-contain" /></span>
               ) : (
-                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-base font-black text-white ${styles.desktopLogo} ${styles.desktopLogoFallback}`}>{(company.nome || 'O').slice(0, 1)}</span>
+                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-base font-black ${styles.desktopLogo} ${styles.desktopLogoFallback} ${contrast.desktopLogoContrast} ${contrast.desktopLogoFallbackContrast}`}>{(company.nome || 'O').slice(0, 1)}</span>
               )}
               <div className="min-w-0 flex-1">
-                <p className={`truncate text-[15px] font-black tracking-[-0.03em] ${styles.desktopCompanyName}`}>{company.nome || 'Orçaly'}</p>
+                <p className={`truncate text-[15px] font-black tracking-[-0.03em] ${styles.desktopCompanyName} ${contrast.desktopCompanyNameContrast}`}>{company.nome || 'Orçaly'}</p>
                 <p className={`mt-0.5 truncate text-[10px] font-bold uppercase tracking-[0.12em] ${styles.desktopPlan} ${contrast.desktopPlanContrast}`}>{plan}</p>
               </div>
             </Link>
