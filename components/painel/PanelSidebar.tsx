@@ -92,7 +92,7 @@ export default function PanelSidebar({ company }: { company: PanelSidebarCompany
         </details>
       </div>
 
-      <aside className={`panel-sidebar-desktop-legacy hidden lg:block ${styles.desktopSidebar} ${styles.enter}`}>
+      <aside className={`panel-sidebar-desktop-legacy hidden lg:block ${styles.desktopSidebar} ${contrast.desktopSidebarContrast} ${styles.enter}`}>
         <div className={styles.desktopInner}>
           <div className={styles.desktopBrand}>
             <Link href="/painel/site" className={`flex items-center gap-3 ${styles.desktopBrandLink}`}>
@@ -145,14 +145,19 @@ function SidebarGroups({ pathname, modules, mobile = false }: { pathname: string
               {items.map((module) => {
                 const active = activeFor(pathname, module.href)
                 const stateClass = mobile ? active ? styles.navLinkMobileActive : styles.navLinkMobileIdle : active ? styles.navLinkDesktopActive : styles.navLinkDesktopIdle
-                const contrastStateClass = !mobile && !active ? contrast.navLinkDesktopIdleContrast : ''
+                const contrastStateClass = mobile
+                  ? ''
+                  : active ? contrast.navLinkDesktopActiveContrast : contrast.navLinkDesktopIdleContrast
                 const descriptionContrastClass = mobile
                   ? active ? contrast.navDescriptionMobileActiveContrast : contrast.navDescriptionMobileContrast
                   : active ? contrast.navDescriptionDesktopActiveContrast : contrast.navDescriptionDesktopContrast
+                const iconContrastClass = mobile
+                  ? ''
+                  : active ? contrast.navIconDesktopActiveContrast : contrast.navIconDesktopContrast
                 return (
                   <Link key={`${module.id}-${module.href}`} href={module.href} aria-current={active ? 'page' : undefined} className={`${styles.navLink} ${stateClass} ${contrastStateClass}`}>
                     <span className={styles.navRow}>
-                      <span className={styles.navIcon} aria-hidden="true">{module.icon}</span>
+                      <span className={`${styles.navIcon} ${iconContrastClass}`} aria-hidden="true">{module.icon}</span>
                       <span className={styles.navCopy}><span className={`${styles.navLabel} ${!mobile ? contrast.navLabelDesktopContrast : ''}`}>{module.label}</span><span className={`${styles.navDescription} ${descriptionContrastClass}`}>{module.description}</span></span>
                       <ArrowIcon />
                     </span>
