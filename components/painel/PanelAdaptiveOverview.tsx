@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import type { PanelPremiumCompany } from '@/components/painel/PanelPremiumHeader'
-import styles from './PanelChromeV3.module.css'
+import styles from './PanelOverviewV2.module.css'
 
 type ActionItem = {
   label: string
