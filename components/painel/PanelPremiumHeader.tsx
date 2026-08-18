@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import styles from './PanelChromeV3.module.css'
+import contrast from './PanelContrastV4.module.css'
 
 export type PanelPremiumCompany = {
   id?: string | null
@@ -175,10 +176,10 @@ export default function PanelPremiumHeader({
   }
 
   return (
-    <header className={`panel-adaptive-header ${styles.header} ${styles.enter}`}>
+    <header className={`panel-adaptive-header ${styles.header} ${styles.enter} ${contrast.headerContrast}`}>
       <div className="panel-adaptive-header-copy min-w-0">
-        <nav className={`panel-adaptive-breadcrumb ${styles.breadcrumb}`} aria-label="Navegação estrutural">
-          <Link href="/painel/site" className={styles.breadcrumbLink}>Minha Vitrine</Link>
+        <nav className={`panel-adaptive-breadcrumb ${styles.breadcrumb} ${contrast.breadcrumbContrast}`} aria-label="Navegação estrutural">
+          <Link href="/painel/site" className={`${styles.breadcrumbLink} ${contrast.breadcrumbLinkContrast}`}>Minha Vitrine</Link>
           {parts.map((part, index) => (
             <span key={`${part}-${index}`}>
               <span aria-hidden="true">/</span>
@@ -189,26 +190,26 @@ export default function PanelPremiumHeader({
 
         <div className={`panel-adaptive-title-row ${styles.titleRow}`}>
           <div className="min-w-0">
-            <span className={`panel-adaptive-kicker ${styles.kicker}`}>Central de gestão</span>
-            <h1 className={styles.title}>{title}</h1>
+            <span className={`panel-adaptive-kicker ${styles.kicker} ${contrast.kickerContrast}`}>Central de gestão</span>
+            <h1 className={`${styles.title} ${contrast.titleContrast}`}>{title}</h1>
           </div>
 
-          <span className={`panel-adaptive-segment-badge ${styles.segmentBadge}`}>
+          <span className={`panel-adaptive-segment-badge ${styles.segmentBadge} ${contrast.segmentBadgeContrast}`}>
             {normalizeSegment(company.business_type || company.site_template)}
           </span>
 
           {company.is_founder === true && typeof company.founder_number === 'number' ? (
-            <span className={styles.founderBadge}>
+            <span className={`${styles.founderBadge} ${contrast.founderBadgeContrast}`}>
               Founder #{String(company.founder_number).padStart(2, '0')}
             </span>
           ) : null}
         </div>
 
-        <p className={styles.description}>{description}</p>
+        <p className={`${styles.description} ${contrast.descriptionContrast}`}>{description}</p>
       </div>
 
       <div className={`panel-adaptive-header-actions ${styles.headerActions}`}>
-        <div className={`panel-adaptive-company-card ${styles.companyCard}`} title={company.nome || 'Empresa Orçaly'}>
+        <div className={`panel-adaptive-company-card ${styles.companyCard} ${contrast.companyCardContrast}`} title={company.nome || 'Empresa Orçaly'}>
           {company.logo_url ? (
             <span className={`panel-adaptive-company-logo ${styles.companyLogo}`}>
               <img src={company.logo_url} alt="" />
@@ -235,7 +236,7 @@ export default function PanelPremiumHeader({
         <button
           type="button"
           onClick={() => void logout()}
-          className={styles.logout}
+          className={`${styles.logout} ${contrast.logoutContrast}`}
           aria-label="Sair da conta"
           title="Sair da conta"
         >
