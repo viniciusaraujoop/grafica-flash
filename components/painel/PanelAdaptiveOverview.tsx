@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { PanelPremiumCompany } from '@/components/painel/PanelPremiumHeader'
+import styles from './PanelChromeV3.module.css'
 
 type ActionItem = {
   label: string
@@ -11,201 +12,102 @@ type ActionItem = {
 }
 
 const existingRoutes = new Set<string>([
-  '/painel',
-  '/painel/admin',
-  '/painel/agenda',
-  '/painel/analises',
-  '/painel/aparelhos',
-  '/painel/aprovacao-arte',
-  '/painel/aprovacao-cliente',
-  '/painel/artes',
-  '/painel/assinatura',
-  '/painel/assistente',
-  '/painel/auditoria',
-  '/painel/catalogo',
-  '/painel/central-operacional',
-  '/painel/checklist-evento',
-  '/painel/clientes',
-  '/painel/comissoes',
-  '/painel/configuracoes',
-  '/painel/configuracoes/equipe',
-  '/painel/contas-pagar',
-  '/painel/contas-receber',
-  '/painel/contratos',
-  '/painel/crm',
-  '/painel/cupom',
-  '/painel/cupons',
-  '/painel/datas',
-  '/painel/defeitos',
-  '/painel/destaques',
-  '/painel/diagnostico',
-  '/painel/entradas-saidas',
-  '/painel/entregas',
-  '/painel/equipamentos',
-  '/painel/equipe',
-  '/painel/equipe-evento',
-  '/painel/estoque',
-  '/painel/eventos',
-  '/painel/financeiro',
-  '/painel/financeiro/contas-a-pagar',
-  '/painel/financeiro/contas-a-receber',
-  '/painel/financeiro/entradas',
-  '/painel/financeiro/lancamentos',
-  '/painel/financeiro/materiais',
-  '/painel/financeiro/saidas',
-  '/painel/follow-up',
-  '/painel/formas-pagamento',
-  '/painel/fotos',
-  '/painel/garantias',
-  '/painel/historico',
-  '/painel/horarios',
-  '/painel/itens-alugados',
-  '/painel/lembretes',
-  '/painel/manutencao',
-  '/painel/mao-de-obra',
-  '/painel/marketplace',
-  '/painel/materiais',
-  '/painel/mensagens',
-  '/painel/modulo/assinatura',
-  '/painel/modulos/[module]',
-  '/painel/notas-fiscais',
-  '/painel/notificacoes',
-  '/painel/notificacoes/inteligentes',
-  '/painel/onboarding',
-  '/painel/oportunidades',
-  '/painel/orcamento/[id]',
-  '/painel/orcamento-inteligente',
-  '/painel/orcamento-tecnico',
-  '/painel/ordens-servico',
-  '/painel/pacotes',
-  '/painel/pagamentos',
-  '/painel/pagamentos/configuracao',
-  '/painel/pagamentos/vendas',
-  '/painel/pecas',
-  '/painel/pedidos',
-  '/painel/pedidos/[id]',
-  '/painel/prazos',
-  '/painel/producao',
-  '/painel/produtos',
-  '/painel/produtos/[id]',
-  '/painel/produtos/ia',
-  '/painel/profissionais',
-  '/painel/promocoes',
-  '/painel/proposta/[id]',
-  '/painel/propostas',
-  '/painel/relatorios',
-  '/painel/revisoes',
-  '/painel/segmento',
-  '/painel/segmentos',
-  '/painel/setup',
-  '/painel/sinal-pagamento',
-  '/painel/site',
-  '/painel/solicitacoes',
-  '/painel/tarefas',
-  '/painel/taxas-entrega',
-  '/painel/veiculos',
-  '/painel/whatsapp',
+  '/painel', '/painel/admin', '/painel/agenda', '/painel/analises', '/painel/aparelhos', '/painel/aprovacao-arte',
+  '/painel/aprovacao-cliente', '/painel/artes', '/painel/assinatura', '/painel/assistente', '/painel/auditoria',
+  '/painel/catalogo', '/painel/central-operacional', '/painel/checklist-evento', '/painel/clientes', '/painel/comissoes',
+  '/painel/configuracoes', '/painel/configuracoes/equipe', '/painel/contas-pagar', '/painel/contas-receber', '/painel/contratos',
+  '/painel/crm', '/painel/cupom', '/painel/cupons', '/painel/datas', '/painel/defeitos', '/painel/destaques', '/painel/diagnostico',
+  '/painel/entradas-saidas', '/painel/entregas', '/painel/equipamentos', '/painel/equipe', '/painel/equipe-evento', '/painel/estoque',
+  '/painel/eventos', '/painel/financeiro', '/painel/financeiro/contas-a-pagar', '/painel/financeiro/contas-a-receber',
+  '/painel/financeiro/entradas', '/painel/financeiro/lancamentos', '/painel/financeiro/materiais', '/painel/financeiro/saidas',
+  '/painel/follow-up', '/painel/formas-pagamento', '/painel/fotos', '/painel/garantias', '/painel/historico', '/painel/horarios',
+  '/painel/itens-alugados', '/painel/lembretes', '/painel/manutencao', '/painel/mao-de-obra', '/painel/marketplace', '/painel/materiais',
+  '/painel/mensagens', '/painel/modulo/assinatura', '/painel/modulos/[module]', '/painel/notas-fiscais', '/painel/notificacoes',
+  '/painel/notificacoes/inteligentes', '/painel/onboarding', '/painel/oportunidades', '/painel/orcamento/[id]', '/painel/orcamento-inteligente',
+  '/painel/orcamento-tecnico', '/painel/ordens-servico', '/painel/pacotes', '/painel/pagamentos', '/painel/pagamentos/configuracao',
+  '/painel/pagamentos/vendas', '/painel/pecas', '/painel/pedidos', '/painel/pedidos/[id]', '/painel/prazos', '/painel/producao',
+  '/painel/produtos', '/painel/produtos/[id]', '/painel/produtos/ia', '/painel/profissionais', '/painel/promocoes', '/painel/proposta/[id]',
+  '/painel/propostas', '/painel/relatorios', '/painel/revisoes', '/painel/segmento', '/painel/segmentos', '/painel/setup',
+  '/painel/sinal-pagamento', '/painel/site', '/painel/solicitacoes', '/painel/tarefas', '/painel/taxas-entrega', '/painel/veiculos', '/painel/whatsapp',
 ])
 
-const segmentContent: Record<string, {
-  label: string
-  title: string
-  description: string
-  actions: ActionItem[]
-}> = {
+const segmentContent: Record<string, { label: string; title: string; description: string; actions: ActionItem[] }> = {
   food: {
-    label: 'Food',
-    title: 'Operacao de pedidos e entregas',
-    description: 'Acesse rapidamente cardapio, pedidos, entregas, regioes e horarios de atendimento.',
+    label: 'Food', title: 'Pedidos e entregas', description: 'Acessos essenciais da operação de hoje.',
     actions: [
-      { label: 'Ver pedidos', description: 'Acompanhe pedidos e status.', href: '/painel/pedidos', code: 'PD' },
-      { label: 'Editar catalogo', description: 'Organize cardapio e disponibilidade.', href: '/painel/catalogo', code: 'CT' },
-      { label: 'Ver entregas', description: 'Monitore a operacao de entrega.', href: '/painel/entregas', code: 'EN' },
-      { label: 'Configurar horarios', description: 'Defina quando a empresa atende.', href: '/painel/horarios', code: 'HR' },
+      { label: 'Ver pedidos', description: 'Pedidos e status.', href: '/painel/pedidos', code: 'PD' },
+      { label: 'Editar catálogo', description: 'Cardápio e disponibilidade.', href: '/painel/catalogo', code: 'CT' },
+      { label: 'Ver entregas', description: 'Operação de entrega.', href: '/painel/entregas', code: 'EN' },
+      { label: 'Horários', description: 'Quando a empresa atende.', href: '/painel/horarios', code: 'HR' },
     ],
   },
   graphic: {
-    label: 'Grafica',
-    title: 'Orcamentos, artes e producao',
-    description: 'Centralize produtos, propostas, aprovacoes e etapas de producao.',
+    label: 'Gráfica', title: 'Orçamentos e produção', description: 'Atalhos do fluxo comercial e produtivo.',
     actions: [
-      { label: 'Novo produto', description: 'Cadastre produtos e servicos.', href: '/painel/produtos', code: 'PR' },
-      { label: 'Ver propostas', description: 'Acompanhe propostas comerciais.', href: '/painel/propostas', code: 'PP' },
-      { label: 'Ver artes', description: 'Organize arquivos e aprovacoes.', href: '/painel/artes', code: 'AR' },
-      { label: 'Acompanhar producao', description: 'Veja trabalhos em andamento.', href: '/painel/producao', code: 'PO' },
+      { label: 'Novo produto', description: 'Produtos e serviços.', href: '/painel/produtos', code: 'PR' },
+      { label: 'Propostas', description: 'Negociações comerciais.', href: '/painel/propostas', code: 'PP' },
+      { label: 'Artes', description: 'Arquivos e aprovações.', href: '/painel/artes', code: 'AR' },
+      { label: 'Produção', description: 'Trabalhos em andamento.', href: '/painel/producao', code: 'PO' },
     ],
   },
   auto: {
-    label: 'Auto e oficina',
-    title: 'Ordens, veiculos e manutencao',
-    description: 'Acesse ordens de servico, diagnosticos, pecas e andamento da oficina.',
+    label: 'Auto e oficina', title: 'Ordens e manutenção', description: 'Atalhos centrais da rotina da oficina.',
     actions: [
-      { label: 'Ordens de servico', description: 'Acompanhe os servicos abertos.', href: '/painel/ordens-servico', code: 'OS' },
-      { label: 'Veiculos', description: 'Consulte veiculos cadastrados.', href: '/painel/veiculos', code: 'VE' },
-      { label: 'Diagnosticos', description: 'Organize avaliacao e aprovacao.', href: '/painel/diagnostico', code: 'DG' },
-      { label: 'Pecas', description: 'Acompanhe itens e materiais.', href: '/painel/pecas', code: 'PC' },
+      { label: 'Ordens', description: 'Serviços abertos.', href: '/painel/ordens-servico', code: 'OS' },
+      { label: 'Veículos', description: 'Veículos cadastrados.', href: '/painel/veiculos', code: 'VE' },
+      { label: 'Diagnósticos', description: 'Avaliação e aprovação.', href: '/painel/diagnostico', code: 'DG' },
+      { label: 'Peças', description: 'Itens e materiais.', href: '/painel/pecas', code: 'PC' },
     ],
   },
   assistance: {
-    label: 'Assistencia tecnica',
-    title: 'Aparelhos, diagnosticos e manutencao',
-    description: 'Organize aparelhos recebidos, defeitos, aprovacoes e entrega ao cliente.',
+    label: 'Assistência técnica', title: 'Aparelhos e manutenção', description: 'Atalhos do atendimento técnico.',
     actions: [
-      { label: 'Aparelhos', description: 'Consulte os equipamentos recebidos.', href: '/painel/aparelhos', code: 'AP' },
-      { label: 'Diagnosticos', description: 'Acompanhe avaliacao tecnica.', href: '/painel/diagnostico', code: 'DG' },
-      { label: 'Manutencao', description: 'Veja trabalhos em andamento.', href: '/painel/manutencao', code: 'MT' },
-      { label: 'Garantias', description: 'Consulte garantias e retornos.', href: '/painel/garantias', code: 'GT' },
+      { label: 'Aparelhos', description: 'Equipamentos recebidos.', href: '/painel/aparelhos', code: 'AP' },
+      { label: 'Diagnósticos', description: 'Avaliação técnica.', href: '/painel/diagnostico', code: 'DG' },
+      { label: 'Manutenção', description: 'Trabalhos em andamento.', href: '/painel/manutencao', code: 'MT' },
+      { label: 'Garantias', description: 'Garantias e retornos.', href: '/painel/garantias', code: 'GT' },
     ],
   },
   beauty: {
-    label: 'Beauty e barbearia',
-    title: 'Agenda, profissionais e servicos',
-    description: 'Acesse agenda, equipe, servicos e relacionamento com clientes.',
+    label: 'Beauty e barbearia', title: 'Agenda e atendimento', description: 'Atalhos para a rotina de atendimento.',
     actions: [
-      { label: 'Ver agenda', description: 'Acompanhe os horarios do dia.', href: '/painel/agenda', code: 'AG' },
-      { label: 'Profissionais', description: 'Gerencie a equipe de atendimento.', href: '/painel/profissionais', code: 'PF' },
-      { label: 'Produtos e servicos', description: 'Organize os itens oferecidos.', href: '/painel/produtos', code: 'SV' },
-      { label: 'Clientes', description: 'Consulte historico e contatos.', href: '/painel/clientes', code: 'CL' },
+      { label: 'Agenda', description: 'Horários do dia.', href: '/painel/agenda', code: 'AG' },
+      { label: 'Profissionais', description: 'Equipe de atendimento.', href: '/painel/profissionais', code: 'PF' },
+      { label: 'Serviços', description: 'Itens oferecidos.', href: '/painel/produtos', code: 'SV' },
+      { label: 'Clientes', description: 'Histórico e contatos.', href: '/painel/clientes', code: 'CL' },
     ],
   },
   events: {
-    label: 'Eventos',
-    title: 'Datas, contratos e execucao',
-    description: 'Organize eventos futuros, pacotes, contratos, equipe e checklist.',
+    label: 'Eventos', title: 'Eventos e execução', description: 'Atalhos para preparar e acompanhar eventos.',
     actions: [
-      { label: 'Proximos eventos', description: 'Consulte eventos e datas.', href: '/painel/eventos', code: 'EV' },
-      { label: 'Contratos', description: 'Acompanhe documentos e acordos.', href: '/painel/contratos', code: 'CO' },
-      { label: 'Pacotes', description: 'Organize ofertas e servicos.', href: '/painel/pacotes', code: 'PA' },
-      { label: 'Checklist', description: 'Controle a preparacao do evento.', href: '/painel/checklist-evento', code: 'CK' },
+      { label: 'Eventos', description: 'Eventos e datas.', href: '/painel/eventos', code: 'EV' },
+      { label: 'Contratos', description: 'Documentos e acordos.', href: '/painel/contratos', code: 'CO' },
+      { label: 'Pacotes', description: 'Ofertas e serviços.', href: '/painel/pacotes', code: 'PA' },
+      { label: 'Checklist', description: 'Preparação do evento.', href: '/painel/checklist-evento', code: 'CK' },
     ],
   },
   store: {
-    label: 'Loja e comercio',
-    title: 'Produtos, estoque e vendas',
-    description: 'Acesse rapidamente produtos, pedidos, estoque e catalogo digital.',
+    label: 'Loja e comércio', title: 'Produtos e vendas', description: 'Atalhos para estoque, pedidos e catálogo.',
     actions: [
-      { label: 'Produtos', description: 'Gerencie o que esta a venda.', href: '/painel/produtos', code: 'PR' },
-      { label: 'Pedidos', description: 'Acompanhe compras e status.', href: '/painel/pedidos', code: 'PD' },
-      { label: 'Estoque', description: 'Consulte disponibilidade.', href: '/painel/estoque', code: 'ES' },
-      { label: 'Catalogo', description: 'Veja a vitrine comercial.', href: '/painel/catalogo', code: 'CT' },
+      { label: 'Produtos', description: 'Itens à venda.', href: '/painel/produtos', code: 'PR' },
+      { label: 'Pedidos', description: 'Compras e status.', href: '/painel/pedidos', code: 'PD' },
+      { label: 'Estoque', description: 'Disponibilidade.', href: '/painel/estoque', code: 'ES' },
+      { label: 'Catálogo', description: 'Vitrine comercial.', href: '/painel/catalogo', code: 'CT' },
     ],
   },
   services: {
-    label: 'Servicos',
-    title: 'Solicitacoes, propostas e acompanhamento',
-    description: 'Organize demandas, propostas, prazos e relacionamento com clientes.',
+    label: 'Serviços', title: 'Comercial e execução', description: 'Atalhos para demandas, propostas e clientes.',
     actions: [
-      { label: 'Solicitacoes', description: 'Veja novas demandas.', href: '/painel/solicitacoes', code: 'SO' },
-      { label: 'Propostas', description: 'Acompanhe negociacoes.', href: '/painel/propostas', code: 'PP' },
-      { label: 'Tarefas', description: 'Organize o trabalho em andamento.', href: '/painel/tarefas', code: 'TF' },
-      { label: 'Clientes', description: 'Consulte contatos e historico.', href: '/painel/clientes', code: 'CL' },
+      { label: 'Solicitações', description: 'Novas demandas.', href: '/painel/solicitacoes', code: 'SO' },
+      { label: 'Propostas', description: 'Negociações.', href: '/painel/propostas', code: 'PP' },
+      { label: 'Tarefas', description: 'Trabalho em andamento.', href: '/painel/tarefas', code: 'TF' },
+      { label: 'Clientes', description: 'Contatos e histórico.', href: '/painel/clientes', code: 'CL' },
     ],
   },
 }
 
 function normalizeSegment(value?: string | null) {
   const normalized = String(value || '').trim().toLowerCase()
-
   if (['food', 'restaurante', 'lanchonete', 'delivery', 'alimenticio'].includes(normalized)) return 'food'
   if (['graphic', 'grafica', 'custom_products', 'personalizados'].includes(normalized)) return 'graphic'
   if (['auto', 'oficina', 'automotive', 'automotivo'].includes(normalized)) return 'auto'
@@ -213,38 +115,34 @@ function normalizeSegment(value?: string | null) {
   if (['beauty', 'barber', 'barbearia', 'beleza', 'estetica'].includes(normalized)) return 'beauty'
   if (['events', 'eventos'].includes(normalized)) return 'events'
   if (['store', 'loja', 'retail', 'comercio'].includes(normalized)) return 'store'
-
   return 'services'
 }
 
-export default function PanelAdaptiveOverview({
-  company,
-}: {
-  company: PanelPremiumCompany
-}) {
+export default function PanelAdaptiveOverview({ company }: { company: PanelPremiumCompany }) {
   const segmentKey = normalizeSegment(company.business_type || company.site_template)
   const content = segmentContent[segmentKey] || segmentContent.services
   const actions = content.actions.filter((action) => existingRoutes.has(action.href)).slice(0, 4)
-
   if (!actions.length) return null
 
   return (
-    <section className="panel-adaptive-overview" aria-labelledby="panel-adaptive-overview-title">
-      <div className="panel-adaptive-overview-copy">
-        <span>{content.label}</span>
-        <h2 id="panel-adaptive-overview-title">{content.title}</h2>
-        <p>{content.description}</p>
+    <section className={styles.overviewStrip} aria-labelledby="panel-adaptive-overview-title">
+      <div className={styles.overviewCopy}>
+        <span className={styles.overviewEyebrow}>{content.label}</span>
+        <div className="min-w-0">
+          <h2 id="panel-adaptive-overview-title" className={styles.overviewTitle}>{content.title}</h2>
+          <p className={styles.overviewDescription}>{content.description}</p>
+        </div>
       </div>
 
-      <div className="panel-adaptive-actions" aria-label="Acoes rapidas da operacao">
-        {actions.map((action) => (
-          <Link key={action.href} href={action.href} className="panel-adaptive-action-card">
-            <span className="panel-adaptive-action-code" aria-hidden="true">{action.code}</span>
-            <span className="min-w-0">
+      <div className={styles.overviewActions} aria-label="Ações rápidas da operação">
+        {actions.map((action, index) => (
+          <Link key={action.href} href={action.href} className={styles.overviewAction} style={{ animationDelay: `${80 + index * 45}ms` }}>
+            <span className={styles.overviewCode} aria-hidden="true">{action.code}</span>
+            <span className="min-w-0 flex-1">
               <strong>{action.label}</strong>
               <small>{action.description}</small>
             </span>
-            <span className="panel-adaptive-action-arrow" aria-hidden="true">&#8594;</span>
+            <span className={styles.overviewArrow} aria-hidden="true">→</span>
           </Link>
         ))}
       </div>
