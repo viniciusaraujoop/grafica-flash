@@ -74,32 +74,52 @@
 }
 
 .desktopSidebarContrast {
-  background: linear-gradient(180deg, #04142c 0%, #062348 54%, #05172f 100%) !important;
-  border-color: rgba(156, 197, 238, 0.18) !important;
-  box-shadow: 0 24px 64px rgba(3, 18, 42, 0.28) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 55%, #f3f6fa 100%) !important;
+  border-color: #d7e0ea !important;
+  box-shadow: 0 22px 58px rgba(15, 42, 77, 0.13) !important;
+}
+
+.desktopBrandContrast {
+  border-bottom-color: #dfe7ef !important;
+}
+
+.desktopCompanyNameContrast {
+  color: #111827 !important;
+  text-shadow: none !important;
 }
 
 .desktopPlanContrast {
-  color: #d8ebff !important;
+  color: #4b5f76 !important;
+}
+
+.desktopLogoContrast {
+  border-color: #d4dee9 !important;
+  box-shadow: 0 8px 20px rgba(15, 42, 77, 0.1) !important;
+}
+
+.desktopLogoFallbackContrast {
+  background: #0b3e88 !important;
+  color: #ffffff !important;
 }
 
 .segmentCardContrast {
-  border-color: rgba(255, 255, 255, 0.18) !important;
-  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: #d9e3ee !important;
+  background: #f2f6fa !important;
+  box-shadow: inset 0 1px 0 #ffffff;
 }
 
 .segmentEyebrowContrast {
-  color: #c8e4ff !important;
+  color: #607389 !important;
 }
 
 .segmentTitleContrast {
-  color: #ffffff !important;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.16);
+  color: #111827 !important;
+  text-shadow: none !important;
 }
 
 .groupLabelDesktopContrast {
-  color: #d3e5f7 !important;
-  font-size: 0.59rem !important;
+  color: #4b5f76 !important;
+  font-size: 0.6rem !important;
   font-weight: 950 !important;
   letter-spacing: 0.14em !important;
 }
@@ -110,44 +130,46 @@
 }
 
 .navLinkDesktopIdleContrast {
-  color: #f7fbff !important;
-  border-color: rgba(255, 255, 255, 0.035) !important;
+  color: #111827 !important;
+  border-color: transparent !important;
+  background: transparent !important;
 }
 
 .navLinkDesktopIdleContrast:hover {
-  border-color: rgba(164, 208, 250, 0.18) !important;
-  background: rgba(255, 255, 255, 0.09) !important;
-  color: #ffffff !important;
+  border-color: #c9d8e7 !important;
+  background: #eef5fc !important;
+  color: #07182b !important;
 }
 
 .navLinkDesktopActiveContrast {
-  border-color: rgba(196, 226, 255, 0.42) !important;
-  background: linear-gradient(135deg, #1e69c7 0%, #15549f 100%) !important;
+  border-color: #1a5aa5 !important;
+  background: linear-gradient(135deg, #1764b6 0%, #0f4f9c 100%) !important;
   color: #ffffff !important;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 10px 24px rgba(13, 70, 137, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
 }
 
 .navLabelDesktopContrast {
   color: inherit !important;
-  font-size: 0.82rem !important;
+  font-size: 0.84rem !important;
   font-weight: 950 !important;
   letter-spacing: -0.012em;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.14);
+  text-shadow: none !important;
 }
 
 .navIconDesktopContrast {
-  background: rgba(255, 255, 255, 0.115) !important;
-  color: #ffffff !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: #e7edf4 !important;
+  color: #173a63 !important;
+  box-shadow: inset 0 0 0 1px #d9e2ec;
 }
 
 .navIconDesktopActiveContrast {
   background: rgba(255, 255, 255, 0.2) !important;
   color: #ffffff !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
 .navDescriptionDesktopContrast {
-  color: #c9dced !important;
+  color: #52677f !important;
   font-weight: 750 !important;
 }
 
