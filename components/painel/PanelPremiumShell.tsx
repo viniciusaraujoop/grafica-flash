@@ -6,6 +6,7 @@ import PanelPremiumHeader, { type PanelPremiumCompany } from '@/components/paine
 import PanelAdaptiveOverview from '@/components/painel/PanelAdaptiveOverview'
 import FounderWelcomeModal from '@/components/painel/FounderWelcomeModal'
 import styles from './PanelChromeV3.module.css'
+import contrast from './PanelContrastV4.module.css'
 
 export default function PanelPremiumShell({
   company,
@@ -16,9 +17,11 @@ export default function PanelPremiumShell({
   pathname: string
   children: ReactNode
 }) {
+  const dashboardContrast = pathname === '/painel/inicio' ? contrast.dashboardContrast : ''
+
   return (
     <div
-      className={`orcaly-panel-adaptive min-h-screen lg:grid lg:grid-cols-[268px_minmax(0,1fr)] ${styles.shell}`}
+      className={`orcaly-panel-adaptive min-h-screen lg:grid lg:grid-cols-[268px_minmax(0,1fr)] ${styles.shell} ${dashboardContrast}`}
       data-orcaly-panel="adaptive-v2"
     >
       <FounderWelcomeModal company={company} />
