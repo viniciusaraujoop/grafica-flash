@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import PartnerSystemDemo from "@/components/parceiros/PartnerSystemDemo";
 import { supabase } from "@/lib/supabase";
 
@@ -29,7 +30,9 @@ function date(value?: string | null) {
 }
 
 export default function PartnerDemoHub() {
-  const [checking, setChecking] = useState(true);
+  const searchParams = useSearchParams();
+  const previewOnly = searchParams.get("preview") === "1";
+  const [checking, setChecking] = useState(!previewOnly);
   const [partner, setPartner] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [error, setError] = useState("");
@@ -42,6 +45,10 @@ export default function PartnerDemoHub() {
   }
 
   async function load() {
+    if (previewOnly) {
+      setChecking(false);
+      return;
+    }
     const accessToken = await token();
     if (!accessToken) {
       setPartner(false);
@@ -59,7 +66,7 @@ export default function PartnerDemoHub() {
     setChecking(false);
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [previewOnly]);
 
   async function createDemo(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -83,6 +90,8 @@ export default function PartnerDemoHub() {
   async function copy(value: string) {
     try { await navigator.clipboard.writeText(value); setMessage("Link copiado."); } catch { setError("Não foi possível copiar automaticamente."); }
   }
+
+  if (previewOnly) return <PartnerSystemDemo />;
 
   if (checking) {
     return <main className="grid min-h-screen place-items-center bg-[#f4f7fb]"><div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-[#08295b]"/></main>;
