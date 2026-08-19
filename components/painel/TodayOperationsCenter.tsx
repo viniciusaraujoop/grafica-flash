@@ -165,7 +165,7 @@ export default function TodayOperationsCenter() {
         <div className={styles.heroHeader}>
           <div>
             <span className={styles.eyebrow}>Hoje no Orçaly</span>
-            <h2 id="today-title">
+            <h2 id="today-title" style={{ color: '#fff' }}>
               {payload.totals.attention > 0
                 ? `Você tem ${payload.totals.attention} ${payload.totals.attention === 1 ? 'item' : 'itens'} que precisam da sua atenção.`
                 : 'Sua operação está em dia neste momento.'}
