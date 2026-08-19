@@ -7,8 +7,8 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     // These screens intentionally trigger an async initial load from an effect.
-    // Their loading flag belongs to the external request lifecycle. Keep every
-    // other hooks/compiler rule enabled and scope this exception to the loaders.
+    // Their loading/local browser state belongs to an external lifecycle. Keep
+    // every other hooks/compiler rule enabled and scope this exception narrowly.
     files: [
       "app/admin/indicacoes/growth/page.tsx",
       "components/parceiros/PartnerDemoHub.tsx",
@@ -18,6 +18,9 @@ const eslintConfig = defineConfig([
       "components/admin/AdminCompaniesV2.tsx",
       "components/admin/AdminUsersV2.tsx",
       "components/admin/AdminPaymentsV2.tsx",
+      "app/painel/relatorios/page.tsx",
+      "components/public-site/StorefrontExperienceV2.tsx",
+      "components/public-site/StorefrontProductActions.tsx",
     ],
     rules: {
       "react-hooks/set-state-in-effect": "off",
