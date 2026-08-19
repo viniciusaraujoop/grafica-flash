@@ -1,0 +1,98 @@
+name: Admin Control Center v2 QA
+
+on:
+  pull_request:
+    paths:
+      - 'app/admin/**'
+      - 'app/equipe/**'
+      - 'app/api/admin/**'
+      - 'app/api/team-invites/**'
+      - 'components/admin/**'
+      - 'lib/admin/**'
+      - 'lib/platform-admin.ts'
+      - 'lib/platform-admin-invites.ts'
+      - 'supabase/migrations/20260819230000_admin_control_center_v2.sql'
+      - 'scripts/verify-admin-control-center-v2.mjs'
+      - 'package.json'
+      - 'eslint.config.mjs'
+      - '.github/workflows/admin-control-center-v2.yml'
+  workflow_dispatch:
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Domain invariant tests
+        run: npm test
+      - name: Focused lint
+        run: >-
+          npx eslint
+          lib/platform-admin.ts
+          lib/admin/control-center-v2.ts
+          lib/admin/optional-schema.ts
+          lib/admin/feature-flags.ts
+          app/api/admin/control-center-v2/route.ts
+          app/api/admin/companies-v2/route.ts
+          app/api/admin/company-360/[id]/route.ts
+          app/api/admin/company/[id]/route.ts
+          app/api/admin/search/route.ts
+          app/api/admin/users-v2/route.ts
+          app/api/admin/feature-flags/route.ts
+          app/api/admin/support-tickets/route.ts
+          app/api/admin/webhooks/route.ts
+          app/api/admin/security/route.ts
+          app/api/admin/system-health/route.ts
+          app/api/admin/customer-success/route.ts
+          app/api/admin/payments-v2/route.ts
+          app/api/admin/notifications-v2/route.ts
+          app/api/admin/support-mode/route.ts
+          app/api/admin/ai/route.ts
+          app/api/admin/team-v2/route.ts
+          app/api/team-invites/activate/route.ts
+          components/admin/AdminShellV2.tsx
+          components/admin/AdminControlCenterV2.tsx
+          components/admin/AdminCompaniesV2.tsx
+          components/admin/AdminCompany360.tsx
+          components/admin/AdminUsersV2.tsx
+          components/admin/AdminMetricsV2.tsx
+          components/admin/AdminFeatureFlagsV2.tsx
+          components/admin/AdminSupportCenterV2.tsx
+          components/admin/AdminWebhookInspectorV2.tsx
+          components/admin/AdminSecurityCenterV2.tsx
+          components/admin/AdminSystemHealthV2.tsx
+          components/admin/AdminCustomerSuccessV2.tsx
+          components/admin/AdminPaymentsV2.tsx
+          components/admin/AdminNotificationsV2.tsx
+          components/admin/AdminDailyBriefV2.tsx
+          components/admin/AdminTeamV2.tsx
+      - name: TypeScript and production build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-build.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-build-placeholder
+          SUPABASE_SERVICE_ROLE_KEY: ci-build-placeholder
+        run: npm run build
+      - name: Dependency audit baseline
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+  global-lint-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Global lint baseline
+        run: npm run lint
