@@ -1,0 +1,590 @@
+.page {
+  display: grid;
+  gap: 1.15rem;
+  padding-bottom: 1rem;
+}
+
+.hero,
+.attentionSection,
+.summarySection,
+.errorCard {
+  border: 1px solid rgba(14, 55, 105, 0.1);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 14px 42px rgba(10, 40, 82, 0.07);
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  color: #fff;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(88, 166, 255, 0.26), transparent 30%),
+    linear-gradient(135deg, #071d43 0%, #0b3675 68%, #0d478c 100%);
+  animation: enter 220ms ease-out both;
+}
+
+.heroGlow {
+  position: absolute;
+  right: -7rem;
+  bottom: -8rem;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+.heroHeader {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.eyebrow,
+.sectionEyebrow {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  color: #b8d6ff;
+}
+
+.hero h2 {
+  max-width: 800px;
+  margin: 0;
+  font-size: clamp(1.65rem, 4vw, 2.8rem);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+  font-weight: 780;
+}
+
+.heroHeader > div:first-child > p {
+  max-width: 760px;
+  margin: 0.85rem 0 0;
+  color: rgba(232, 242, 255, 0.82);
+  line-height: 1.65;
+}
+
+.heroStats {
+  display: flex;
+  align-items: stretch;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.heroStats > div,
+.heroStats > button {
+  min-width: 78px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.09);
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+
+.heroStats > div {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  padding: 0.7rem 0.8rem;
+}
+
+.heroStats strong {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.heroStats span {
+  margin-top: 0.3rem;
+  font-size: 0.67rem;
+  font-weight: 700;
+  color: rgba(226, 239, 255, 0.72);
+}
+
+.heroStats button {
+  cursor: pointer;
+  padding: 0.75rem 0.9rem;
+  font-weight: 800;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.heroStats button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.intelligence {
+  position: relative;
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 1.25rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: rgba(4, 20, 49, 0.38);
+}
+
+.intelligenceIcon {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #d9eaff;
+}
+
+.intelligence strong {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #cbe0ff;
+}
+
+.intelligence p {
+  margin: 0.25rem 0 0;
+  line-height: 1.55;
+  color: #fff;
+}
+
+.intelligence small {
+  display: block;
+  margin-top: 0.35rem;
+  color: #f7d58b;
+}
+
+.attentionSection,
+.summarySection {
+  padding: clamp(1rem, 2.4vw, 1.45rem);
+  animation: enter 220ms 40ms ease-out both;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.sectionEyebrow {
+  margin-bottom: 0.2rem;
+  color: #4875ae;
+}
+
+.sectionHeader h3 {
+  margin: 0;
+  color: #10233f;
+  font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+  letter-spacing: -0.03em;
+}
+
+.sectionHeader > a {
+  flex-shrink: 0;
+  color: #174f91;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.sectionHeader > small {
+  color: #738298;
+  font-weight: 700;
+}
+
+.attentionList {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.attentionItem {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem;
+  border: 1px solid #e8eef6;
+  border-radius: 17px;
+  color: inherit;
+  text-decoration: none;
+  background: #fff;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  animation: enter 200ms ease-out both;
+}
+
+.attentionItem:hover {
+  border-color: #cbd9e9;
+  box-shadow: 0 8px 25px rgba(16, 50, 92, 0.07);
+  transform: translateY(-1px);
+}
+
+.itemIcon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.itemCopy {
+  min-width: 0;
+}
+
+.itemTopline {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.itemTopline strong {
+  min-width: 0;
+  color: #142a47;
+  font-size: 0.92rem;
+}
+
+.priority {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 0.22rem 0.48rem;
+  font-size: 0.61rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.priorityCritical {
+  color: #9a2b32;
+  background: #fff0f1;
+}
+
+.priorityHigh {
+  color: #8a5b04;
+  background: #fff6df;
+}
+
+.priorityNormal {
+  color: #245f9d;
+  background: #edf5ff;
+}
+
+.priorityInfo {
+  color: #526273;
+  background: #f1f4f7;
+}
+
+.itemDescription {
+  display: block;
+  overflow: hidden;
+  margin-top: 0.18rem;
+  color: #66768a;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.itemMeta {
+  display: flex;
+  gap: 0.55rem;
+  margin-top: 0.28rem;
+  color: #8693a4;
+  font-size: 0.69rem;
+  font-weight: 700;
+}
+
+.itemArrow {
+  color: #8ea2bb;
+  font-weight: 900;
+  transition: transform 180ms ease;
+}
+
+.attentionItem:hover .itemArrow {
+  transform: translateX(2px);
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 112px;
+  padding: 1rem;
+  border: 1px dashed #cad8e7;
+  border-radius: 18px;
+  background: #f9fbfd;
+}
+
+.emptyState > span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 14px;
+  background: #e9f8f2;
+  color: #217454;
+  font-weight: 900;
+}
+
+.emptyState strong {
+  color: #17314f;
+}
+
+.emptyState p {
+  margin: 0.2rem 0 0;
+  color: #728198;
+  font-size: 0.8rem;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.summaryCard {
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid #e7edf4;
+  border-radius: 17px;
+  color: inherit;
+  text-decoration: none;
+  background: linear-gradient(180deg, #fff, #fbfcfe);
+  transition: border-color 180ms ease, transform 180ms ease;
+  animation: enter 200ms ease-out both;
+}
+
+.summaryCard:hover {
+  border-color: #c8d7e8;
+  transform: translateY(-1px);
+}
+
+.summaryCard > span {
+  display: block;
+  min-height: 2em;
+  color: #718197;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.summaryCard strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 0.3rem;
+  color: #10233f;
+  font-size: clamp(1.05rem, 2vw, 1.5rem);
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.summaryCard small {
+  display: block;
+  margin-top: 0.55rem;
+  color: #4772a7;
+  font-weight: 800;
+}
+
+.skeletonWrap {
+  display: grid;
+  gap: 1rem;
+}
+
+.skeleton {
+  overflow: hidden;
+  position: relative;
+  border-radius: 22px;
+  background: #eaf0f6;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  animation: shimmer 1.2s infinite;
+}
+
+.skeletonHero {
+  min-height: 230px;
+}
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.skeletonCard {
+  min-height: 100px;
+}
+
+.errorCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem;
+}
+
+.errorCard strong {
+  color: #7f2630;
+}
+
+.errorCard p {
+  margin: 0.2rem 0 0;
+  color: #7b6670;
+}
+
+.errorCard button {
+  flex-shrink: 0;
+  cursor: pointer;
+  border: 0;
+  border-radius: 13px;
+  padding: 0.7rem 0.9rem;
+  background: #0b376f;
+  color: #fff;
+  font-weight: 800;
+}
+
+@keyframes enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  to { transform: translateX(100%); }
+}
+
+@media (max-width: 980px) {
+  .heroHeader {
+    flex-direction: column;
+  }
+
+  .heroStats {
+    width: 100%;
+  }
+
+  .heroStats > div,
+  .heroStats > button {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .summaryGrid,
+  .skeletonGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    gap: 0.8rem;
+  }
+
+  .hero,
+  .attentionSection,
+  .summarySection,
+  .errorCard {
+    border-radius: 20px;
+  }
+
+  .hero {
+    padding: 1.1rem;
+  }
+
+  .hero h2 {
+    font-size: 1.7rem;
+  }
+
+  .heroStats {
+    gap: 0.4rem;
+  }
+
+  .heroStats > div,
+  .heroStats > button {
+    padding-inline: 0.45rem;
+  }
+
+  .intelligence {
+    padding: 0.8rem;
+  }
+
+  .sectionHeader {
+    align-items: flex-start;
+  }
+
+  .sectionHeader > a,
+  .sectionHeader > small {
+    font-size: 0.7rem;
+    text-align: right;
+  }
+
+  .attentionItem {
+    grid-template-columns: 38px minmax(0, 1fr) 18px;
+    gap: 0.65rem;
+    padding: 0.7rem;
+  }
+
+  .itemIcon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .itemTopline {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .itemDescription {
+    white-space: normal;
+  }
+
+  .summaryGrid,
+  .skeletonGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .summaryCard {
+    padding: 0.75rem;
+  }
+
+  .summaryCard > span {
+    min-height: 2.35em;
+  }
+
+  .errorCard {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero,
+  .attentionSection,
+  .attentionItem,
+  .summaryCard,
+  .skeleton::after {
+    animation: none !important;
+  }
+
+  .heroStats button,
+  .attentionItem,
+  .summaryCard,
+  .itemArrow {
+    transition: none !important;
+  }
+}
