@@ -14,8 +14,8 @@ type JsonRecord = Record<string, unknown>;
 type AffiliateContext = Awaited<ReturnType<typeof requireAffiliate>>;
 type AdminClient = AffiliateContext["admin"];
 
-const CAMPAIGN_KIND = "campaign";
-const NOTIFICATION_READ_KIND = "notification_read";
+const CAMPAIGN_KIND = "content";
+const NOTIFICATION_READ_KIND = "manual";
 const CAMPAIGN_PREFIX = "campaign:";
 
 function clean(value: unknown, max = 500) {
