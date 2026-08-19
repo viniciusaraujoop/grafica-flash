@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import PartnerSystemDemo from "@/components/parceiros/PartnerSystemDemo";
 import { supabase } from "@/lib/supabase";
@@ -41,7 +41,7 @@ export default function PartnerDemoHub({ previewOnly = false }: { previewOnly?: 
     return data.session?.access_token || "";
   }
 
-  async function load() {
+  const load = useCallback(async () => {
     if (previewOnly) {
       setChecking(false);
       return;
@@ -61,9 +61,9 @@ export default function PartnerDemoHub({ previewOnly = false }: { previewOnly?: 
       setPartner(false);
     }
     setChecking(false);
-  }
+  }, [previewOnly]);
 
-  useEffect(() => { void load(); }, [previewOnly]);
+  useEffect(() => { void load(); }, [load]);
 
   async function createDemo(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
