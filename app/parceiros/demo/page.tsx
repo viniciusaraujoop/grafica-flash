@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function ParceirosDemoPage() {
-  return <PartnerDemoHub />;
+export default async function ParceirosDemoPage({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
+  const params = await searchParams;
+  return <PartnerDemoHub previewOnly={params.preview === "1"} />;
 }
