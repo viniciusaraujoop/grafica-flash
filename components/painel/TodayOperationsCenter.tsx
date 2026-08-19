@@ -35,6 +35,14 @@ type TodayPayload = {
   dataHealth?: Record<string, string | null>
 }
 
+type SummaryKey = keyof TodayPayload['summary']
+type SummaryCard = {
+  key: SummaryKey
+  label: string
+  href: string
+  money?: boolean
+}
+
 function money(value: number) {
   return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
@@ -81,7 +89,7 @@ function summarySentence(payload: TodayPayload) {
   return `${parts.slice(0, 3).join('; ')}. ${parts[3] ? `${parts[3]}.` : ''}`
 }
 
-const summaryCards = [
+const summaryCards: SummaryCard[] = [
   { key: 'salesToday', label: 'Vendas hoje', href: '/painel/pedidos', money: true },
   { key: 'ordersToday', label: 'Pedidos hoje', href: '/painel/pedidos' },
   { key: 'receiptsToday', label: 'Recebimentos', href: '/painel/financeiro', money: true },
@@ -90,7 +98,7 @@ const summaryCards = [
   { key: 'customersWaiting', label: 'Clientes aguardando', href: '/painel/follow-up' },
   { key: 'deliveries', label: 'Entregas em aberto', href: '/painel/entregas' },
   { key: 'opportunityValue', label: 'Em oportunidades', href: '/painel/crm', money: true },
-] as const
+]
 
 export default function TodayOperationsCenter() {
   const [payload, setPayload] = useState<TodayPayload | null>(null)
