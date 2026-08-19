@@ -6,6 +6,19 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
+type DemoMetadata = {
+  eventType?: string;
+  sessionId?: string;
+  companyName?: string;
+  segment?: string;
+};
+
+type DemoRow = {
+  affiliate_id: string;
+  metadata: DemoMetadata | null;
+  created_at: string;
+};
+
 function text(value: unknown, max = 300) {
   return String(value || "").trim().slice(0, max);
 }
@@ -27,12 +40,12 @@ export async function GET(request: NextRequest, context: { params: Promise<{ tok
       .order("created_at", { ascending: false })
       .limit(1);
     if (error) throw error;
-    const row = rows?.[0] as any;
-    if (!row?.affiliate_id || !row?.metadata?.sessionId) {
+    const row = (rows?.[0] || null) as DemoRow | null;
+    if (!row?.affiliate_id || !row.metadata?.sessionId) {
       return NextResponse.json({ error: "Demonstração não encontrada." }, { status: 404 });
     }
 
-    const metadata = row.metadata as Record<string, unknown>;
+    const metadata = row.metadata;
     await admin.from("affiliate_activity_events").insert({
       affiliate_id: row.affiliate_id,
       kind: "demo",
