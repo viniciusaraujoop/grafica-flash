@@ -1,6 +1,7 @@
 'use client'
 
 import PublicSiteRenderer, { type PublicSiteCompany, type PublicSiteProduct } from '@/components/public-site/PublicSiteRenderer'
+import StorefrontExperienceV2 from '@/components/public-site/StorefrontExperienceV2'
 import { getSiteTemplateByBusinessType } from '@/lib/site-templates'
 
 type SitePreviewMode = 'desktop' | 'mobile'
@@ -28,13 +29,14 @@ export default function SitePreview({ company, products = [], compact = false, m
 
   const widthClass = mode === 'mobile' ? 'mx-auto max-w-[390px]' : 'w-full'
   const heightClass = compact ? 'h-[760px]' : 'min-h-[720px]'
+  const previewProducts = products.length ? products : fakeProducts
 
   return (
     <div className={`w-full max-w-full overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-blue-950/5 ${heightClass}`}>
       <div className="flex items-center justify-between border-b border-blue-100 bg-white px-4 py-3">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#05245c]">Prévia</p>
-          <p className="text-sm font-black text-slate-500">{mode === 'mobile' ? 'Visual mobile' : 'Visual desktop'}</p>
+          <p className="text-sm font-black text-slate-500">{mode === 'mobile' ? 'Visual mobile' : 'Visual desktop'} · Storefront 2.0</p>
         </div>
         <div className="flex gap-1">
           <span className="h-3 w-3 rounded-full bg-red-200" />
@@ -45,7 +47,9 @@ export default function SitePreview({ company, products = [], compact = false, m
 
       <div className="h-[calc(100%-57px)] overflow-y-auto overflow-x-hidden bg-[#f5f8ff] p-3">
         <div className={`min-w-0 ${widthClass}`}>
-          <PublicSiteRenderer company={company} products={products.length ? products : fakeProducts} />
+          <StorefrontExperienceV2 company={company} products={previewProducts}>
+            <PublicSiteRenderer company={company} products={previewProducts} />
+          </StorefrontExperienceV2>
         </div>
       </div>
     </div>

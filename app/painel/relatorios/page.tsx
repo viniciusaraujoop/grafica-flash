@@ -23,6 +23,25 @@ type Payload = {
   partial?: boolean
 }
 
+type StorefrontPayload = {
+  schemaReady: boolean
+  periodDays: number
+  partial?: boolean
+  metrics: {
+    visitors: number
+    pageViews: number
+    productViews: number
+    searches: number
+    favorites: number
+    addToCart: number
+    checkoutStarts: number
+    orders: number
+    conversion: number
+  }
+  topProducts: Array<{ id: string; name: string; views: number }>
+  searchGaps: Array<{ query: string; searches: number }>
+}
+
 function money(value: number) {
   return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
@@ -36,6 +55,7 @@ function duration(hours: number | null) {
 export default function RelatoriosPage() {
   const [days, setDays] = useState(30)
   const [data, setData] = useState<Payload | null>(null)
+  const [storefront, setStorefront] = useState<StorefrontPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -43,10 +63,18 @@ export default function RelatoriosPage() {
     setLoading(true); setError('')
     try {
       const token = await getAccessTokenClient()
-      const response = await fetch(`/api/reports/decision?days=${period}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload.error || 'Erro ao gerar relatório.')
+      const headers = { Authorization: `Bearer ${token}` }
+      const [decisionResponse, storefrontResponse] = await Promise.all([
+        fetch(`/api/reports/decision?days=${period}`, { headers, cache: 'no-store' }),
+        fetch(`/api/reports/storefront?days=${period}`, { headers, cache: 'no-store' }),
+      ])
+      const [payload, storefrontPayload] = await Promise.all([
+        decisionResponse.json().catch(() => ({})),
+        storefrontResponse.json().catch(() => ({})),
+      ])
+      if (!decisionResponse.ok) throw new Error(payload.error || 'Erro ao gerar relatório.')
       setData(payload)
+      setStorefront(storefrontResponse.ok ? storefrontPayload : null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao gerar relatório.')
     } finally { setLoading(false) }
@@ -64,12 +92,13 @@ export default function RelatoriosPage() {
     ['Clientes recorrentes', String(metrics.recurringCustomers), 'Compraram mais de uma vez'],
     ['Tempo médio de conclusão', duration(metrics.avgCompletionHours), 'Com base no histórico de status'],
   ] : []
+  const site = storefront?.metrics
 
   return (
     <main className="grid gap-4 text-[#10233f]">
       <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_12px_36px_rgba(10,40,82,.055)] sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div><span className="text-[11px] font-extrabold uppercase tracking-[.16em] text-[#4776ad]">Relatórios</span><h2 className="mt-1 text-2xl font-bold tracking-[-.04em] sm:text-3xl">Números que ajudam a decidir.</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">Sem gráfico ornamental: vendas, conversão, recorrência, produtos e velocidade de execução a partir dos dados reais da empresa.</p></div>
+          <div><span className="text-[11px] font-extrabold uppercase tracking-[.16em] text-[#4776ad]">Relatórios</span><h2 className="mt-1 text-2xl font-bold tracking-[-.04em] sm:text-3xl">Números que ajudam a decidir.</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">Vendas, conversão, recorrência e agora comportamento da vitrine pública, sempre a partir de dados observados.</p></div>
           <div className="grid grid-cols-3 rounded-xl bg-slate-100 p-1" aria-label="Período do relatório">{[7, 30, 90].map((period) => <button key={period} type="button" onClick={() => setDays(period)} aria-pressed={days === period} className={`rounded-lg px-3 py-2 text-xs font-extrabold ${days === period ? 'bg-white text-[#0b3b78] shadow-sm' : 'text-slate-500'}`}>{period} dias</button>)}</div>
         </div>
       </section>
@@ -89,6 +118,17 @@ export default function RelatoriosPage() {
           </section>
         </>
       ) : null}
+
+      {!loading ? <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_12px_36px_rgba(10,40,82,.055)] sm:p-6"><div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"><div><span className="text-[10px] font-extrabold uppercase tracking-[.14em] text-[#4776ad]">Site / Marketplace</span><h3 className="mt-1 text-xl font-bold tracking-[-.03em]">Comportamento na vitrine pública</h3><p className="mt-1 text-xs leading-5 text-slate-400">Eventos sem senha, token, cartão, e-mail ou telefone. Sessões são armazenadas apenas como hash.</p></div>{storefront?.partial ? <span className="rounded-lg bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700">Leitura parcial</span> : null}</div>{storefront?.schemaReady === false ? <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">Analytics da vitrine aguardando a migration do Storefront 2.0. O painel continua funcionando sem fabricar números.</div> : site ? <><div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{[
+        ['Visitantes observados', site.visitors, 'sessões hash'],
+        ['Visualizações', site.pageViews, 'page_view'],
+        ['Produtos vistos', site.productViews, 'product_view'],
+        ['Buscas', site.searches, 'termos agregados'],
+        ['Favoritos', site.favorites, 'adições locais'],
+        ['Carrinho', site.addToCart, 'instrumentação disponível'],
+        ['Pedidos do checkout', site.orders, 'checkout idempotente'],
+        ['Conversão observada', `${site.conversion.toFixed(1)}%`, 'pedido / visitante'],
+      ].map(([label, value, detail]) => <div key={String(label)} className="rounded-xl bg-slate-50 p-3"><span className="text-[9px] font-extrabold uppercase tracking-[.08em] text-slate-400">{String(label)}</span><strong className="mt-1 block text-xl tracking-[-.03em]">{String(value)}</strong><small className="text-[10px] font-semibold text-slate-400">{String(detail)}</small></div>)}</div><div className="mt-4 grid gap-4 lg:grid-cols-2"><div className="rounded-xl border border-slate-100 p-4"><h4 className="text-sm font-bold">Produtos mais vistos</h4><div className="mt-3 grid gap-2">{storefront.topProducts.map((item, index) => <div key={item.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-xs"><span className="truncate"><b className="mr-2 text-[#174e93]">{index + 1}</b>{item.name}</span><strong>{item.views}</strong></div>)}{!storefront.topProducts.length ? <p className="text-xs text-slate-400">Sem product_view suficiente no período.</p> : null}</div></div><div className="rounded-xl border border-slate-100 p-4"><h4 className="text-sm font-bold">Buscas sem resultado</h4><div className="mt-3 grid gap-2">{storefront.searchGaps.map((item) => <div key={item.query} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-xs"><span className="truncate">“{item.query}”</span><strong>{item.searches}</strong></div>)}{!storefront.searchGaps.length ? <p className="text-xs text-slate-400">Nenhuma lacuna de busca observada.</p> : null}</div></div></div></> : <p className="mt-4 text-sm text-slate-400">Analytics indisponível neste momento.</p>}</section> : null}
       <style jsx global>{`@keyframes orcaly-report-in { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } } @media (prefers-reduced-motion: reduce) { [class*='orcaly-report-in'] { animation:none !important } }`}</style>
     </main>
   )

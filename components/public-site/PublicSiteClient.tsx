@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import PublicSiteRenderer, { type PublicSiteCompany, type PublicSiteProduct } from './PublicSiteRenderer'
+import StorefrontExperienceV2 from './StorefrontExperienceV2'
 
 type PublicSiteClientProps = {
   slug: string
@@ -48,9 +49,11 @@ export default function PublicSiteClient({ slug }: PublicSiteClientProps) {
 
   if (loading) {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#f7faff] px-4 text-[#071b3a]">
-        <div className="rounded-[2rem] bg-white p-8 text-center font-black shadow-xl shadow-blue-950/5">
-          Carregando site...
+      <main className="min-h-screen bg-[#f7faff] px-4 py-8 text-[#071b3a]">
+        <div className="mx-auto max-w-7xl space-y-4">
+          <div className="h-16 animate-pulse rounded-2xl bg-white motion-reduce:animate-none" />
+          <div className="h-[420px] animate-pulse rounded-[2rem] bg-slate-100 motion-reduce:animate-none" />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-56 animate-pulse rounded-2xl bg-white motion-reduce:animate-none" />)}</div>
         </div>
       </main>
     )
@@ -67,5 +70,5 @@ export default function PublicSiteClient({ slug }: PublicSiteClientProps) {
     )
   }
 
-  return <PublicSiteRenderer company={company} products={products} />
+  return <StorefrontExperienceV2 company={company} products={products}><PublicSiteRenderer company={company} products={products} /></StorefrontExperienceV2>
 }
