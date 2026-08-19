@@ -4,27 +4,193 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-type Member = { id:string; email:string; nome:string; role:string; is_active:boolean; area:string; last_login_at?:string|null }
-type Invite = { id:string; email:string; nome:string; role:string; status:string; expires_at:string }
-type Payload = { schemaReady:boolean; migration?:string|null; team:Member[]; invites:Invite[]; canManage:boolean; roleOptions:string[] }
+type Member = {
+  id: string
+  email: string
+  nome: string
+  role: string
+  is_active: boolean
+  area: string
+  last_login_at?: string | null
+}
 
-function roleLabel(role:string){return ({owner:'Owner',admin:'Platform Admin',platform_admin:'Platform Admin',finance:'Finance',support:'Support',security:'Security',operations:'Operations',viewer:'Viewer',prospector:'Comercial'} as Record<string,string>)[role]||role}
+type Invite = {
+  id: string
+  email: string
+  nome: string
+  role: string
+  status: string
+  expires_at: string
+}
 
-export default function AdminTeamV2(){
-  const [data,setData]=useState<Payload|null>(null)
-  const [error,setError]=useState('')
-  const [version,setVersion]=useState(0)
-  const [activationUrl,setActivationUrl]=useState('')
-  const [form,setForm]=useState({nome:'',email:'',role:'support',area:'',reason:''})
+type Payload = {
+  schemaReady: boolean
+  migration?: string | null
+  team: Member[]
+  invites: Invite[]
+  canManage: boolean
+  roleOptions: string[]
+}
 
-  useEffect(()=>{let active=true;void supabase.auth.getSession().then(async({data:auth})=>{const response=await fetch('/api/admin/team-v2',{headers:{Authorization:`Bearer ${auth.session?.access_token||''}`},cache:'no-store'});const payload=await response.json().catch(()=>({}));if(!active)return;if(!response.ok){setError(payload.error||'Não foi possível carregar a equipe.');return}setData(payload as Payload);setError('')});return()=>{active=false}},[version])
+function roleLabel(role: string) {
+  return ({
+    owner: 'Owner',
+    admin: 'Platform Admin',
+    platform_admin: 'Platform Admin',
+    finance: 'Finance',
+    support: 'Support',
+    security: 'Security',
+    operations: 'Operations',
+    viewer: 'Viewer',
+    prospector: 'Comercial',
+  } as Record<string, string>)[role] || role
+}
 
-  async function createInvite(){
-    const auth=await supabase.auth.getSession();const response=await fetch('/api/admin/team-v2',{method:'POST',headers:{Authorization:`Bearer ${auth.data.session?.access_token||''}`,'Content-Type':'application/json'},body:JSON.stringify({action:'create_invite',...form})});const payload=await response.json().catch(()=>({}));if(!response.ok){setError(payload.error||'Convite não criado.');return}setActivationUrl(payload.activationUrl||'');setForm({nome:'',email:'',role:'support',area:'',reason:''});setVersion(v=>v+1)
+export default function AdminTeamV2() {
+  const [data, setData] = useState<Payload | null>(null)
+  const [error, setError] = useState('')
+  const [version, setVersion] = useState(0)
+  const [activationUrl, setActivationUrl] = useState('')
+  const [form, setForm] = useState({ nome: '', email: '', role: 'support', area: '', reason: '' })
+
+  useEffect(() => {
+    let active = true
+    void supabase.auth.getSession().then(async ({ data: auth }) => {
+      const response = await fetch('/api/admin/team-v2', {
+        headers: { Authorization: `Bearer ${auth.session?.access_token || ''}` },
+        cache: 'no-store',
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!active) return
+      if (!response.ok) {
+        setError(payload.error || 'Não foi possível carregar a equipe.')
+        return
+      }
+      setData(payload as Payload)
+      setError('')
+    })
+    return () => { active = false }
+  }, [version])
+
+  async function createInvite() {
+    const auth = await supabase.auth.getSession()
+    const response = await fetch('/api/admin/team-v2', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${auth.data.session?.access_token || ''}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'create_invite', ...form }),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      setError(payload.error || 'Convite não criado.')
+      return
+    }
+    setActivationUrl(payload.activationUrl || '')
+    setForm({ nome: '', email: '', role: 'support', area: '', reason: '' })
+    setVersion((value) => value + 1)
   }
 
-  async function setActive(member:Member,active:boolean){const reason=window.prompt(`Motivo para ${active?'reativar':'desativar'} ${member.email}:`)||'';if(reason.trim().length<8)return;const auth=await supabase.auth.getSession();const response=await fetch('/api/admin/team-v2',{method:'POST',headers:{Authorization:`Bearer ${auth.data.session?.access_token||''}`,'Content-Type':'application/json'},body:JSON.stringify({action:'set_active',id:member.id,active,reason})});const payload=await response.json().catch(()=>({}));if(!response.ok){setError(payload.error||'Ação não concluída.');return}setVersion(v=>v+1)}
+  async function setActive(member: Member, active: boolean) {
+    const reason = window.prompt(`Motivo para ${active ? 'reativar' : 'desativar'} ${member.email}:`) || ''
+    if (reason.trim().length < 8) return
+    const auth = await supabase.auth.getSession()
+    const response = await fetch('/api/admin/team-v2', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${auth.data.session?.access_token || ''}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'set_active', id: member.id, active, reason }),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      setError(payload.error || 'Ação não concluída.')
+      return
+    }
+    setVersion((value) => value + 1)
+  }
 
-  if(!data)return <div className={`rounded-2xl border bg-white p-8 ${error?'text-red-700':'text-slate-400'}`}>{error||'Carregando equipe administrativa…'}</div>
-  return <div className="space-y-4"><section className="rounded-3xl border border-slate-200 bg-white p-6"><p className="text-[10px] font-semibold uppercase tracking-[.12em] text-slate-400">Equipe Admin / RBAC</p><h1 className="mt-1 text-3xl font-semibold tracking-[-.04em] text-[#0b2e63]">Least privilege sem senha escolhida pelo Owner.</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">Novos acessos usam convite com token hash e o próprio convidado cria a senha. O fluxo legado continua preservado em uma rota separada enquanto a migration do RBAC estendido não estiver aplicada.</p></section>{error?<div className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</div>:null>{!data.schemaReady?<div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800"><strong>RBAC estendido ainda não está habilitado no banco conectado.</strong><p className="mt-1">A migration `{data.migration}` não foi aplicada à produção. Finance/Support atuais continuam funcionando; convites para Security/Operations/Viewer ficam bloqueados até ambiente autorizado.</p><Link href="/admin/equipe" className="mt-3 inline-flex rounded-xl bg-white px-3 py-2 text-xs font-semibold">Abrir gestão legada preservada</Link></div>:null}{activationUrl?<div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"><strong>Convite criado. Copie o link agora:</strong><input readOnly value={activationUrl} className="mt-2 w-full rounded-xl border border-emerald-200 bg-white px-3 py-3 text-xs"/><p className="mt-2 text-xs">O token em claro não é armazenado pelo Orçaly.</p></div>:null}<section className="grid gap-4 xl:grid-cols-[1fr_360px]"><div className="rounded-2xl border border-slate-200 bg-white p-4"><h2 className="text-sm font-semibold">Acessos atuais</h2><div className="mt-3 space-y-2">{data.team.map(member=><article key={member.id} className="flex flex-col gap-3 rounded-xl border border-slate-100 p-3 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><strong className="block truncate text-sm">{member.nome||member.email}</strong><span className="block truncate text-xs text-slate-400">{member.email} · {roleLabel(member.role)} · {member.area}</span></div><span className={`w-fit rounded-lg px-2 py-1 text-[9px] font-semibold ${member.is_active?'bg-emerald-50 text-emerald-700':'bg-slate-100 text-slate-500'}`}>{member.is_active?'Ativo':'Inativo'}</span>{data.canManage&&member.role!=='owner'?<button onClick={()=>void setActive(member,!member.is_active)} className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-semibold">{member.is_active?'Desativar':'Reativar'}</button>:null}</article>)}</div></div><aside className="rounded-2xl border border-slate-200 bg-white p-5"><h2 className="text-sm font-semibold">Convidar administrador</h2>{data.schemaReady&&data.canManage?<div className="mt-4 grid gap-3"><input value={form.nome} onChange={e=>setForm({...form,nome:e.target.value})} placeholder="Nome" className="rounded-xl border border-slate-200 px-3 py-3 text-sm"/><input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="E-mail exclusivo" className="rounded-xl border border-slate-200 px-3 py-3 text-sm"/><select value={form.role} onChange={e=>setForm({...form,role:e.target.value})} className="rounded-xl border border-slate-200 px-3 py-3 text-sm">{data.roleOptions.map(role=><option key={role} value={role}>{roleLabel(role)}</option>)}</select><input value={form.area} onChange={e=>setForm({...form,area:e.target.value})} placeholder="Área (opcional)" className="rounded-xl border border-slate-200 px-3 py-3 text-sm"/><textarea value={form.reason} onChange={e=>setForm({...form,reason:e.target.value})} placeholder="Motivo do acesso" className="rounded-xl border border-slate-200 px-3 py-3 text-sm"/><button disabled={form.nome.length<2||!form.email.includes('@')||form.reason.trim().length<8} onClick={()=>void createInvite()} className="rounded-xl bg-[#0b2e63] px-4 py-3 text-sm font-semibold text-white disabled:opacity-40">Gerar convite seguro</button></div>:<p className="mt-3 text-sm leading-6 text-slate-400">Criação de novos papéis está bloqueada neste ambiente. Nenhum fallback inseguro com senha temporária será usado.</p>}</aside></section><section className="rounded-2xl border border-slate-200 bg-white p-4"><h2 className="text-sm font-semibold">Convites recentes</h2><div className="mt-3 grid gap-2 md:grid-cols-2">{data.invites.slice(0,12).map(inv=><div key={inv.id} className="rounded-xl bg-slate-50 p-3"><strong className="block text-xs">{inv.nome} · {roleLabel(inv.role)}</strong><span className="mt-1 block text-[10px] text-slate-400">{inv.email} · {inv.status}</span></div>)}</div></section></div>
+  if (!data) {
+    return <div className={`rounded-2xl border bg-white p-8 ${error ? 'text-red-700' : 'text-slate-400'}`}>{error || 'Carregando equipe administrativa…'}</div>
+  }
+
+  return (
+    <div className="space-y-4">
+      <section className="rounded-3xl border border-slate-200 bg-white p-6">
+        <p className="text-[10px] font-semibold uppercase tracking-[.12em] text-slate-400">Equipe Admin / RBAC</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-[-.04em] text-[#0b2e63]">Least privilege sem senha escolhida pelo Owner.</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">Novos acessos usam convite com token hash e o próprio convidado cria a senha. O fluxo legado continua preservado em uma rota separada enquanto a migration do RBAC estendido não estiver aplicada.</p>
+      </section>
+
+      {error ? <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
+
+      {!data.schemaReady ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
+          <strong>RBAC estendido ainda não está habilitado no banco conectado.</strong>
+          <p className="mt-1">A migration <code>{data.migration || 'admin_control_center_v2'}</code> não foi aplicada à produção. Finance/Support atuais continuam funcionando; convites para Security/Operations/Viewer ficam bloqueados até ambiente autorizado.</p>
+          <Link href="/admin/equipe" className="mt-3 inline-flex rounded-xl bg-white px-3 py-2 text-xs font-semibold">Abrir gestão legada preservada</Link>
+        </div>
+      ) : null}
+
+      {activationUrl ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          <strong>Convite criado. Copie o link agora:</strong>
+          <input readOnly value={activationUrl} className="mt-2 w-full rounded-xl border border-emerald-200 bg-white px-3 py-3 text-xs" />
+          <p className="mt-2 text-xs">O token em claro não é armazenado pelo Orçaly.</p>
+        </div>
+      ) : null}
+
+      <section className="grid gap-4 xl:grid-cols-[1fr_360px]">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <h2 className="text-sm font-semibold">Acessos atuais</h2>
+          <div className="mt-3 space-y-2">
+            {data.team.map((member) => (
+              <article key={member.id} className="flex flex-col gap-3 rounded-xl border border-slate-100 p-3 sm:flex-row sm:items-center">
+                <div className="min-w-0 flex-1">
+                  <strong className="block truncate text-sm">{member.nome || member.email}</strong>
+                  <span className="block truncate text-xs text-slate-400">{member.email} · {roleLabel(member.role)} · {member.area}</span>
+                </div>
+                <span className={`w-fit rounded-lg px-2 py-1 text-[9px] font-semibold ${member.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{member.is_active ? 'Ativo' : 'Inativo'}</span>
+                {data.canManage && member.role !== 'owner' ? (
+                  <button type="button" onClick={() => void setActive(member, !member.is_active)} className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-semibold">{member.is_active ? 'Desativar' : 'Reativar'}</button>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <aside className="rounded-2xl border border-slate-200 bg-white p-5">
+          <h2 className="text-sm font-semibold">Convidar administrador</h2>
+          {data.schemaReady && data.canManage ? (
+            <div className="mt-4 grid gap-3">
+              <input value={form.nome} onChange={(event) => setForm({ ...form, nome: event.target.value })} placeholder="Nome" className="rounded-xl border border-slate-200 px-3 py-3 text-sm" />
+              <input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="E-mail exclusivo" className="rounded-xl border border-slate-200 px-3 py-3 text-sm" />
+              <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} className="rounded-xl border border-slate-200 px-3 py-3 text-sm">
+                {data.roleOptions.map((role) => <option key={role} value={role}>{roleLabel(role)}</option>)}
+              </select>
+              <input value={form.area} onChange={(event) => setForm({ ...form, area: event.target.value })} placeholder="Área (opcional)" className="rounded-xl border border-slate-200 px-3 py-3 text-sm" />
+              <textarea value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} placeholder="Motivo do acesso" className="rounded-xl border border-slate-200 px-3 py-3 text-sm" />
+              <button type="button" disabled={form.nome.length < 2 || !form.email.includes('@') || form.reason.trim().length < 8} onClick={() => void createInvite()} className="rounded-xl bg-[#0b2e63] px-4 py-3 text-sm font-semibold text-white disabled:opacity-40">Gerar convite seguro</button>
+            </div>
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-slate-400">Criação de novos papéis está bloqueada neste ambiente. Nenhum fallback inseguro com senha temporária será usado.</p>
+          )}
+        </aside>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+        <h2 className="text-sm font-semibold">Convites recentes</h2>
+        <div className="mt-3 grid gap-2 md:grid-cols-2">
+          {data.invites.slice(0, 12).map((invite) => (
+            <div key={invite.id} className="rounded-xl bg-slate-50 p-3">
+              <strong className="block text-xs">{invite.nome} · {roleLabel(invite.role)}</strong>
+              <span className="mt-1 block text-[10px] text-slate-400">{invite.email} · {invite.status}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  )
 }
