@@ -275,7 +275,7 @@ export default function OrdersWorkspaceV2() {
                     </div>
                     <div className="grid gap-2">
                       {stageOrders.map((order) => (
-                        <KanbanCard key={order.id} order={order} disabled={movingId === order.id} onDragStart={() => setDraggedId(order.id)} onMove={(stageId) => void moveOrder(order.id, stageId)} workflow={workflow} />
+                        <KanbanCard key={order.id} order={order} businessType={businessType} disabled={movingId === order.id} onDragStart={() => setDraggedId(order.id)} onMove={(stageId) => void moveOrder(order.id, stageId)} workflow={workflow} />
                       ))}
                       {!stageOrders.length ? <div className="grid min-h-24 place-items-center rounded-xl border border-dashed border-slate-200 bg-white/60 px-3 text-center text-xs font-semibold text-slate-400">Arraste um pedido para esta etapa.</div> : null}
                     </div>
@@ -358,14 +358,14 @@ function ListOrder({ order, businessType, workflow, disabled, onMove }: { order:
   )
 }
 
-function KanbanCard({ order, disabled, onDragStart, onMove, workflow }: { order: Order; disabled: boolean; onDragStart: () => void; onMove: (stageId: string) => void; workflow: ReturnType<typeof orderWorkflowFor> }) {
+function KanbanCard({ order, businessType, disabled, onDragStart, onMove, workflow }: { order: Order; businessType: string; disabled: boolean; onDragStart: () => void; onMove: (stageId: string) => void; workflow: ReturnType<typeof orderWorkflowFor> }) {
   return (
     <article draggable={!disabled} onDragStart={onDragStart} className={`rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md ${disabled ? 'opacity-60' : 'cursor-grab active:cursor-grabbing'}`}>
       <div className="flex items-start justify-between gap-2"><Link href={`/painel/pedidos/${order.id}`} className="min-w-0 truncate text-sm font-extrabold text-slate-800 hover:text-[#174e93]">{customerName(order)}</Link><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black ring-1 ${priorityClass(order.prioridade || order.priority)}`}>{priorityLabel(order.prioridade || order.priority)}</span></div>
       <p className="mt-1 line-clamp-2 text-xs font-medium leading-5 text-slate-500">{order.produto || 'Pedido'}</p>
       <div className="mt-3 flex items-center justify-between gap-2"><strong className="text-sm text-[#174e93]">{money(orderValue(order))}</strong><span className={`text-[10px] font-bold ${deadlineClass(order.prazo_entrega)}`}>{dateLabel(order.prazo_entrega)}</span></div>
       {order.next_action?.titulo ? <div className="mt-2 rounded-lg bg-blue-50 px-2.5 py-2 text-[10px] font-bold leading-4 text-blue-700">Próxima: {order.next_action.titulo}</div> : null}
-      <select aria-label={`Mover ${customerName(order)}`} disabled={disabled} value={orderStageForStatus(order.status, '').id} onChange={(event) => onMove(event.target.value)} className="mt-2 h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-bold outline-none md:hidden">
+      <select aria-label={`Mover ${customerName(order)}`} disabled={disabled} value={orderStageForStatus(order.status, businessType).id} onChange={(event) => onMove(event.target.value)} className="mt-2 h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-bold outline-none md:hidden">
         {workflow.map((stage) => <option key={stage.id} value={stage.id}>{stage.label}</option>)}
       </select>
     </article>
