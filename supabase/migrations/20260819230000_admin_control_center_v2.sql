@@ -1,5 +1,7 @@
 -- ORCALY ADMIN CONTROL CENTER 2.0
--- Additive-only migration. Do not apply to production without an explicitly confirmed target.
+-- Preferentially additive migration. The two role CHECK constraints and the invite
+-- completion RPC are intentionally replaced to support the new RBAC model.
+-- Do not apply to production without an explicitly confirmed target and staging QA.
 
 create table if not exists public.platform_support_tickets (
   id uuid primary key default gen_random_uuid(),
@@ -52,8 +54,94 @@ alter table public.platform_support_tickets enable row level security;
 alter table public.platform_support_ticket_events enable row level security;
 alter table public.platform_feature_flags enable row level security;
 
--- Deliberately no authenticated-client policies. Control Center APIs use server-side
--- service role only after platform RBAC has validated intent.
+-- No authenticated-client policies by design. Control Center APIs use service role
+-- only after server-side platform RBAC validates actor + intent.
+
+-- Non-data-destructive constraint evolution required by the real existing schema.
+alter table public.platform_admins drop constraint if exists platform_admins_role_check_v2;
+alter table public.platform_admins add constraint platform_admins_role_check_v3
+  check (lower(role) = any (array[
+    'owner','super_admin','admin','platform_admin','finance','support','suporte',
+    'security','seguranca','operations','operacoes','viewer','visualizador','prospector'
+  ]::text[]));
+
+alter table public.platform_admin_invites drop constraint if exists platform_admin_invites_role_check;
+alter table public.platform_admin_invites add constraint platform_admin_invites_role_check_v2
+  check (lower(role) = any (array[
+    'admin','platform_admin','finance','support','security','operations','viewer','prospector'
+  ]::text[]));
+
+create or replace function public.complete_platform_admin_invite(p_claim_id uuid, p_user_id uuid)
+returns setof public.platform_admins
+language plpgsql
+set search_path to 'pg_catalog', 'public', 'auth'
+as $function$
+declare
+  v_invite public.platform_admin_invites%rowtype;
+  v_admin public.platform_admins%rowtype;
+  v_role text;
+begin
+  if p_claim_id is null or p_user_id is null then
+    raise exception 'invalid_activation_input';
+  end if;
+
+  select * into v_invite
+  from public.platform_admin_invites
+  where status = 'activating'
+    and activation_claim_id = p_claim_id
+    and expires_at > now()
+  for update;
+
+  if not found then raise exception 'invite_not_claimed'; end if;
+
+  v_role := lower(v_invite.role);
+  if v_role not in ('admin','platform_admin','finance','support','security','operations','viewer','prospector') then
+    raise exception 'invalid_invite_role';
+  end if;
+
+  if exists (select 1 from public.platform_admins p where lower(p.email) = v_invite.email_normalized) then
+    raise exception 'platform_admin_email_exists';
+  end if;
+
+  insert into public.platform_admins (
+    user_id,email,nome,role,is_active,permissions,area,observacoes,created_by,must_change_password,updated_at
+  ) values (
+    p_user_id,
+    v_invite.email_normalized,
+    btrim(v_invite.nome),
+    v_role,
+    true,
+    v_invite.permissions,
+    coalesce(nullif(btrim(v_invite.area), ''), 'Plataforma'),
+    v_invite.observacoes,
+    v_invite.created_by_email,
+    false,
+    now()
+  ) returning * into v_admin;
+
+  update public.platform_admin_invites
+  set status = 'activated',
+      activated_at = now(),
+      claimed_at = null,
+      activation_claim_id = null,
+      user_id = p_user_id,
+      platform_admin_id = v_admin.id
+  where id = v_invite.id
+    and status = 'activating'
+    and activation_claim_id = p_claim_id;
+
+  if not found then raise exception 'invite_activation_race'; end if;
+
+  return next v_admin;
+  return;
+end;
+$function$;
+
+insert into public.platform_feature_flags (key,description,enabled,scope,scope_value,created_by,updated_by)
+values
+  ('support.mode','Permite iniciar Modo Suporte read-only auditado.',false,'global','*','migration','migration'),
+  ('admin.ai','Permite gerar resumo administrativo assistido por IA.',false,'global','*','migration','migration')
+on conflict (key,scope,scope_value) do nothing;
 
 create index if not exists idx_platform_support_tickets_status_priority_created
   on public.platform_support_tickets (status, priority, created_at desc);
