@@ -1,3 +1,36 @@
 .subscriptionPage :global(#subscription-v2-title) {
   color: #05070b !important;
+  padding-bottom: 0.34rem;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 18px rgba(255, 255, 255, 0.12);
+  background-image: linear-gradient(
+    90deg,
+    #5eead4 0%,
+    #7dd3fc 58%,
+    rgba(125, 211, 252, 0) 100%
+  );
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  background-size: clamp(5.5rem, 34%, 12rem) 3px;
+  animation: subscription-title-accent 520ms 120ms cubic-bezier(.2,.75,.2,1) both;
+}
+
+@keyframes subscription-title-accent {
+  from {
+    opacity: 0.72;
+    transform: translateY(3px);
+    background-size: 0 3px;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    background-size: clamp(5.5rem, 34%, 12rem) 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subscriptionPage :global(#subscription-v2-title) {
+    animation: none;
+  }
 }
