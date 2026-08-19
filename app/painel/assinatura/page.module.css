@@ -1,0 +1,22 @@
+.subscriptionPage :global(#subscription-v2-title) {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  color: #05070b !important;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 1rem;
+  padding: 0.28em 0.42em 0.34em;
+  box-shadow:
+    0 12px 30px rgba(2, 12, 27, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  text-shadow: none !important;
+  backdrop-filter: blur(10px);
+}
+
+@media (max-width: 640px) {
+  .subscriptionPage :global(#subscription-v2-title) {
+    border-radius: 0.8rem;
+    padding: 0.25em 0.34em 0.3em;
+  }
+}
