@@ -2,6 +2,30 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { AffiliateError, affiliateStatusCode, hashAffiliateValue, requireAffiliate } from "@/lib/affiliates/server";
 
+type DemoEventMetadata = {
+  eventType?: string;
+  sessionId?: string;
+  companyName?: string;
+  segment?: string;
+  token?: string;
+  tokenHash?: string;
+  synthetic?: boolean;
+};
+
+type DemoEventRow = {
+  metadata: DemoEventMetadata | null;
+  created_at: string;
+};
+
+type DemoSession = {
+  id: string;
+  companyName: string;
+  segment: string;
+  token: string;
+  url: string;
+  createdAt: string;
+};
+
 function text(value: unknown, max = 300) {
   return String(value || "").trim().slice(0, max);
 }
@@ -22,23 +46,23 @@ export async function GET(request: NextRequest) {
       .limit(600);
     if (error) throw error;
 
-    const events = data || [];
-    const sessions = events
-      .filter((row: any) => row.metadata?.eventType === "session")
+    const events = (data || []) as DemoEventRow[];
+    const sessions: DemoSession[] = events
+      .filter((row) => row.metadata?.eventType === "session")
       .slice(0, 100)
-      .map((row: any) => ({
-        id: row.metadata?.sessionId,
-        companyName: row.metadata?.companyName,
-        segment: row.metadata?.segment,
-        token: row.metadata?.token,
-        url: row.metadata?.token ? `${appUrl()}/demo/${row.metadata.token}` : null,
+      .map((row) => ({
+        id: text(row.metadata?.sessionId, 80),
+        companyName: text(row.metadata?.companyName, 140),
+        segment: text(row.metadata?.segment, 60),
+        token: text(row.metadata?.token, 160),
+        url: row.metadata?.token ? `${appUrl()}/demo/${text(row.metadata.token, 160)}` : "",
         createdAt: row.created_at,
       }))
-      .filter((row: any) => row.id && row.url);
+      .filter((row) => Boolean(row.id && row.url));
 
     const openMap = new Map<string, { count: number; lastOpenedAt: string | null }>();
     for (const row of events) {
-      const metadata = (row.metadata || {}) as Record<string, unknown>;
+      const metadata = row.metadata || {};
       if (metadata.eventType !== "open") continue;
       const id = text(metadata.sessionId, 80);
       if (!id) continue;
@@ -49,7 +73,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      sessions: sessions.map((session: any) => ({ ...session, ...(openMap.get(session.id) || { count: 0, lastOpenedAt: null }) })),
+      sessions: sessions.map((session) => ({ ...session, ...(openMap.get(session.id) || { count: 0, lastOpenedAt: null }) })),
     });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Não foi possível carregar demonstrações." }, { status: affiliateStatusCode(error) });
