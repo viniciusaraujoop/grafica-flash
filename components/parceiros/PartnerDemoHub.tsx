@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import PartnerSystemDemo from "@/components/parceiros/PartnerSystemDemo";
 import { supabase } from "@/lib/supabase";
 
@@ -29,9 +28,7 @@ function date(value?: string | null) {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(parsed);
 }
 
-export default function PartnerDemoHub() {
-  const searchParams = useSearchParams();
-  const previewOnly = searchParams.get("preview") === "1";
+export default function PartnerDemoHub({ previewOnly = false }: { previewOnly?: boolean }) {
   const [checking, setChecking] = useState(!previewOnly);
   const [partner, setPartner] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([]);
