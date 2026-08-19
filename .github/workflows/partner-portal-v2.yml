@@ -5,13 +5,16 @@ on:
     paths:
       - 'app/parceiros/**'
       - 'app/demo/**'
+      - 'app/cadastro/codigo/**'
       - 'app/admin/indicacoes/**'
       - 'app/api/parceiros/**'
       - 'app/api/public/partner-demo/**'
+      - 'app/api/public/partner-code/**'
       - 'app/api/admin/affiliates/**'
       - 'app/api/checkout/lead/route.ts'
       - 'components/parceiros/**'
       - 'lib/affiliates/**'
+      - 'supabase/migrations/20260819221500_partner_portal_v2_indexes.sql'
       - 'scripts/verify-partner-portal-v2.mjs'
       - 'package.json'
       - '.github/workflows/partner-portal-v2.yml'
@@ -38,21 +41,28 @@ jobs:
           app/api/parceiros/demos/route.ts
           app/api/parceiros/ai/route.ts
           app/api/public/partner-demo/[token]/route.ts
+          app/api/public/partner-code/[code]/route.ts
           app/api/admin/affiliates/growth/route.ts
           app/api/checkout/lead/route.ts
+          app/cadastro/codigo/page.tsx
           app/parceiros/painel/page.tsx
           app/parceiros/painel/layout.tsx
           app/parceiros/demo/page.tsx
           app/parceiros/notificacoes/page.tsx
+          app/parceiros/pipeline/page.tsx
           app/demo/[token]/page.tsx
           app/admin/indicacoes/growth/page.tsx
           components/parceiros/PartnerPortalV2.tsx
           components/parceiros/PartnerNotificationsCenter.tsx
           components/parceiros/PartnerDemoHub.tsx
           components/parceiros/TrackedPartnerDemo.tsx
+          components/parceiros/PartnerPipelineV2.tsx
           lib/affiliates/portal-v2.ts
       - name: TypeScript and production build
         run: npm run build
+      - name: Dependency audit (report debt, do not auto-upgrade)
+        continue-on-error: true
+        run: npm audit --audit-level=high
 
   global-lint-baseline:
     runs-on: ubuntu-latest
