@@ -1,6 +1,5 @@
-// ORCALY_OWNER_BACKOFFICE_V2
-import OwnerBackofficeClient from '@/components/admin/OwnerBackofficeClient'
+import AdminControlCenterV2 from '@/components/admin/AdminControlCenterV2'
 
 export default function AdminPage() {
-  return <OwnerBackofficeClient initialView="overview" />
+  return <AdminControlCenterV2 />
 }

@@ -1,6 +1,5 @@
-// ORCALY_OWNER_BACKOFFICE_V2
-import { redirect } from 'next/navigation'
+import AdminCompaniesV2 from '@/components/admin/AdminCompaniesV2'
 
 export default function AdminEmpresasPage() {
-  redirect('/admin/assinantes')
+  return <AdminCompaniesV2 />
 }
