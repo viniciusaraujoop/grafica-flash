@@ -9,14 +9,14 @@ function cleanLead(body: any) {
   return {
     nome,
     telefone: String(body.telefone || '').trim() || null,
-    email: String(body.email || '').trim() || null,
+    email: String(body.email || '').trim().toLowerCase() || null,
     origem: String(body.origem || 'manual'),
     etapa: String(body.etapa || 'novo_lead'),
     status: String(body.status || 'ativo'),
     valor_estimado: Number(body.valor_estimado || 0),
     proximo_contato_em: body.proximo_contato_em || null,
     observacoes: String(body.observacoes || '').trim() || null,
-    tags: Array.isArray(body.tags) ? body.tags : [],
+    tags: Array.isArray(body.tags) ? body.tags.map((tag: unknown) => String(tag).trim()).filter(Boolean).slice(0, 20) : [],
     order_id: body.order_id || null,
     proposal_id: body.proposal_id || null,
   }
@@ -75,12 +75,80 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const payload = cleanLead(body)
+    const companyId = result.companyAccess!.company.id
+
+    let existing: any = null
+    if (payload.email) {
+      const { data } = await result.supabaseAdmin
+        .from('crm_leads')
+        .select('*')
+        .eq('company_id', companyId)
+        .ilike('email', payload.email)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      existing = data
+    }
+
+    if (!existing && payload.telefone) {
+      const { data } = await result.supabaseAdmin
+        .from('crm_leads')
+        .select('*')
+        .eq('company_id', companyId)
+        .eq('telefone', payload.telefone)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      existing = data
+    }
+
+    if (existing?.id) {
+      const incomingStage = payload.etapa === 'novo_lead' && existing.etapa && existing.etapa !== 'novo_lead' ? existing.etapa : payload.etapa
+      const mergedTags = Array.from(new Set([...(Array.isArray(existing.tags) ? existing.tags : []), ...payload.tags])).slice(0, 20)
+      const update = {
+        nome: payload.nome || existing.nome,
+        telefone: payload.telefone || existing.telefone,
+        email: payload.email || existing.email,
+        origem: payload.origem === 'manual' && existing.origem ? existing.origem : payload.origem,
+        etapa: incomingStage,
+        status: 'ativo',
+        valor_estimado: Math.max(Number(existing.valor_estimado || 0), payload.valor_estimado),
+        proximo_contato_em: payload.proximo_contato_em || existing.proximo_contato_em,
+        observacoes: payload.observacoes || existing.observacoes,
+        tags: mergedTags,
+        order_id: payload.order_id || existing.order_id,
+        proposal_id: payload.proposal_id || existing.proposal_id,
+        updated_at: new Date().toISOString(),
+      }
+
+      const { data, error } = await result.supabaseAdmin
+        .from('crm_leads')
+        .update(update)
+        .eq('id', existing.id)
+        .eq('company_id', companyId)
+        .select('*')
+        .single()
+
+      if (error) throw error
+
+      await createAuditLog(result.supabaseAdmin, {
+        company_id: companyId,
+        user_id: result.requester!.id,
+        action: 'crm.lead.reused',
+        entity: 'crm_leads',
+        entity_id: data.id,
+        details: { nome: data.nome, etapa: data.etapa, matched_by: payload.email ? 'email_or_phone' : 'phone' },
+        request,
+      })
+
+      return NextResponse.json({ ok: true, reused: true, lead: data })
+    }
 
     const { data, error } = await result.supabaseAdmin
       .from('crm_leads')
       .insert({
         ...payload,
-        company_id: result.companyAccess!.company.id,
+        company_id: companyId,
         created_by: result.requester!.id,
       })
       .select('*')
@@ -89,7 +157,7 @@ export async function POST(request: NextRequest) {
     if (error) throw error
 
     await createAuditLog(result.supabaseAdmin, {
-      company_id: result.companyAccess!.company.id,
+      company_id: companyId,
       user_id: result.requester!.id,
       action: 'crm.lead.created',
       entity: 'crm_leads',
@@ -99,7 +167,7 @@ export async function POST(request: NextRequest) {
     })
 
     await createNotification(result.supabaseAdmin, {
-      company_id: result.companyAccess!.company.id,
+      company_id: companyId,
       user_id: result.requester!.id,
       tipo: 'crm',
       titulo: 'Novo lead criado',
@@ -108,7 +176,7 @@ export async function POST(request: NextRequest) {
       payload: { lead_id: data.id },
     })
 
-    return NextResponse.json({ ok: true, lead: data })
+    return NextResponse.json({ ok: true, reused: false, lead: data })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro ao criar lead.'
     return NextResponse.json({ error: message }, { status: 500 })
