@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
-import PartnerSystemDemo from "@/components/parceiros/PartnerSystemDemo";
+import PartnerDemoHub from "@/components/parceiros/PartnerDemoHub";
 
 export const metadata: Metadata = {
   title: "Demonstração Orçaly",
-  description:
-    "Ambiente demonstrativo e somente leitura do Orçaly para apresentações comerciais.",
-  robots: {
-    index: false,
-    follow: false,
-  },
+  description: "Ambiente demonstrativo sintético e somente leitura do Orçaly para apresentações comerciais.",
+  robots: { index: false, follow: false },
 };
 
-export default function ParceirosDemoPage() {
-  return <PartnerSystemDemo />;
+export default async function ParceirosDemoPage({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
+  const params = await searchParams;
+  return <PartnerDemoHub previewOnly={params.preview === "1"} />;
 }
