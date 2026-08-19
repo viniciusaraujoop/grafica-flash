@@ -44,13 +44,29 @@ export type PublicStorefrontProduct = {
   created_at?: string | null
 }
 
+export type PublicStorefrontReview = {
+  id: string
+  rating: number
+  comment?: string | null
+  photo_url?: string | null
+  company_reply?: string | null
+  replied_at?: string | null
+  created_at: string
+}
+
 function cleanSlug(value: unknown) {
   return String(value || '').trim().toLowerCase().slice(0, 80)
 }
 
-function validProductId(value: unknown) {
+export function validProductId(value: unknown) {
   const id = String(value || '').trim()
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id) ? id : ''
+}
+
+function missingTable(error: { code?: string; message?: string } | null | undefined, table: string) {
+  const code = String(error?.code || '')
+  const message = String(error?.message || '').toLowerCase()
+  return code === '42P01' || code === 'PGRST205' || message.includes(table.toLowerCase()) && message.includes('does not exist')
 }
 
 export async function findPublicCompanyBySlug(value: unknown) {
@@ -90,6 +106,49 @@ export async function loadPublicStorefrontProduct(slugValue: unknown, productIdV
   if (!data || data.ativo === false || data.available === false) return null
 
   return { company, product: data as unknown as PublicStorefrontProduct }
+}
+
+export async function loadRelatedStorefrontProducts(companyId: string, product: PublicStorefrontProduct, limit = 4) {
+  const supabase = getSupabaseAdmin()
+  let query = supabase
+    .from('products')
+    .select('id,nome,descricao_curta,categoria,preco,preco_promocional,promocao_ativa,preco_sob_consulta,imagem_url,image_urls,destaque,ativo,available,estoque,created_at')
+    .eq('company_id', companyId)
+    .neq('id', product.id)
+    .or('ativo.is.null,ativo.eq.true')
+    .or('available.is.null,available.eq.true')
+    .limit(Math.max(1, Math.min(limit, 8)))
+
+  const category = String(product.categoria || '').trim()
+  if (category) query = query.eq('categoria', category)
+
+  const { data, error } = await query.order('destaque', { ascending: false }).order('created_at', { ascending: false })
+  if (error) return []
+  return (data || []) as unknown as PublicStorefrontProduct[]
+}
+
+export async function loadPublicProductReviews(companyId: string, productIdValue: unknown) {
+  const productId = validProductId(productIdValue)
+  if (!productId) return { schemaReady: true, reviews: [] as PublicStorefrontReview[], average: null as number | null, total: 0 }
+
+  const supabase = getSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('storefront_reviews')
+    .select('id,rating,comment,photo_url,company_reply,replied_at,created_at')
+    .eq('company_id', companyId)
+    .eq('product_id', productId)
+    .eq('status', 'published')
+    .order('created_at', { ascending: false })
+    .limit(30)
+
+  if (error) {
+    if (missingTable(error, 'storefront_reviews')) return { schemaReady: false, reviews: [] as PublicStorefrontReview[], average: null as number | null, total: 0 }
+    return { schemaReady: true, reviews: [] as PublicStorefrontReview[], average: null as number | null, total: 0 }
+  }
+
+  const reviews = (data || []) as unknown as PublicStorefrontReview[]
+  const average = reviews.length ? Number((reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length).toFixed(1)) : null
+  return { schemaReady: true, reviews, average, total: reviews.length }
 }
 
 export function productPrice(product: PublicStorefrontProduct) {
