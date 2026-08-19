@@ -60,6 +60,10 @@ jobs:
           components/parceiros/PartnerPipelineV2.tsx
           lib/affiliates/portal-v2.ts
       - name: TypeScript and production build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-build.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-build-placeholder
+          SUPABASE_SERVICE_ROLE_KEY: ci-build-placeholder
         run: npm run build
       - name: Dependency audit (report debt, do not auto-upgrade)
         continue-on-error: true
