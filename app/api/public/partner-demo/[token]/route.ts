@@ -22,8 +22,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ tok
     const { data: rows, error } = await admin
       .from("affiliate_activity_events")
       .select("affiliate_id,metadata,created_at")
-      .eq("kind", "demo_session")
-      .contains("metadata", { tokenHash })
+      .eq("kind", "demo")
+      .contains("metadata", { eventType: "session", tokenHash })
       .order("created_at", { ascending: false })
       .limit(1);
     if (error) throw error;
@@ -35,9 +35,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ tok
     const metadata = row.metadata as Record<string, unknown>;
     await admin.from("affiliate_activity_events").insert({
       affiliate_id: row.affiliate_id,
-      kind: "demo_open",
+      kind: "demo",
       xp: 0,
       metadata: {
+        eventType: "open",
         sessionId: metadata.sessionId,
         referrerHost: (() => {
           try { return new URL(request.headers.get("referer") || "").hostname || null; } catch { return null; }
