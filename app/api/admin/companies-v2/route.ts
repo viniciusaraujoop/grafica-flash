@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   const rows = (data || []) as JsonRecord[]
   const hasMore = rows.length > limit
-  const page = rows.slice(0, limit).map((company) => ({ ...company, state: companySubscriptionState(company) }))
-  return NextResponse.json({ rows: page, nextCursor: hasMore ? String(page[page.length - 1]?.created_at || '') : null, hasMore })
+  const sourcePage = rows.slice(0, limit)
+  const nextCursor = hasMore ? String(sourcePage[sourcePage.length - 1]?.created_at || '') : null
+  const page = sourcePage.map((company) => ({ ...company, state: companySubscriptionState(company) }))
+  return NextResponse.json({ rows: page, nextCursor, hasMore })
 }
