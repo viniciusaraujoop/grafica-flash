@@ -23,6 +23,19 @@ export function getSignupWebhookSecret() {
   return text(process.env.MP_SIGNUP_WEBHOOK_SECRET);
 }
 
+function friendlyMercadoPagoMessage(message: string) {
+  const normalized = message.trim().toLowerCase();
+
+  if (
+    normalized.includes("invalid user identification number") ||
+    normalized.includes("invalid identification number")
+  ) {
+    return "CPF/CNPJ inválido. Confira os números informados.";
+  }
+
+  return message;
+}
+
 export async function signupMercadoPagoRequest(
   path: string,
   init: RequestInit = {},
@@ -42,12 +55,13 @@ export async function signupMercadoPagoRequest(
   const payload = (await response.json().catch(() => ({}))) as JsonRecord;
 
   if (!response.ok) {
-    const message = String(
+    const providerMessage = String(
       payload.message ||
         payload.error_description ||
         payload.error ||
         `Mercado Pago retornou HTTP ${response.status}.`,
     );
+    const message = friendlyMercadoPagoMessage(providerMessage);
 
     throw Object.assign(new Error(message), {
       status: response.status,
