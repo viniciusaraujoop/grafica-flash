@@ -1,0 +1,40 @@
+name: Main Site v2 Branch QA
+
+on:
+  push:
+    branches:
+      - feat/main-site-v2
+  workflow_dispatch:
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Domain and regression invariants
+        run: npm test
+      - name: Payment boundary regression
+        run: npm run verify:payments
+      - name: Focused lint
+        run: npx eslint app/page.tsx app/sitemap.ts app/robots.ts app/solucoes/[slug]/page.tsx components/marketing/MainSiteV2.tsx components/marketing/ProductDemoTabs.tsx components/marketing/PlanSelector.tsx components/marketing/ReferralBridge.tsx lib/marketing/main-site.ts
+      - name: TypeScript and production build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-build.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-build-placeholder
+          SUPABASE_SERVICE_ROLE_KEY: ci-build-placeholder
+          NEXT_PUBLIC_APP_URL: https://ci.orcaly.invalid
+        run: npm run build
+      - name: Diff whitespace check
+        run: git diff --check 079c8d781f074d6e86663f9968596694183ac81a...HEAD
+      - name: Dependency audit baseline
+        continue-on-error: true
+        run: npm audit --audit-level=high
