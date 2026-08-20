@@ -63,6 +63,7 @@ const arrayFields = new Set(['site_benefits','site_faq','site_testimonials','sit
 const booleanFields = new Set(['site_promo_active','site_show_marketplace','site_enable_cart','site_enable_coupons','site_show_prices'])
 const colorFields = new Set(['site_primary_color','site_accent_color','site_background_color','site_text_color','site_card_color'])
 const longTextFields = new Set(['site_about_text','site_seo_description','site_promo_text','site_empty_catalog_text','site_whatsapp_message'])
+const urlFields = new Set(['logo_url'])
 const enumFields: Record<string, Set<string>> = {
   site_layout: new Set(['marketplace','premium','compact','food','services']),
   site_font_style: new Set(['modern','classic','editorial','friendly','compact']),
@@ -102,6 +103,20 @@ function safeColor(value: unknown) {
   return /^#[0-9a-f]{6}$/i.test(color) ? color : undefined
 }
 
+function safeUrl(value: unknown) {
+  const text = String(value ?? '').trim()
+  if (!text) return ''
+  if (text.length > 2048) return undefined
+
+  try {
+    const parsed = new URL(text)
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return undefined
+    return parsed.toString()
+  } catch {
+    return undefined
+  }
+}
+
 function cleanPayload(body: Record<string, unknown>) {
   const payload: Record<string, unknown> = {}
 
@@ -136,6 +151,11 @@ function cleanPayload(body: Record<string, unknown>) {
     if (colorFields.has(field)) {
       const color = safeColor(value)
       if (color) payload[field] = color
+      continue
+    }
+    if (urlFields.has(field)) {
+      const url = safeUrl(value)
+      if (url !== undefined) payload[field] = url
       continue
     }
     if (enumFields[field]) {
