@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     let query = supabaseAdmin
       .from('orders')
       .select(
-        'id,nome,telefone,customer_name,customer_phone,customer_email,produto,status,payment_status,paid_at,total,total_amount,valor_total,preco_estimado,created_at,updated_at,prioridade,priority,prazo_entrega,responsavel_id,responsavel_nome,canal_origem,delivery_type,arquivo_url,file_url,observacoes,observacoes_internas',
+        'id,nome,telefone,customer_name,customer_phone,customer_email,produto,status,payment_status,paid_at,total,total_amount,valor_total,preco_estimado,created_at,updated_at,prioridade,priority,prazo_entrega,responsavel_id,responsavel_nome,canal_origem,delivery_type,arquivo_url,observacoes,observacoes_internas',
         { count: 'exact' },
       )
       .eq('company_id', access.company.id)
