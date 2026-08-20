@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm test",
+    "prebuild": "npm test && npm run verify:payments && npx eslint app/page.tsx app/sitemap.ts app/robots.ts app/solucoes/[slug]/page.tsx components/marketing/MainSiteV2.tsx components/marketing/ProductDemoTabs.tsx components/marketing/PlanSelector.tsx components/marketing/ReferralBridge.tsx lib/marketing/main-site.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
