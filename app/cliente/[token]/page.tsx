@@ -1,180 +1,40 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 
-type Order = {
-  id: string
-  nome?: string | null
-  customer_name?: string | null
-  produto?: string | null
-  status?: string | null
-  payment_status?: string | null
-  paid_at?: string | null
-  total?: number | null
-  total_amount?: number | null
-  valor_total?: number | null
-  preco_estimado?: number | null
-  created_at?: string | null
-  updated_at?: string | null
-  prazo_entrega?: string | null
-  delivery_type?: string | null
-  endereco_entrega?: string | null
-  forma_pagamento?: string | null
-  arquivo_url?: string | null
-  file_url?: string | null
+type Order = { id:string; nome?:string|null; customer_name?:string|null; produto?:string|null; status?:string|null; payment_status?:string|null; paid_at?:string|null; total?:number|null; total_amount?:number|null; valor_total?:number|null; preco_estimado?:number|null; created_at?:string|null; updated_at?:string|null; prazo_entrega?:string|null; delivery_type?:string|null; endereco_entrega?:string|null; forma_pagamento?:string|null; arquivo_url?:string|null; file_url?:string|null }
+type Proposal = { id:string; token:string; proposta_numero?:string|null; titulo?:string|null; status?:string|null; valor_total?:number|null; valor_sinal?:number|null; prazo?:string|null; valid_until?:string|null; created_at?:string|null; approved_at?:string|null; payment_url?:string|null; imagem_capa_url?:string|null; preview_image_url?:string|null }
+type TimelineEvent = { id:string; order_id:string; new_status:string; note?:string|null; created_at?:string|null }
+type ArtApproval = { id:string; order_id?:string|null; token:string; title?:string|null; produto_nome?:string|null; preview_url?:string|null; artwork_url?:string|null; status?:string|null; approved_at?:string|null; requested_changes_at?:string|null; expires_at?:string|null }
+type PortalPayload = { company:{ nome?:string; logo_url?:string|null; whatsapp?:string|null; site_primary_color?:string|null; site_accent_color?:string|null }; link:{ customer_name?:string|null; customer_phone?:string|null }; orders:Order[]; proposals:Proposal[]; timeline:TimelineEvent[]; artApprovals:ArtApproval[] }
+
+function money(value: unknown) { return Number(value || 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' }) }
+function dateBR(value?:string|null, withTime=false) { if(!value)return 'Não informado'; const date=new Date(value); if(Number.isNaN(date.getTime()))return 'Não informado'; return new Intl.DateTimeFormat('pt-BR', withTime ? {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'} : {day:'2-digit',month:'long',year:'numeric'}).format(date) }
+function orderValue(order:Order){ return Number(order.total_amount || order.total || order.valor_total || order.preco_estimado || 0) }
+function whatsappUrl(phone:string|null|undefined,message:string){ const raw=String(phone||'').replace(/\D/g,''); if(!raw)return '#'; const normalized=raw.startsWith('55')?raw:`55${raw}`; return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}` }
+function statusTone(status?:string|null){ const value=String(status||'').toLowerCase(); if(value.includes('entreg')||value.includes('conclu')||value.includes('aprov'))return 'bg-emerald-50 text-emerald-700 ring-emerald-100'; if(value.includes('cancel')||value.includes('recus')||value.includes('expir'))return 'bg-red-50 text-red-700 ring-red-100'; if(value.includes('aguard')||value.includes('pend')||value.includes('sinal'))return 'bg-amber-50 text-amber-700 ring-amber-100'; return 'bg-blue-50 text-blue-700 ring-blue-100' }
+function reviewable(status?:string|null){ const value=String(status||'').toLowerCase(); return value.includes('entreg')||value.includes('conclu')||value.includes('finaliz') }
+
+export default function ClientePortalPage(){
+  const params=useParams<{token:string}>(); const token=Array.isArray(params?.token)?params.token[0]:params?.token
+  const[payload,setPayload]=useState<PortalPayload|null>(null); const[expandedOrder,setExpandedOrder]=useState<string|null>(null); const[loading,setLoading]=useState(true); const[error,setError]=useState('')
+  async function load(){ setLoading(true);setError('');try{const response=await fetch(`/api/cliente/${token}`,{cache:'no-store'});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'Área do cliente não encontrada.');setPayload(data)}catch(err){setError(err instanceof Error?err.message:'Área do cliente não encontrada.')}finally{setLoading(false)} }
+  useEffect(()=>{if(token)void load()},[token])
+  const timelineByOrder=useMemo(()=>{const map=new Map<string,TimelineEvent[]>();for(const event of payload?.timeline||[]){if(!map.has(event.order_id))map.set(event.order_id,[]);map.get(event.order_id)!.push(event)}return map},[payload?.timeline])
+  const artsByOrder=useMemo(()=>{const map=new Map<string,ArtApproval[]>();for(const art of payload?.artApprovals||[]){if(!art.order_id)continue;if(!map.has(art.order_id))map.set(art.order_id,[]);map.get(art.order_id)!.push(art)}return map},[payload?.artApprovals])
+  if(loading)return <main className="min-h-screen bg-[#f4f7fb] px-4 py-8"><div className="mx-auto grid max-w-5xl gap-4"><div className="h-48 animate-pulse rounded-[1.75rem] bg-slate-200 motion-reduce:animate-none"/><div className="grid gap-4 md:grid-cols-2"><div className="h-72 animate-pulse rounded-[1.5rem] bg-slate-100 motion-reduce:animate-none"/><div className="h-72 animate-pulse rounded-[1.5rem] bg-slate-100 motion-reduce:animate-none"/></div></div></main>
+  if(error||!payload)return <main className="grid min-h-screen place-items-center bg-[#f4f7fb] px-4"><div className="max-w-md rounded-[1.5rem] border border-slate-200 bg-white p-7 text-center shadow-xl"><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-red-50 font-black text-red-600">!</span><h1 className="mt-4 text-2xl font-bold tracking-[-.03em] text-[#10233f]">Link indisponível</h1><p className="mt-2 text-sm leading-6 text-slate-500">{error}</p></div></main>
+  const company=payload.company;const customer=payload.link;const primary=company.site_primary_color||'#0b3b78'
+  return <main className="min-h-screen bg-[#f4f7fb] px-3 py-4 text-[#10233f] sm:px-5 sm:py-7" style={{'--portal-primary':primary} as React.CSSProperties}><section className="mx-auto max-w-5xl space-y-4 sm:space-y-5">
+    <header className="relative overflow-hidden rounded-[1.75rem] bg-[var(--portal-primary)] p-5 text-white shadow-[0_22px_60px_rgba(8,39,80,.18)] sm:p-7"><div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10 blur-2xl" aria-hidden/><div className="relative flex items-start gap-4">{company.logo_url?<img src={company.logo_url} alt={`Logo ${company.nome||'da empresa'}`} className="h-14 w-14 rounded-2xl bg-white object-contain p-1.5 shadow-sm sm:h-16 sm:w-16"/>:<div className="grid h-14 w-14 place-items-center rounded-2xl bg-white/12 text-xl font-black ring-1 ring-white/15 sm:h-16 sm:w-16">O</div>}<div className="min-w-0 flex-1"><span className="text-[10px] font-extrabold uppercase tracking-[.16em] text-white/65">Portal do cliente</span><h1 className="mt-1 truncate text-2xl font-bold tracking-[-.04em] sm:text-3xl">{company.nome||'Empresa'}</h1><p className="mt-1.5 text-sm font-medium text-white/75">Olá, {customer.customer_name||'cliente'}. Acompanhe pedidos, propostas, pagamentos e aprovações em um só lugar.</p></div></div><div className="relative mt-5 grid grid-cols-3 gap-2"><PortalMetric label="Pedidos" value={String(payload.orders.length)}/><PortalMetric label="Propostas" value={String(payload.proposals.length)}/><PortalMetric label="Artes" value={String(payload.artApprovals.length)}/></div></header>
+    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_12px_36px_rgba(10,40,82,.05)] sm:p-5"><div className="flex items-center justify-between gap-3"><div><span className="text-[10px] font-extrabold uppercase tracking-[.14em] text-[#4776ad]">Pedidos</span><h2 className="mt-1 text-xl font-bold tracking-[-.03em]">Acompanhe cada etapa</h2></div>{company.whatsapp?<a href={whatsappUrl(company.whatsapp,'Olá! Estou acessando meu portal e preciso de ajuda.')} target="_blank" rel="noreferrer" className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">Falar no WhatsApp</a>:null}</div><div className="mt-4 grid gap-3">{payload.orders.map(order=>{const events=timelineByOrder.get(order.id)||[];const arts=artsByOrder.get(order.id)||[];const expanded=expandedOrder===order.id;return <article key={order.id} className="overflow-hidden rounded-[1.2rem] border border-slate-200 bg-white"><div className="p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="truncate text-base font-bold">{order.produto||'Pedido'}</h3><p className="mt-1 text-xs font-medium text-slate-400">Criado em {dateBR(order.created_at)}</p></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold ring-1 ${statusTone(order.status)}`}>{order.status||'Recebido'}</span></div><div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4"><MiniInfo label="Valor" value={money(orderValue(order))}/><MiniInfo label="Prazo" value={dateBR(order.prazo_entrega)}/><MiniInfo label="Pagamento" value={order.paid_at?'Confirmado':order.payment_status||'Aguardando'}/><MiniInfo label="Entrega" value={order.delivery_type||'A combinar'}/></div><div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={()=>setExpandedOrder(expanded?null:order.id)} className="rounded-lg bg-slate-100 px-3 py-2 text-[11px] font-bold text-slate-600">{expanded?'Ocultar andamento':'Ver andamento'}</button>{order.arquivo_url||order.file_url?<a href={order.arquivo_url||order.file_url||'#'} target="_blank" rel="noreferrer" className="rounded-lg bg-blue-50 px-3 py-2 text-[11px] font-bold text-blue-700">Baixar arquivo</a>:null}{company.whatsapp?<a href={whatsappUrl(company.whatsapp,`Olá! Quero repetir meu pedido de ${order.produto||'produto/serviço'}.`)} target="_blank" rel="noreferrer" className="rounded-lg bg-emerald-50 px-3 py-2 text-[11px] font-bold text-emerald-700">Repetir pedido</a>:null}{reviewable(order.status)&&token?<Link href={`/cliente/${encodeURIComponent(token)}/avaliar/${encodeURIComponent(order.id)}`} className="rounded-lg bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700">Avaliar pedido</Link>:null}</div></div>{expanded?<div className="border-t border-slate-100 bg-slate-50/70 p-4"><h4 className="text-xs font-extrabold uppercase tracking-[.1em] text-slate-400">Timeline</h4><div className="mt-3 grid gap-0">{events.length?events.map((event,index)=><div key={event.id} className="grid grid-cols-[18px_1fr] gap-3"><div className="flex flex-col items-center"><span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#174e93] ring-4 ring-blue-50"/>{index<events.length-1?<span className="min-h-8 w-px flex-1 bg-blue-100"/>:null}</div><div className="pb-3"><strong className="text-xs text-slate-700">{event.new_status}</strong><p className="mt-0.5 text-[11px] text-slate-400">{dateBR(event.created_at,true)}</p></div></div>):<p className="text-xs text-slate-400">O andamento aparecerá aqui quando o pedido avançar.</p>}</div>{arts.length?<div className="mt-3 border-t border-slate-200 pt-3"><h4 className="text-xs font-extrabold text-slate-600">Aprovação de arte</h4><div className="mt-2 grid gap-2">{arts.map(art=><a key={art.id} href={`/arte/${art.token}`} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#174e93] ring-1 ring-slate-200"><span>{art.title||art.produto_nome||'Arte do pedido'}</span><span>{art.status||'Abrir'} →</span></a>)}</div></div>:null}</div>:null}</article>})}{!payload.orders.length?<Empty title="Nenhum pedido por aqui ainda." text="Quando a empresa registrar um pedido para este contato, ele aparecerá automaticamente."/>:null}</div></section>
+    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_12px_36px_rgba(10,40,82,.05)] sm:p-5"><div><span className="text-[10px] font-extrabold uppercase tracking-[.14em] text-[#4776ad]">Propostas</span><h2 className="mt-1 text-xl font-bold tracking-[-.03em]">Orçamentos e aprovações</h2></div><div className="mt-4 grid gap-3 md:grid-cols-2">{payload.proposals.map(proposal=><a key={proposal.id} href={`/proposta/${proposal.token}`} className="group rounded-[1.15rem] border border-slate-200 p-4 transition duration-200 hover:-translate-y-px hover:border-blue-200 hover:shadow-md"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><h3 className="truncate text-sm font-bold text-slate-800 group-hover:text-[#174e93]">{proposal.titulo||proposal.proposta_numero||'Proposta'}</h3><p className="mt-1 text-[11px] font-medium text-slate-400">{proposal.valid_until?`Válida até ${dateBR(proposal.valid_until)}`:`Criada em ${dateBR(proposal.created_at)}`}</p></div><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black ring-1 ${statusTone(proposal.status)}`}>{proposal.status||'enviada'}</span></div><div className="mt-4 flex items-end justify-between"><strong className="text-xl tracking-[-.03em] text-[#10233f]">{money(proposal.valor_total)}</strong><span className="text-xs font-bold text-[#4776ad]">Abrir proposta →</span></div></a>)}{!payload.proposals.length?<Empty title="Nenhuma proposta ativa." text="Novos orçamentos enviados para você serão reunidos aqui."/>:null}</div></section>
+    <footer className="px-2 py-3 text-center text-[11px] font-medium text-slate-400">Acesso protegido por link individual. Informações internas da empresa não são exibidas neste portal.</footer>
+  </section></main>
 }
 
-type Proposal = {
-  id: string
-  token: string
-  proposta_numero?: string | null
-  titulo?: string | null
-  status?: string | null
-  valor_total?: number | null
-  valor_sinal?: number | null
-  prazo?: string | null
-  valid_until?: string | null
-  created_at?: string | null
-  approved_at?: string | null
-  payment_url?: string | null
-  imagem_capa_url?: string | null
-  preview_image_url?: string | null
-}
-
-type TimelineEvent = { id: string; order_id: string; new_status: string; note?: string | null; created_at?: string | null }
-type ArtApproval = { id: string; order_id?: string | null; token: string; title?: string | null; produto_nome?: string | null; preview_url?: string | null; artwork_url?: string | null; status?: string | null; approved_at?: string | null; requested_changes_at?: string | null; expires_at?: string | null }
-
-type PortalPayload = {
-  company: { nome?: string; logo_url?: string | null; whatsapp?: string | null; site_primary_color?: string | null; site_accent_color?: string | null }
-  link: { customer_name?: string | null; customer_phone?: string | null }
-  orders: Order[]
-  proposals: Proposal[]
-  timeline: TimelineEvent[]
-  artApprovals: ArtApproval[]
-}
-
-function money(value: unknown) {
-  return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
-function dateBR(value?: string | null, withTime = false) {
-  if (!value) return 'Não informado'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Não informado'
-  return new Intl.DateTimeFormat('pt-BR', withTime ? { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: '2-digit', month: 'long', year: 'numeric' }).format(date)
-}
-
-function orderValue(order: Order) {
-  return Number(order.total_amount || order.total || order.valor_total || order.preco_estimado || 0)
-}
-
-function whatsappUrl(phone: string | null | undefined, message: string) {
-  const digits = String(phone || '').replace(/\D/g, '')
-  if (!digits) return '#'
-  const normalized = digits.startsWith('55') ? digits : `55${digits}`
-  return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`
-}
-
-function statusTone(status?: string | null) {
-  const value = String(status || '').toLowerCase()
-  if (value.includes('entreg') || value.includes('conclu') || value.includes('aprov')) return 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-  if (value.includes('cancel') || value.includes('recus') || value.includes('expir')) return 'bg-red-50 text-red-700 ring-red-100'
-  if (value.includes('aguard') || value.includes('pend') || value.includes('sinal')) return 'bg-amber-50 text-amber-700 ring-amber-100'
-  return 'bg-blue-50 text-blue-700 ring-blue-100'
-}
-
-export default function ClientePortalPage() {
-  const params = useParams<{ token: string }>()
-  const token = Array.isArray(params?.token) ? params.token[0] : params?.token
-  const [payload, setPayload] = useState<PortalPayload | null>(null)
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  async function load() {
-    setLoading(true); setError('')
-    try {
-      const response = await fetch(`/api/cliente/${token}`, { cache: 'no-store' })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(data.error || 'Área do cliente não encontrada.')
-      setPayload(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Área do cliente não encontrada.')
-    } finally { setLoading(false) }
-  }
-
-  useEffect(() => { if (token) void load() }, [token])
-
-  const timelineByOrder = useMemo(() => {
-    const map = new Map<string, TimelineEvent[]>()
-    for (const event of payload?.timeline || []) {
-      if (!map.has(event.order_id)) map.set(event.order_id, [])
-      map.get(event.order_id)!.push(event)
-    }
-    return map
-  }, [payload?.timeline])
-
-  const artsByOrder = useMemo(() => {
-    const map = new Map<string, ArtApproval[]>()
-    for (const art of payload?.artApprovals || []) {
-      if (!art.order_id) continue
-      if (!map.has(art.order_id)) map.set(art.order_id, [])
-      map.get(art.order_id)!.push(art)
-    }
-    return map
-  }, [payload?.artApprovals])
-
-  if (loading) return <main className="min-h-screen bg-[#f4f7fb] px-4 py-8"><div className="mx-auto grid max-w-5xl gap-4"><div className="h-48 animate-pulse rounded-[1.75rem] bg-slate-200"/><div className="grid gap-4 md:grid-cols-2"><div className="h-72 animate-pulse rounded-[1.5rem] bg-slate-100"/><div className="h-72 animate-pulse rounded-[1.5rem] bg-slate-100"/></div></div></main>
-
-  if (error || !payload) return <main className="grid min-h-screen place-items-center bg-[#f4f7fb] px-4"><div className="max-w-md rounded-[1.5rem] border border-slate-200 bg-white p-7 text-center shadow-xl"><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-red-50 font-black text-red-600">!</span><h1 className="mt-4 text-2xl font-bold tracking-[-.03em] text-[#10233f]">Link indisponível</h1><p className="mt-2 text-sm leading-6 text-slate-500">{error}</p></div></main>
-
-  const company = payload.company
-  const customer = payload.link
-  const primary = company.site_primary_color || '#0b3b78'
-
-  return (
-    <main className="min-h-screen bg-[#f4f7fb] px-3 py-4 text-[#10233f] sm:px-5 sm:py-7" style={{ '--portal-primary': primary } as React.CSSProperties}>
-      <section className="mx-auto max-w-5xl space-y-4 sm:space-y-5">
-        <header className="relative overflow-hidden rounded-[1.75rem] bg-[var(--portal-primary)] p-5 text-white shadow-[0_22px_60px_rgba(8,39,80,.18)] sm:p-7">
-          <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10 blur-2xl" aria-hidden="true"/>
-          <div className="relative flex items-start gap-4">
-            {company.logo_url ? <img src={company.logo_url} alt={`Logo ${company.nome || 'da empresa'}`} className="h-14 w-14 rounded-2xl bg-white object-contain p-1.5 shadow-sm sm:h-16 sm:w-16"/> : <div className="grid h-14 w-14 place-items-center rounded-2xl bg-white/12 text-xl font-black ring-1 ring-white/15 sm:h-16 sm:w-16">O</div>}
-            <div className="min-w-0 flex-1"><span className="text-[10px] font-extrabold uppercase tracking-[.16em] text-white/65">Portal do cliente</span><h1 className="mt-1 truncate text-2xl font-bold tracking-[-.04em] sm:text-3xl">{company.nome || 'Empresa'}</h1><p className="mt-1.5 text-sm font-medium text-white/75">Olá, {customer.customer_name || 'cliente'}. Acompanhe pedidos, propostas, pagamentos e aprovações em um só lugar.</p></div>
-          </div>
-          <div className="relative mt-5 grid grid-cols-3 gap-2"><PortalMetric label="Pedidos" value={String(payload.orders.length)}/><PortalMetric label="Propostas" value={String(payload.proposals.length)}/><PortalMetric label="Artes" value={String(payload.artApprovals.length)}/></div>
-        </header>
-
-        <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_12px_36px_rgba(10,40,82,.05)] sm:p-5">
-          <div className="flex items-center justify-between gap-3"><div><span className="text-[10px] font-extrabold uppercase tracking-[.14em] text-[#4776ad]">Pedidos</span><h2 className="mt-1 text-xl font-bold tracking-[-.03em]">Acompanhe cada etapa</h2></div>{company.whatsapp ? <a href={whatsappUrl(company.whatsapp, `Olá! Estou acessando meu portal e preciso de ajuda.`)} target="_blank" rel="noreferrer" className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">Falar no WhatsApp</a> : null}</div>
-          <div className="mt-4 grid gap-3">
-            {payload.orders.map((order) => {
-              const events = timelineByOrder.get(order.id) || []
-              const arts = artsByOrder.get(order.id) || []
-              const expanded = expandedOrder === order.id
-              return <article key={order.id} className="overflow-hidden rounded-[1.2rem] border border-slate-200 bg-white">
-                <div className="p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="truncate text-base font-bold">{order.produto || 'Pedido'}</h3><p className="mt-1 text-xs font-medium text-slate-400">Criado em {dateBR(order.created_at)}</p></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold ring-1 ${statusTone(order.status)}`}>{order.status || 'Recebido'}</span></div>
-                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4"><MiniInfo label="Valor" value={money(orderValue(order))}/><MiniInfo label="Prazo" value={dateBR(order.prazo_entrega)}/><MiniInfo label="Pagamento" value={order.paid_at ? 'Confirmado' : order.payment_status || 'Aguardando'}/><MiniInfo label="Entrega" value={order.delivery_type || 'A combinar'}/></div>
-                  <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => setExpandedOrder(expanded ? null : order.id)} className="rounded-lg bg-slate-100 px-3 py-2 text-[11px] font-bold text-slate-600">{expanded ? 'Ocultar andamento' : 'Ver andamento'}</button>{(order.arquivo_url || order.file_url) ? <a href={order.arquivo_url || order.file_url || '#'} target="_blank" rel="noreferrer" className="rounded-lg bg-blue-50 px-3 py-2 text-[11px] font-bold text-blue-700">Baixar arquivo</a> : null}{company.whatsapp ? <a href={whatsappUrl(company.whatsapp, `Olá! Quero repetir meu pedido de ${order.produto || 'produto/serviço'}.`)} target="_blank" rel="noreferrer" className="rounded-lg bg-emerald-50 px-3 py-2 text-[11px] font-bold text-emerald-700">Repetir pedido</a> : null}</div>
-                </div>
-                {expanded ? <div className="border-t border-slate-100 bg-slate-50/70 p-4"><h4 className="text-xs font-extrabold uppercase tracking-[.1em] text-slate-400">Timeline</h4><div className="mt-3 grid gap-0">{events.length ? events.map((event, index) => <div key={event.id} className="grid grid-cols-[18px_1fr] gap-3"><div className="flex flex-col items-center"><span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#174e93] ring-4 ring-blue-50"/>{index < events.length - 1 ? <span className="min-h-8 w-px flex-1 bg-blue-100"/> : null}</div><div className="pb-3"><strong className="text-xs text-slate-700">{event.new_status}</strong><p className="mt-0.5 text-[11px] text-slate-400">{dateBR(event.created_at, true)}</p></div></div>) : <p className="text-xs text-slate-400">O andamento aparecerá aqui quando o pedido avançar.</p>}</div>{arts.length ? <div className="mt-3 border-t border-slate-200 pt-3"><h4 className="text-xs font-extrabold text-slate-600">Aprovação de arte</h4><div className="mt-2 grid gap-2">{arts.map((art) => <a key={art.id} href={`/arte/${art.token}`} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#174e93] ring-1 ring-slate-200"><span>{art.title || art.produto_nome || 'Arte do pedido'}</span><span>{art.status || 'Abrir'} →</span></a>)}</div></div> : null}</div> : null}
-              </article>
-            })}
-            {!payload.orders.length ? <Empty title="Nenhum pedido por aqui ainda." text="Quando a empresa registrar um pedido para este contato, ele aparecerá automaticamente."/> : null}
-          </div>
-        </section>
-
-        <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_12px_36px_rgba(10,40,82,.05)] sm:p-5">
-          <div><span className="text-[10px] font-extrabold uppercase tracking-[.14em] text-[#4776ad]">Propostas</span><h2 className="mt-1 text-xl font-bold tracking-[-.03em]">Orçamentos e aprovações</h2></div>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">{payload.proposals.map((proposal) => <a key={proposal.id} href={`/proposta/${proposal.token}`} className="group rounded-[1.15rem] border border-slate-200 p-4 transition duration-200 hover:-translate-y-px hover:border-blue-200 hover:shadow-md"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><h3 className="truncate text-sm font-bold text-slate-800 group-hover:text-[#174e93]">{proposal.titulo || proposal.proposta_numero || 'Proposta'}</h3><p className="mt-1 text-[11px] font-medium text-slate-400">{proposal.valid_until ? `Válida até ${dateBR(proposal.valid_until)}` : `Criada em ${dateBR(proposal.created_at)}`}</p></div><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black ring-1 ${statusTone(proposal.status)}`}>{proposal.status || 'enviada'}</span></div><div className="mt-4 flex items-end justify-between"><strong className="text-xl tracking-[-.03em] text-[#10233f]">{money(proposal.valor_total)}</strong><span className="text-xs font-bold text-[#4776ad]">Abrir proposta →</span></div></a>)}{!payload.proposals.length ? <Empty title="Nenhuma proposta ativa." text="Novos orçamentos enviados para você serão reunidos aqui."/> : null}</div>
-        </section>
-
-        <footer className="px-2 py-3 text-center text-[11px] font-medium text-slate-400">Acesso protegido por link individual. Informações internas da empresa não são exibidas neste portal.</footer>
-      </section>
-    </main>
-  )
-}
-
-function PortalMetric({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border border-white/10 bg-white/10 px-3 py-2.5 backdrop-blur"><span className="block text-[9px] font-bold uppercase tracking-[.1em] text-white/55">{label}</span><strong className="mt-0.5 block text-lg">{value}</strong></div> }
-function MiniInfo({ label, value }: { label: string; value: string }) { return <div className="rounded-lg bg-slate-50 px-2.5 py-2"><span className="block text-[9px] font-extrabold uppercase tracking-[.08em] text-slate-400">{label}</span><strong className="mt-0.5 block truncate text-[11px] text-slate-650">{value}</strong></div> }
-function Empty({ title, text }: { title: string; text: string }) { return <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center md:col-span-2"><strong className="text-sm text-slate-700">{title}</strong><p className="mt-1 text-xs leading-5 text-slate-400">{text}</p></div> }
+function PortalMetric({label,value}:{label:string;value:string}){return <div className="rounded-xl border border-white/10 bg-white/10 px-3 py-2.5 backdrop-blur"><span className="block text-[9px] font-bold uppercase tracking-[.1em] text-white/55">{label}</span><strong className="mt-0.5 block text-lg">{value}</strong></div>}
+function MiniInfo({label,value}:{label:string;value:string}){return <div className="rounded-lg bg-slate-50 px-2.5 py-2"><span className="block text-[9px] font-extrabold uppercase tracking-[.08em] text-slate-400">{label}</span><strong className="mt-0.5 block truncate text-[11px] text-slate-650">{value}</strong></div>}
+function Empty({title,text}:{title:string;text:string}){return <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center md:col-span-2"><strong className="text-sm text-slate-700">{title}</strong><p className="mt-1 text-xs leading-5 text-slate-400">{text}</p></div>}

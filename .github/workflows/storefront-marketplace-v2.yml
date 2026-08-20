@@ -1,0 +1,87 @@
+name: Storefront Marketplace v2 QA
+
+on:
+  pull_request:
+    paths:
+      - 'app/site/**'
+      - 'app/api/public-site/**'
+      - 'app/api/site/**'
+      - 'app/api/reports/storefront/**'
+      - 'app/painel/relatorios/**'
+      - 'components/public-site/**'
+      - 'components/site-builder/**'
+      - 'lib/storefront/**'
+      - 'supabase/migrations/20260819234000_storefront_marketplace_v2.sql'
+      - 'scripts/verify-storefront-marketplace-v2.mjs'
+      - 'package.json'
+      - '.github/workflows/storefront-marketplace-v2.yml'
+  workflow_dispatch:
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      STOREFRONT_BASE_SHA: 2023780f4ae622a1d1da7c84a8a77d7460f3f014
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Domain and regression invariants
+        run: npm test
+      - name: Payment boundary regression
+        run: npm run verify:payments
+      - name: Focused lint
+        run: >-
+          npx eslint
+          components/public-site/StorefrontExperienceV2.tsx
+          components/public-site/StorefrontProductActions.tsx
+          components/public-site/PublicSiteClient.tsx
+          components/site-builder/SitePreview.tsx
+          app/site/[slug]/produto/[productId]/page.tsx
+          app/api/public-site/[slug]/search/route.ts
+          app/api/public-site/[slug]/events/route.ts
+          app/api/site/settings/route.ts
+          app/api/reports/storefront/route.ts
+          app/painel/relatorios/page.tsx
+          lib/storefront/public-product.ts
+      - name: TypeScript and production build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-build.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-build-placeholder
+          SUPABASE_SERVICE_ROLE_KEY: ci-build-placeholder
+          NEXT_PUBLIC_APP_URL: https://ci.orcaly.invalid
+        run: npm run build
+      - name: Protected payment diff check
+        run: |
+          touched="$(git diff --name-only "$STOREFRONT_BASE_SHA...HEAD" | grep -E '^(lib/payments/|lib/mercado-pago|app/api/checkout/|components/checkout/CheckoutClient\.tsx|app/api/marketplace/coupon|app/api/marketplace/payments/)' || true)"
+          if [ -n "$touched" ]; then
+            echo "Protected payment/checkout files changed:"
+            echo "$touched"
+            exit 1
+          fi
+      - name: Diff whitespace check
+        run: git diff --check "$STOREFRONT_BASE_SHA...HEAD"
+      - name: Dependency audit baseline
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+  global-lint-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Global lint baseline
+        run: npm run lint

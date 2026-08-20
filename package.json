@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node scripts/verify-partner-portal-v2.mjs && node scripts/verify-admin-control-center-v2.mjs",
+    "test": "node scripts/verify-partner-portal-v2.mjs && node scripts/verify-admin-control-center-v2.mjs && node scripts/verify-storefront-marketplace-v2.mjs",
     "security:check": "node scripts/security-check.mjs",
     "verify:payments": "node scripts/verify-payment-flow-boundaries.mjs",
     "verify:payment-credentials": "node scripts/auditar-isolamento-pagamentos.cjs"
