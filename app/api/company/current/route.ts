@@ -6,10 +6,21 @@ import {
   getSupabaseAdmin,
 } from '@/lib/company-access'
 
+async function getRequesterWithSingleRetry(
+  request: NextRequest,
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+) {
+  const requester = await getRequester(request, supabaseAdmin)
+  if (requester) return requester
+
+  await new Promise((resolve) => setTimeout(resolve, 120))
+  return getRequester(request, supabaseAdmin)
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
-    const requester = await getRequester(request, supabaseAdmin)
+    const requester = await getRequesterWithSingleRetry(request, supabaseAdmin)
 
     if (!requester) {
       return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
