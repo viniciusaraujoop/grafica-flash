@@ -1,0 +1,7 @@
+{
+  "status": "failed",
+  "phase": "fresh_20",
+  "exit_code": 1,
+  "source_commit": "aa75d6ff7703a996feba23efda628d63070baf6d",
+  "target": "protected-preview"
+}

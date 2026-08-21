@@ -4,17 +4,21 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm test && npm run verify:payments && npx eslint app/page.tsx app/sitemap.ts app/robots.ts app/solucoes/[slug]/page.tsx components/marketing/MainSiteV2.tsx components/marketing/ProductDemoTabs.tsx components/marketing/PlanSelector.tsx components/marketing/ReferralBridge.tsx lib/marketing/main-site.ts",
+    "prebuild": "npm test && npm run verify:auth-diff && npm run verify:payments && npm run lint:auth-hotfix && npx eslint app/page.tsx app/sitemap.ts app/robots.ts app/solucoes/[slug]/page.tsx components/marketing/MainSiteV2.tsx components/marketing/ProductDemoTabs.tsx components/marketing/PlanSelector.tsx components/marketing/ReferralBridge.tsx lib/marketing/main-site.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node scripts/verify-critical-hotfix.mjs && node scripts/verify-partner-portal-v2.mjs && node scripts/verify-admin-control-center-v2.mjs && node scripts/verify-storefront-marketplace-v2.mjs && node scripts/verify-main-site-v2.mjs",
+    "lint:auth-hotfix": "eslint app/login/page.tsx app/login/actions.ts app/painel/layout.tsx app/painel/actions.ts app/api/company/current/route.ts components/painel/PanelAuthenticatedLayout.tsx components/painel/PanelPremiumHeader.tsx lib/supabase-server.ts lib/current-company-client.ts proxy.ts scripts/verify-auth-first-login-race.mjs scripts/verify-auth-whitespace.mjs",
+    "test": "node --check scripts/e2e-auth-first-login.mjs && node scripts/verify-critical-hotfix.mjs && node scripts/verify-auth-first-login-race.mjs && node scripts/verify-auth-whitespace.mjs && node scripts/verify-partner-portal-v2.mjs && node scripts/verify-admin-control-center-v2.mjs && node scripts/verify-storefront-marketplace-v2.mjs && node scripts/verify-main-site-v2.mjs",
+    "e2e:auth": "node scripts/e2e-auth-first-login.mjs",
+    "verify:auth-diff": "git diff --check && node scripts/verify-auth-whitespace.mjs",
     "security:check": "node scripts/security-check.mjs",
     "verify:payments": "node scripts/verify-payment-flow-boundaries.mjs",
     "verify:payment-credentials": "node scripts/auditar-isolamento-pagamentos.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",
+    "@vercel/sandbox": "3.0.1",
     "next": "16.2.9",
     "qrcode": "^1.5.4",
     "react": "19.2.4",

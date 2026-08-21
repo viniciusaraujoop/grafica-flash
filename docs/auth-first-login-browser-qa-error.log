@@ -1,0 +1,10 @@
+file:///home/runner/work/grafica-flash/grafica-flash/scripts/e2e-auth-first-login.mjs:44
+  throw new Error(`Timeout esperando ${description}. Último estado: ${String(last || 'sem detalhe')}`)
+        ^
+
+Error: Timeout esperando formulário de login. Último estado: sem detalhe
+    at waitFor (file:///home/runner/work/grafica-flash/grafica-flash/scripts/e2e-auth-first-login.mjs:44:9)
+    at async runFreshLogin (file:///home/runner/work/grafica-flash/grafica-flash/scripts/e2e-auth-first-login.mjs:207:5)
+    at async file:///home/runner/work/grafica-flash/grafica-flash/scripts/e2e-auth-first-login.mjs:292:18
+
+Node.js v24.19.0

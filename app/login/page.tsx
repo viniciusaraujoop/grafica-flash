@@ -4,7 +4,6 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import {
   useEffect,
   useMemo,
@@ -12,7 +11,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from 'react'
-import { supabase } from '@/lib/supabase'
+import { signInWithPasswordAction } from './actions'
 
 type MessageType = 'info' | 'erro' | 'sucesso'
 
@@ -96,30 +95,6 @@ function isValidEmail(value: string) {
     value.trim().length === 0 ||
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
   )
-}
-
-function getFriendlyAuthError(message: string) {
-  const normalized = message.toLowerCase()
-
-  if (
-    message === 'Invalid login credentials' ||
-    normalized.includes('invalid login credentials')
-  ) {
-    return 'E-mail ou senha incorretos. Confira os dados e tente novamente.'
-  }
-
-  if (normalized.includes('email not confirmed')) {
-    return 'Confirme seu e-mail antes de entrar.'
-  }
-
-  if (
-    normalized.includes('too many requests') ||
-    normalized.includes('rate limit')
-  ) {
-    return 'Muitas tentativas em pouco tempo. Aguarde um momento e tente novamente.'
-  }
-
-  return 'Não foi possível entrar agora. Tente novamente em alguns instantes.'
 }
 
 // ORCALY_LOGIN_DEFAULT_INICIO_V1
@@ -496,8 +471,6 @@ const trustFeatures: Feature[] = [
 ]
 
 export default function LoginPage() {
-  const router = useRouter()
-
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
@@ -642,101 +615,29 @@ export default function LoginPage() {
     setTipoMensagem('info')
     setMensagem('Validando seu acesso...')
 
+    if (
+      lembrarEmail &&
+      typeof window !== 'undefined'
+    ) {
+      window.localStorage.setItem(
+        'orcaly_login_email',
+        emailLimpo,
+      )
+    }
+
     try {
-      const { data, error } =
-        await supabase.auth.signInWithPassword({
-          email: emailLimpo,
-          password: senha,
-        })
+      setTipoMensagem('sucesso')
+      setMensagem('Acesso validado. Preparando seu painel...')
 
-      if (error) {
-        setTipoMensagem('erro')
-        setMensagem(
-          getFriendlyAuthError(error.message),
-        )
-        setCarregando(false)
-        return
-      }
-
-      if (!data.user?.id) {
-        setTipoMensagem('erro')
-        setMensagem(
-          'Não foi possível entrar agora. Tente novamente em alguns instantes.',
-        )
-        setCarregando(false)
-        return
-      }
-
-      if (
-        lembrarEmail &&
-        typeof window !== 'undefined'
-      ) {
-        window.localStorage.setItem(
-          'orcaly_login_email',
-          emailLimpo,
-        )
-      }
-
-      if (
-        data.session?.access_token &&
-        data.session?.refresh_token
-      ) {
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        })
-      }
-
-      const accessToken = data.session?.access_token
-
-      if (!accessToken) {
-        setTipoMensagem('erro')
-        setMensagem(
-          'Não foi possível validar a sessão da sua conta. Entre novamente.',
-        )
-        setCarregando(false)
-        return
-      }
-
-      const accessResponse = await fetch('/api/company/current', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-        cache: 'no-store',
+      const result = await signInWithPasswordAction({
+        email: emailLimpo,
+        password: senha,
+        next: getSafeNextPath(),
       })
 
-      const accessPayload = (await accessResponse
-        .json()
-        .catch(() => ({}))) as {
-        company?: { id?: string | null } | null
-        error?: string
-      }
-
-      if (!accessResponse.ok) {
-        setTipoMensagem('erro')
-        setMensagem(
-          accessPayload.error ||
-            'Não foi possível verificar a empresa vinculada à sua conta.',
-        )
-        setCarregando(false)
-        return
-      }
-
-      if (!accessPayload.company?.id) {
-        setTipoMensagem('info')
-        setMensagem(
-          'Sua conta ainda não está vinculada a uma empresa. Vamos concluir seu cadastro.',
-        )
-        router.replace('/cadastro')
-        return
-      }
-
-      setTipoMensagem('sucesso')
-      setMensagem(
-        'Acesso validado. Abrindo seu painel...',
-      )
-
-      router.replace(getSafeNextPath())
+      setTipoMensagem('erro')
+      setMensagem(result.error)
+      setCarregando(false)
     } catch {
       setTipoMensagem('erro')
       setMensagem(
@@ -1127,7 +1028,7 @@ export default function LoginPage() {
 
                     <span className="relative">
                       {carregando
-                        ? 'Validando acesso...'
+                        ? 'Preparando seu painel...'
                         : 'Entrar no painel'}
                     </span>
 
