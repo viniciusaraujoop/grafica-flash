@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm test && npm run verify:payments && npx eslint app/page.tsx app/sitemap.ts app/robots.ts app/solucoes/[slug]/page.tsx components/marketing/MainSiteV2.tsx components/marketing/ProductDemoTabs.tsx components/marketing/PlanSelector.tsx components/marketing/ReferralBridge.tsx lib/marketing/main-site.ts",
+    "prebuild": "npm test && npm run verify:payments && npx eslint app/page.tsx app/sitemap.ts app/robots.ts app/solucoes/[slug]/page.tsx app/api/public/home-chat/route.ts app/api/public/home-chat/lead/route.ts app/api/public/home-chat/event/route.ts app/api/admin/assistant/route.ts app/admin/growth/page.tsx app/admin/growth/assistente/page.tsx components/home/HomeAiChat.tsx components/home/HomeAiChatV2.tsx components/admin/AdminAssistantGrowth.tsx components/marketing/MainSiteV2.tsx components/marketing/ProductDemoTabs.tsx components/marketing/PlanSelector.tsx components/marketing/ReferralBridge.tsx lib/assistant/analytics.ts lib/assistant/orcaly-knowledge.ts lib/assistant/router.ts lib/assistant/tools.ts lib/assistant/types.ts lib/marketing/main-site.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node scripts/verify-critical-hotfix.mjs && node scripts/verify-partner-portal-v2.mjs && node scripts/verify-admin-control-center-v2.mjs && node scripts/verify-storefront-marketplace-v2.mjs && node scripts/verify-main-site-v2.mjs",
+    "test": "node scripts/verify-orcaly-assistant-v2.mjs && node scripts/verify-critical-hotfix.mjs && node scripts/verify-partner-portal-v2.mjs && node scripts/verify-admin-control-center-v2.mjs && node scripts/verify-storefront-marketplace-v2.mjs && node scripts/verify-main-site-v2.mjs",
     "security:check": "node scripts/security-check.mjs",
     "verify:payments": "node scripts/verify-payment-flow-boundaries.mjs",
     "verify:payment-credentials": "node scripts/auditar-isolamento-pagamentos.cjs"
