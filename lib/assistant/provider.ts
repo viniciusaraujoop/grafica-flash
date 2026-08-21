@@ -44,15 +44,18 @@ type ProviderCandidate = {
   models: string[]
 }
 
+const DEFAULT_GATEWAY_MODEL = 'openai/gpt-5.6-sol'
+const DEFAULT_GATEWAY_FALLBACK_MODEL = 'openai/gpt-5.4'
+
 function normalizeGatewayModel(value: string) {
   const model = value.trim()
-  if (!model) return 'openai/gpt-5.6-luna'
+  if (!model) return DEFAULT_GATEWAY_MODEL
   return model.includes('/') ? model : `openai/${model}`
 }
 
 function normalizeOpenAiModel(value: string) {
   const model = value.trim()
-  if (!model) return 'gpt-5.6-luna'
+  if (!model) return DEFAULT_GATEWAY_MODEL.slice('openai/'.length)
   return model.startsWith('openai/') ? model.slice('openai/'.length) : model
 }
 
@@ -66,8 +69,8 @@ function classifyStatus(status: number): AssistantProviderErrorType {
 }
 
 function providerCandidates() {
-  const configuredModel = process.env.ORCALY_HOME_AI_MODEL || 'openai/gpt-5.6-luna'
-  const configuredFallback = process.env.ORCALY_HOME_AI_FALLBACK_MODEL || 'openai/gpt-5.4'
+  const configuredModel = process.env.ORCALY_HOME_AI_MODEL || DEFAULT_GATEWAY_MODEL
+  const configuredFallback = process.env.ORCALY_HOME_AI_FALLBACK_MODEL || DEFAULT_GATEWAY_FALLBACK_MODEL
   const gatewayModels = Array.from(new Set([
     normalizeGatewayModel(configuredModel),
     normalizeGatewayModel(configuredFallback),
