@@ -8,36 +8,12 @@ function notFound() {
   return NextResponse.json({ error: 'Not found' }, { status: 404 })
 }
 
-async function readStreamText(response: Response) {
-  if (!response.body) return ''
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
+async function readStreamText(stream: AsyncIterable<string>) {
   let answer = ''
-
-  while (answer.length < 300) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() || ''
-
-    for (const raw of lines) {
-      const line = raw.trim()
-      if (!line.startsWith('data:')) continue
-      const data = line.slice(5).trim()
-      if (!data || data === '[DONE]') continue
-      try {
-        const chunk = JSON.parse(data)
-        const content = chunk?.choices?.[0]?.delta?.content
-        if (typeof content === 'string') answer += content
-      } catch {
-        // Probe only needs to confirm that valid text is emitted.
-      }
-    }
+  for await (const chunk of stream) {
+    answer += chunk
+    if (answer.length >= 300) break
   }
-
-  try { await reader.cancel() } catch {}
   return answer.trim().slice(0, 300)
 }
 
@@ -64,15 +40,17 @@ export async function GET(request: NextRequest) {
       ok: false,
       errorType: result.failure.errorType,
       provider: result.failure.provider,
+      authMode: result.failure.authMode,
       providerStatus: result.failure.status,
       model: result.failure.model || null,
     }, { status: 503 })
   }
 
-  const answer = await readStreamText(result.response)
+  const answer = await readStreamText(result.textStream)
   return NextResponse.json({
     ok: Boolean(answer),
     provider: result.provider,
+    authMode: result.authMode,
     model: result.requestedModel,
     hasConversationalText: Boolean(answer),
     answerPreview: answer,
