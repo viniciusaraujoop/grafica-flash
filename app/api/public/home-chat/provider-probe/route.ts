@@ -6,6 +6,14 @@ import { enforceRateLimit } from '@/lib/security/rate-limit'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+function configuredProviders() {
+  return {
+    aiGatewayApiKey: Boolean(process.env.AI_GATEWAY_API_KEY),
+    vercelOidcToken: Boolean(process.env.VERCEL_OIDC_TOKEN),
+    openaiApiKey: Boolean(process.env.OPENAI_API_KEY),
+  }
+}
+
 export async function GET(request: NextRequest) {
   const limited = await enforceRateLimit(request, {
     scope: 'assistant-provider-probe',
@@ -16,6 +24,7 @@ export async function GET(request: NextRequest) {
   if (limited) return limited
 
   const requestId = randomUUID()
+  const configured = configuredProviders()
   const result = await openAssistantProviderStream({
     requestId,
     messages: [
@@ -34,6 +43,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       ok: false,
       requestId,
+      configured,
       errorType: result.failure.errorType,
       provider: result.failure.provider,
       authMode: result.failure.authMode,
@@ -53,6 +63,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       ok: false,
       requestId,
+      configured,
       errorType: 'OPENAI_PROVIDER_ERROR',
       provider: result.provider,
       authMode: result.authMode,
@@ -64,6 +75,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     ok: Boolean(answer.trim()),
     requestId,
+    configured,
     provider: result.provider,
     authMode: result.authMode,
     model: result.requestedModel,
