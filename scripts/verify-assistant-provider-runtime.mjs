@@ -18,7 +18,6 @@ if (!/^openai\//.test(model)) {
   process.exit(1)
 }
 
-// A Vercel build does not reproduce the deployed Function authentication
-// context reliably. The real provider probe runs through the preview-only
-// /api/public/home-chat/qa endpoint after the deployment is READY.
-console.log(`Assistente provider build gate: PASS transport=ai-sdk managed-auth model=${model} runtime_probe=deferred-to-preview`)
+// Build confirma contrato e modelo, mas não prova credencial. A autenticação
+// real é validada no Preview pelo endpoint protegido por ambiente /qa.
+console.log(`Assistente provider build gate: PASS transport=ai-sdk model=${model} runtime_probe=required-on-preview`)
