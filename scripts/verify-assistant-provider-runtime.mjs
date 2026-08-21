@@ -5,83 +5,107 @@ if (!isVercelPreview) {
   process.exit(0)
 }
 
-const gatewayKey = process.env.AI_GATEWAY_API_KEY
-const openAiKey = process.env.OPENAI_API_KEY
+const configuredModel = process.env.ORCALY_HOME_AI_MODEL || 'openai/gpt-5.6-luna'
+const configuredFallback = process.env.ORCALY_HOME_AI_FALLBACK_MODEL || 'openai/gpt-5.4'
 
-let provider
-let endpoint
-let apiKey
-let model
+function gatewayModel(value) {
+  return value.includes('/') ? value : `openai/${value}`
+}
 
-if (gatewayKey) {
-  provider = 'vercel-ai-gateway'
-  endpoint = 'https://ai-gateway.vercel.sh/v1/chat/completions'
-  apiKey = gatewayKey
-  model = process.env.ORCALY_HOME_AI_MODEL || 'openai/gpt-5.6-luna'
-  if (!model.includes('/')) model = `openai/${model}`
-} else if (openAiKey) {
-  provider = 'openai'
-  endpoint = 'https://api.openai.com/v1/chat/completions'
-  apiKey = openAiKey
-  model = process.env.ORCALY_HOME_AI_MODEL || 'gpt-5.6-luna'
-  if (model.startsWith('openai/')) model = model.slice('openai/'.length)
-} else {
+function openAiModel(value) {
+  return value.startsWith('openai/') ? value.slice('openai/'.length) : value
+}
+
+const candidates = []
+if (process.env.AI_GATEWAY_API_KEY) {
+  candidates.push({
+    provider: 'vercel-ai-gateway',
+    endpoint: 'https://ai-gateway.vercel.sh/v1/chat/completions',
+    apiKey: process.env.AI_GATEWAY_API_KEY,
+    models: [...new Set([gatewayModel(configuredModel), gatewayModel(configuredFallback)])],
+  })
+}
+if (process.env.OPENAI_API_KEY) {
+  candidates.push({
+    provider: 'openai',
+    endpoint: 'https://api.openai.com/v1/chat/completions',
+    apiKey: process.env.OPENAI_API_KEY,
+    models: [...new Set([openAiModel(configuredModel), openAiModel(configuredFallback)])],
+  })
+}
+
+console.log(`Assistente provider runtime probe: configured gateway=${Boolean(process.env.AI_GATEWAY_API_KEY)} openai=${Boolean(process.env.OPENAI_API_KEY)}`)
+
+if (!candidates.length) {
   console.error('Assistente provider runtime probe: FAIL OPENAI_NOT_CONFIGURED')
   process.exit(1)
 }
 
-const startedAt = Date.now()
-let response
+let lastFailure = 'OPENAI_PROVIDER_ERROR'
 
-try {
-  response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        {
-          role: 'system',
-          content: 'Sonda de saúde do Assistente Orçaly. Responda somente com uma frase curta em português confirmando que consegue responder.',
+for (const candidate of candidates) {
+  for (const model of candidate.models) {
+    const startedAt = Date.now()
+    let response
+
+    try {
+      response = await fetch(candidate.endpoint, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${candidate.apiKey}`,
+          'content-type': 'application/json',
         },
-        {
-          role: 'user',
-          content: 'Confirme que o provider está operacional.',
-        },
-      ],
-      max_tokens: 40,
-      stream: false,
-    }),
-    signal: AbortSignal.timeout(15000),
-  })
-} catch (error) {
-  const name = error instanceof Error ? error.name : 'UnknownError'
-  console.error(`Assistente provider runtime probe: FAIL ${name} provider=${provider} model=${model}`)
-  process.exit(1)
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: 'system',
+              content: 'Sonda de saúde do Assistente Orçaly. Responda somente com uma frase curta em português confirmando que consegue responder.',
+            },
+            {
+              role: 'user',
+              content: 'Confirme que o provider está operacional.',
+            },
+          ],
+          max_tokens: 40,
+          stream: false,
+        }),
+        signal: AbortSignal.timeout(15000),
+      })
+    } catch (error) {
+      const name = error instanceof Error ? error.name : 'UnknownError'
+      lastFailure = name === 'TimeoutError' || name === 'AbortError' ? 'OPENAI_TIMEOUT' : 'OPENAI_PROVIDER_ERROR'
+      console.error(`Assistente provider runtime probe: candidate FAIL ${lastFailure} provider=${candidate.provider} model=${model}`)
+      continue
+    }
+
+    const durationMs = Date.now() - startedAt
+    const payload = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      lastFailure = response.status === 401 || response.status === 403
+        ? 'OPENAI_AUTH_ERROR'
+        : response.status === 429
+          ? 'OPENAI_RATE_LIMIT'
+          : response.status >= 500
+            ? 'OPENAI_PROVIDER_ERROR'
+            : 'VALIDATION_ERROR'
+      console.error(`Assistente provider runtime probe: candidate FAIL ${lastFailure} provider=${candidate.provider} status=${response.status} model=${model} duration_ms=${durationMs}`)
+      if (lastFailure === 'OPENAI_AUTH_ERROR' || lastFailure === 'VALIDATION_ERROR') break
+      continue
+    }
+
+    const answer = String(payload?.choices?.[0]?.message?.content || '').trim()
+    if (!answer) {
+      lastFailure = 'PARSER_ERROR'
+      console.error(`Assistente provider runtime probe: candidate FAIL PARSER_ERROR provider=${candidate.provider} status=${response.status} model=${model} duration_ms=${durationMs}`)
+      continue
+    }
+
+    console.log(`Assistente provider runtime probe: PASS provider=${candidate.provider} model=${model} status=${response.status} duration_ms=${durationMs} conversational_text=true`)
+    process.exit(0)
+  }
 }
 
-const durationMs = Date.now() - startedAt
-const payload = await response.json().catch(() => ({}))
-
-if (!response.ok) {
-  const errorType = response.status === 401 || response.status === 403
-    ? 'OPENAI_AUTH_ERROR'
-    : response.status === 429
-      ? 'OPENAI_RATE_LIMIT'
-      : response.status >= 500
-        ? 'OPENAI_PROVIDER_ERROR'
-        : 'VALIDATION_ERROR'
-  console.error(`Assistente provider runtime probe: FAIL ${errorType} provider=${provider} status=${response.status} model=${model} duration_ms=${durationMs}`)
-  process.exit(1)
-}
-
-const answer = String(payload?.choices?.[0]?.message?.content || '').trim()
-if (!answer) {
-  console.error(`Assistente provider runtime probe: FAIL PARSER_ERROR provider=${provider} status=${response.status} model=${model} duration_ms=${durationMs}`)
-  process.exit(1)
-}
-
-console.log(`Assistente provider runtime probe: PASS provider=${provider} model=${model} status=${response.status} duration_ms=${durationMs} conversational_text=true`)
+console.error(`Assistente provider runtime probe: FAIL ${lastFailure} no working provider candidate`)
+process.exit(1)
