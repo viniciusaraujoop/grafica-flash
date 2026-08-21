@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     let leadId = existing?.id as string | undefined
     let reused = Boolean(leadId)
 
-    if (leadId) {
+    if (leadId && existing) {
       const patch: Record<string, unknown> = {
         nome_responsavel: nome,
         whatsapp: whatsapp || existing.whatsapp,
