@@ -7,6 +7,12 @@ on:
     paths:
       - .github/workflows/auth-first-login-hotfix-qa.yml
       - scripts/e2e-auth-first-login.mjs
+  pull_request:
+    branches:
+      - feat/main-site-v2
+    paths:
+      - .github/workflows/auth-first-login-hotfix-qa.yml
+      - scripts/e2e-auth-first-login.mjs
   workflow_dispatch:
 
 permissions:
