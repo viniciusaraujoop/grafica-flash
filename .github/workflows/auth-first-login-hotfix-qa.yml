@@ -1,0 +1,158 @@
+name: Auth First Login Hotfix QA
+
+on:
+  push:
+    branches:
+      - fix/auth-first-login-race
+    paths:
+      - .github/workflows/auth-first-login-hotfix-qa.yml
+      - scripts/e2e-auth-first-login.mjs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: auth-first-login-hotfix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      QA_CONTROL_URL: https://ozrasuktfthsvbqprtel.supabase.co/functions/v1/auth-hotfix-qa-control
+      QA_OIDC_AUDIENCE: orcaly-auth-first-login-qa
+
+    steps:
+      - name: Checkout hotfix
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Resolve Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_PATH"
+          echo "CHROMIUM_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+
+      - name: Create disposable QA identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC_JSON="$(curl --silent --show-error --fail-with-body \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${QA_OIDC_AUDIENCE}")"
+          OIDC_TOKEN="$(printf '%s' "$OIDC_JSON" | jq -r '.value')"
+          test -n "$OIDC_TOKEN"
+
+          FIXTURE="$(curl --silent --show-error --fail-with-body \
+            -X POST "$QA_CONTROL_URL" \
+            -H "Authorization: Bearer $OIDC_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data '{"action":"create"}')"
+
+          USER_ID="$(printf '%s' "$FIXTURE" | jq -r '.userId')"
+          EMAIL="$(printf '%s' "$FIXTURE" | jq -r '.email')"
+          PASSWORD="$(printf '%s' "$FIXTURE" | jq -r '.password')"
+          BASE_URL="$(printf '%s' "$FIXTURE" | jq -r '.baseUrl')"
+          SHARE="$(printf '%s' "$FIXTURE" | jq -r '.vercelShare')"
+
+          test -n "$USER_ID"
+          test -n "$EMAIL"
+          test -n "$PASSWORD"
+          test -n "$BASE_URL"
+          test -n "$SHARE"
+
+          echo "::add-mask::$USER_ID"
+          echo "::add-mask::$EMAIL"
+          echo "::add-mask::$PASSWORD"
+          echo "::add-mask::$SHARE"
+
+          {
+            echo "QA_USER_ID=$USER_ID"
+            echo "ORCALY_E2E_EMAIL=$EMAIL"
+            echo "ORCALY_E2E_PASSWORD=$PASSWORD"
+            echo "ORCALY_E2E_BASE_URL=$BASE_URL"
+            echo "ORCALY_E2E_VERCEL_SHARE=$SHARE"
+          } >> "$GITHUB_ENV"
+
+          echo "Disposable QA identity created."
+
+      - name: Fresh login 20 of 20
+        shell: bash
+        env:
+          ORCALY_E2E_ITERATIONS: '20'
+          ORCALY_E2E_TIMEOUT_MS: '45000'
+        run: node scripts/e2e-auth-first-login.mjs | tee fresh-20.log
+
+      - name: Preview acceptance 10 of 10
+        shell: bash
+        env:
+          ORCALY_E2E_ITERATIONS: '10'
+          ORCALY_E2E_TIMEOUT_MS: '45000'
+        run: node scripts/e2e-auth-first-login.mjs | tee preview-10.log
+
+      - name: Mobile 390px
+        shell: bash
+        env:
+          ORCALY_E2E_ITERATIONS: '3'
+          ORCALY_E2E_MOBILE: '1'
+          ORCALY_E2E_TIMEOUT_MS: '45000'
+        run: node scripts/e2e-auth-first-login.mjs | tee mobile-390.log
+
+      - name: Slow 3G
+        shell: bash
+        env:
+          ORCALY_E2E_ITERATIONS: '3'
+          ORCALY_E2E_NETWORK: slow
+          ORCALY_E2E_TIMEOUT_MS: '90000'
+        run: node scripts/e2e-auth-first-login.mjs | tee slow-3g.log
+
+      - name: Double click protection
+        shell: bash
+        env:
+          ORCALY_E2E_ITERATIONS: '3'
+          ORCALY_E2E_DOUBLE_CLICK: '1'
+          ORCALY_E2E_TIMEOUT_MS: '45000'
+        run: node scripts/e2e-auth-first-login.mjs | tee double-click.log
+
+      - name: Upload sanitized QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auth-first-login-qa-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            fresh-20.log
+            preview-10.log
+            mobile-390.log
+            slow-3g.log
+            double-click.log
+
+      - name: Delete disposable QA identity
+        if: always() && env.QA_USER_ID != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC_JSON="$(curl --silent --show-error --fail-with-body \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${QA_OIDC_AUDIENCE}")"
+          OIDC_TOKEN="$(printf '%s' "$OIDC_JSON" | jq -r '.value')"
+
+          curl --silent --show-error --fail-with-body \
+            -X POST "$QA_CONTROL_URL" \
+            -H "Authorization: Bearer $OIDC_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data "{\"action\":\"cleanup\",\"userId\":\"$QA_USER_ID\"}" \
+            >/dev/null
+
+          echo "Disposable QA identity deleted."
