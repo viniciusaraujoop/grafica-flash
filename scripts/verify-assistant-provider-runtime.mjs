@@ -1,3 +1,5 @@
+import { generateText } from 'ai'
+
 const isVercelPreview = process.env.VERCEL === '1' && process.env.VERCEL_ENV === 'preview'
 
 if (!isVercelPreview) {
@@ -5,129 +7,55 @@ if (!isVercelPreview) {
   process.exit(0)
 }
 
-const configuredModel = process.env.ORCALY_HOME_AI_MODEL || 'openai/gpt-5.6-luna'
-const configuredFallback = process.env.ORCALY_HOME_AI_FALLBACK_MODEL || 'openai/gpt-5.4'
+const model = process.env.ORCALY_HOME_AI_MODEL || 'openai/gpt-5.6-sol'
+const fallbackModel = process.env.ORCALY_HOME_AI_FALLBACK_MODEL || 'openai/gpt-5.4'
 
-function gatewayModel(value) {
-  return value.includes('/') ? value : `openai/${value}`
+function statusFromError(error) {
+  if (!error || typeof error !== 'object') return 0
+  const response = error.response && typeof error.response === 'object' ? error.response : null
+  const status = Number(error.statusCode || error.status || response?.status || 0)
+  return Number.isFinite(status) ? status : 0
 }
 
-function openAiModel(value) {
-  return value.startsWith('openai/') ? value.slice('openai/'.length) : value
+function classify(error) {
+  const status = statusFromError(error)
+  if (status === 401 || status === 403) return 'OPENAI_AUTH_ERROR'
+  if (status === 429) return 'OPENAI_RATE_LIMIT'
+  if (status === 408 || status === 504) return 'OPENAI_TIMEOUT'
+  if ([400, 404, 422].includes(status)) return 'VALIDATION_ERROR'
+  if (status >= 500) return 'OPENAI_PROVIDER_ERROR'
+  const message = error instanceof Error ? error.message.toLowerCase() : ''
+  if (message.includes('timeout')) return 'OPENAI_TIMEOUT'
+  if (message.includes('api key') || message.includes('authentication') || message.includes('unauthorized')) return 'OPENAI_AUTH_ERROR'
+  return 'OPENAI_PROVIDER_ERROR'
 }
 
-function safeProviderReason(payload) {
-  const raw = payload?.error?.message || payload?.message || payload?.error?.code || payload?.code || ''
-  return String(raw)
-    .replace(/Bearer\s+\S+/gi, 'Bearer [redacted]')
-    .replace(/(?:sk|vcp|vca|vcr|ai)[-_][A-Za-z0-9_-]{12,}/g, '[redacted]')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 220)
-}
+const startedAt = Date.now()
 
-const candidates = []
-
-if (process.env.VERCEL_OIDC_TOKEN) {
-  candidates.push({
-    provider: 'vercel-ai-gateway-oidc',
-    endpoint: 'https://ai-gateway.vercel.sh/v1/chat/completions',
-    apiKey: process.env.VERCEL_OIDC_TOKEN,
-    models: [...new Set([gatewayModel(configuredModel), gatewayModel(configuredFallback)])],
+try {
+  const result = await generateText({
+    model,
+    prompt: 'Sonda de saúde do Assistente Orçaly. Responda somente com uma frase curta em português confirmando que consegue responder.',
+    maxOutputTokens: 40,
+    abortSignal: AbortSignal.timeout(15_000),
+    providerOptions: {
+      gateway: {
+        models: fallbackModel === model ? [] : [fallbackModel],
+        disallowPromptTraining: true,
+      },
+    },
   })
-}
 
-if (process.env.AI_GATEWAY_API_KEY) {
-  candidates.push({
-    provider: 'vercel-ai-gateway-api-key',
-    endpoint: 'https://ai-gateway.vercel.sh/v1/chat/completions',
-    apiKey: process.env.AI_GATEWAY_API_KEY,
-    models: [...new Set([gatewayModel(configuredModel), gatewayModel(configuredFallback)])],
-  })
-}
+  const answer = String(result.text || '').trim()
+  if (!answer) {
+    console.error(`Assistente provider runtime probe: FAIL PARSER_ERROR provider=vercel-ai-gateway-sdk model=${model}`)
+    process.exit(1)
+  }
 
-if (process.env.OPENAI_API_KEY) {
-  candidates.push({
-    provider: 'openai',
-    endpoint: 'https://api.openai.com/v1/chat/completions',
-    apiKey: process.env.OPENAI_API_KEY,
-    models: [...new Set([openAiModel(configuredModel), openAiModel(configuredFallback)])],
-  })
-}
-
-console.log(`Assistente provider runtime probe: configured oidc=${Boolean(process.env.VERCEL_OIDC_TOKEN)} gateway_key=${Boolean(process.env.AI_GATEWAY_API_KEY)} openai=${Boolean(process.env.OPENAI_API_KEY)}`)
-
-if (!candidates.length) {
-  console.error('Assistente provider runtime probe: FAIL OPENAI_NOT_CONFIGURED')
+  console.log(`Assistente provider runtime probe: PASS provider=vercel-ai-gateway-sdk model=${model} duration_ms=${Date.now() - startedAt} conversational_text=true`)
+} catch (error) {
+  const errorType = classify(error)
+  const status = statusFromError(error)
+  console.error(`Assistente provider runtime probe: FAIL ${errorType} provider=vercel-ai-gateway-sdk status=${status} model=${model} duration_ms=${Date.now() - startedAt}`)
   process.exit(1)
 }
-
-let lastFailure = 'OPENAI_PROVIDER_ERROR'
-
-for (const candidate of candidates) {
-  for (const model of candidate.models) {
-    const startedAt = Date.now()
-    let response
-
-    try {
-      response = await fetch(candidate.endpoint, {
-        method: 'POST',
-        headers: {
-          authorization: `Bearer ${candidate.apiKey}`,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            {
-              role: 'system',
-              content: 'Sonda de saúde do Assistente Orçaly. Responda somente com uma frase curta em português confirmando que consegue responder.',
-            },
-            {
-              role: 'user',
-              content: 'Confirme que o provider está operacional.',
-            },
-          ],
-          max_tokens: 40,
-          stream: false,
-        }),
-        signal: AbortSignal.timeout(15000),
-      })
-    } catch (error) {
-      const name = error instanceof Error ? error.name : 'UnknownError'
-      lastFailure = name === 'TimeoutError' || name === 'AbortError' ? 'OPENAI_TIMEOUT' : 'OPENAI_PROVIDER_ERROR'
-      console.error(`Assistente provider runtime probe: candidate FAIL ${lastFailure} provider=${candidate.provider} model=${model}`)
-      continue
-    }
-
-    const durationMs = Date.now() - startedAt
-    const payload = await response.json().catch(() => ({}))
-
-    if (!response.ok) {
-      lastFailure = response.status === 401 || response.status === 403
-        ? 'OPENAI_AUTH_ERROR'
-        : response.status === 429
-          ? 'OPENAI_RATE_LIMIT'
-          : response.status >= 500
-            ? 'OPENAI_PROVIDER_ERROR'
-            : 'VALIDATION_ERROR'
-      const reason = safeProviderReason(payload)
-      console.error(`Assistente provider runtime probe: candidate FAIL ${lastFailure} provider=${candidate.provider} status=${response.status} model=${model} duration_ms=${durationMs}${reason ? ` reason=${JSON.stringify(reason)}` : ''}`)
-      if (lastFailure === 'OPENAI_AUTH_ERROR' || lastFailure === 'VALIDATION_ERROR') break
-      continue
-    }
-
-    const answer = String(payload?.choices?.[0]?.message?.content || '').trim()
-    if (!answer) {
-      lastFailure = 'PARSER_ERROR'
-      console.error(`Assistente provider runtime probe: candidate FAIL PARSER_ERROR provider=${candidate.provider} status=${response.status} model=${model} duration_ms=${durationMs}`)
-      continue
-    }
-
-    console.log(`Assistente provider runtime probe: PASS provider=${candidate.provider} model=${model} status=${response.status} duration_ms=${durationMs} conversational_text=true`)
-    process.exit(0)
-  }
-}
-
-console.error(`Assistente provider runtime probe: FAIL ${lastFailure} no working provider candidate`)
-process.exit(1)
