@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { streamText } from 'ai'
+
 export type AssistantProviderErrorType =
   | 'OPENAI_NOT_CONFIGURED'
   | 'OPENAI_AUTH_ERROR'
@@ -11,8 +13,8 @@ export type AssistantProviderErrorType =
 
 export type AssistantProviderFailure = {
   errorType: AssistantProviderErrorType
-  provider: 'vercel-ai-gateway' | 'openai' | 'none'
-  authMode: 'oidc' | 'api-key' | 'openai-key' | 'none'
+  provider: 'vercel-ai-gateway' | 'none'
+  authMode: 'managed' | 'none'
   status: number
   model: string
   durationMs: number
@@ -20,11 +22,11 @@ export type AssistantProviderFailure = {
 
 export type AssistantProviderStream = {
   ok: true
-  response: Response
-  provider: 'vercel-ai-gateway' | 'openai'
-  authMode: 'oidc' | 'api-key' | 'openai-key'
+  provider: 'vercel-ai-gateway'
+  authMode: 'managed'
   requestedModel: string
   durationMs: number
+  textStream: AsyncIterable<string>
 }
 
 export type AssistantProviderOpenResult =
@@ -36,89 +38,43 @@ type ChatMessage = {
   content: string
 }
 
-type ProviderCandidate = {
-  provider: 'vercel-ai-gateway' | 'openai'
-  authMode: 'oidc' | 'api-key' | 'openai-key'
-  endpoint: string
-  apiKey: string
-  models: string[]
-}
+const DEFAULT_MODEL = 'openai/gpt-5.6-sol'
+const DEFAULT_FALLBACK_MODEL = 'openai/gpt-5.4'
 
-const DEFAULT_GATEWAY_MODEL = 'openai/gpt-5.6-sol'
-const DEFAULT_GATEWAY_FALLBACK_MODEL = 'openai/gpt-5.4'
-
-function normalizeGatewayModel(value: string) {
+function gatewayModel(value: string) {
   const model = value.trim()
-  if (!model) return DEFAULT_GATEWAY_MODEL
+  if (!model) return DEFAULT_MODEL
   return model.includes('/') ? model : `openai/${model}`
 }
 
-function normalizeOpenAiModel(value: string) {
-  const model = value.trim()
-  if (!model) return DEFAULT_GATEWAY_MODEL.slice('openai/'.length)
-  return model.startsWith('openai/') ? model.slice('openai/'.length) : model
+function statusFromError(error: unknown) {
+  if (!error || typeof error !== 'object') return 0
+  const record = error as Record<string, unknown>
+  const response = record.response && typeof record.response === 'object'
+    ? (record.response as Record<string, unknown>)
+    : null
+  const candidate = record.statusCode ?? record.status ?? response?.status
+  const status = Number(candidate || 0)
+  return Number.isFinite(status) ? status : 0
 }
 
-function classifyStatus(status: number): AssistantProviderErrorType {
+function classifyError(error: unknown): AssistantProviderErrorType {
+  const status = statusFromError(error)
   if (status === 401 || status === 403) return 'OPENAI_AUTH_ERROR'
   if (status === 429) return 'OPENAI_RATE_LIMIT'
   if (status === 408 || status === 504) return 'OPENAI_TIMEOUT'
   if (status === 400 || status === 404 || status === 422) return 'VALIDATION_ERROR'
   if (status >= 500) return 'OPENAI_PROVIDER_ERROR'
+
+  const name = error instanceof Error ? error.name : ''
+  const message = error instanceof Error ? error.message.toLowerCase() : ''
+  if (name === 'TimeoutError' || name === 'AbortError' || message.includes('timeout')) {
+    return 'OPENAI_TIMEOUT'
+  }
+  if (message.includes('api key') || message.includes('authentication') || message.includes('unauthorized')) {
+    return 'OPENAI_AUTH_ERROR'
+  }
   return 'OPENAI_PROVIDER_ERROR'
-}
-
-function providerCandidates() {
-  const configuredModel = process.env.ORCALY_HOME_AI_MODEL || DEFAULT_GATEWAY_MODEL
-  const configuredFallback = process.env.ORCALY_HOME_AI_FALLBACK_MODEL || DEFAULT_GATEWAY_FALLBACK_MODEL
-  const gatewayModels = Array.from(new Set([
-    normalizeGatewayModel(configuredModel),
-    normalizeGatewayModel(configuredFallback),
-  ]))
-  const candidates: ProviderCandidate[] = []
-
-  // Vercel documents deployment OIDC as a valid AI Gateway credential. Prefer
-  // it inside deployments so a stale manually configured API key cannot mask
-  // a healthy project-scoped token. The incident reproduced in Preview had an
-  // invalid AI_GATEWAY_API_KEY that always won the old `key || oidc` expression.
-  if (process.env.VERCEL_OIDC_TOKEN && process.env.VERCEL_ENV) {
-    candidates.push({
-      provider: 'vercel-ai-gateway',
-      authMode: 'oidc',
-      endpoint: 'https://ai-gateway.vercel.sh/v1/chat/completions',
-      apiKey: process.env.VERCEL_OIDC_TOKEN,
-      models: gatewayModels,
-    })
-  }
-
-  // Keep explicit Gateway keys for local development and as a deployment
-  // fallback. A broken key no longer prevents OIDC from being attempted first.
-  if (process.env.AI_GATEWAY_API_KEY) {
-    candidates.push({
-      provider: 'vercel-ai-gateway',
-      authMode: 'api-key',
-      endpoint: 'https://ai-gateway.vercel.sh/v1/chat/completions',
-      apiKey: process.env.AI_GATEWAY_API_KEY,
-      models: gatewayModels,
-    })
-  }
-
-  // The project already supports OPENAI_API_KEY for server-side AI features.
-  // When present, it is a real final provider fallback, never exposed client-side.
-  if (process.env.OPENAI_API_KEY) {
-    candidates.push({
-      provider: 'openai',
-      authMode: 'openai-key',
-      endpoint: 'https://api.openai.com/v1/chat/completions',
-      apiKey: process.env.OPENAI_API_KEY,
-      models: Array.from(new Set([
-        normalizeOpenAiModel(configuredModel),
-        normalizeOpenAiModel(configuredFallback),
-      ])),
-    })
-  }
-
-  return candidates
 }
 
 function safeProviderLog(input: {
@@ -136,103 +92,87 @@ function safeProviderLog(input: {
   }))
 }
 
+function prependFirstChunk(
+  first: IteratorResult<string>,
+  iterator: AsyncIterator<string>,
+): AsyncIterable<string> {
+  return {
+    async *[Symbol.asyncIterator]() {
+      if (!first.done && first.value) yield first.value
+      while (true) {
+        const next = await iterator.next()
+        if (next.done) return
+        if (next.value) yield next.value
+      }
+    },
+  }
+}
+
 export async function openAssistantProviderStream(input: {
   requestId: string
   messages: ChatMessage[]
 }): Promise<AssistantProviderOpenResult> {
-  const candidates = providerCandidates()
+  const requestedModel = gatewayModel(process.env.ORCALY_HOME_AI_MODEL || DEFAULT_MODEL)
+  const fallbackModel = gatewayModel(
+    process.env.ORCALY_HOME_AI_FALLBACK_MODEL || DEFAULT_FALLBACK_MODEL,
+  )
+  const startedAt = Date.now()
 
-  if (!candidates.length) {
+  try {
+    // Model strings use Vercel AI Gateway through the official AI SDK. On a
+    // Vercel deployment authentication is managed by the platform instead of
+    // manually forwarding AI_GATEWAY_API_KEY/VERCEL_OIDC_TOKEN as raw Bearer
+    // credentials, which was the root of the 401/403 incident.
+    const result = streamText({
+      model: requestedModel,
+      messages: input.messages,
+      maxOutputTokens: 450,
+      abortSignal: AbortSignal.timeout(14_000),
+      providerOptions: {
+        gateway: {
+          models: fallbackModel === requestedModel ? [] : [fallbackModel],
+          disallowPromptTraining: true,
+        },
+      },
+    })
+
+    const iterator = result.textStream[Symbol.asyncIterator]()
+
+    // Pull the first chunk before returning the HTTP response. Authentication,
+    // invalid-model and immediate provider failures are therefore classified
+    // while the route can still return a non-200 status instead of a fake 200.
+    const first = await iterator.next()
+    if (first.done || !first.value) {
+      const failure: AssistantProviderFailure = {
+        errorType: 'VALIDATION_ERROR',
+        provider: 'vercel-ai-gateway',
+        authMode: 'managed',
+        status: 0,
+        model: requestedModel,
+        durationMs: Date.now() - startedAt,
+      }
+      safeProviderLog({ requestId: input.requestId, failure })
+      return { ok: false, failure }
+    }
+
+    return {
+      ok: true,
+      provider: 'vercel-ai-gateway',
+      authMode: 'managed',
+      requestedModel,
+      durationMs: Date.now() - startedAt,
+      textStream: prependFirstChunk(first, iterator),
+    }
+  } catch (error) {
     const failure: AssistantProviderFailure = {
-      errorType: 'OPENAI_NOT_CONFIGURED',
-      provider: 'none',
-      authMode: 'none',
-      status: 0,
-      model: '',
-      durationMs: 0,
+      errorType: classifyError(error),
+      provider: 'vercel-ai-gateway',
+      authMode: 'managed',
+      status: statusFromError(error),
+      model: requestedModel,
+      durationMs: Date.now() - startedAt,
     }
     safeProviderLog({ requestId: input.requestId, failure })
     return { ok: false, failure }
   }
-
-  let lastFailure: AssistantProviderFailure = {
-    errorType: 'INTERNAL_ERROR',
-    provider: 'none',
-    authMode: 'none',
-    status: 0,
-    model: '',
-    durationMs: 0,
-  }
-
-  for (const candidate of candidates) {
-    for (const model of candidate.models) {
-      const startedAt = Date.now()
-      try {
-        const response = await fetch(candidate.endpoint, {
-          method: 'POST',
-          headers: {
-            authorization: `Bearer ${candidate.apiKey}`,
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify({
-            model,
-            messages: input.messages,
-            max_tokens: 450,
-            stream: true,
-            stream_options: { include_usage: true },
-          }),
-          signal: AbortSignal.timeout(14_000),
-        })
-
-        const durationMs = Date.now() - startedAt
-        if (response.ok && response.body) {
-          return {
-            ok: true,
-            response,
-            provider: candidate.provider,
-            authMode: candidate.authMode,
-            requestedModel: model,
-            durationMs,
-          }
-        }
-
-        lastFailure = {
-          errorType: classifyStatus(response.status),
-          provider: candidate.provider,
-          authMode: candidate.authMode,
-          status: response.status,
-          model,
-          durationMs,
-        }
-        safeProviderLog({ requestId: input.requestId, failure: lastFailure })
-        try {
-          await response.body?.cancel()
-        } catch {
-          // Nothing useful to expose from provider error bodies at runtime.
-        }
-
-        // Configuration/auth/contract errors are not transient. Do not retry a
-        // second model with the same credential, but continue to the next
-        // independently authenticated provider candidate when one exists.
-        if (['OPENAI_AUTH_ERROR', 'VALIDATION_ERROR'].includes(lastFailure.errorType)) {
-          break
-        }
-      } catch (error) {
-        const durationMs = Date.now() - startedAt
-        const name = error instanceof Error ? error.name : ''
-        const timeout = name === 'TimeoutError' || name === 'AbortError'
-        lastFailure = {
-          errorType: timeout ? 'OPENAI_TIMEOUT' : 'OPENAI_PROVIDER_ERROR',
-          provider: candidate.provider,
-          authMode: candidate.authMode,
-          status: 0,
-          model,
-          durationMs,
-        }
-        safeProviderLog({ requestId: input.requestId, failure: lastFailure })
-      }
-    }
-  }
-
-  return { ok: false, failure: lastFailure }
 }
