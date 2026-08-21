@@ -12,6 +12,7 @@ export type AssistantProviderErrorType =
 export type AssistantProviderFailure = {
   errorType: AssistantProviderErrorType
   provider: 'vercel-ai-gateway' | 'openai' | 'none'
+  authMode: 'oidc' | 'api-key' | 'openai-key' | 'none'
   status: number
   model: string
   durationMs: number
@@ -21,6 +22,7 @@ export type AssistantProviderStream = {
   ok: true
   response: Response
   provider: 'vercel-ai-gateway' | 'openai'
+  authMode: 'oidc' | 'api-key' | 'openai-key'
   requestedModel: string
   durationMs: number
 }
@@ -36,6 +38,7 @@ type ChatMessage = {
 
 type ProviderCandidate = {
   provider: 'vercel-ai-gateway' | 'openai'
+  authMode: 'oidc' | 'api-key' | 'openai-key'
   endpoint: string
   apiKey: string
   models: string[]
@@ -65,29 +68,44 @@ function classifyStatus(status: number): AssistantProviderErrorType {
 function providerCandidates() {
   const configuredModel = process.env.ORCALY_HOME_AI_MODEL || 'openai/gpt-5.6-luna'
   const configuredFallback = process.env.ORCALY_HOME_AI_FALLBACK_MODEL || 'openai/gpt-5.4'
+  const gatewayModels = Array.from(new Set([
+    normalizeGatewayModel(configuredModel),
+    normalizeGatewayModel(configuredFallback),
+  ]))
   const candidates: ProviderCandidate[] = []
 
-  // Raw AI Gateway REST calls require the Gateway credential. VERCEL_OIDC_TOKEN
-  // is intentionally not used here: production logs proved it returns 401 in
-  // this integration path.
-  if (process.env.AI_GATEWAY_API_KEY) {
+  // Vercel documents deployment OIDC as a valid AI Gateway credential. Prefer
+  // it inside deployments so a stale manually configured API key cannot mask
+  // a healthy project-scoped token. The incident reproduced in Preview had an
+  // invalid AI_GATEWAY_API_KEY that always won the old `key || oidc` expression.
+  if (process.env.VERCEL_OIDC_TOKEN && process.env.VERCEL_ENV) {
     candidates.push({
       provider: 'vercel-ai-gateway',
+      authMode: 'oidc',
       endpoint: 'https://ai-gateway.vercel.sh/v1/chat/completions',
-      apiKey: process.env.AI_GATEWAY_API_KEY,
-      models: Array.from(new Set([
-        normalizeGatewayModel(configuredModel),
-        normalizeGatewayModel(configuredFallback),
-      ])),
+      apiKey: process.env.VERCEL_OIDC_TOKEN,
+      models: gatewayModels,
     })
   }
 
-  // The project already supports OPENAI_API_KEY for other server-side AI
-  // functionality. When present, use it as a real provider fallback rather
-  // than pretending the assistant worked with a static response.
+  // Keep explicit Gateway keys for local development and as a deployment
+  // fallback. A broken key no longer prevents OIDC from being attempted first.
+  if (process.env.AI_GATEWAY_API_KEY) {
+    candidates.push({
+      provider: 'vercel-ai-gateway',
+      authMode: 'api-key',
+      endpoint: 'https://ai-gateway.vercel.sh/v1/chat/completions',
+      apiKey: process.env.AI_GATEWAY_API_KEY,
+      models: gatewayModels,
+    })
+  }
+
+  // The project already supports OPENAI_API_KEY for server-side AI features.
+  // When present, it is a real final provider fallback, never exposed client-side.
   if (process.env.OPENAI_API_KEY) {
     candidates.push({
       provider: 'openai',
+      authMode: 'openai-key',
       endpoint: 'https://api.openai.com/v1/chat/completions',
       apiKey: process.env.OPENAI_API_KEY,
       models: Array.from(new Set([
@@ -108,6 +126,7 @@ function safeProviderLog(input: {
     request_id: input.requestId,
     error_type: input.failure.errorType,
     provider: input.failure.provider,
+    auth_mode: input.failure.authMode,
     provider_status: input.failure.status,
     model: input.failure.model,
     duration_ms: input.failure.durationMs,
@@ -117,13 +136,14 @@ function safeProviderLog(input: {
 export async function openAssistantProviderStream(input: {
   requestId: string
   messages: ChatMessage[]
-}) : Promise<AssistantProviderOpenResult> {
+}): Promise<AssistantProviderOpenResult> {
   const candidates = providerCandidates()
 
   if (!candidates.length) {
     const failure: AssistantProviderFailure = {
       errorType: 'OPENAI_NOT_CONFIGURED',
       provider: 'none',
+      authMode: 'none',
       status: 0,
       model: '',
       durationMs: 0,
@@ -135,6 +155,7 @@ export async function openAssistantProviderStream(input: {
   let lastFailure: AssistantProviderFailure = {
     errorType: 'INTERNAL_ERROR',
     provider: 'none',
+    authMode: 'none',
     status: 0,
     model: '',
     durationMs: 0,
@@ -166,6 +187,7 @@ export async function openAssistantProviderStream(input: {
             ok: true,
             response,
             provider: candidate.provider,
+            authMode: candidate.authMode,
             requestedModel: model,
             durationMs,
           }
@@ -174,14 +196,21 @@ export async function openAssistantProviderStream(input: {
         lastFailure = {
           errorType: classifyStatus(response.status),
           provider: candidate.provider,
+          authMode: candidate.authMode,
           status: response.status,
           model,
           durationMs,
         }
         safeProviderLog({ requestId: input.requestId, failure: lastFailure })
+        try {
+          await response.body?.cancel()
+        } catch {
+          // Nothing useful to expose from provider error bodies at runtime.
+        }
 
-        // 400/401/403/404/422 are configuration or contract failures. Trying
-        // another model on the same credential only hides the actual problem.
+        // Configuration/auth/contract errors are not transient. Do not retry a
+        // second model with the same credential, but continue to the next
+        // independently authenticated provider candidate when one exists.
         if (['OPENAI_AUTH_ERROR', 'VALIDATION_ERROR'].includes(lastFailure.errorType)) {
           break
         }
@@ -192,6 +221,7 @@ export async function openAssistantProviderStream(input: {
         lastFailure = {
           errorType: timeout ? 'OPENAI_TIMEOUT' : 'OPENAI_PROVIDER_ERROR',
           provider: candidate.provider,
+          authMode: candidate.authMode,
           status: 0,
           model,
           durationMs,
