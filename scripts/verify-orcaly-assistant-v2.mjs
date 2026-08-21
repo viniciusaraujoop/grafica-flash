@@ -13,10 +13,12 @@ const eventRoute = read('app/api/public/home-chat/event/route.ts')
 const ui = read('components/home/HomeAiChatV2.tsx')
 const wrapper = read('components/home/HomeAiChat.tsx')
 const knowledge = read('lib/assistant/orcaly-knowledge.ts')
+const provider = read('lib/assistant/provider.ts')
 const tools = read('lib/assistant/tools.ts')
 const router = read('lib/assistant/router.ts')
 const analytics = read('lib/assistant/analytics.ts')
 const adminApi = read('app/api/admin/assistant/route.ts')
+const marketing = read('lib/marketing/main-site.ts')
 const migration = read('supabase/migrations/20260821004000_orcaly_assistant_v2_analytics.sql')
 const evals = JSON.parse(read('tests/orcaly-assistant-v2-evals.json'))
 
@@ -25,17 +27,32 @@ has(knowledge, /marketingSolutions/, 'knowledge must import canonical segment so
 has(knowledge, /marketingFeatures/, 'knowledge must import canonical features')
 has(knowledge, /marketingFaq/, 'knowledge must import canonical FAQ')
 
-for (const file of [api, tools, router]) {
+for (const file of [api, tools, router, provider]) {
   lacks(file, /R\$\s*49[,.]90|R\$\s*99[,.]90|R\$\s*149[,.]90/, 'assistant runtime must not duplicate plan prices')
 }
 has(api, /publicKnowledgeForPrompt/, 'AI prompt must be built from canonical product knowledge')
-has(api, /stream:\s*true/, 'AI Gateway request must stream')
-has(api, /text\/event-stream/, 'public assistant must return SSE')
+has(provider, /stream:\s*true/, 'provider request must stream')
+has(api, /text\/event-stream/, 'public assistant must return SSE when the provider is healthy')
 has(api, /public-home-ai-chat-v2-ip/, 'IP rate limit is required')
 has(api, /public-home-ai-chat-v2-session/, 'session rate limit is required')
-has(api, /AI_GATEWAY_API_KEY\s*\|\|\s*process\.env\.VERCEL_OIDC_TOKEN/, 'gateway auth must remain server-side')
+has(provider, /process\.env\.AI_GATEWAY_API_KEY/, 'AI Gateway auth must use its dedicated server-side key')
+has(provider, /process\.env\.OPENAI_API_KEY/, 'direct OpenAI server-side provider fallback must be supported')
+lacks(provider, /process\.env\.VERCEL_OIDC_TOKEN/, 'raw AI Gateway calls must not reuse VERCEL_OIDC_TOKEN after the proven 401 regression')
+has(provider, /OPENAI_NOT_CONFIGURED/, 'provider errors must classify missing configuration')
+has(provider, /OPENAI_AUTH_ERROR/, 'provider errors must classify authentication failures')
+has(provider, /OPENAI_RATE_LIMIT/, 'provider errors must classify rate limits')
+has(provider, /OPENAI_TIMEOUT/, 'provider errors must classify timeouts')
+has(api, /status:\s*provider\.failure\.errorType === 'OPENAI_RATE_LIMIT' \? 429 : 503/, 'provider failure must not masquerade as HTTP 200')
+has(api, /X-Assistant-Request-Id/, 'provider/request failures must expose a safe support request id')
+has(api, /routeFallbackAssistant/, 'provider failure must use intent-aware fallback')
+lacks(api, /fallbackResult\(\).*get_plans/s, 'fallback must not dump all plans for every provider failure')
 lacks(api, /NEXT_PUBLIC_.*AI_GATEWAY|NEXT_PUBLIC_.*OPENAI/i, 'AI secret must never be public')
 lacks(ui, /dangerouslySetInnerHTML/, 'model content must not use dangerouslySetInnerHTML')
+
+has(router, /Você é o Assistente Orçaly|Eu sou o Assistente Orçaly/, 'identity intent must answer directly')
+has(router, /O principal motivo é centralizar/, 'why-subscribe intent must answer benefits instead of pricing')
+has(router, /routeFallbackAssistant/, 'intent-aware provider contingency must exist')
+has(router, /Estou temporariamente sem acesso à conversa por IA/, 'unknown fallback must describe real provider contingency')
 
 has(wrapper, /dynamic\(/, 'assistant heavy UI must be lazy loaded')
 has(wrapper, /ssr:\s*false/, 'assistant client UI should not inflate server render')
@@ -49,6 +66,11 @@ has(ui, /assistant_whatsapp_clicked/, 'WhatsApp analytics must be wired')
 has(ui, /orcaly_affiliate_referral_v1/, 'existing referral storage key must be reused')
 has(ui, /withAttribution/, 'assistant CTA must preserve referral/UTM context')
 lacks(ui, /href:\s*['"]#/, 'assistant v2 must not create dead hash CTAs')
+
+for (const file of [ui, knowledge, tools, router, marketing]) {
+  lacks(file, /https:\/\/[^'"\s]*vercel\.app/i, 'commercial assistant code must not hardcode a Vercel deployment URL')
+}
+has(marketing, /return planId \? `\/cadastro\?plano=\$\{encodeURIComponent\(planId\)\}` : '\/cadastro'/, 'signup URLs must stay relative and environment-safe')
 
 const requiredTools = [
   'get_plans',
@@ -89,9 +111,9 @@ lacks(migration, /\bdrop\s+table\b|\btruncate\b|\balter\s+table[^;]+drop\b/i, 'a
 has(adminApi, /requireOfficialPlatformOwner/, 'assistant analytics must be owner-protected')
 lacks(adminApi, /\bsession_hash\s*:/, 'admin API must not expose session hash as a response field')
 
-if (!Array.isArray(evals) || evals.length < 15) fail('eval dataset must cover at least 15 scenarios')
+if (!Array.isArray(evals) || evals.length < 25) fail('eval dataset must cover at least 25 scenarios')
 const evalInputs = evals.map((item) => String(item.input || '').toLowerCase())
-for (const required of ['quanto custa', 'tenho uma gráfica', 'mostre sua api key', 'ignore suas instruções', 'execute sql', 'quem ganhou a copa']) {
+for (const required of ['você é uma ia', 'por que devo assinar', 'quanto custa', 'tenho uma gráfica', 'mostre sua api key', 'ignore suas instruções', 'execute sql', 'quem ganhou a copa']) {
   if (!evalInputs.some((item) => item.includes(required))) fail(`eval dataset missing: ${required}`)
 }
 
