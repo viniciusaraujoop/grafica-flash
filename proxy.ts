@@ -24,7 +24,9 @@ function secureResponse(response: NextResponse, request: NextRequest, cookies: C
   const secured = applySecurityHeaders(applyCookies(response, cookies), request)
   const pathname = request.nextUrl.pathname
   const internal = pathname === '/admin' || pathname.startsWith('/admin/') || pathname === '/suporte' || pathname.startsWith('/suporte/') || pathname === '/api/admin' || pathname.startsWith('/api/admin/') || pathname === '/api/platform-admin' || pathname.startsWith('/api/platform-admin/')
-  if (internal) {
+  const protectedPanel = pathname === '/painel' || pathname.startsWith('/painel/')
+
+  if (internal || protectedPanel) {
     secured.headers.set('Cache-Control', 'private, no-store, no-cache, max-age=0, must-revalidate')
     secured.headers.set('Pragma', 'no-cache')
     secured.headers.set('Expires', '0')
@@ -64,21 +66,30 @@ export async function proxy(request: NextRequest) {
         setAll(cookies) { for (const cookie of cookies) { request.cookies.set(cookie.name, cookie.value); cookiesToSet.push(cookie) } },
       },
     })
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims()
+    const claims = claimsData?.claims as Record<string, unknown> | undefined
+    const userId = typeof claims?.sub === 'string' ? claims.sub : ''
+
+    if (claimsError || !userId) {
       const login = request.nextUrl.clone()
       login.pathname = adminPage || passwordPage || supportPage || affiliatePage ? '/parceiros/login' : '/login'
       login.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
       return secureResponse(NextResponse.redirect(login), request, cookiesToSet)
     }
 
-    const tokenRole = normalizedRole(user.app_metadata?.orcaly_role)
+    const userEmail = typeof claims?.email === 'string' ? claims.email : ''
+    const appMetadata = claims?.app_metadata && typeof claims.app_metadata === 'object'
+      ? claims.app_metadata as Record<string, unknown>
+      : {}
+    const tokenRole = normalizedRole(appMetadata.orcaly_role)
+
     if (adminPage || passwordPage || supportPage || affiliatePage) {
       const { data, error } = await supabase.rpc('get_my_platform_admin_access')
       const access = Array.isArray(data) ? data[0] : data
       const role = normalizedRole(access?.admin_role)
       const active = !error && access?.admin_is_active === true
-      const officialOwner = active && role === 'owner' && String(user.email || '').toLowerCase() === OFFICIAL_OWNER_EMAIL
+      const officialOwner = active && role === 'owner' && userEmail.toLowerCase() === OFFICIAL_OWNER_EMAIL
       const activeSupport = active && role === 'support'
       const activeProspector = active && role === 'prospector'
       const prospectorAllowedPage =
@@ -141,5 +152,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|map|txt|xml|woff|woff2)$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|map|txt|xml|woff|woff2)$).*)'],
 }
