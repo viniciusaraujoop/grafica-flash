@@ -7,6 +7,7 @@ import { join } from 'node:path'
 const baseUrl = (process.env.ORCALY_E2E_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
 const email = process.env.ORCALY_E2E_EMAIL || ''
 const password = process.env.ORCALY_E2E_PASSWORD || ''
+const vercelShare = process.env.ORCALY_E2E_VERCEL_SHARE || ''
 const iterations = Number(process.env.ORCALY_E2E_ITERATIONS || 20)
 const chromium = process.env.CHROMIUM_PATH || process.env.CHROME_PATH || 'chromium'
 const mobile = process.env.ORCALY_E2E_MOBILE === '1'
@@ -17,6 +18,12 @@ const timeoutMs = Number(process.env.ORCALY_E2E_TIMEOUT_MS || 30000)
 if (!email || !password) {
   console.error('ORCALY_E2E_EMAIL e ORCALY_E2E_PASSWORD são obrigatórios para o fresh-login E2E.')
   process.exit(2)
+}
+
+function loginUrl() {
+  const url = new URL(`${baseUrl}/login`)
+  if (vercelShare) url.searchParams.set('_vercel_share', vercelShare)
+  return url.toString()
 }
 
 function delay(ms) {
@@ -196,7 +203,7 @@ async function runFreshLogin(index) {
       }, sessionId)
     }
 
-    await cdp.send('Page.navigate', { url: `${baseUrl}/login` }, sessionId)
+    await cdp.send('Page.navigate', { url: loginUrl() }, sessionId)
     await waitFor(async () => {
       const result = await cdp.send('Runtime.evaluate', {
         expression: `document.readyState === 'complete' && !!document.querySelector('input[type="email"]') && !!document.querySelector('input[type="password"]')`,
@@ -290,6 +297,7 @@ for (let index = 1; index <= iterations; index += 1) {
 console.log(JSON.stringify({
   event: 'auth_first_login_e2e_complete',
   baseUrl,
+  vercelProtection: Boolean(vercelShare),
   iterations,
   mobile,
   slowNetwork,
