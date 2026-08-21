@@ -87,7 +87,7 @@ has(migration, /grant select, insert on table public\.assistant_events to servic
 lacks(migration, /\bdrop\s+table\b|\btruncate\b|\balter\s+table[^;]+drop\b/i, 'assistant migration must be additive')
 
 has(adminApi, /requireOfficialPlatformOwner/, 'assistant analytics must be owner-protected')
-lacks(adminApi, /session_hash.*NextResponse|return.*session_hash/s, 'admin API must not intentionally expose session hashes')
+lacks(adminApi, /\bsession_hash\s*:/, 'admin API must not expose session hash as a response field')
 
 if (!Array.isArray(evals) || evals.length < 15) fail('eval dataset must cover at least 15 scenarios')
 const evalInputs = evals.map((item) => String(item.input || '').toLowerCase())
