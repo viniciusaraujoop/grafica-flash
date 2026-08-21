@@ -16,6 +16,7 @@ create table if not exists public.assistant_events (
     'assistant_lead_created',
     'assistant_feedback',
     'assistant_unanswered',
+    'assistant_fallback',
     'assistant_provider_error'
   )),
   page_path text,
