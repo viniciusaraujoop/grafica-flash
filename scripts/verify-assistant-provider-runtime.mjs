@@ -17,14 +17,27 @@ function openAiModel(value) {
 }
 
 const candidates = []
+
+// Test deployment-native OIDC independently. A stale explicit Gateway key
+// must not prevent us from proving whether OIDC itself is healthy.
+if (process.env.VERCEL_OIDC_TOKEN) {
+  candidates.push({
+    provider: 'vercel-ai-gateway-oidc',
+    endpoint: 'https://ai-gateway.vercel.sh/v1/chat/completions',
+    apiKey: process.env.VERCEL_OIDC_TOKEN,
+    models: [...new Set([gatewayModel(configuredModel), gatewayModel(configuredFallback)])],
+  })
+}
+
 if (process.env.AI_GATEWAY_API_KEY) {
   candidates.push({
-    provider: 'vercel-ai-gateway',
+    provider: 'vercel-ai-gateway-api-key',
     endpoint: 'https://ai-gateway.vercel.sh/v1/chat/completions',
     apiKey: process.env.AI_GATEWAY_API_KEY,
     models: [...new Set([gatewayModel(configuredModel), gatewayModel(configuredFallback)])],
   })
 }
+
 if (process.env.OPENAI_API_KEY) {
   candidates.push({
     provider: 'openai',
@@ -34,7 +47,7 @@ if (process.env.OPENAI_API_KEY) {
   })
 }
 
-console.log(`Assistente provider runtime probe: configured gateway=${Boolean(process.env.AI_GATEWAY_API_KEY)} openai=${Boolean(process.env.OPENAI_API_KEY)}`)
+console.log(`Assistente provider runtime probe: configured oidc=${Boolean(process.env.VERCEL_OIDC_TOKEN)} gateway_key=${Boolean(process.env.AI_GATEWAY_API_KEY)} openai=${Boolean(process.env.OPENAI_API_KEY)}`)
 
 if (!candidates.length) {
   console.error('Assistente provider runtime probe: FAIL OPENAI_NOT_CONFIGURED')
