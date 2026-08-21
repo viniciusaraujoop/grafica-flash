@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { resolveCommercialObjection } from '@/lib/assistant/objections'
 import type { AssistantResult } from '@/lib/assistant/types'
 import {
   inferSegmentFromText,
@@ -70,14 +71,16 @@ export function routeDeterministicAssistant(input: {
   }
 
   if (
-    /(quem ganhou.*copa|futebol|receita de|fofoca|eleicao|eleição|presidente do|previsao do tempo|previsão do tempo|horoscopo|horóscopo)/.test(question)
+    /(quem ganhou.*copa|futebol|receita de|fofoca|eleicao|presidente do|previsao do tempo|horoscopo)/.test(question)
   ) {
     return scopeRedirect()
   }
 
+  const objection = resolveCommercialObjection(input.question)
+  if (objection) return objection
+
   if (
     question === 'ver para meu negocio' ||
-    question === 'ver para meu negócio' ||
     question.includes('meu tipo de negocio')
   ) {
     return {
@@ -88,13 +91,11 @@ export function routeDeterministicAssistant(input: {
     }
   }
 
-  if (
-    /quanto custa|preco|preço|valores|valor dos planos|quais planos/.test(question)
-  ) {
+  if (/quanto custa|preco|valores|valor dos planos|quais planos/.test(question)) {
     return runAssistantTool('get_plans')
   }
 
-  if (/comparar|comparacao|comparação|diferenca entre|diferença entre/.test(question)) {
+  if (/comparar|comparacao|diferenca entre/.test(question)) {
     const requested = ['essencial', 'profissional', 'premium'].filter((candidate) =>
       normalizedContext.includes(candidate === 'essencial' ? 'basico' : candidate === 'profissional' ? 'intermediario' : candidate),
     )
@@ -102,7 +103,7 @@ export function routeDeterministicAssistant(input: {
   }
 
   if (/qual plano|plano ideal|recomenda.*plano|melhor plano/.test(question)) {
-    const decisionSignals = /(proposta|follow.?up|relatorio|crm|equipe|automacao|recuperacao|volume|escala|comecando|começando|pequeno|organizar vendas|acompanhar clientes)/.test(normalizedContext)
+    const decisionSignals = /(proposta|follow.?up|relatorio|crm|equipe|automacao|recuperacao|volume|escala|comecando|pequeno|organizar vendas|acompanhar clientes)/.test(normalizedContext)
 
     if (!decisionSignals) {
       return {
@@ -122,7 +123,7 @@ export function routeDeterministicAssistant(input: {
     })
   }
 
-  if (/estou comecando|estou começando|ja vendo|já vendo|preciso de automa|preciso organizar/.test(question)) {
+  if (/estou comecando|ja vendo|preciso de automa|preciso organizar/.test(question)) {
     return runAssistantTool('recommend_plan', {
       needs: normalizedContext,
       workflow: normalizedContext,
@@ -131,23 +132,23 @@ export function routeDeterministicAssistant(input: {
     })
   }
 
-  if (/demonstracao|demonstração|ver demo|mostrar demo|como fica na pratica|como fica na prática/.test(question)) {
+  if (/demonstracao|ver demo|mostrar demo|como fica na pratica/.test(question)) {
     return runAssistantTool('get_demo', { segment })
   }
 
-  if (/quero testar|criar conta|quero assinar|quero contratar|comecar cadastro|começar cadastro|fazer cadastro/.test(question)) {
+  if (/quero testar|criar conta|quero assinar|quero contratar|comecar cadastro|fazer cadastro/.test(question)) {
     return runAssistantTool('start_signup', { plan, segment })
   }
 
-  if (/falar com alguem|falar com alguém|whatsapp|contato humano|falar com a equipe|quero atendimento/.test(question)) {
+  if (/falar com alguem|whatsapp|contato humano|falar com a equipe|quero atendimento/.test(question)) {
     return runAssistantTool('prepare_whatsapp_handoff', { plan, segment })
   }
 
-  if (segment && (/tenho |sou |meu negocio|meu negócio|funciona para|como funciona/.test(question))) {
+  if (segment && (/tenho |sou |meu negocio|funciona para|como funciona/.test(question))) {
     return runAssistantTool('get_segment_solution', { segment })
   }
 
-  if (/site proprio|site próprio|catalogo|catálogo|cardapio|cardápio|crm|proposta|financeiro|follow.?up|pedidos/.test(question)) {
+  if (/site proprio|catalogo|cardapio|crm|proposta|financeiro|follow.?up|pedidos/.test(question)) {
     return runAssistantTool('search_features', { query: question })
   }
 
