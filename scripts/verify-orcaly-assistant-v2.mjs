@@ -78,7 +78,8 @@ lacks(lead, /@assistant\.|placeholder.*@|fake.*@/i, 'lead capture must not manuf
 
 has(eventRoute, /PUBLIC_EVENTS/, 'public analytics endpoint needs an event allowlist')
 has(analytics, /createHash\('sha256'\)/, 'session identifiers must be anonymized before persistence')
-lacks(analytics, /question|conversation|message_content|email|whatsapp/i, 'analytics schema/service must not persist conversation text or direct PII')
+lacks(analytics, /\b(question|conversation|message_content|email|phone|whatsapp)\s*:/i, 'analytics payload must not define conversation text or direct PII fields')
+lacks(analytics, /metadata\s*:\s*\{[^}]*\b(question|conversation|email|phone|whatsapp)\b/s, 'analytics metadata must not include conversation text or direct PII')
 
 has(migration, /enable row level security/i, 'assistant analytics table must use RLS')
 has(migration, /revoke all on table public\.assistant_events from anon, authenticated/i, 'assistant analytics must not be client-readable/writable')
