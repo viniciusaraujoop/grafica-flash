@@ -28,6 +28,13 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
+  {
+    files: ["components/home/HomeAiChatV2.tsx"],
+    rules: {
+      // The feedback field is intentionally removed before localStorage persistence.
+      "@typescript-eslint/no-unused-vars": ["warn", { ignoreRestSiblings: true }],
+    },
+  },
   globalIgnores([
     ".next/**",
     "out/**",
