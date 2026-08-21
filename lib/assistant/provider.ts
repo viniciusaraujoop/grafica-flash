@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { streamText } from 'ai'
+import { gateway, streamText } from 'ai'
 
 export type AssistantProviderErrorType =
   | 'OPENAI_NOT_CONFIGURED'
@@ -161,11 +161,11 @@ export async function openAssistantProviderStream(input: {
     .map((message) => ({ role: message.role, content: message.content }))
 
   try {
-    // Model strings use Vercel AI Gateway through the official AI SDK. On a
-    // Vercel deployment authentication is delegated to the SDK/provider layer;
-    // application code never forwards AI credentials to a raw HTTP endpoint.
+    // Use the explicit Gateway provider exported by AI SDK. This provider reads
+    // Vercel deployment OIDC through @ai-sdk/gateway/@vercel/oidc and avoids
+    // manually forwarding short-lived tokens or stale API keys in application code.
     const result = streamText({
-      model: requestedModel,
+      model: gateway(requestedModel),
       instructions: instructions || undefined,
       messages,
       maxOutputTokens: 450,
@@ -179,10 +179,6 @@ export async function openAssistantProviderStream(input: {
     })
 
     const iterator = result.fullStream[Symbol.asyncIterator]()
-
-    // Pull until the first text delta before returning the HTTP response. Any
-    // initial Gateway error is classified while the route can still return a
-    // proper non-200 status. Mid-stream errors remain observable by the route.
     const first = await firstTextChunk(iterator)
     if (first.done || !first.text) {
       const failure: AssistantProviderFailure = {
