@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "lint:auth-hotfix": "eslint app/login/page.tsx app/login/actions.ts app/painel/layout.tsx app/api/company/current/route.ts lib/supabase-server.ts lib/current-company-client.ts proxy.ts scripts/verify-auth-first-login-race.mjs",
+    "lint:auth-hotfix": "eslint app/login/page.tsx app/login/actions.ts app/painel/layout.tsx app/painel/actions.ts app/api/company/current/route.ts components/painel/PanelPremiumHeader.tsx lib/supabase-server.ts lib/current-company-client.ts proxy.ts scripts/verify-auth-first-login-race.mjs",
     "test": "node scripts/verify-critical-hotfix.mjs && node scripts/verify-auth-first-login-race.mjs && node scripts/verify-partner-portal-v2.mjs && node scripts/verify-admin-control-center-v2.mjs && node scripts/verify-storefront-marketplace-v2.mjs && node scripts/verify-main-site-v2.mjs",
     "e2e:auth": "node scripts/e2e-auth-first-login.mjs",
     "security:check": "node scripts/security-check.mjs",
