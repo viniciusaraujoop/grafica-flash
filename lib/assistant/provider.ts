@@ -40,10 +40,11 @@ type ChatMessage = {
 
 const DEFAULT_MODEL = 'openai/gpt-5.6-sol'
 const DEFAULT_FALLBACK_MODEL = 'openai/gpt-5.4'
+const LEGACY_MODEL_IDS = new Set(['gpt-5.6-luna', 'openai/gpt-5.6-luna'])
 
 function gatewayModel(value: string) {
   const model = value.trim()
-  if (!model) return DEFAULT_MODEL
+  if (!model || LEGACY_MODEL_IDS.has(model)) return DEFAULT_MODEL
   return model.includes('/') ? model : `openai/${model}`
 }
 
