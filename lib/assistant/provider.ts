@@ -11,10 +11,12 @@ export type AssistantProviderErrorType =
   | 'VALIDATION_ERROR'
   | 'INTERNAL_ERROR'
 
+export type AssistantProviderAuthMode = 'api-key' | 'managed' | 'none'
+
 export type AssistantProviderFailure = {
   errorType: AssistantProviderErrorType
   provider: 'vercel-ai-gateway' | 'none'
-  authMode: 'managed' | 'none'
+  authMode: AssistantProviderAuthMode
   status: number
   model: string
   durationMs: number
@@ -23,7 +25,7 @@ export type AssistantProviderFailure = {
 export type AssistantProviderStream = {
   ok: true
   provider: 'vercel-ai-gateway'
-  authMode: 'managed'
+  authMode: Exclude<AssistantProviderAuthMode, 'none'>
   requestedModel: string
   durationMs: number
   textStream: AsyncIterable<string>
@@ -53,6 +55,12 @@ function gatewayModel(value: string) {
   const model = value.trim()
   if (!model || LEGACY_MODEL_IDS.has(model)) return DEFAULT_MODEL
   return model.includes('/') ? model : `openai/${model}`
+}
+
+function configuredAuthMode(): AssistantProviderAuthMode {
+  if (process.env.AI_GATEWAY_API_KEY) return 'api-key'
+  if (process.env.VERCEL_OIDC_TOKEN) return 'managed'
+  return 'none'
 }
 
 function statusFromError(error: unknown) {
@@ -152,6 +160,21 @@ export async function openAssistantProviderStream(input: {
     process.env.ORCALY_HOME_AI_FALLBACK_MODEL || DEFAULT_FALLBACK_MODEL,
   )
   const startedAt = Date.now()
+  const authMode = configuredAuthMode()
+
+  if (authMode === 'none') {
+    const failure: AssistantProviderFailure = {
+      errorType: 'OPENAI_NOT_CONFIGURED',
+      provider: 'none',
+      authMode,
+      status: 0,
+      model: requestedModel,
+      durationMs: Date.now() - startedAt,
+    }
+    safeProviderLog({ requestId: input.requestId, failure })
+    return { ok: false, failure }
+  }
+
   const instructions = input.messages
     .filter((message) => message.role === 'system')
     .map((message) => message.content)
@@ -161,9 +184,9 @@ export async function openAssistantProviderStream(input: {
     .map((message) => ({ role: message.role, content: message.content }))
 
   try {
-    // Use the explicit Gateway provider exported by AI SDK. This provider reads
-    // Vercel deployment OIDC through @ai-sdk/gateway/@vercel/oidc and avoids
-    // manually forwarding short-lived tokens or stale API keys in application code.
+    // AI SDK Gateway reads AI_GATEWAY_API_KEY when configured and can use
+    // deployment OIDC when VERCEL_OIDC_TOKEN is available. Application code
+    // never forwards either credential to the browser or logs its value.
     const result = streamText({
       model: gateway(requestedModel),
       instructions: instructions || undefined,
@@ -184,7 +207,7 @@ export async function openAssistantProviderStream(input: {
       const failure: AssistantProviderFailure = {
         errorType: 'VALIDATION_ERROR',
         provider: 'vercel-ai-gateway',
-        authMode: 'managed',
+        authMode,
         status: 0,
         model: requestedModel,
         durationMs: Date.now() - startedAt,
@@ -196,7 +219,7 @@ export async function openAssistantProviderStream(input: {
     return {
       ok: true,
       provider: 'vercel-ai-gateway',
-      authMode: 'managed',
+      authMode,
       requestedModel,
       durationMs: Date.now() - startedAt,
       textStream: remainingTextStream(first.text, iterator),
@@ -205,7 +228,7 @@ export async function openAssistantProviderStream(input: {
     const failure: AssistantProviderFailure = {
       errorType: classifyError(error),
       provider: 'vercel-ai-gateway',
-      authMode: 'managed',
+      authMode,
       status: statusFromError(error),
       model: requestedModel,
       durationMs: Date.now() - startedAt,
