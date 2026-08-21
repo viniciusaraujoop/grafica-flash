@@ -22,20 +22,12 @@ export type CurrentCompanyClientPayload<TCompany = any> = {
 }
 
 export async function getCurrentCompanyClient<TCompany = any>(): Promise<CurrentCompanyClientPayload<TCompany>> {
-  const { data: sessionData } = await supabase.auth.getSession()
-  const token = sessionData.session?.access_token
-
-  if (!token) {
-    throw new Error('Você precisa estar logado.')
-  }
-
   const response = await fetch('/api/company/current', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    cache: 'no-store',
+    credentials: 'same-origin',
   })
 
-  const payload = await response.json()
+  const payload = await response.json().catch(() => ({}))
 
   if (!response.ok) {
     throw new Error(payload.error || 'Erro ao carregar empresa atual.')
@@ -48,11 +40,13 @@ export async function getCurrentCompanyClient<TCompany = any>(): Promise<Current
   return payload as CurrentCompanyClientPayload<TCompany>
 }
 
+// APIs legadas ainda recebem Bearer explicitamente. Este helper permanece
+// somente para esses endpoints; /api/company/current agora usa a sessão SSR.
 export async function getAccessTokenClient() {
-  const { data: sessionData } = await supabase.auth.getSession()
+  const { data: sessionData, error } = await supabase.auth.getSession()
   const token = sessionData.session?.access_token
 
-  if (!token) {
+  if (error || !token) {
     throw new Error('Você precisa estar logado.')
   }
 
