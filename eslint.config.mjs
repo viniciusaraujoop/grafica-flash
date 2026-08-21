@@ -18,6 +18,8 @@ const eslintConfig = defineConfig([
       "components/admin/AdminCompaniesV2.tsx",
       "components/admin/AdminUsersV2.tsx",
       "components/admin/AdminPaymentsV2.tsx",
+      "components/admin/AdminAssistantGrowth.tsx",
+      "components/home/HomeAiChatV2.tsx",
       "app/painel/relatorios/page.tsx",
       "components/public-site/StorefrontExperienceV2.tsx",
       "components/public-site/StorefrontProductActions.tsx",
