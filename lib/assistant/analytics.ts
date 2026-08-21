@@ -14,6 +14,7 @@ export const ASSISTANT_EVENT_NAMES = [
   'assistant_lead_created',
   'assistant_feedback',
   'assistant_unanswered',
+  'assistant_fallback',
   'assistant_provider_error',
 ] as const
 
@@ -57,6 +58,9 @@ function safeMetadata(value: unknown) {
     'pc',
     'ref_present',
     'crm_saved',
+    'error_type',
+    'provider',
+    'provider_status',
   ]
   const result: Record<string, unknown> = {}
 
