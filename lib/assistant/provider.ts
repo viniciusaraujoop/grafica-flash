@@ -38,6 +38,13 @@ type ChatMessage = {
   content: string
 }
 
+type FullStreamPart = {
+  type?: string
+  text?: string
+  textDelta?: string
+  error?: unknown
+}
+
 const DEFAULT_MODEL = 'openai/gpt-5.6-sol'
 const DEFAULT_FALLBACK_MODEL = 'openai/gpt-5.4'
 const LEGACY_MODEL_IDS = new Set(['gpt-5.6-luna', 'openai/gpt-5.6-luna'])
@@ -72,7 +79,12 @@ function classifyError(error: unknown): AssistantProviderErrorType {
   if (name === 'TimeoutError' || name === 'AbortError' || message.includes('timeout')) {
     return 'OPENAI_TIMEOUT'
   }
-  if (message.includes('api key') || message.includes('authentication') || message.includes('unauthorized')) {
+  if (
+    message.includes('api key') ||
+    message.includes('authentication') ||
+    message.includes('unauthenticated') ||
+    message.includes('unauthorized')
+  ) {
     return 'OPENAI_AUTH_ERROR'
   }
   if (message.includes('invalid prompt') || message.includes('invalid') || message.includes('schema')) {
@@ -96,17 +108,36 @@ function safeProviderLog(input: {
   }))
 }
 
-function prependFirstChunk(
-  first: IteratorResult<string>,
-  iterator: AsyncIterator<string>,
+function textFromPart(part: FullStreamPart) {
+  if (part.type !== 'text-delta') return ''
+  return String(part.text ?? part.textDelta ?? '')
+}
+
+async function firstTextChunk(iterator: AsyncIterator<unknown>) {
+  while (true) {
+    const next = await iterator.next()
+    if (next.done) return { done: true as const, text: '' }
+    const part = (next.value || {}) as FullStreamPart
+    if (part.type === 'error') throw part.error || new Error('Provider stream error')
+    const text = textFromPart(part)
+    if (text) return { done: false as const, text }
+  }
+}
+
+function remainingTextStream(
+  firstText: string,
+  iterator: AsyncIterator<unknown>,
 ): AsyncIterable<string> {
   return {
     async *[Symbol.asyncIterator]() {
-      if (!first.done && first.value) yield first.value
+      yield firstText
       while (true) {
         const next = await iterator.next()
         if (next.done) return
-        if (next.value) yield next.value
+        const part = (next.value || {}) as FullStreamPart
+        if (part.type === 'error') throw part.error || new Error('Provider stream error')
+        const text = textFromPart(part)
+        if (text) yield text
       }
     },
   }
@@ -131,9 +162,8 @@ export async function openAssistantProviderStream(input: {
 
   try {
     // Model strings use Vercel AI Gateway through the official AI SDK. On a
-    // Vercel deployment authentication is managed by the platform instead of
-    // manually forwarding AI_GATEWAY_API_KEY/VERCEL_OIDC_TOKEN as raw Bearer
-    // credentials, which was the root of the 401/403 incident.
+    // Vercel deployment authentication is delegated to the SDK/provider layer;
+    // application code never forwards AI credentials to a raw HTTP endpoint.
     const result = streamText({
       model: requestedModel,
       instructions: instructions || undefined,
@@ -148,13 +178,13 @@ export async function openAssistantProviderStream(input: {
       },
     })
 
-    const iterator = result.textStream[Symbol.asyncIterator]()
+    const iterator = result.fullStream[Symbol.asyncIterator]()
 
-    // Pull the first chunk before returning the HTTP response. Authentication,
-    // invalid-model and immediate provider failures are therefore classified
-    // while the route can still return a non-200 status instead of a fake 200.
-    const first = await iterator.next()
-    if (first.done || !first.value) {
+    // Pull until the first text delta before returning the HTTP response. Any
+    // initial Gateway error is classified while the route can still return a
+    // proper non-200 status. Mid-stream errors remain observable by the route.
+    const first = await firstTextChunk(iterator)
+    if (first.done || !first.text) {
       const failure: AssistantProviderFailure = {
         errorType: 'VALIDATION_ERROR',
         provider: 'vercel-ai-gateway',
@@ -173,7 +203,7 @@ export async function openAssistantProviderStream(input: {
       authMode: 'managed',
       requestedModel,
       durationMs: Date.now() - startedAt,
-      textStream: prependFirstChunk(first, iterator),
+      textStream: remainingTextStream(first.text, iterator),
     }
   } catch (error) {
     const failure: AssistantProviderFailure = {
