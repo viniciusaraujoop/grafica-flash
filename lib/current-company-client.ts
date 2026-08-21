@@ -1,12 +1,15 @@
 import { supabase } from '@/lib/supabase'
 
-type CompanyIdentity = {
-  id?: string | null
+type DefaultCompany = Record<string, unknown>
+
+type RawCurrentCompanyResponse = {
+  error?: string
+  company?: {
+    id?: string | null
+  } | null
 }
 
-type DefaultCompany = CompanyIdentity & Record<string, unknown>
-
-export type CurrentCompanyClientPayload<TCompany extends CompanyIdentity = DefaultCompany> = {
+export type CurrentCompanyClientPayload<TCompany = DefaultCompany> = {
   user?: {
     id: string
     email?: string | null
@@ -27,13 +30,13 @@ export type CurrentCompanyClientPayload<TCompany extends CompanyIdentity = Defau
   }
 }
 
-export async function getCurrentCompanyClient<TCompany extends CompanyIdentity = DefaultCompany>(): Promise<CurrentCompanyClientPayload<TCompany>> {
+export async function getCurrentCompanyClient<TCompany = DefaultCompany>(): Promise<CurrentCompanyClientPayload<TCompany>> {
   const response = await fetch('/api/company/current', {
     cache: 'no-store',
     credentials: 'same-origin',
   })
 
-  const payload = await response.json().catch(() => ({}))
+  const payload = await response.json().catch(() => ({})) as RawCurrentCompanyResponse
 
   if (!response.ok) {
     throw new Error(payload.error || 'Erro ao carregar empresa atual.')
@@ -59,6 +62,6 @@ export async function getAccessTokenClient() {
   return token
 }
 
-export async function getCurrentCompany<TCompany extends CompanyIdentity = DefaultCompany>(): Promise<CurrentCompanyClientPayload<TCompany>> {
+export async function getCurrentCompany<TCompany = DefaultCompany>(): Promise<CurrentCompanyClientPayload<TCompany>> {
   return getCurrentCompanyClient<TCompany>()
 }
