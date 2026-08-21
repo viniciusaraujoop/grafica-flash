@@ -16,10 +16,18 @@ function openAiModel(value) {
   return value.startsWith('openai/') ? value.slice('openai/'.length) : value
 }
 
+function safeProviderReason(payload) {
+  const raw = payload?.error?.message || payload?.message || payload?.error?.code || payload?.code || ''
+  return String(raw)
+    .replace(/Bearer\s+\S+/gi, 'Bearer [redacted]')
+    .replace(/(?:sk|vcp|vca|vcr|ai)[-_][A-Za-z0-9_-]{12,}/g, '[redacted]')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 220)
+}
+
 const candidates = []
 
-// Test deployment-native OIDC independently. A stale explicit Gateway key
-// must not prevent us from proving whether OIDC itself is healthy.
 if (process.env.VERCEL_OIDC_TOKEN) {
   candidates.push({
     provider: 'vercel-ai-gateway-oidc',
@@ -103,7 +111,8 @@ for (const candidate of candidates) {
           : response.status >= 500
             ? 'OPENAI_PROVIDER_ERROR'
             : 'VALIDATION_ERROR'
-      console.error(`Assistente provider runtime probe: candidate FAIL ${lastFailure} provider=${candidate.provider} status=${response.status} model=${model} duration_ms=${durationMs}`)
+      const reason = safeProviderReason(payload)
+      console.error(`Assistente provider runtime probe: candidate FAIL ${lastFailure} provider=${candidate.provider} status=${response.status} model=${model} duration_ms=${durationMs}${reason ? ` reason=${JSON.stringify(reason)}` : ''}`)
       if (lastFailure === 'OPENAI_AUTH_ERROR' || lastFailure === 'VALIDATION_ERROR') break
       continue
     }
