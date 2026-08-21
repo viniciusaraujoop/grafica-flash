@@ -60,6 +60,8 @@ export async function signInWithPasswordAction(input: {
     }
   }
 
+  let destination = nextPath
+
   try {
     const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -87,29 +89,14 @@ export async function signInWithPasswordAction(input: {
       data.user.email,
     )
 
-    const destination = access.company?.id ? nextPath : '/cadastro'
+    destination = access.company?.id ? nextPath : '/cadastro'
 
     console.info(JSON.stringify({
       event: 'auth_login_success',
       route: '/login',
       has_company: Boolean(access.company?.id),
     }))
-
-    // A autenticação acabou de alterar os cookies que definem a identidade
-    // server-side. Limpar o Router Cache evita reutilizar uma árvore de /painel
-    // obtida quando a mesma aba ainda estava anônima.
-    revalidatePath('/', 'layout')
-
-    console.info(JSON.stringify({
-      event: 'auth_redirect_started',
-      route: '/login',
-      destination,
-    }))
-
-    redirect(destination, RedirectType.replace)
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'unknown_error'
-
     console.error(JSON.stringify({
       event: 'auth_login_failure',
       route: '/login',
@@ -117,13 +104,22 @@ export async function signInWithPasswordAction(input: {
       error_name: error instanceof Error ? error.name : 'UnknownError',
     }))
 
-    if (message === 'NEXT_REDIRECT') {
-      throw error
-    }
-
     return {
       ok: false,
       error: 'Não foi possível entrar agora. Tente novamente em alguns instantes.',
     }
   }
+
+  // A autenticação acabou de alterar os cookies que definem a identidade
+  // server-side. Limpar o Router Cache evita reutilizar uma árvore de /painel
+  // obtida quando a mesma aba ainda estava anônima.
+  revalidatePath('/', 'layout')
+
+  console.info(JSON.stringify({
+    event: 'auth_redirect_started',
+    route: '/login',
+    destination,
+  }))
+
+  redirect(destination, RedirectType.replace)
 }
