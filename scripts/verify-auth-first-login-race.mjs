@@ -9,6 +9,8 @@ const [
   loginPage,
   loginAction,
   panelLayout,
+  panelAction,
+  panelHeader,
   companyCurrent,
   currentCompanyClient,
   serverClient,
@@ -17,6 +19,8 @@ const [
   source('app/login/page.tsx'),
   source('app/login/actions.ts'),
   source('app/painel/layout.tsx'),
+  source('app/painel/actions.ts'),
+  source('components/painel/PanelPremiumHeader.tsx'),
   source('app/api/company/current/route.ts'),
   source('lib/current-company-client.ts'),
   source('lib/supabase-server.ts'),
@@ -37,6 +41,14 @@ assert.match(loginAction, /redirect\(destination, RedirectType\.replace\)/, 'Log
 assert.equal(loginAction.includes('setTimeout('), false, 'Login não pode depender de delay arbitrário.')
 assert.equal(loginAction.includes('access_token'), false, 'Server Action não deve manipular access token manualmente.')
 assert.equal(loginAction.includes('refresh_token'), false, 'Server Action não deve manipular refresh token manualmente.')
+
+assert.match(panelAction, /^'use server'/, 'Logout precisa ser mutação server-side.')
+assert.match(panelAction, /auth\.signOut\(\)/, 'Logout precisa encerrar a sessão pelo cliente SSR.')
+assert.match(panelAction, /revalidatePath\('\/', 'layout'\)/, 'Logout precisa invalidar Router Cache.')
+assert.match(panelAction, /redirect\('\/login', RedirectType\.replace\)/, 'Logout precisa terminar em redirect server-side.')
+assert.match(panelHeader, /signOutAction/, 'Cabeçalho do painel precisa chamar o logout SSR.')
+assert.equal(panelHeader.includes('window.location.assign'), false, 'Logout não pode depender de navegação documental forçada.')
+assert.equal(panelHeader.includes('supabase.auth.signOut'), false, 'Cabeçalho não pode manter um segundo contrato client-side de logout.')
 
 assert.match(serverClient, /createServerClient/, 'Servidor precisa usar @supabase/ssr.')
 assert.match(serverClient, /await cookies\(\)/, 'Servidor precisa usar cookies da request atual.')
@@ -70,7 +82,7 @@ assert.match(proxy, /Cache-Control', 'private, no-store, no-cache, max-age=0, mu
 assert.match(proxy, /auth\.getClaims\(\)/, 'Proxy precisa validar/renovar sessão conforme o padrão SSR atual.')
 assert.equal(proxy.includes('auth.getSession()'), false, 'Proxy não pode confiar em getSession para autorização.')
 
-for (const sourceText of [loginPage, loginAction, companyCurrent, serverClient, proxy]) {
+for (const sourceText of [loginPage, loginAction, panelAction, panelHeader, companyCurrent, serverClient, proxy]) {
   assert.equal(/service_role/i.test(sourceText), false, 'Fluxo de login/browser não pode expor service_role.')
   assert.equal(/localStorage\.setItem\([^\n]*(access|refresh)[_-]?token/i.test(sourceText), false, 'Fluxo de auth não pode persistir token manualmente no localStorage.')
 }
