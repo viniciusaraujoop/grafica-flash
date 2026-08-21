@@ -1,6 +1,10 @@
 import { supabase } from '@/lib/supabase'
 
-type DefaultCompany = Record<string, unknown>
+// Consumidores legados deste helper acessam formatos de empresa diferentes
+// sem fornecer generic. Manter a compatibilidade aqui evita ampliar o hotfix
+// para uma refatoração de tipos não relacionada a autenticação.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DefaultCompany = any
 
 type RawCurrentCompanyResponse = {
   error?: string
