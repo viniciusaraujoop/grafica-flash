@@ -3,7 +3,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { getCompanyPublicHost } from '@/lib/company-url'
 import PanelPremiumShell from '@/components/painel/PanelPremiumShell'
 import './premium.css'
@@ -54,34 +53,10 @@ function normalizePlano(value?: string | null) {
   return value
 }
 
-function esperar(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-async function obterTokenComRetry() {
-  for (let tentativa = 0; tentativa < 8; tentativa += 1) {
-    const { data, error } = await supabase.auth.getSession()
-
-    if (error) {
-      throw new Error(`Erro ao verificar login: ${error.message}`)
-    }
-
-    const token = data.session?.access_token
-
-    if (token) return token
-
-    await esperar(250)
-  }
-
-  return null
-}
-
-async function consultarEmpresaAtual(token: string) {
+async function consultarEmpresaAtual() {
   const response = await fetch('/api/company/current', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
     cache: 'no-store',
+    credentials: 'same-origin',
   })
 
   const data = await response.json().catch(() => ({})) as CompanyCurrentPayload
@@ -202,6 +177,7 @@ export default function PainelLayout({ children }: { children: ReactNode }) {
   const [payload, setPayload] = useState<CompanyCurrentPayload | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [mensagem, setMensagem] = useState('')
+  const [retryKey, setRetryKey] = useState(0)
 
   useEffect(() => {
     let ativo = true
@@ -211,36 +187,13 @@ export default function PainelLayout({ children }: { children: ReactNode }) {
       setMensagem('')
 
       try {
-        let token = await obterTokenComRetry()
-
-        if (!token) {
-          router.replace('/login')
-          return
-        }
-
-        let { response, data } = await consultarEmpresaAtual(token)
-
-        // Quando o login acabou de acontecer, às vezes o access token antigo/expirado
-        // ainda está no navegador por alguns instantes. Tentamos renovar e consultar de novo
-        // antes de mostrar “Não autorizado”. DNS já atormenta o suficiente, sessão vencida
-        // não precisa entrar na festa.
-        if (response.status === 401) {
-          const { data: refreshed } = await supabase.auth.refreshSession()
-          const novoToken = refreshed.session?.access_token
-
-          if (novoToken) {
-            token = novoToken
-            const retry = await consultarEmpresaAtual(token)
-            response = retry.response
-            data = retry.data
-          }
-        }
+        const { response, data } = await consultarEmpresaAtual()
 
         if (!ativo) return
 
         if (response.status === 401) {
-          await supabase.auth.signOut()
-          router.replace('/login?expired=1')
+          const next = pathname.startsWith('/painel') ? pathname : '/painel/inicio'
+          router.replace(`/login?expired=1&next=${encodeURIComponent(next)}`)
           return
         }
 
@@ -255,8 +208,14 @@ export default function PainelLayout({ children }: { children: ReactNode }) {
           return
         }
 
-        // Não redireciona mais para /assinatura.
-        // Assinatura vencida/pendente entra no painel bloqueado.
+        console.info(JSON.stringify({
+          event: 'panel_auth_resolved',
+          route: pathname,
+          has_company: true,
+        }))
+
+        // Não redireciona para /assinatura. Assinatura vencida/pendente
+        // continua entrando no painel bloqueado, preservando o fluxo existente.
         setPayload(data)
         setCarregando(false)
       } catch (erro) {
@@ -271,12 +230,12 @@ export default function PainelLayout({ children }: { children: ReactNode }) {
       }
     }
 
-    verificarAcesso()
+    void verificarAcesso()
 
     return () => {
       ativo = false
     }
-  }, [router, pathname])
+  }, [router, pathname, retryKey])
 
   if (carregando) {
     return (
@@ -287,7 +246,7 @@ export default function PainelLayout({ children }: { children: ReactNode }) {
             alt="Orçaly"
             className="mx-auto mb-6 h-14 w-auto object-contain"
           />
-          <p className="font-bold text-slate-500">Verificando acesso...</p>
+          <p className="font-bold text-slate-500">Preparando seu painel...</p>
         </div>
       </main>
     )
@@ -313,7 +272,7 @@ export default function PainelLayout({ children }: { children: ReactNode }) {
 
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={() => setRetryKey((current) => current + 1)}
             className="mt-6 rounded-2xl bg-[#05245c] px-6 py-4 font-black text-white"
           >
             Tentar novamente
