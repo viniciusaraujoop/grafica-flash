@@ -98,56 +98,19 @@ function buildSystemPrompt(page: AssistantPageContext) {
   ].join('\n')
 }
 
-async function consumeProviderSse(input: {
-  provider: Response
+async function consumeProviderText(input: {
+  textStream: AsyncIterable<string>
   controller: ReadableStreamDefaultController<Uint8Array>
 }) {
-  const reader = input.provider.body!.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
   let answer = ''
-  let servedModel = ''
-  let promptTokens: number | undefined
-  let completionTokens: number | undefined
 
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-
-    const lines = buffer.split('\n')
-    buffer = lines.pop() || ''
-
-    for (const rawLine of lines) {
-      const line = rawLine.trim()
-      if (!line.startsWith('data:')) continue
-      const data = line.slice(5).trim()
-      if (!data || data === '[DONE]') continue
-
-      try {
-        const chunk = JSON.parse(data)
-        const content = chunk?.choices?.[0]?.delta?.content
-        if (typeof content === 'string' && content) {
-          answer += content
-          input.controller.enqueue(sse('delta', { text: content }))
-        }
-        if (typeof chunk?.model === 'string') servedModel = chunk.model
-        if (chunk?.usage) {
-          promptTokens = Number(chunk.usage.prompt_tokens || 0)
-          completionTokens = Number(chunk.usage.completion_tokens || 0)
-        }
-      } catch {
-        // Um chunk inválido não pode injetar payload bruto na interface.
-      }
-    }
+  for await (const content of input.textStream) {
+    if (!content) continue
+    answer += content
+    input.controller.enqueue(sse('delta', { text: content }))
   }
 
-  return {
-    answer: cleanText(answer, 2000),
-    servedModel,
-    promptTokens,
-    completionTokens,
-  }
+  return cleanText(answer, 2000)
 }
 
 function streamHeaders() {
@@ -205,8 +168,9 @@ function deterministicStreamingResponse(input: {
 }
 
 function aiStreamingResponse(input: {
-  providerResponse: Response
+  textStream: AsyncIterable<string>
   providerName: string
+  authMode: string
   requestedModel: string
   question: string
   messages: PublicAssistantMessage[]
@@ -225,12 +189,12 @@ function aiStreamingResponse(input: {
             message: 'Analisando seu negócio...',
           }))
 
-          const streamed = await consumeProviderSse({
-            provider: input.providerResponse,
+          const answer = await consumeProviderText({
+            textStream: input.textStream,
             controller,
           })
 
-          if (!streamed.answer) {
+          if (!answer) {
             const fallback = {
               ...routeFallbackAssistant({ question: input.question, messages: input.messages }),
               requestId: input.requestId,
@@ -239,7 +203,7 @@ function aiStreamingResponse(input: {
               request_id: input.requestId,
               error_type: 'PARSER_ERROR',
               provider: input.providerName,
-              model: streamed.servedModel || input.requestedModel,
+              model: input.requestedModel,
               duration_ms: Date.now() - startedAt,
             }))
             controller.enqueue(sse('final', fallback))
@@ -250,14 +214,14 @@ function aiStreamingResponse(input: {
               pagePath: input.page.pathname,
               status: 'empty_provider_response',
               latencyMs: Date.now() - startedAt,
-              model: streamed.servedModel || input.requestedModel,
+              model: input.requestedModel,
               metadata: { source: 'fallback', error_type: 'PARSER_ERROR' },
             })
             return
           }
 
           const result: AssistantResult = {
-            answer: streamed.answer,
+            answer,
             suggestions: suggestionsFor(input.question),
             source: 'ai',
             tool: null,
@@ -272,12 +236,11 @@ function aiStreamingResponse(input: {
             pagePath: input.page.pathname,
             status: 'ok',
             latencyMs: Date.now() - startedAt,
-            model: streamed.servedModel || input.requestedModel,
-            promptTokens: streamed.promptTokens,
-            completionTokens: streamed.completionTokens,
+            model: input.requestedModel,
             metadata: {
               source: 'ai',
               provider: input.providerName,
+              auth_mode: input.authMode,
               utm_source: input.page.utm_source,
               utm_medium: input.page.utm_medium,
               utm_campaign: input.page.utm_campaign,
@@ -297,6 +260,16 @@ function aiStreamingResponse(input: {
             requestId: input.requestId,
           }
           controller.enqueue(sse('final', fallback))
+          await recordAssistantEvent({
+            eventName: 'assistant_fallback',
+            sessionId: input.sessionId,
+            requestId: input.requestId,
+            pagePath: input.page.pathname,
+            status: 'stream_error',
+            latencyMs: Date.now() - startedAt,
+            model: input.requestedModel,
+            metadata: { source: 'fallback', error_type: 'INTERNAL_ERROR' },
+          })
         } finally {
           try {
             controller.close()
@@ -386,6 +359,7 @@ export async function POST(request: NextRequest) {
           source: 'fallback',
           error_type: provider.failure.errorType,
           provider: provider.failure.provider,
+          auth_mode: provider.failure.authMode,
           provider_status: provider.failure.status,
         },
       })
@@ -405,8 +379,9 @@ export async function POST(request: NextRequest) {
     }
 
     return aiStreamingResponse({
-      providerResponse: provider.response,
+      textStream: provider.textStream,
       providerName: provider.provider,
+      authMode: provider.authMode,
       requestedModel: provider.requestedModel,
       question,
       messages,
