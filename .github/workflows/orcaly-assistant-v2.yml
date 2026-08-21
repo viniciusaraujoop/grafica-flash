@@ -1,0 +1,66 @@
+name: Orçaly Assistant v2 QA
+
+on:
+  push:
+    branches:
+      - feat/orcaly-assistant-v2
+  pull_request:
+    paths:
+      - 'app/api/public/home-chat/**'
+      - 'app/api/admin/assistant/**'
+      - 'app/admin/growth/**'
+      - 'components/home/HomeAiChat*'
+      - 'components/admin/AdminAssistantGrowth.tsx'
+      - 'lib/assistant/**'
+      - 'tests/orcaly-assistant-v2-evals.json'
+      - 'scripts/verify-orcaly-assistant-v2.mjs'
+      - 'supabase/migrations/*assistant*'
+      - 'docs/orcaly-assistant-v2.md'
+      - 'package.json'
+      - '.github/workflows/orcaly-assistant-v2.yml'
+  workflow_dispatch:
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-build.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-build-placeholder
+      SUPABASE_SERVICE_ROLE_KEY: ci-build-placeholder
+      NEXT_PUBLIC_APP_URL: https://ci.orcaly.invalid
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Assistant evals and regression invariants
+        run: npm test
+      - name: Payment boundary regression
+        run: npm run verify:payments
+      - name: Focused lint and production build
+        run: npm run build
+      - name: Whitespace check
+        run: git diff --check e835806976650ed1e8da162141d463cdecdd383b...HEAD
+      - name: Dependency audit baseline
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+  global-lint-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Global lint baseline
+        run: npm run lint
