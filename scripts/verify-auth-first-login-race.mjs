@@ -9,6 +9,7 @@ const [
   loginPage,
   loginAction,
   panelLayout,
+  panelClientShell,
   panelAction,
   panelHeader,
   companyCurrent,
@@ -19,6 +20,7 @@ const [
   source('app/login/page.tsx'),
   source('app/login/actions.ts'),
   source('app/painel/layout.tsx'),
+  source('components/painel/PanelAuthenticatedLayout.tsx'),
   source('app/painel/actions.ts'),
   source('components/painel/PanelPremiumHeader.tsx'),
   source('app/api/company/current/route.ts'),
@@ -41,6 +43,24 @@ assert.match(loginAction, /redirect\(destination, RedirectType\.replace\)/, 'Log
 assert.equal(loginAction.includes('setTimeout('), false, 'Login não pode depender de delay arbitrário.')
 assert.equal(loginAction.includes('access_token'), false, 'Server Action não deve manipular access token manualmente.')
 assert.equal(loginAction.includes('refresh_token'), false, 'Server Action não deve manipular refresh token manualmente.')
+
+assert.match(panelLayout, /export const dynamic = 'force-dynamic'/, 'Layout protegido precisa ser dinâmico e não pode ser pré-renderizado como árvore anônima.')
+assert.match(panelLayout, /createSupabaseServerClient/, 'Layout protegido precisa resolver auth no servidor.')
+assert.match(panelLayout, /auth\.getClaims\(\)/, 'Layout protegido precisa validar identidade por claims.')
+assert.match(panelLayout, /getCompanyAccess/, 'Layout protegido precisa resolver a empresa antes de renderizar o painel.')
+assert.match(panelLayout, /panel_auth_resolved/, 'Layout precisa registrar quando AUTHENTICATED foi resolvido.')
+assert.match(panelLayout, /company_load_success/, 'Primeira carga do painel precisa observar a resolução da empresa.')
+assert.equal(panelLayout.includes("'use client'"), false, 'Contrato inicial do painel não pode voltar a ser client-only.')
+assert.equal(panelLayout.includes('/api/company/current'), false, 'Primeira renderização do painel não pode depender de request client-side de current company.')
+assert.equal(panelLayout.includes('getSession()'), false, 'Layout protegido não pode depender de getSession client-side.')
+assert.equal(panelLayout.includes('refreshSession()'), false, 'Layout protegido não pode disparar refresh concorrente.')
+assert.equal(panelLayout.includes('setTimeout('), false, 'Layout protegido não pode resolver auth por cronômetro.')
+assert.equal(panelLayout.includes('Authorization'), false, 'Layout protegido não pode exigir Bearer manual.')
+
+assert.match(panelClientShell, /^'use client'/, 'Somente a casca visual do painel deve permanecer client-side.')
+assert.equal(panelClientShell.includes('/api/company/current'), false, 'Casca visual não pode refazer a autorização inicial no browser.')
+assert.equal(panelClientShell.includes('getSession()'), false, 'Casca visual não pode iniciar uma segunda corrida de sessão.')
+assert.equal(panelClientShell.includes('setTimeout('), false, 'Casca visual não pode esperar por auth via delay.')
 
 assert.match(panelAction, /^'use server'/, 'Logout precisa ser mutação server-side.')
 assert.match(panelAction, /auth\.signOut\(\)/, 'Logout precisa encerrar a sessão pelo cliente SSR.')
@@ -70,19 +90,12 @@ const currentCompanyFunction = currentCompanyClient.slice(
 assert.equal(currentCompanyFunction.includes('getSession()'), false, 'Current company não pode depender de getSession client-side.')
 assert.equal(currentCompanyFunction.includes('Authorization'), false, 'Current company não pode exigir Bearer manual.')
 
-assert.equal(panelLayout.includes('obterTokenComRetry'), false, 'Layout protegido não pode fazer polling de token.')
-assert.equal(panelLayout.includes('refreshSession()'), false, 'Primeiro carregamento do painel não deve disparar refresh concorrente.')
-assert.equal(panelLayout.includes('setTimeout('), false, 'Layout protegido não pode resolver auth por cronômetro.')
-assert.match(panelLayout, /credentials: 'same-origin'/, 'Layout protegido precisa consultar company/current com a mesma sessão SSR.')
-assert.match(panelLayout, /panel_auth_resolved/, 'Layout precisa registrar quando AUTHENTICATED foi resolvido.')
-assert.match(panelLayout, /setRetryKey/, 'Erro recuperável do backend deve permitir retry explícito sem reload da página.')
-
 assert.match(proxy, /const protectedPanel = pathname === '\/painel'/, 'Proxy precisa tratar /painel como conteúdo privado.')
 assert.match(proxy, /Cache-Control', 'private, no-store, no-cache, max-age=0, must-revalidate'/, 'Painel protegido não pode ser servido por cache público.')
 assert.match(proxy, /auth\.getClaims\(\)/, 'Proxy precisa validar/renovar sessão conforme o padrão SSR atual.')
 assert.equal(proxy.includes('auth.getSession()'), false, 'Proxy não pode confiar em getSession para autorização.')
 
-for (const sourceText of [loginPage, loginAction, panelAction, panelHeader, companyCurrent, serverClient, proxy]) {
+for (const sourceText of [loginPage, loginAction, panelLayout, panelAction, panelHeader, companyCurrent, serverClient, proxy]) {
   assert.equal(/service_role/i.test(sourceText), false, 'Fluxo de login/browser não pode expor service_role.')
   assert.equal(/localStorage\.setItem\([^\n]*(access|refresh)[_-]?token/i.test(sourceText), false, 'Fluxo de auth não pode persistir token manualmente no localStorage.')
 }
