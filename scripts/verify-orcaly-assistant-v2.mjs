@@ -31,7 +31,8 @@ for (const file of [api, tools, router, provider]) {
   lacks(file, /R\$\s*49[,.]90|R\$\s*99[,.]90|R\$\s*149[,.]90/, 'assistant runtime must not duplicate plan prices')
 }
 has(api, /publicKnowledgeForPrompt/, 'AI prompt must be built from canonical product knowledge')
-has(provider, /import \{ streamText \} from 'ai'/, 'provider must use the official AI SDK transport')
+has(provider, /import \{[^}]*gateway[^}]*streamText[^}]*\} from 'ai'|import \{[^}]*streamText[^}]*gateway[^}]*\} from 'ai'/, 'provider must use the official AI SDK Gateway transport')
+has(provider, /gateway\(requestedModel\)/, 'provider must use the explicit AI SDK Gateway provider')
 has(provider, /streamText\(/, 'provider request must stream')
 has(provider, /openai\/gpt-5\.6-sol/, 'provider must use a supported canonical Gateway model by default')
 has(api, /text\/event-stream/, 'public assistant must return SSE when the provider is healthy')
