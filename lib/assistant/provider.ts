@@ -75,6 +75,9 @@ function classifyError(error: unknown): AssistantProviderErrorType {
   if (message.includes('api key') || message.includes('authentication') || message.includes('unauthorized')) {
     return 'OPENAI_AUTH_ERROR'
   }
+  if (message.includes('invalid prompt') || message.includes('invalid') || message.includes('schema')) {
+    return 'VALIDATION_ERROR'
+  }
   return 'OPENAI_PROVIDER_ERROR'
 }
 
@@ -118,6 +121,13 @@ export async function openAssistantProviderStream(input: {
     process.env.ORCALY_HOME_AI_FALLBACK_MODEL || DEFAULT_FALLBACK_MODEL,
   )
   const startedAt = Date.now()
+  const instructions = input.messages
+    .filter((message) => message.role === 'system')
+    .map((message) => message.content)
+    .join('\n\n')
+  const messages = input.messages
+    .filter((message): message is ChatMessage & { role: 'assistant' | 'user' } => message.role !== 'system')
+    .map((message) => ({ role: message.role, content: message.content }))
 
   try {
     // Model strings use Vercel AI Gateway through the official AI SDK. On a
@@ -126,7 +136,8 @@ export async function openAssistantProviderStream(input: {
     // credentials, which was the root of the 401/403 incident.
     const result = streamText({
       model: requestedModel,
-      messages: input.messages,
+      instructions: instructions || undefined,
+      messages,
       maxOutputTokens: 450,
       abortSignal: AbortSignal.timeout(14_000),
       providerOptions: {
