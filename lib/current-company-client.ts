@@ -1,6 +1,12 @@
 import { supabase } from '@/lib/supabase'
 
-export type CurrentCompanyClientPayload<TCompany = any> = {
+type CompanyIdentity = {
+  id?: string | null
+}
+
+type DefaultCompany = CompanyIdentity & Record<string, unknown>
+
+export type CurrentCompanyClientPayload<TCompany extends CompanyIdentity = DefaultCompany> = {
   user?: {
     id: string
     email?: string | null
@@ -21,7 +27,7 @@ export type CurrentCompanyClientPayload<TCompany = any> = {
   }
 }
 
-export async function getCurrentCompanyClient<TCompany = any>(): Promise<CurrentCompanyClientPayload<TCompany>> {
+export async function getCurrentCompanyClient<TCompany extends CompanyIdentity = DefaultCompany>(): Promise<CurrentCompanyClientPayload<TCompany>> {
   const response = await fetch('/api/company/current', {
     cache: 'no-store',
     credentials: 'same-origin',
@@ -53,6 +59,6 @@ export async function getAccessTokenClient() {
   return token
 }
 
-export async function getCurrentCompany<TCompany = any>(): Promise<CurrentCompanyClientPayload<TCompany>> {
+export async function getCurrentCompany<TCompany extends CompanyIdentity = DefaultCompany>(): Promise<CurrentCompanyClientPayload<TCompany>> {
   return getCurrentCompanyClient<TCompany>()
 }
