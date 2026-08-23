@@ -307,15 +307,40 @@ export async function claimWhatsAppWebhookEvent(supabaseAdmin: SupabaseAdmin, pa
   })
 
   if (!error) return true
-  if (error.code === '23505') return false
-  throw error
+  if (error.code !== '23505') throw error
+
+  const { data: existing, error: existingError } = await supabaseAdmin
+    .from('whatsapp_webhook_events')
+    .select('processing_status')
+    .eq('event_key', payload.eventKey)
+    .maybeSingle()
+  if (existingError) throw existingError
+
+  if (existing?.processing_status !== 'failed') return false
+
+  const { error: retryError } = await supabaseAdmin
+    .from('whatsapp_webhook_events')
+    .update({
+      company_id: payload.companyId || null,
+      event_type: payload.eventType,
+      payload_hash: hash,
+      processing_status: 'processing',
+      processed_at: null,
+      error_message: null,
+      received_at: new Date().toISOString(),
+    })
+    .eq('event_key', payload.eventKey)
+    .eq('processing_status', 'failed')
+  if (retryError) throw retryError
+
+  return true
 }
 
 export async function finishWhatsAppWebhookEvent(supabaseAdmin: SupabaseAdmin, eventKey: string, options?: {
   status?: 'processed' | 'ignored' | 'failed'
   error?: string | null
 }) {
-  await supabaseAdmin
+  const { error } = await supabaseAdmin
     .from('whatsapp_webhook_events')
     .update({
       processing_status: options?.status || 'processed',
@@ -323,6 +348,7 @@ export async function finishWhatsAppWebhookEvent(supabaseAdmin: SupabaseAdmin, e
       error_message: options?.error || null,
     })
     .eq('event_key', eventKey)
+  if (error) throw error
 }
 
 export async function saveInbound(supabaseAdmin: SupabaseAdmin, payload: {
