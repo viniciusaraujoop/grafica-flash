@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -14,6 +14,9 @@ const mobile = process.env.ORCALY_E2E_MOBILE === '1'
 const slowNetwork = process.env.ORCALY_E2E_NETWORK === 'slow'
 const doubleClick = process.env.ORCALY_E2E_DOUBLE_CLICK === '1'
 const timeoutMs = Number(process.env.ORCALY_E2E_TIMEOUT_MS || 30000)
+const artifactRoot = process.env.ORCALY_E2E_ARTIFACT_ROOT || 'artifacts/auth'
+const runOffset = Number(process.env.ORCALY_E2E_RUN_OFFSET || 0)
+const runGroup = process.env.ORCALY_E2E_RUN_GROUP || 'fresh'
 
 if (!email || !password) {
   console.error('ORCALY_E2E_EMAIL e ORCALY_E2E_PASSWORD são obrigatórios para o fresh-login E2E.')
@@ -24,6 +27,16 @@ function loginUrl() {
   const url = new URL(`${baseUrl}/login`)
   if (vercelShare) url.searchParams.set('_vercel_share', vercelShare)
   return url.toString()
+}
+
+function sanitizeUrl(raw) {
+  try {
+    const url = new URL(raw)
+    url.searchParams.delete('_vercel_share')
+    return url.toString()
+  } catch {
+    return String(raw || '').replace(/([?&])_vercel_share=[^&]+/g, '$1_vercel_share=[REDACTED]')
+  }
 }
 
 function delay(ms) {
@@ -138,7 +151,7 @@ class Cdp {
         return
       }
       const handlers = this.listeners.get(message.method) || []
-      for (const handler of handlers) handler(message.params || {})
+      for (const handler of handlers) handler(message.params || {}, message.sessionId)
     }
     this.ws.onclose = () => {
       for (const pending of this.pending.values()) pending.reject(new Error('CDP websocket fechado.'))
@@ -171,36 +184,116 @@ class Cdp {
   }
 }
 
+async function saveScreenshot(cdp, sessionId, path) {
+  try {
+    const capture = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId)
+    if (capture?.data) await writeFile(path, Buffer.from(capture.data, 'base64'))
+  } catch {
+    // The structured result still records the failure if the page is no longer reachable.
+  }
+}
+
+async function readPageState(cdp, sessionId) {
+  try {
+    const response = await cdp.send('Runtime.evaluate', {
+      expression: `({
+        href: location.href,
+        pathname: location.pathname,
+        readyState: document.readyState,
+        panelReady: !!document.querySelector('[data-orcaly-panel="operations-v2"]'),
+        genericError: /This page couldn[’']t load/i.test(document.body?.innerText || ''),
+        loginForm: !!document.querySelector('form'),
+        submitDisabled: !!document.querySelector('button[type="submit"]')?.disabled,
+        bodyText: (document.body?.innerText || '').slice(0, 4000)
+      })`,
+      returnByValue: true,
+    }, sessionId)
+    return response.result?.value || null
+  } catch (error) {
+    return { evaluationError: error instanceof Error ? error.message : String(error) }
+  }
+}
+
 async function runFreshLogin(index) {
-  const browser = await launchChromium()
-  const cdp = new Cdp(browser.browserWsUrl)
-  const consoleErrors = []
-  const badResponses = []
+  const runNumber = runOffset + index
+  const runDir = join(artifactRoot, `run-${String(runNumber).padStart(3, '0')}`)
+  await mkdir(runDir, { recursive: true })
+
+  const startedAt = new Date()
+  const result = {
+    run: runNumber,
+    group: runGroup,
+    startedAt: startedAt.toISOString(),
+    browserStarted: false,
+    loginSubmitted: false,
+    authSucceeded: false,
+    redirectOccurred: false,
+    finalUrl: null,
+    panelReady: false,
+    unexpected401: 0,
+    unexpected403: 0,
+    unexpected500: 0,
+    consoleErrors: [],
+    duration: null,
+    failureStage: null,
+    failureMessage: null,
+  }
+
+  const consoleLines = []
+  const network = []
+  let browser
+  let cdp
+  let sessionId
   let loginPosts = 0
+  let stage = 'browser_start'
+  let finalState = null
 
   try {
+    browser = await launchChromium()
+    result.browserStarted = true
+
+    cdp = new Cdp(browser.browserWsUrl)
     await cdp.connect()
-    const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' })
-    const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true })
+    const target = await cdp.send('Target.createTarget', { url: 'about:blank' })
+    const attached = await cdp.send('Target.attachToTarget', { targetId: target.targetId, flatten: true })
+    sessionId = attached.sessionId
 
     cdp.on('Runtime.exceptionThrown', (params) => {
-      if (params.exceptionDetails?.text) consoleErrors.push(params.exceptionDetails.text)
+      const message = params.exceptionDetails?.exception?.description || params.exceptionDetails?.text || 'runtime exception'
+      result.consoleErrors.push(String(message))
+      consoleLines.push(`[exception] ${String(message)}`)
     })
     cdp.on('Runtime.consoleAPICalled', (params) => {
-      if (params.type === 'error') {
-        consoleErrors.push(params.args?.map((arg) => arg.value || arg.description || '').join(' ') || 'console.error')
-      }
+      const message = params.args?.map((arg) => arg.value || arg.description || '').join(' ') || `console.${params.type}`
+      consoleLines.push(`[${params.type}] ${message}`)
+      if (params.type === 'error') result.consoleErrors.push(message)
     })
     cdp.on('Network.requestWillBeSent', (params) => {
-      const request = params.request
-      if (request?.method === 'POST' && request.url?.startsWith(`${baseUrl}/login`)) loginPosts += 1
+      const request = params.request || {}
+      network.push({
+        type: 'request',
+        requestId: params.requestId,
+        method: request.method,
+        url: sanitizeUrl(request.url),
+        timestamp: params.timestamp,
+      })
+      if (request.method === 'POST' && request.url?.startsWith(`${baseUrl}/login`)) loginPosts += 1
     })
     cdp.on('Network.responseReceived', (params) => {
-      const response = params.response
-      if (!response?.url?.startsWith(baseUrl)) return
-      if (response.status >= 400) {
-        badResponses.push({ status: response.status, url: response.url })
-      }
+      const response = params.response || {}
+      if (!response.url?.startsWith(baseUrl)) return
+      const status = Number(response.status || 0)
+      network.push({
+        type: 'response',
+        requestId: params.requestId,
+        status,
+        url: sanitizeUrl(response.url),
+        mimeType: response.mimeType || null,
+        timestamp: params.timestamp,
+      })
+      if (status === 401) result.unexpected401 += 1
+      if (status === 403) result.unexpected403 += 1
+      if (status >= 500) result.unexpected500 += 1
     })
 
     await cdp.send('Runtime.enable', {}, sessionId)
@@ -226,15 +319,19 @@ async function runFreshLogin(index) {
       }, sessionId)
     }
 
+    stage = 'login_load'
     await cdp.send('Page.navigate', { url: loginUrl() }, sessionId)
     await waitFor(async () => {
-      const result = await cdp.send('Runtime.evaluate', {
-        expression: `document.readyState === 'complete' && !!document.querySelector('input[type="email"]') && !!document.querySelector('input[type="password"]')`,
+      const response = await cdp.send('Runtime.evaluate', {
+        expression: `document.readyState === 'complete' && !!document.querySelector('input[type="email"]') && !!document.querySelector('input[type="password"]') && !!document.querySelector('button[type="submit"]')`,
         returnByValue: true,
       }, sessionId)
-      return result.result?.value === true
+      return response.result?.value === true
     }, 'formulário de login')
 
+    await saveScreenshot(cdp, sessionId, join(runDir, 'screenshot-before.png'))
+
+    stage = 'login_submit'
     const fill = await cdp.send('Runtime.evaluate', {
       expression: `(() => {
         const set = (el, value) => {
@@ -257,71 +354,100 @@ async function runFreshLogin(index) {
       awaitPromise: true,
     }, sessionId)
     assert.equal(fill.result?.value, true, 'Formulário de login não pôde ser preenchido.')
+    result.loginSubmitted = true
 
+    stage = 'panel_wait'
     await waitFor(async () => {
-      const result = await cdp.send('Runtime.evaluate', {
-        expression: `(() => {
-          const text = document.body?.innerText || ''
-          if (text.includes("This page couldn’t load") || text.includes("This page couldn't load")) return 'next-error'
-          if (location.pathname.startsWith('/painel') && document.querySelector('[data-orcaly-panel="operations-v2"]')) return 'ready'
-          return location.pathname
-        })()`,
-        returnByValue: true,
-      }, sessionId)
-      const value = result.result?.value
-      if (value === 'next-error') throw new Error('Next.js exibiu a tela fatal de navegação.')
-      return value === 'ready'
+      const state = await readPageState(cdp, sessionId)
+      if (state?.genericError) throw new Error('Next.js exibiu a tela fatal de navegação.')
+      if (state?.pathname?.startsWith('/painel')) result.redirectOccurred = true
+      return state?.panelReady === true
     }, 'painel autenticado pronto')
 
-    const finalState = await cdp.send('Runtime.evaluate', {
-      expression: `({
-        href: location.href,
-        panelReady: !!document.querySelector('[data-orcaly-panel="operations-v2"]'),
-        genericError: /This page couldn[’']t load/i.test(document.body?.innerText || ''),
-        bodyText: (document.body?.innerText || '').slice(0, 1000)
-      })`,
-      returnByValue: true,
-    }, sessionId)
+    stage = 'panel_verify'
+    finalState = await readPageState(cdp, sessionId)
+    result.finalUrl = finalState?.href ? sanitizeUrl(finalState.href) : null
+    result.panelReady = finalState?.panelReady === true
+    result.authSucceeded = loginPosts > 0 && result.panelReady
 
-    assert.equal(finalState.result?.value?.panelReady, true, 'Painel não atingiu estado ready.')
-    assert.equal(finalState.result?.value?.genericError, false, 'Tela fatal do Next apareceu após login.')
-    assert.match(finalState.result?.value?.href || '', /\/painel(?:\/|$)/, 'URL final não está no painel.')
+    assert.equal(result.panelReady, true, 'Painel não atingiu estado ready.')
+    assert.equal(finalState?.genericError, false, 'Tela fatal do Next apareceu após login.')
+    assert.match(result.finalUrl || '', /\/painel(?:\/|$)/, 'URL final não está no painel.')
     assert.equal(loginPosts, 1, `Esperado 1 request de login; recebido ${loginPosts}.`)
 
-    const unexpected = badResponses.filter(({ status, url }) => {
-      if (status < 400) return false
-      if (/manifest\.webmanifest/.test(url)) return false
+    const unexpected = network.filter((entry) => {
+      if (entry.type !== 'response' || entry.status < 400) return false
+      if (/manifest\.webmanifest/.test(entry.url)) return false
       return true
     })
 
     assert.deepEqual(unexpected, [], `HTTP inesperado após login: ${JSON.stringify(unexpected)}`)
-    assert.deepEqual(consoleErrors, [], `Erros de console: ${JSON.stringify(consoleErrors)}`)
-
-    return {
-      iteration: index,
-      url: finalState.result?.value?.href,
-      loginPosts,
-      consoleErrors: consoleErrors.length,
-      badResponses: unexpected.length,
+    assert.deepEqual(result.consoleErrors, [], `Erros de console: ${JSON.stringify(result.consoleErrors)}`)
+    stage = 'complete'
+  } catch (error) {
+    result.failureStage = stage
+    result.failureMessage = error instanceof Error ? error.message : String(error)
+    if (cdp && sessionId) {
+      finalState = await readPageState(cdp, sessionId)
+      result.finalUrl = finalState?.href ? sanitizeUrl(finalState.href) : result.finalUrl
+      result.panelReady = finalState?.panelReady === true
+      result.redirectOccurred = Boolean(finalState?.pathname?.startsWith('/painel'))
+      result.authSucceeded = loginPosts > 0 && result.redirectOccurred
+      await writeFile(join(runDir, 'page-state.json'), JSON.stringify(finalState, null, 2))
     }
+    throw error
   } finally {
-    cdp.close()
-    await browser.close()
+    result.duration = Date.now() - startedAt.getTime()
+    if (cdp && sessionId) await saveScreenshot(cdp, sessionId, join(runDir, 'screenshot-after.png'))
+    if (finalState?.href && !result.finalUrl) result.finalUrl = sanitizeUrl(finalState.href)
+
+    await writeFile(join(runDir, 'final-url.txt'), `${result.finalUrl || 'unknown'}\n`)
+    await writeFile(join(runDir, 'console.log'), `${consoleLines.join('\n')}${consoleLines.length ? '\n' : ''}`)
+    await writeFile(join(runDir, 'network.json'), JSON.stringify(network, null, 2))
+    await writeFile(join(runDir, 'result.json'), JSON.stringify({ ...result, loginPosts }, null, 2))
+
+    cdp?.close()
+    if (browser) {
+      try {
+        await browser.close()
+      } catch (cleanupError) {
+        const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError)
+        await writeFile(join(runDir, 'cleanup-error.txt'), `${message}\n`)
+        if (!result.failureMessage) throw cleanupError
+      }
+    }
+  }
+
+  return {
+    iteration: index,
+    run: runNumber,
+    url: result.finalUrl,
+    loginPosts,
+    consoleErrors: result.consoleErrors.length,
+    badResponses: result.unexpected401 + result.unexpected403 + result.unexpected500,
   }
 }
 
+await mkdir(artifactRoot, { recursive: true })
 const results = []
 for (let index = 1; index <= iterations; index += 1) {
-  const result = await runFreshLogin(index)
-  results.push(result)
-  console.log(`[auth-e2e] ${index}/${iterations} PASS ${result.url}`)
+  try {
+    const result = await runFreshLogin(index)
+    results.push(result)
+    console.log(`[auth-e2e] ${index}/${iterations} PASS ${result.url}`)
+  } catch (error) {
+    console.error(`[auth-e2e] ${index}/${iterations} FAIL ${error instanceof Error ? error.message : String(error)}`)
+    throw error
+  }
 }
 
 console.log(JSON.stringify({
   event: 'auth_first_login_e2e_complete',
-  baseUrl,
+  baseUrl: sanitizeUrl(baseUrl),
   vercelProtection: Boolean(vercelShare),
   iterations,
+  runOffset,
+  runGroup,
   mobile,
   slowNetwork,
   doubleClick,
