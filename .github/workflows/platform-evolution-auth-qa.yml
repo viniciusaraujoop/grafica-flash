@@ -110,21 +110,50 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p docs "$QA_ARTIFACT_ROOT/preflight"
           COOKIE_JAR="$RUNNER_TEMP/orcaly-vercel-preview.cookies"
+          BODY_FILE="$RUNNER_TEMP/orcaly-vercel-preview-body"
+          HEADER_FILE="$RUNNER_TEMP/orcaly-vercel-preview-headers"
+          PREFLIGHT_LOG="$QA_ARTIFACT_ROOT/preflight/preview.log"
           TARGET="${ORCALY_E2E_BASE_URL}/api/internal/platform-evolution-build?_vercel_share=${ORCALY_E2E_VERCEL_SHARE}"
           MATCHED=""
+          LAST_STATUS=""
+          LAST_CONTENT_TYPE=""
+          LAST_COMMIT=""
+          FAILURE_KIND=""
+
+          : > "$PREFLIGHT_LOG"
 
           for attempt in $(seq 1 100); do
-            BODY="$(curl --location --silent --show-error \
+            : > "$BODY_FILE"
+            : > "$HEADER_FILE"
+            STATUS="$(curl --location --silent --show-error \
               --connect-timeout 10 \
               --max-time 20 \
               --cookie "$COOKIE_JAR" \
               --cookie-jar "$COOKIE_JAR" \
+              --dump-header "$HEADER_FILE" \
+              --output "$BODY_FILE" \
+              --write-out '%{http_code}' \
               "$TARGET" || true)"
 
-            COMMIT="$(printf '%s' "$BODY" | jq -r '.commit // empty' 2>/dev/null || true)"
+            CONTENT_TYPE="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/ {sub(/\r$/, ""); value=$0} END{sub(/^[^:]+:[[:space:]]*/, "", value); print value}' "$HEADER_FILE")"
+            COMMIT="$(jq -r '.commit // empty' "$BODY_FILE" 2>/dev/null || true)"
+
+            LAST_STATUS="$STATUS"
+            LAST_CONTENT_TYPE="$CONTENT_TYPE"
+            LAST_COMMIT="$COMMIT"
+
+            printf 'attempt=%s status=%s content_type=%s commit=%s\n' \
+              "$attempt" "${STATUS:-none}" "${CONTENT_TYPE:-unknown}" "${COMMIT:-none}" >> "$PREFLIGHT_LOG"
+
             if [ "$COMMIT" = "$GITHUB_SHA" ]; then
               MATCHED="$COMMIT"
+              break
+            fi
+
+            if [[ "$CONTENT_TYPE" == text/html* ]]; then
+              FAILURE_KIND="PREVIEW_PROTECTION_BYPASS"
               break
             fi
 
@@ -132,7 +161,35 @@ jobs:
           done
 
           if [ "$MATCHED" != "$GITHUB_SHA" ]; then
-            echo "Branch Preview did not converge to the workflow commit." >&2
+            if [ -z "$FAILURE_KIND" ]; then
+              FAILURE_KIND="PREVIEW_COMMIT_CONVERGENCE"
+            fi
+
+            jq -n \
+              --arg status "failed" \
+              --arg phase "preview_preflight" \
+              --arg failure_stage "$FAILURE_KIND" \
+              --arg source_commit "$GITHUB_SHA" \
+              --arg target "$ORCALY_E2E_BASE_URL" \
+              --arg http_status "${LAST_STATUS:-unknown}" \
+              --arg content_type "${LAST_CONTENT_TYPE:-unknown}" \
+              --arg observed_commit "${LAST_COMMIT:-}" \
+              '{
+                status:$status,
+                phase:$phase,
+                failure_stage:$failure_stage,
+                source_commit:$source_commit,
+                target:$target,
+                http_status:$http_status,
+                content_type:$content_type,
+                observed_commit:$observed_commit
+              }' > "$QA_RESULT_FILE"
+
+            printf '%s\n' \
+              "Preview preflight failed: $FAILURE_KIND; status=${LAST_STATUS:-unknown}; content-type=${LAST_CONTENT_TYPE:-unknown}." \
+              > "$QA_ERROR_FILE"
+
+            echo "Branch Preview preflight failed: $FAILURE_KIND" >&2
             exit 1
           fi
 
@@ -141,7 +198,7 @@ jobs:
         run: |
           set -Euo pipefail
           mkdir -p docs "$QA_ARTIFACT_ROOT"
-          rm -f "$QA_RESULT_FILE" "$QA_ERROR_FILE"
+          rm -f "$QA_ERROR_FILE"
           phase="bootstrap"
           current_log=""
 
@@ -264,7 +321,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: platform-evolution-auth-qa-${{ github.run_id }}
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 7
           path: |
             artifacts/auth/**
