@@ -33,7 +33,10 @@ type Payload = {
     latestScan?: Record<string, unknown> | null
   }
   recentErrors: RecentError[]
-  schema: { applicationErrorsReady: boolean }
+  schema: {
+    applicationErrorsReady: boolean
+    applicationErrorsReadable: boolean
+  }
 }
 
 function tone(status: Status) {
@@ -62,8 +65,6 @@ export default function AdminSystemHealthV3() {
 
   useEffect(() => {
     let active = true
-    setError('')
-    setErrorId('')
 
     void supabase.auth.getSession().then(async ({ data: auth }) => {
       const token = auth.session?.access_token || ''
@@ -74,17 +75,30 @@ export default function AdminSystemHealthV3() {
       const payload = await response.json().catch(() => ({}))
       if (!active) return
       if (!response.ok) {
+        setData(null)
         setError(String(payload.error || 'Falha ao carregar a saúde da plataforma.'))
         setErrorId(String(payload.errorId || ''))
         return
       }
+      setError('')
+      setErrorId('')
       setData(payload as Payload)
     }).catch(() => {
-      if (active) setError('Falha de rede ao carregar a saúde da plataforma.')
+      if (!active) return
+      setData(null)
+      setError('Falha de rede ao carregar a saúde da plataforma.')
+      setErrorId('')
     })
 
     return () => { active = false }
   }, [version])
+
+  function refresh() {
+    setData(null)
+    setError('')
+    setErrorId('')
+    setVersion((value) => value + 1)
+  }
 
   return (
     <div className="space-y-4">
@@ -95,7 +109,7 @@ export default function AdminSystemHealthV3() {
             <h1 className="mt-1 text-2xl font-semibold tracking-[-.04em] text-[#0b2e63] sm:text-3xl">Evidência primeiro. Sem verde decorativo.</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">Cada integração é classificada apenas com sinais observáveis. Credencial configurada, por si só, não significa serviço saudável.</p>
           </div>
-          <button type="button" onClick={() => setVersion((value) => value + 1)} className="min-h-11 rounded-xl bg-[#0b2e63] px-4 py-3 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Atualizar checks</button>
+          <button type="button" onClick={refresh} className="min-h-11 rounded-xl bg-[#0b2e63] px-4 py-3 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Atualizar checks</button>
         </div>
       </section>
 
@@ -104,7 +118,7 @@ export default function AdminSystemHealthV3() {
           <strong className="block">Não conseguimos carregar esta área.</strong>
           <span className="mt-1 block">{error}</span>
           {errorId ? <code className="mt-2 inline-block rounded-lg bg-white/70 px-2 py-1 text-xs font-bold">{errorId}</code> : null}
-          <button type="button" onClick={() => setVersion((value) => value + 1)} className="ml-3 mt-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-bold">Tentar novamente</button>
+          <button type="button" onClick={refresh} className="ml-3 mt-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-bold">Tentar novamente</button>
         </section>
       ) : null}
 
@@ -150,12 +164,18 @@ export default function AdminSystemHealthV3() {
                 <h2 className="text-sm font-bold text-[#0b2e63]">Erros de aplicação recentes</h2>
                 <p className="mt-1 text-xs text-slate-500">Business audit e analytics continuam separados desta trilha.</p>
               </div>
-              <span className={`mt-2 w-fit rounded-lg px-2 py-1 text-[10px] font-bold sm:mt-0 ${data.schema.applicationErrorsReady ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                {data.schema.applicationErrorsReady ? 'Schema disponível' : 'Migration pendente'}
+              <span className={`mt-2 w-fit rounded-lg px-2 py-1 text-[10px] font-bold sm:mt-0 ${data.schema.applicationErrorsReadable ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                {!data.schema.applicationErrorsReady
+                  ? 'Migration pendente'
+                  : data.schema.applicationErrorsReadable
+                    ? 'Telemetria disponível'
+                    : 'Leitura indisponível'}
               </span>
             </div>
             {!data.schema.applicationErrorsReady ? (
               <div className="p-5 text-sm text-slate-500">A migration de observabilidade está versionada, mas ainda não foi aplicada neste ambiente. O Health Center permanece funcional sem inventar telemetria.</div>
+            ) : !data.schema.applicationErrorsReadable ? (
+              <div className="p-5 text-sm text-slate-500">O schema existe, mas a telemetria não pôde ser lida neste momento. O status permanece Unknown até existir evidência válida.</div>
             ) : data.recentErrors.length ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-xs">
