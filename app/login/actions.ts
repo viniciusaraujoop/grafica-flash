@@ -10,6 +10,8 @@ export type LoginActionResult = {
   error: string
 }
 
+export type LoginFormState = LoginActionResult
+
 function safeNextPath(rawNext?: string | null) {
   const next = String(rawNext || '').trim()
 
@@ -122,4 +124,15 @@ export async function signInWithPasswordAction(input: {
   }))
 
   redirect(destination, RedirectType.replace)
+}
+
+export async function signInWithPasswordFormAction(
+  _previousState: LoginFormState,
+  formData: FormData,
+): Promise<LoginFormState> {
+  return signInWithPasswordAction({
+    email: String(formData.get('email') || ''),
+    password: String(formData.get('password') || ''),
+    next: String(formData.get('next') || ''),
+  })
 }
