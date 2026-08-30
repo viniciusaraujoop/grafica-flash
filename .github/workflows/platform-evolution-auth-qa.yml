@@ -10,6 +10,7 @@ on:
       - app/painel/layout.tsx
       - app/painel/actions.ts
       - app/api/company/current/route.ts
+      - app/api/internal/platform-evolution-build/route.ts
       - components/painel/PanelAuthenticatedLayout.tsx
       - components/painel/PanelPremiumHeader.tsx
       - lib/supabase-server.ts
@@ -30,12 +31,14 @@ concurrency:
 jobs:
   browser-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     env:
       QA_CONTROL_URL: https://ozrasuktfthsvbqprtel.supabase.co/functions/v1/auth-hotfix-qa-control
       QA_OIDC_AUDIENCE: orcaly-platform-evolution-auth-qa
+      QA_BRANCH_URL: https://orcaly-git-feat-platform-evolution-3-vinicius-araujos-projects.vercel.app
       QA_RESULT_FILE: docs/platform-evolution-auth-qa.json
       QA_ERROR_FILE: docs/platform-evolution-auth-qa-error.log
+      QA_ARTIFACT_ROOT: artifacts/auth
 
     steps:
       - name: Checkout platform branch
@@ -65,23 +68,30 @@ jobs:
           OIDC_TOKEN="$(printf '%s' "$OIDC_JSON" | jq -r '.value')"
           test -n "$OIDC_TOKEN"
 
+          REQUEST_BODY="$(jq -cn \
+            --arg baseUrl "$QA_BRANCH_URL" \
+            --arg sourceCommit "$GITHUB_SHA" \
+            '{action:"create",baseUrl:$baseUrl,sourceCommit:$sourceCommit}')"
+
           FIXTURE="$(curl --silent --show-error --fail-with-body \
             -X POST "$QA_CONTROL_URL" \
             -H "Authorization: Bearer $OIDC_TOKEN" \
             -H 'Content-Type: application/json' \
-            --data '{"action":"create"}')"
+            --data "$REQUEST_BODY")"
 
           USER_ID="$(printf '%s' "$FIXTURE" | jq -r '.userId')"
           EMAIL="$(printf '%s' "$FIXTURE" | jq -r '.email')"
           PASSWORD="$(printf '%s' "$FIXTURE" | jq -r '.password')"
           BASE_URL="$(printf '%s' "$FIXTURE" | jq -r '.baseUrl')"
           SHARE="$(printf '%s' "$FIXTURE" | jq -r '.vercelShare')"
+          SOURCE_COMMIT="$(printf '%s' "$FIXTURE" | jq -r '.sourceCommit')"
 
           test -n "$USER_ID"
           test -n "$EMAIL"
           test -n "$PASSWORD"
-          test -n "$BASE_URL"
+          test "$BASE_URL" = "$QA_BRANCH_URL"
           test -n "$SHARE"
+          test "$SOURCE_COMMIT" = "$GITHUB_SHA"
 
           echo "::add-mask::$USER_ID"
           echo "::add-mask::$EMAIL"
@@ -96,11 +106,41 @@ jobs:
             echo "ORCALY_E2E_VERCEL_SHARE=$SHARE"
           } >> "$GITHUB_ENV"
 
+      - name: Wait for branch Preview to serve current commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          COOKIE_JAR="$RUNNER_TEMP/orcaly-vercel-preview.cookies"
+          TARGET="${ORCALY_E2E_BASE_URL}/api/internal/platform-evolution-build?_vercel_share=${ORCALY_E2E_VERCEL_SHARE}"
+          MATCHED=""
+
+          for attempt in $(seq 1 100); do
+            BODY="$(curl --location --silent --show-error \
+              --connect-timeout 10 \
+              --max-time 20 \
+              --cookie "$COOKIE_JAR" \
+              --cookie-jar "$COOKIE_JAR" \
+              "$TARGET" || true)"
+
+            COMMIT="$(printf '%s' "$BODY" | jq -r '.commit // empty' 2>/dev/null || true)"
+            if [ "$COMMIT" = "$GITHUB_SHA" ]; then
+              MATCHED="$COMMIT"
+              break
+            fi
+
+            sleep 3
+          done
+
+          if [ "$MATCHED" != "$GITHUB_SHA" ]; then
+            echo "Branch Preview did not converge to the workflow commit." >&2
+            exit 1
+          fi
+
       - name: Run full browser matrix
         shell: bash
         run: |
           set -Euo pipefail
-          mkdir -p docs
+          mkdir -p docs "$QA_ARTIFACT_ROOT"
           rm -f "$QA_RESULT_FILE" "$QA_ERROR_FILE"
           phase="bootstrap"
           current_log=""
@@ -108,74 +148,126 @@ jobs:
           write_failure() {
             local code="$1"
             if [ -n "$current_log" ] && [ -f "$current_log" ]; then
-              tail -n 120 "$current_log" > "$QA_ERROR_FILE"
+              tail -n 160 "$current_log" > "$QA_ERROR_FILE"
             else
               printf '%s\n' "No browser log was produced for phase: $phase" > "$QA_ERROR_FILE"
             fi
-            cat > "$QA_RESULT_FILE" <<EOF
-          {
-            "status": "failed",
-            "phase": "$phase",
-            "exit_code": $code,
-            "source_commit": "$GITHUB_SHA",
-            "target": "protected-preview"
-          }
-          EOF
+
+            FAIL_RESULT="$(find "$QA_ARTIFACT_ROOT" -name result.json -type f -print0 \
+              | xargs -0 -r grep -l '"failureMessage": "' \
+              | tail -n 1 || true)"
+
+            if [ -n "$FAIL_RESULT" ] && [ -f "$FAIL_RESULT" ]; then
+              FAILURE_STAGE="$(jq -r '.failureStage // "unknown"' "$FAIL_RESULT")"
+              FAILURE_MESSAGE="$(jq -r '.failureMessage // "unknown"' "$FAIL_RESULT")"
+              FAILURE_RUN="$(jq -r '.run // 0' "$FAIL_RESULT")"
+            else
+              FAILURE_STAGE="$phase"
+              FAILURE_MESSAGE="Browser phase exited before a structured per-run failure was available."
+              FAILURE_RUN=0
+            fi
+
+            jq -n \
+              --arg status "failed" \
+              --arg phase "$phase" \
+              --arg source_commit "$GITHUB_SHA" \
+              --arg target "$ORCALY_E2E_BASE_URL" \
+              --arg failure_stage "$FAILURE_STAGE" \
+              --arg failure_message "$FAILURE_MESSAGE" \
+              --argjson failure_run "$FAILURE_RUN" \
+              --argjson exit_code "$code" \
+              '{
+                status:$status,
+                phase:$phase,
+                exit_code:$exit_code,
+                source_commit:$source_commit,
+                target:$target,
+                failure_run:$failure_run,
+                failure_stage:$failure_stage,
+                failure_message:$failure_message
+              }' > "$QA_RESULT_FILE"
           }
 
           trap 'code=$?; if [ "$code" -ne 0 ]; then write_failure "$code"; fi' EXIT
 
           phase="fresh_20"
           current_log="fresh-20.log"
-          ORCALY_E2E_ITERATIONS=20 ORCALY_E2E_TIMEOUT_MS=45000 \
+          ORCALY_E2E_ITERATIONS=20 \
+          ORCALY_E2E_RUN_OFFSET=0 \
+          ORCALY_E2E_RUN_GROUP=fresh_20 \
+          ORCALY_E2E_ARTIFACT_ROOT="$QA_ARTIFACT_ROOT" \
+          ORCALY_E2E_TIMEOUT_MS=45000 \
             node scripts/e2e-auth-first-login.mjs 2>&1 | tee "$current_log"
 
           phase="preview_10"
           current_log="preview-10.log"
-          ORCALY_E2E_ITERATIONS=10 ORCALY_E2E_TIMEOUT_MS=45000 \
+          ORCALY_E2E_ITERATIONS=10 \
+          ORCALY_E2E_RUN_OFFSET=20 \
+          ORCALY_E2E_RUN_GROUP=preview_10 \
+          ORCALY_E2E_ARTIFACT_ROOT="$QA_ARTIFACT_ROOT" \
+          ORCALY_E2E_TIMEOUT_MS=45000 \
             node scripts/e2e-auth-first-login.mjs 2>&1 | tee "$current_log"
 
           phase="mobile_390"
           current_log="mobile-390.log"
-          ORCALY_E2E_ITERATIONS=3 ORCALY_E2E_MOBILE=1 ORCALY_E2E_TIMEOUT_MS=45000 \
+          ORCALY_E2E_ITERATIONS=3 \
+          ORCALY_E2E_RUN_OFFSET=30 \
+          ORCALY_E2E_RUN_GROUP=mobile_390 \
+          ORCALY_E2E_ARTIFACT_ROOT="$QA_ARTIFACT_ROOT" \
+          ORCALY_E2E_MOBILE=1 \
+          ORCALY_E2E_TIMEOUT_MS=45000 \
             node scripts/e2e-auth-first-login.mjs 2>&1 | tee "$current_log"
 
           phase="slow_3g"
           current_log="slow-3g.log"
-          ORCALY_E2E_ITERATIONS=3 ORCALY_E2E_NETWORK=slow ORCALY_E2E_TIMEOUT_MS=90000 \
+          ORCALY_E2E_ITERATIONS=3 \
+          ORCALY_E2E_RUN_OFFSET=33 \
+          ORCALY_E2E_RUN_GROUP=slow_3g \
+          ORCALY_E2E_ARTIFACT_ROOT="$QA_ARTIFACT_ROOT" \
+          ORCALY_E2E_NETWORK=slow \
+          ORCALY_E2E_TIMEOUT_MS=90000 \
             node scripts/e2e-auth-first-login.mjs 2>&1 | tee "$current_log"
 
           phase="double_click"
           current_log="double-click.log"
-          ORCALY_E2E_ITERATIONS=3 ORCALY_E2E_DOUBLE_CLICK=1 ORCALY_E2E_TIMEOUT_MS=45000 \
+          ORCALY_E2E_ITERATIONS=3 \
+          ORCALY_E2E_RUN_OFFSET=36 \
+          ORCALY_E2E_RUN_GROUP=double_click \
+          ORCALY_E2E_ARTIFACT_ROOT="$QA_ARTIFACT_ROOT" \
+          ORCALY_E2E_DOUBLE_CLICK=1 \
+          ORCALY_E2E_TIMEOUT_MS=45000 \
             node scripts/e2e-auth-first-login.mjs 2>&1 | tee "$current_log"
 
           phase="complete"
           rm -f "$QA_ERROR_FILE"
-          cat > "$QA_RESULT_FILE" <<EOF
-          {
-            "status": "passed",
-            "phase": "complete",
-            "source_commit": "$GITHUB_SHA",
-            "target": "protected-preview",
-            "fresh_logins": 20,
-            "preview_logins": 10,
-            "mobile_390": 3,
-            "slow_3g": 3,
-            "double_click": 3,
-            "unexpected_401_403_500": 0,
-            "generic_next_error": 0
-          }
-          EOF
+          jq -n \
+            --arg status "passed" \
+            --arg phase "complete" \
+            --arg source_commit "$GITHUB_SHA" \
+            --arg target "$ORCALY_E2E_BASE_URL" \
+            '{
+              status:$status,
+              phase:$phase,
+              source_commit:$source_commit,
+              target:$target,
+              fresh_logins:20,
+              preview_logins:10,
+              mobile_390:3,
+              slow_3g:3,
+              double_click:3,
+              unexpected_401_403_500:0,
+              generic_next_error:0
+            }' > "$QA_RESULT_FILE"
 
       - name: Upload sanitized QA evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: platform-evolution-auth-qa-${{ github.run_id }}
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 7
           path: |
+            artifacts/auth/**
             fresh-20.log
             preview-10.log
             mobile-390.log
