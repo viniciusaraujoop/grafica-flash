@@ -42,8 +42,10 @@ assert.equal(publicOrderPage.includes('redirect(`/site/${slug}`)'), false, 'Rota
 assert.match(publicOrderRoot, /getCurrentCompanyClient/, 'CTA interno /orcamento precisa resolver a empresa autenticada.')
 assert.match(publicOrderRoot, /\/orcamento\/\$\{encodeURIComponent\(slug\)\}/, 'CTA interno precisa encaminhar para o formulário público da própria empresa.')
 
-assert.match(companyCurrentRoute, /getRequesterWithSingleRetry/, 'Validação inicial da empresa precisa manter retry único e controlado.')
-assert.match(companyCurrentRoute, /setTimeout\(resolve, 120\)/, 'Retry de autenticação precisa permanecer curto e limitado.')
+assert.match(companyCurrentRoute, /getClaims\(\)/, 'Validação inicial da empresa precisa usar a sessão SSR por cookie.')
+assert.equal(companyCurrentRoute.includes('getRequesterWithSingleRetry'), false, 'Retry temporal legado não pode reaparecer no company/current.')
+assert.equal(companyCurrentRoute.includes('setTimeout('), false, 'Validação de autenticação não pode depender de cronômetro.')
+assert.match(companyCurrentRoute, /getCookieRequester/, 'company/current precisa priorizar a identidade resolvida no servidor.')
 
 assert.match(marketingSite, /Fale com a gente/, 'Home precisa manter a copy comercial corrigida.')
 assert.equal(marketingSite.includes('O canal público confirmado hoje'), false, 'Copy técnica antiga não pode reaparecer na home.')
