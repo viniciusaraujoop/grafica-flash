@@ -8,6 +8,7 @@ import {
   useActionState,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -475,7 +476,7 @@ export default function LoginPage() {
   const [senha, setSenha] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [lembrarEmail, setLembrarEmail] = useState(true)
-  const [nextPath, setNextPath] = useState('/painel/inicio')
+  const nextPathRef = useRef<HTMLInputElement>(null)
   const [loginState, loginAction, carregando] = useActionState(
     signInWithPasswordFormAction,
     { ok: false, error: '' },
@@ -500,7 +501,9 @@ export default function LoginPage() {
       'orcaly_login_email',
     )
     const params = new URLSearchParams(window.location.search)
-    setNextPath(getSafeNextPath())
+    if (nextPathRef.current) {
+      nextPathRef.current.value = getSafeNextPath()
+    }
 
     const frame = window.requestAnimationFrame(() => {
       if (savedEmail) {
@@ -531,13 +534,6 @@ export default function LoginPage() {
 
     return () => window.cancelAnimationFrame(frame)
   }, [])
-
-  useEffect(() => {
-    if (!loginState.error) return
-
-    setTipoMensagem('erro')
-    setMensagem(loginState.error)
-  }, [loginState.error])
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -596,10 +592,15 @@ export default function LoginPage() {
     )
   }
 
+  const displayedMessage = loginState.error || mensagem
+  const displayedMessageType: MessageType = loginState.error
+    ? 'erro'
+    : tipoMensagem
+
   const messageClass =
-    tipoMensagem === 'erro'
+    displayedMessageType === 'erro'
       ? 'border-red-200/90 bg-red-50 text-red-700'
-      : tipoMensagem === 'sucesso'
+      : displayedMessageType === 'sucesso'
         ? 'border-emerald-200/90 bg-emerald-50 text-emerald-700'
         : 'border-blue-100 bg-blue-50/80 text-[#05245c]'
 
@@ -808,7 +809,12 @@ export default function LoginPage() {
               action={loginAction}
               className="relative overflow-hidden rounded-[2.1rem] border border-white bg-white p-5 shadow-[0_35px_100px_rgba(6,26,54,.16)] sm:p-8"
             >
-              <input type="hidden" name="next" value={nextPath} />
+              <input
+                ref={nextPathRef}
+                type="hidden"
+                name="next"
+                defaultValue="/painel/inicio"
+              />
               <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-blue-100/80 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-28 -left-24 h-56 w-56 rounded-full bg-emerald-100/70 blur-3xl" />
 
@@ -851,7 +857,7 @@ export default function LoginPage() {
                   <span className="mt-0.5 shrink-0">
                     <ShieldIcon />
                   </span>
-                  <span>{mensagem}</span>
+                  <span>{displayedMessage}</span>
                 </div>
 
                 <div className="mt-6 grid gap-5">
