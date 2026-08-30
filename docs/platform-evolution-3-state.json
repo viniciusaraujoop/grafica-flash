@@ -1,0 +1,53 @@
+{
+  "version": 3,
+  "branch": "feat/platform-evolution-3",
+  "head": "ca925d64914267afc378d0313439bc6587a7f83a",
+  "startedFrom": "cbe320a7806df3b959a1e787eea2a098301ceece",
+  "currentPhase": "AUTH_CERTIFICATION",
+  "completed": [
+    "foundation_preserved",
+    "observability_foundation",
+    "auth_ssr_architecture",
+    "auth_timing_retry_removed",
+    "auth_reload_workaround_removed",
+    "ci_build_fixture_hardened"
+  ],
+  "inProgress": [
+    "auth_browser_harness_artifacts",
+    "auth_20_fresh_login_certification"
+  ],
+  "blocked": [
+    {
+      "id": "PE3-AUTH-002",
+      "reason": "Fresh-login browser matrix timed out on iteration 4 waiting for authenticated panel readiness after three consecutive passes; root cause under investigation."
+    }
+  ],
+  "externalLimitations": [],
+  "bugsFound": [
+    "PE3-AUTH-001",
+    "PE3-AUTH-002",
+    "PE3-CI-001"
+  ],
+  "migrations": [
+    "platform_evolution_3_observability",
+    "admin_control_center_v2"
+  ],
+  "deployments": [
+    {
+      "environment": "preview",
+      "commit": "d9f7f81b0b42b58636714c20046e7adcd22b40b0",
+      "state": "READY",
+      "id": "dpl_BFkhGD69FV25SZ9oH5MNJwsdwwHV"
+    }
+  ],
+  "lastVerifiedCommit": "ca925d64914267afc378d0313439bc6587a7f83a",
+  "lastVerifiedQualityGate": "Platform Evolution 3 run 11: success",
+  "authQa": {
+    "latestRunId": 33333278711,
+    "latestResult": "FAILED",
+    "phase": "fresh_20",
+    "passesBeforeFailure": 3,
+    "failure": "Timeout waiting for authenticated panel readiness on iteration 4"
+  },
+  "finalStatus": "IN_PROGRESS"
+}
