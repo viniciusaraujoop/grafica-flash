@@ -5,13 +5,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import {
+  useActionState,
   useEffect,
   useMemo,
   useState,
-  type FormEvent,
   type ReactNode,
 } from 'react'
-import { signInWithPasswordAction } from './actions'
+import { signInWithPasswordFormAction } from './actions'
 
 type MessageType = 'info' | 'erro' | 'sucesso'
 
@@ -475,7 +475,11 @@ export default function LoginPage() {
   const [senha, setSenha] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [lembrarEmail, setLembrarEmail] = useState(true)
-  const [carregando, setCarregando] = useState(false)
+  const [nextPath, setNextPath] = useState('/painel/inicio')
+  const [loginState, loginAction, carregando] = useActionState(
+    signInWithPasswordFormAction,
+    { ok: false, error: '' },
+  )
   const [mensagem, setMensagem] = useState(
     'Entre para acessar o painel da sua empresa.',
   )
@@ -496,6 +500,7 @@ export default function LoginPage() {
       'orcaly_login_email',
     )
     const params = new URLSearchParams(window.location.search)
+    setNextPath(getSafeNextPath())
 
     const frame = window.requestAnimationFrame(() => {
       if (savedEmail) {
@@ -526,6 +531,13 @@ export default function LoginPage() {
 
     return () => window.cancelAnimationFrame(frame)
   }, [])
+
+  useEffect(() => {
+    if (!loginState.error) return
+
+    setTipoMensagem('erro')
+    setMensagem(loginState.error)
+  }, [loginState.error])
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -582,69 +594,6 @@ export default function LoginPage() {
     setMensagem(
       'A recuperação automática será liberada em breve. Por enquanto, confira os dados ou fale com o suporte em orcalybr@gmail.com.',
     )
-  }
-
-  async function entrar(
-    evento: FormEvent<HTMLFormElement>,
-  ) {
-    evento.preventDefault()
-
-    if (carregando) return
-
-    const emailLimpo = email.trim().toLowerCase()
-
-    if (!emailLimpo) {
-      setTipoMensagem('erro')
-      setMensagem('Informe o e-mail da conta.')
-      return
-    }
-
-    if (!emailValido) {
-      setTipoMensagem('erro')
-      setMensagem('Digite um e-mail válido.')
-      return
-    }
-
-    if (!senha) {
-      setTipoMensagem('erro')
-      setMensagem('Informe sua senha de acesso.')
-      return
-    }
-
-    setCarregando(true)
-    setTipoMensagem('info')
-    setMensagem('Validando seu acesso...')
-
-    if (
-      lembrarEmail &&
-      typeof window !== 'undefined'
-    ) {
-      window.localStorage.setItem(
-        'orcaly_login_email',
-        emailLimpo,
-      )
-    }
-
-    try {
-      setTipoMensagem('sucesso')
-      setMensagem('Acesso validado. Preparando seu painel...')
-
-      const result = await signInWithPasswordAction({
-        email: emailLimpo,
-        password: senha,
-        next: getSafeNextPath(),
-      })
-
-      setTipoMensagem('erro')
-      setMensagem(result.error)
-      setCarregando(false)
-    } catch {
-      setTipoMensagem('erro')
-      setMensagem(
-        'Não foi possível entrar agora. Tente novamente em alguns instantes.',
-      )
-      setCarregando(false)
-    }
   }
 
   const messageClass =
@@ -856,9 +805,10 @@ export default function LoginPage() {
             </div>
 
             <form
-              onSubmit={entrar}
+              action={loginAction}
               className="relative overflow-hidden rounded-[2.1rem] border border-white bg-white p-5 shadow-[0_35px_100px_rgba(6,26,54,.16)] sm:p-8"
             >
+              <input type="hidden" name="next" value={nextPath} />
               <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-blue-100/80 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-28 -left-24 h-56 w-56 rounded-full bg-emerald-100/70 blur-3xl" />
 
@@ -922,6 +872,8 @@ export default function LoginPage() {
                       </span>
 
                       <input
+                        name="email"
+                        required
                         value={email}
                         onChange={(event) =>
                           handleEmailChange(event.target.value)
@@ -955,6 +907,8 @@ export default function LoginPage() {
                       </span>
 
                       <input
+                        name="password"
+                        required
                         value={senha}
                         onChange={(event) =>
                           setSenha(event.target.value)
