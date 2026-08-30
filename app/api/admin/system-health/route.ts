@@ -72,8 +72,10 @@ export async function GET(request: NextRequest) {
       ['ok', 'success'].includes(lower(row.status)) && !lower(row.event_name).includes('provider_error'),
     ).length
 
-    const errorSchemaReady = !applicationErrors.error || !isMissingRelation(applicationErrors.error, 'application_error_events')
-    const recentErrors = errorSchemaReady ? ((applicationErrors.data || []) as ErrorRow[]) : []
+    const errorRelationMissing = isMissingRelation(applicationErrors.error, 'application_error_events')
+    const errorSchemaReady = !errorRelationMissing
+    const errorTelemetryReadable = !applicationErrors.error
+    const recentErrors = errorTelemetryReadable ? ((applicationErrors.data || []) as ErrorRow[]) : []
     const error5xx = recentErrors.filter((row) => Number(row.http_status || 0) >= 500).length
 
     const services: Service[] = [
@@ -131,12 +133,20 @@ export async function GET(request: NextRequest) {
       {
         key: 'application_errors',
         name: 'Application Errors',
-        status: !errorSchemaReady ? 'Unknown' : error5xx > 0 ? 'Degraded' : recentErrors.length ? 'Operational' : 'Unknown',
+        status: !errorSchemaReady || !errorTelemetryReadable
+          ? 'Unknown'
+          : error5xx > 0
+            ? 'Degraded'
+            : recentErrors.length
+              ? 'Operational'
+              : 'Unknown',
         detail: !errorSchemaReady
           ? 'Migration de observabilidade ainda não aplicada neste ambiente.'
-          : recentErrors.length
-            ? `${recentErrors.length} erros registrados em 24h; ${error5xx} associados a HTTP 5xx.`
-            : 'Schema disponível, mas sem eventos recentes. Ausência de evento não prova saúde total.',
+          : !errorTelemetryReadable
+            ? 'Schema existe, mas a leitura da telemetria falhou. Nenhuma inferência de saúde foi feita.'
+            : recentErrors.length
+              ? `${recentErrors.length} erros registrados em 24h; ${error5xx} associados a HTTP 5xx.`
+              : 'Schema disponível, mas sem eventos recentes. Ausência de evento não prova saúde total.',
         observedAt: recentErrors[0]?.created_at || null,
       },
       {
@@ -167,8 +177,8 @@ export async function GET(request: NextRequest) {
           webhookFailures24h: hooks.error ? null : hookRows.filter((row) => ['failed', 'error'].includes(lower(row.processing_status))).length,
           whatsappFailures24h: whatsapp.error ? null : waFailed,
           securityOpen: security.error ? null : security.count || 0,
-          applicationErrors24h: !errorSchemaReady ? null : recentErrors.length,
-          application5xx24h: !errorSchemaReady ? null : error5xx,
+          applicationErrors24h: !errorTelemetryReadable ? null : recentErrors.length,
+          application5xx24h: !errorTelemetryReadable ? null : error5xx,
           latestScan: scan.error ? null : scan.data || null,
         },
         recentErrors: recentErrors.slice(0, 12).map((row) => ({
@@ -182,6 +192,7 @@ export async function GET(request: NextRequest) {
         })),
         schema: {
           applicationErrorsReady: errorSchemaReady,
+          applicationErrorsReadable: errorTelemetryReadable,
         },
       },
       { headers: { 'x-orcaly-request-id': requestId } },
