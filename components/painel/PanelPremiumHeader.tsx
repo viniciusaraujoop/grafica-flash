@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { signOutAction } from '@/app/painel/actions'
 import { getBusinessTypeConfig } from '@/lib/business-types'
 import PanelGlobalSearch from '@/components/painel/PanelGlobalSearch'
 import styles from './PanelChromeV3.module.css'
@@ -113,8 +113,7 @@ export default function PanelPremiumHeader({ company, pathname }: { company: Pan
   const segmentLabel = getBusinessTypeConfig(company.business_type || company.site_template || 'services').label
 
   async function logout() {
-    await supabase.auth.signOut()
-    window.location.assign('/login')
+    await signOutAction()
   }
 
   return (

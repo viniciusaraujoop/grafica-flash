@@ -4,13 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm test && npm run verify:payments && npx eslint app/page.tsx app/sitemap.ts app/robots.ts app/solucoes/[slug]/page.tsx app/error.tsx app/global-error.tsx app/api/admin/system-health/route.ts app/admin/system-health/page.tsx components/admin/AdminSystemHealthV3.tsx components/marketing/MainSiteV2.tsx components/marketing/ProductDemoTabs.tsx components/marketing/PlanSelector.tsx components/marketing/ReferralBridge.tsx lib/observability/application-errors.ts lib/marketing/main-site.ts",
+    "prebuild": "npm test && npm run verify:payments && npx eslint app/page.tsx app/sitemap.ts app/robots.ts app/solucoes/[slug]/page.tsx app/error.tsx app/global-error.tsx app/login/page.tsx app/login/actions.ts app/painel/layout.tsx app/painel/actions.ts app/api/company/current/route.ts app/api/admin/system-health/route.ts app/admin/system-health/page.tsx components/painel/PanelAuthenticatedLayout.tsx components/painel/PanelPremiumHeader.tsx components/admin/AdminSystemHealthV3.tsx components/marketing/MainSiteV2.tsx components/marketing/ProductDemoTabs.tsx components/marketing/PlanSelector.tsx components/marketing/ReferralBridge.tsx lib/supabase-server.ts lib/current-company-client.ts lib/observability/application-errors.ts lib/marketing/main-site.ts proxy.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node scripts/verify-platform-evolution-3-foundation.mjs && node scripts/verify-critical-hotfix.mjs && node scripts/verify-partner-portal-v2.mjs && node scripts/verify-admin-control-center-v2.mjs && node scripts/verify-storefront-marketplace-v2.mjs && node scripts/verify-main-site-v2.mjs",
+    "test": "node --check scripts/e2e-auth-first-login.mjs && node scripts/verify-platform-evolution-3-foundation.mjs && node scripts/verify-auth-first-login-race.mjs && node scripts/verify-critical-hotfix.mjs && node scripts/verify-partner-portal-v2.mjs && node scripts/verify-admin-control-center-v2.mjs && node scripts/verify-storefront-marketplace-v2.mjs && node scripts/verify-main-site-v2.mjs",
+    "e2e:auth": "node scripts/e2e-auth-first-login.mjs",
     "security:check": "node scripts/security-check.mjs",
     "verify:platform": "node scripts/verify-platform-evolution-3-foundation.mjs",
+    "verify:auth": "node scripts/verify-auth-first-login-race.mjs",
     "verify:payments": "node scripts/verify-payment-flow-boundaries.mjs",
     "verify:payment-credentials": "node scripts/auditar-isolamento-pagamentos.cjs"
   },
