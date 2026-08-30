@@ -1,53 +1,82 @@
 {
   "version": 3,
   "branch": "feat/platform-evolution-3",
-  "head": "ca925d64914267afc378d0313439bc6587a7f83a",
+  "head": "b371c79e7677f842018c191effb8a2b5c9d1c15d",
   "startedFrom": "cbe320a7806df3b959a1e787eea2a098301ceece",
-  "currentPhase": "AUTH_CERTIFICATION",
+  "currentPhase": "DATABASE_RECONCILIATION_WITH_AUTH_QA_INFRA_BLOCKED",
   "completed": [
     "foundation_preserved",
     "observability_foundation",
     "auth_ssr_architecture",
     "auth_timing_retry_removed",
     "auth_reload_workaround_removed",
-    "ci_build_fixture_hardened"
+    "auth_browser_harness_per_run_artifacts",
+    "auth_preview_preflight_evidence_hardening",
+    "ci_build_fixture_hardened",
+    "ci_quality_gate_ff15070c_success",
+    "database_live_project_reconfirmed",
+    "database_migration_manifest_created",
+    "assistant_v2_schema_drift_identified",
+    "whatsapp_cloud_api_schema_drift_identified"
   ],
   "inProgress": [
-    "auth_browser_harness_artifacts",
-    "auth_20_fresh_login_certification"
+    "auth_20_fresh_login_certification",
+    "auth_preview_10_fresh_login_certification",
+    "database_full_schema_reconciliation",
+    "security_tenancy_map",
+    "rls_bola_validation"
   ],
   "blocked": [
     {
-      "id": "PE3-AUTH-002",
-      "reason": "Fresh-login browser matrix timed out on iteration 4 waiting for authenticated panel readiness after three consecutive passes; root cause under investigation."
+      "id": "PE3-AUTH-004",
+      "reason": "GitHub Auth QA cannot currently cross Vercel Deployment Protection with the share credential returned from the encrypted QA Vault. The same READY Preview exposes the correct ff15070c commit when accessed through an authorized Vercel session. No credential will be hardcoded or exposed."
     }
   ],
-  "externalLimitations": [],
+  "externalLimitations": [
+    {
+      "id": "EXT-VERCEL-QA-BYPASS",
+      "reason": "A valid stable Vercel Preview protection bypass/share credential must be refreshed through a secure secret-management channel. The current execution environment can mint a share credential through the connected Vercel account but blocks writing credential material into Supabase Vault, and GitHub secret mutation is not available."
+    }
+  ],
   "bugsFound": [
     "PE3-AUTH-001",
     "PE3-AUTH-002",
+    "PE3-AUTH-003",
+    "PE3-AUTH-004",
+    "PE3-AUTH-005",
     "PE3-CI-001"
   ],
   "migrations": [
-    "platform_evolution_3_observability",
-    "admin_control_center_v2"
+    "orcaly_assistant_v2_analytics (DB history 20260821012633; Git timestamp drift documented)",
+    "whatsapp_cloud_api_v1 (DB history 20260823163043; Git/runtime branch drift documented)",
+    "platform_evolution_3_observability (DB history 20260830200818)",
+    "admin_control_center_v2 (DB history 20260830201025)",
+    "platform_evolution_3_qa_vault (DB history 20260830211222)"
   ],
   "deployments": [
     {
       "environment": "preview",
-      "commit": "d9f7f81b0b42b58636714c20046e7adcd22b40b0",
+      "commit": "ff15070c4d018cc1f82739d8bc6172ff11fdc297",
       "state": "READY",
-      "id": "dpl_BFkhGD69FV25SZ9oH5MNJwsdwwHV"
+      "id": "dpl_7ZmpdACZ3CXRLtrwUJtx4b2dY4is"
     }
   ],
-  "lastVerifiedCommit": "ca925d64914267afc378d0313439bc6587a7f83a",
-  "lastVerifiedQualityGate": "Platform Evolution 3 run 11: success",
+  "lastVerifiedCommit": "ff15070c4d018cc1f82739d8bc6172ff11fdc297",
+  "lastVerifiedQualityGate": "Platform Evolution 3 run 33336352312: success",
   "authQa": {
-    "latestRunId": 33333278711,
-    "latestResult": "FAILED",
-    "phase": "fresh_20",
-    "passesBeforeFailure": 3,
-    "failure": "Timeout waiting for authenticated panel readiness on iteration 4"
+    "latestRunId": 33336352330,
+    "latestResult": "FAILED_PREVIEW_PREFLIGHT",
+    "phase": "preview_preflight",
+    "passesBeforeFailure": 0,
+    "failure": "Deployment Protection bypass did not expose the internal JSON build endpoint; browser matrix was skipped before login execution.",
+    "nextHarnessCommit": "f0f6e5fa099e29318eb387dffd11f80d36647193"
+  },
+  "database": {
+    "projectId": "ozrasuktfthsvbqprtel",
+    "region": "sa-east-1",
+    "postgresMajor": 17,
+    "manifest": "docs/platform-evolution-3-migrations.md",
+    "destructiveReplayAvoided": true
   },
   "finalStatus": "IN_PROGRESS"
 }
