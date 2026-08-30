@@ -42,6 +42,11 @@ jobs:
         run: npm run security:check
 
       - name: Production build
+        env:
+          # Publishable-only compile fixture. Runtime privileged access is never exercised in this step.
+          NEXT_PUBLIC_SUPABASE_URL: https://ozrasuktfthsvbqprtel.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_mfiQJ5W1Y1VInPHNHBaOAA_Lauq-Cfh
+          SUPABASE_SERVICE_ROLE_KEY: sb_publishable_mfiQJ5W1Y1VInPHNHBaOAA_Lauq-Cfh
         run: npm run build
 
       - name: Diff whitespace validation

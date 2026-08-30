@@ -44,6 +44,22 @@ async function waitFor(predicate, description, deadline = Date.now() + timeoutMs
   throw new Error(`Timeout esperando ${description}. Último estado: ${String(last || 'sem detalhe')}`)
 }
 
+function waitForChildExit(child, maxMs) {
+  if (child.exitCode !== null) return Promise.resolve()
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      child.off('exit', finish)
+      resolve()
+    }
+    const timer = setTimeout(finish, maxMs)
+    child.once('exit', finish)
+  })
+}
+
 async function launchChromium() {
   const userDataDir = await mkdtemp(join(tmpdir(), 'orcaly-auth-e2e-'))
   const args = [
@@ -82,13 +98,20 @@ async function launchChromium() {
     userDataDir,
     browserWsUrl: wsUrl,
     async close() {
-      if (child.exitCode === null) child.kill('SIGTERM')
-      await Promise.race([
-        new Promise((resolve) => child.once('exit', resolve)),
-        delay(1000),
-      ])
-      if (child.exitCode === null) child.kill('SIGKILL')
-      await rm(userDataDir, { recursive: true, force: true })
+      if (child.exitCode === null) {
+        child.kill('SIGTERM')
+        await waitForChildExit(child, 1500)
+      }
+      if (child.exitCode === null) {
+        child.kill('SIGKILL')
+        await waitForChildExit(child, 1500)
+      }
+      await rm(userDataDir, {
+        recursive: true,
+        force: true,
+        maxRetries: 10,
+        retryDelay: 100,
+      })
     },
   }
 }
