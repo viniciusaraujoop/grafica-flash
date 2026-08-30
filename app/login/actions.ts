@@ -10,7 +10,10 @@ export type LoginActionResult = {
   error: string
 }
 
-export type LoginFormState = LoginActionResult
+export type LoginFormState = {
+  ok: boolean
+  error: string
+}
 
 function safeNextPath(rawNext?: string | null) {
   const next = String(rawNext || '').trim()
