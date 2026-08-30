@@ -1,0 +1,202 @@
+name: Platform Evolution Auth QA
+
+on:
+  push:
+    branches:
+      - feat/platform-evolution-3
+    paths:
+      - .github/workflows/platform-evolution-auth-qa.yml
+      - app/login/**
+      - app/painel/layout.tsx
+      - app/painel/actions.ts
+      - app/api/company/current/route.ts
+      - components/painel/PanelAuthenticatedLayout.tsx
+      - components/painel/PanelPremiumHeader.tsx
+      - lib/supabase-server.ts
+      - lib/current-company-client.ts
+      - proxy.ts
+      - scripts/e2e-auth-first-login.mjs
+      - scripts/verify-auth-first-login-race.mjs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: platform-evolution-auth-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      QA_CONTROL_URL: https://ozrasuktfthsvbqprtel.supabase.co/functions/v1/auth-hotfix-qa-control
+      QA_OIDC_AUDIENCE: orcaly-platform-evolution-auth-qa
+      QA_RESULT_FILE: docs/platform-evolution-auth-qa.json
+      QA_ERROR_FILE: docs/platform-evolution-auth-qa-error.log
+
+    steps:
+      - name: Checkout platform branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Resolve Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_PATH"
+          echo "CHROMIUM_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+
+      - name: Create disposable QA identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC_JSON="$(curl --silent --show-error --fail-with-body \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${QA_OIDC_AUDIENCE}")"
+          OIDC_TOKEN="$(printf '%s' "$OIDC_JSON" | jq -r '.value')"
+          test -n "$OIDC_TOKEN"
+
+          FIXTURE="$(curl --silent --show-error --fail-with-body \
+            -X POST "$QA_CONTROL_URL" \
+            -H "Authorization: Bearer $OIDC_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data '{"action":"create"}')"
+
+          USER_ID="$(printf '%s' "$FIXTURE" | jq -r '.userId')"
+          EMAIL="$(printf '%s' "$FIXTURE" | jq -r '.email')"
+          PASSWORD="$(printf '%s' "$FIXTURE" | jq -r '.password')"
+          BASE_URL="$(printf '%s' "$FIXTURE" | jq -r '.baseUrl')"
+          SHARE="$(printf '%s' "$FIXTURE" | jq -r '.vercelShare')"
+
+          test -n "$USER_ID"
+          test -n "$EMAIL"
+          test -n "$PASSWORD"
+          test -n "$BASE_URL"
+          test -n "$SHARE"
+
+          echo "::add-mask::$USER_ID"
+          echo "::add-mask::$EMAIL"
+          echo "::add-mask::$PASSWORD"
+          echo "::add-mask::$SHARE"
+
+          {
+            echo "QA_USER_ID=$USER_ID"
+            echo "ORCALY_E2E_EMAIL=$EMAIL"
+            echo "ORCALY_E2E_PASSWORD=$PASSWORD"
+            echo "ORCALY_E2E_BASE_URL=$BASE_URL"
+            echo "ORCALY_E2E_VERCEL_SHARE=$SHARE"
+          } >> "$GITHUB_ENV"
+
+      - name: Run full browser matrix
+        shell: bash
+        run: |
+          set -Euo pipefail
+          mkdir -p docs
+          rm -f "$QA_RESULT_FILE" "$QA_ERROR_FILE"
+          phase="bootstrap"
+          current_log=""
+
+          write_failure() {
+            local code="$1"
+            if [ -n "$current_log" ] && [ -f "$current_log" ]; then
+              tail -n 120 "$current_log" > "$QA_ERROR_FILE"
+            else
+              printf '%s\n' "No browser log was produced for phase: $phase" > "$QA_ERROR_FILE"
+            fi
+            cat > "$QA_RESULT_FILE" <<EOF
+          {
+            "status": "failed",
+            "phase": "$phase",
+            "exit_code": $code,
+            "source_commit": "$GITHUB_SHA",
+            "target": "protected-preview"
+          }
+          EOF
+          }
+
+          trap 'code=$?; if [ "$code" -ne 0 ]; then write_failure "$code"; fi' EXIT
+
+          phase="fresh_20"
+          current_log="fresh-20.log"
+          ORCALY_E2E_ITERATIONS=20 ORCALY_E2E_TIMEOUT_MS=45000 \
+            node scripts/e2e-auth-first-login.mjs 2>&1 | tee "$current_log"
+
+          phase="preview_10"
+          current_log="preview-10.log"
+          ORCALY_E2E_ITERATIONS=10 ORCALY_E2E_TIMEOUT_MS=45000 \
+            node scripts/e2e-auth-first-login.mjs 2>&1 | tee "$current_log"
+
+          phase="mobile_390"
+          current_log="mobile-390.log"
+          ORCALY_E2E_ITERATIONS=3 ORCALY_E2E_MOBILE=1 ORCALY_E2E_TIMEOUT_MS=45000 \
+            node scripts/e2e-auth-first-login.mjs 2>&1 | tee "$current_log"
+
+          phase="slow_3g"
+          current_log="slow-3g.log"
+          ORCALY_E2E_ITERATIONS=3 ORCALY_E2E_NETWORK=slow ORCALY_E2E_TIMEOUT_MS=90000 \
+            node scripts/e2e-auth-first-login.mjs 2>&1 | tee "$current_log"
+
+          phase="double_click"
+          current_log="double-click.log"
+          ORCALY_E2E_ITERATIONS=3 ORCALY_E2E_DOUBLE_CLICK=1 ORCALY_E2E_TIMEOUT_MS=45000 \
+            node scripts/e2e-auth-first-login.mjs 2>&1 | tee "$current_log"
+
+          phase="complete"
+          rm -f "$QA_ERROR_FILE"
+          cat > "$QA_RESULT_FILE" <<EOF
+          {
+            "status": "passed",
+            "phase": "complete",
+            "source_commit": "$GITHUB_SHA",
+            "target": "protected-preview",
+            "fresh_logins": 20,
+            "preview_logins": 10,
+            "mobile_390": 3,
+            "slow_3g": 3,
+            "double_click": 3,
+            "unexpected_401_403_500": 0,
+            "generic_next_error": 0
+          }
+          EOF
+
+      - name: Upload sanitized QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: platform-evolution-auth-qa-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            fresh-20.log
+            preview-10.log
+            mobile-390.log
+            slow-3g.log
+            double-click.log
+            docs/platform-evolution-auth-qa.json
+            docs/platform-evolution-auth-qa-error.log
+
+      - name: Delete disposable QA identity
+        if: always() && env.QA_USER_ID != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC_JSON="$(curl --silent --show-error --fail-with-body \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${QA_OIDC_AUDIENCE}")"
+          OIDC_TOKEN="$(printf '%s' "$OIDC_JSON" | jq -r '.value')"
+
+          curl --silent --show-error --fail-with-body \
+            -X POST "$QA_CONTROL_URL" \
+            -H "Authorization: Bearer $OIDC_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data "{\"action\":\"cleanup\",\"userId\":\"$QA_USER_ID\"}" \
+            >/dev/null
