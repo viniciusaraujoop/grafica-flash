@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo } from 'react'
 
 function publicCode(digest?: string) {
@@ -25,7 +26,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
             <code style={{ display: 'inline-block', marginTop: 16, padding: '7px 10px', borderRadius: 8, background: '#f1f5f9', fontWeight: 700 }}>{code}</code>
             <div style={{ marginTop: 22, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <button type="button" onClick={reset} style={{ minHeight: 44, border: 0, borderRadius: 12, background: '#0b2e63', color: '#fff', padding: '10px 16px', fontWeight: 700, cursor: 'pointer' }}>Tentar novamente</button>
-              <a href="/" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: 12, color: '#475569', padding: '10px 16px', fontWeight: 700, textDecoration: 'none' }}>Ir para o início</a>
+              <Link href="/" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: 12, color: '#475569', padding: '10px 16px', fontWeight: 700, textDecoration: 'none' }}>Ir para o início</Link>
             </div>
           </section>
         </main>
