@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect, RedirectType } from 'next/navigation'
 import { getCompanyAccess, getSupabaseAdmin } from '@/lib/company-access'
+import { getMfaSecurityState } from '@/lib/security/mfa'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 export type LoginActionResult = {
@@ -23,6 +24,7 @@ function safeNextPath(rawNext?: string | null) {
   if (next.startsWith('//')) return '/painel/inicio'
   if (next.includes('://')) return '/painel/inicio'
   if (next.startsWith('/login')) return '/painel/inicio'
+  if (next.startsWith('/mfa')) return '/painel/inicio'
   if (next.startsWith('/cadastro')) return '/painel/inicio'
 
   return next
@@ -94,12 +96,18 @@ export async function signInWithPasswordAction(input: {
       data.user.email,
     )
 
-    destination = access.company?.id ? nextPath : '/cadastro'
+    const postLoginDestination = access.company?.id ? nextPath : '/cadastro'
+    const mfa = await getMfaSecurityState(supabase)
+
+    destination = mfa.hasVerifiedFactor && mfa.currentLevel !== 'aal2'
+      ? `/mfa?next=${encodeURIComponent(postLoginDestination)}`
+      : postLoginDestination
 
     console.info(JSON.stringify({
       event: 'auth_login_success',
       route: '/login',
       has_company: Boolean(access.company?.id),
+      mfa_required: mfa.hasVerifiedFactor && mfa.currentLevel !== 'aal2',
     }))
   } catch (error) {
     console.error(JSON.stringify({
@@ -115,9 +123,6 @@ export async function signInWithPasswordAction(input: {
     }
   }
 
-  // A autenticação acabou de alterar os cookies que definem a identidade
-  // server-side. Limpar o Router Cache evita reutilizar uma árvore de /painel
-  // obtida quando a mesma aba ainda estava anônima.
   revalidatePath('/', 'layout')
 
   console.info(JSON.stringify({
