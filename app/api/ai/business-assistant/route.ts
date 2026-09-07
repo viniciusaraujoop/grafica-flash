@@ -4,6 +4,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin, isUuid } from '@/lib/company-access'
 
 type Mode = 'free' | 'day_summary' | 'followup' | 'customer' | 'product'
+type JsonRecord = Record<string, unknown>
+
+type BusinessAssistantBody = {
+  mode?: unknown
+  prompt?: unknown
+  lead_id?: unknown
+}
+
+type OperationalContext = {
+  orders: JsonRecord[]
+  proposals: JsonRecord[]
+  tasks: JsonRecord[]
+  leads: JsonRecord[]
+}
+
+type BusinessContext = {
+  empresa: {
+    nome: string
+    segmento: string
+    cidade: string
+    estado: string
+    plano: string
+  }
+  operational?: OperationalContext
+  lead?: JsonRecord | null
+  orders?: JsonRecord[]
+}
 
 function money(value: unknown) {
   return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -13,14 +40,44 @@ function text(value: unknown) {
   return String(value || '').trim()
 }
 
-function localFallback(mode: Mode, context: any, prompt: string) {
+function isRecord(value: unknown): value is JsonRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function asRecord(value: unknown): JsonRecord | null {
+  return isRecord(value) ? value : null
+}
+
+function asRecordArray(value: unknown): JsonRecord[] {
+  return Array.isArray(value) ? value.filter(isRecord) : []
+}
+
+function isMode(value: string): value is Mode {
+  return ['free', 'day_summary', 'followup', 'customer', 'product'].includes(value)
+}
+
+function providerErrorMessage(payload: unknown) {
+  const root = asRecord(payload)
+  const error = asRecord(root?.error)
+  return text(error?.message)
+}
+
+function providerAnswer(payload: unknown) {
+  const root = asRecord(payload)
+  const choices = Array.isArray(root?.choices) ? root.choices : []
+  const firstChoice = asRecord(choices[0])
+  const message = asRecord(firstChoice?.message)
+  return text(message?.content)
+}
+
+function localFallback(mode: Mode, context: BusinessContext, prompt: string) {
   if (mode === 'day_summary') {
-    const { orders = [], proposals = [], tasks = [], leads = [] } = context.operational || {}
-    const pendingProposals = proposals.filter((item: any) => !['aprovado', 'approved', 'recusado', 'cancelado'].includes(text(item.status).toLowerCase()))
-    const proposalValue = pendingProposals.reduce((sum: number, item: any) => sum + Number(item.valor_total || 0), 0)
-    const overdueTasks = tasks.filter((item: any) => item.due_at && new Date(item.due_at).getTime() < Date.now())
-    const dueContacts = leads.filter((item: any) => item.proximo_contato_em && new Date(item.proximo_contato_em).getTime() <= Date.now())
-    const newOrders = orders.filter((item: any) => ['recebido', 'novo', 'pendente'].includes(text(item.status).toLowerCase()))
+    const operational = context.operational ?? { orders: [], proposals: [], tasks: [], leads: [] }
+    const pendingProposals = operational.proposals.filter((item) => !['aprovado', 'approved', 'recusado', 'cancelado'].includes(text(item.status).toLowerCase()))
+    const proposalValue = pendingProposals.reduce((sum, item) => sum + Number(item.valor_total || 0), 0)
+    const overdueTasks = operational.tasks.filter((item) => item.due_at && new Date(text(item.due_at)).getTime() < Date.now())
+    const dueContacts = operational.leads.filter((item) => item.proximo_contato_em && new Date(text(item.proximo_contato_em)).getTime() <= Date.now())
+    const newOrders = operational.orders.filter((item) => ['recebido', 'novo', 'pendente'].includes(text(item.status).toLowerCase()))
     return [
       `${newOrders.length} pedido(s) novo(s) ou pendente(s).`,
       `${pendingProposals.length} proposta(s) aberta(s), somando ${money(proposalValue)}.`,
@@ -34,19 +91,21 @@ function localFallback(mode: Mode, context: any, prompt: string) {
     const lead = context.lead
     if (!lead) return 'Não há dados suficientes para sugerir o follow-up.'
     const value = Number(lead.valor_estimado || 0)
-    return `Olá, ${lead.nome}! Tudo bem? Estou retomando nosso atendimento${value > 0 ? ` sobre a oportunidade de ${money(value)}` : ''}. Posso te ajudar a avançar com o orçamento ou tirar alguma dúvida?`
+    return `Olá, ${text(lead.nome) || 'cliente'}! Tudo bem? Estou retomando nosso atendimento${value > 0 ? ` sobre a oportunidade de ${money(value)}` : ''}. Posso te ajudar a avançar com o orçamento ou tirar alguma dúvida?`
   }
 
   if (mode === 'customer') {
     const lead = context.lead
     const orders = context.orders || []
-    const total = orders.reduce((sum: number, item: any) => sum + Number(item.total_amount || item.total || item.valor_total || item.preco_estimado || 0), 0)
+    const total = orders.reduce((sum, item) => sum + Number(item.total_amount || item.total || item.valor_total || item.preco_estimado || 0), 0)
     if (!lead && !orders.length) return 'Não há histórico suficiente para resumir este cliente.'
+    const firstOrder = orders[0]
+    const customerName = text(lead?.nome) || text(firstOrder?.nome) || text(firstOrder?.customer_name) || 'Não identificado'
     return [
-      `Cliente: ${lead?.nome || orders[0]?.nome || orders[0]?.customer_name || 'Não identificado'}.`,
+      `Cliente: ${customerName}.`,
       `Pedidos encontrados: ${orders.length}. Valor histórico visível: ${money(total)}.`,
-      lead?.etapa ? `Etapa comercial atual: ${lead.etapa}.` : '',
-      lead?.proximo_contato_em ? `Próximo contato: ${new Date(lead.proximo_contato_em).toLocaleString('pt-BR')}.` : 'Nenhum próximo contato definido.',
+      lead?.etapa ? `Etapa comercial atual: ${text(lead.etapa)}.` : '',
+      lead?.proximo_contato_em ? `Próximo contato: ${new Date(text(lead.proximo_contato_em)).toLocaleString('pt-BR')}.` : 'Nenhum próximo contato definido.',
       'Use este resumo como apoio operacional; confirme detalhes antes de enviar algo ao cliente.',
     ].filter(Boolean).join('\n')
   }
@@ -69,21 +128,21 @@ export async function POST(request: NextRequest) {
     const companyId = text(access.company?.id)
     if (!isUuid(companyId)) return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
 
-    const body = await readJsonBody<any>(request, 16 * 1024)
-    const requestedMode = text(body.mode) as Mode
-    const mode: Mode = ['day_summary', 'followup', 'customer', 'product'].includes(requestedMode) ? requestedMode : 'free'
+    const body = await readJsonBody<BusinessAssistantBody>(request, 16 * 1024)
+    const requestedMode = text(body.mode)
+    const mode: Mode = isMode(requestedMode) ? requestedMode : 'free'
     const prompt = text(body.prompt).slice(0, 8000)
     const leadId = text(body.lead_id)
     if (mode === 'free' && !prompt) return NextResponse.json({ error: 'Digite uma solicitação.' }, { status: 400 })
 
     const company = access.company as Record<string, unknown>
-    const context: any = {
+    const context: BusinessContext = {
       empresa: {
-        nome: company.nome,
-        segmento: company.business_type || company.segmento || company.modelo_negocio || company.site_template,
-        cidade: company.cidade,
-        estado: company.estado,
-        plano: company.assinatura_plano || company.plano,
+        nome: text(company.nome),
+        segmento: text(company.business_type || company.segmento || company.modelo_negocio || company.site_template),
+        cidade: text(company.cidade),
+        estado: text(company.estado),
+        plano: text(company.assinatura_plano || company.plano),
       },
     }
 
@@ -95,20 +154,27 @@ export async function POST(request: NextRequest) {
         supabaseAdmin.from('internal_tasks').select('id,titulo,status,prioridade,due_at').eq('company_id', companyId).not('status', 'in', '(concluido,concluida,done,cancelado)').limit(60),
         supabaseAdmin.from('crm_leads').select('id,nome,etapa,valor_estimado,proximo_contato_em').eq('company_id', companyId).eq('status', 'ativo').limit(80),
       ])
-      context.operational = { orders: orders.data || [], proposals: proposals.data || [], tasks: tasks.data || [], leads: leads.data || [] }
+      context.operational = {
+        orders: asRecordArray(orders.data),
+        proposals: asRecordArray(proposals.data),
+        tasks: asRecordArray(tasks.data),
+        leads: asRecordArray(leads.data),
+      }
     }
 
     if ((mode === 'followup' || mode === 'customer') && isUuid(leadId)) {
-      const { data: lead } = await supabaseAdmin.from('crm_leads').select('id,nome,telefone,email,origem,etapa,valor_estimado,proximo_contato_em,observacoes,tags,order_id,proposal_id').eq('id', leadId).eq('company_id', companyId).maybeSingle()
-      context.lead = lead || null
+      const { data: leadData } = await supabaseAdmin.from('crm_leads').select('id,nome,telefone,email,origem,etapa,valor_estimado,proximo_contato_em,observacoes,tags,order_id,proposal_id').eq('id', leadId).eq('company_id', companyId).maybeSingle()
+      const lead = asRecord(leadData)
+      context.lead = lead
       if (mode === 'customer' && lead) {
         const phone = text(lead.telefone)
+        const orderId = text(lead.order_id)
         let query = supabaseAdmin.from('orders').select('id,nome,customer_name,produto,status,total,total_amount,valor_total,preco_estimado,created_at').eq('company_id', companyId).order('created_at', { ascending: false }).limit(40)
         if (phone) query = query.or(`telefone.eq.${phone},customer_phone.eq.${phone}`)
-        else if (lead.order_id) query = query.eq('id', lead.order_id)
+        else if (isUuid(orderId)) query = query.eq('id', orderId)
         else query = query.eq('id', '00000000-0000-0000-0000-000000000000')
         const { data } = await query
-        context.orders = data || []
+        context.orders = asRecordArray(data)
       }
     }
 
@@ -142,10 +208,17 @@ export async function POST(request: NextRequest) {
         ],
       }),
     })
-    const payload = await response.json().catch(() => ({}))
-    if (!response.ok) return NextResponse.json({ ok: true, source: 'fallback', warning: payload.error?.message || 'IA externa indisponível.', answer: fallback })
+    const payload: unknown = await response.json().catch(() => null)
+    if (!response.ok) {
+      return NextResponse.json({
+        ok: true,
+        source: 'fallback',
+        warning: providerErrorMessage(payload) || 'IA externa indisponível.',
+        answer: fallback,
+      })
+    }
 
-    return NextResponse.json({ ok: true, source: 'openai', answer: payload.choices?.[0]?.message?.content || fallback })
+    return NextResponse.json({ ok: true, source: 'openai', answer: providerAnswer(payload) || fallback })
   } catch (error) {
     const bodyError = requestBodyErrorResponse(error)
     if (bodyError) return bodyError
