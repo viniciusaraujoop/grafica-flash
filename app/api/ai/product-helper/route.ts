@@ -1,6 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
+import { getCompanyAccess, getRequester, getSupabaseAdmin, isUuid } from '@/lib/company-access'
 import { createAuditLog } from '@/lib/orcaly-audit'
+
+type JsonRecord = Record<string, unknown>
+
+function asRecord(value: unknown): JsonRecord | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? value as JsonRecord
+    : null
+}
+
+function text(value: unknown) {
+  return String(value || '').trim()
+}
+
+function providerErrorMessage(payload: unknown) {
+  const root = asRecord(payload)
+  const error = asRecord(root?.error)
+  return text(error?.message)
+}
+
+function providerAnswer(payload: unknown) {
+  const root = asRecord(payload)
+  const choices = Array.isArray(root?.choices) ? root.choices : []
+  const firstChoice = asRecord(choices[0])
+  const message = asRecord(firstChoice?.message)
+  return text(message?.content)
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,16 +45,23 @@ export async function POST(request: NextRequest) {
     }
 
     const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
+    const company = asRecord(access.company)
+    const companyId = text(company?.id)
 
-    if (!access.company?.id) {
+    if (!company || !isUuid(companyId)) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     }
 
-    const body = await request.json()
-    const nome = String(body.nome || '').trim()
-    const categoria = String(body.categoria || '').trim()
-    const tipo = String(body.tipo || 'produto').trim()
-    const objetivo = String(body.objetivo || 'descricao').trim()
+    const rawBody: unknown = await request.json().catch(() => null)
+    const body = asRecord(rawBody)
+    if (!body) {
+      return NextResponse.json({ error: 'Payload inválido.' }, { status: 400 })
+    }
+
+    const nome = text(body.nome)
+    const categoria = text(body.categoria)
+    const tipo = text(body.tipo || 'produto')
+    const objetivo = text(body.objetivo || 'descricao')
 
     if (!nome) {
       return NextResponse.json({ error: 'Informe o nome do produto/serviço.' }, { status: 400 })
@@ -43,8 +76,8 @@ export async function POST(request: NextRequest) {
     ].join('\n')
 
     const prompt = [
-      `Empresa: ${access.company.nome || 'Empresa'}`,
-      `Segmento: ${access.company.segmento || access.company.modelo_negocio || access.company.site_template || 'geral'}`,
+      `Empresa: ${text(company.nome) || 'Empresa'}`,
+      `Segmento: ${text(company.segmento || company.modelo_negocio || company.site_template) || 'geral'}`,
       `Tipo: ${tipo}`,
       `Nome: ${nome}`,
       `Categoria: ${categoria || 'não informada'}`,
@@ -74,16 +107,16 @@ export async function POST(request: NextRequest) {
       }),
     })
 
-    const payload = await response.json().catch(() => ({}))
+    const payload: unknown = await response.json().catch(() => null)
 
     if (!response.ok) {
-      return NextResponse.json({ error: payload.error?.message || 'Erro na OpenAI.' }, { status: 500 })
+      return NextResponse.json({ error: providerErrorMessage(payload) || 'Erro na OpenAI.' }, { status: 500 })
     }
 
-    const answer = payload.choices?.[0]?.message?.content || ''
+    const answer = providerAnswer(payload)
 
     await createAuditLog(supabaseAdmin, {
-      company_id: access.company.id,
+      company_id: companyId,
       user_id: requester.id,
       action: 'ai.product_helper.used',
       entity: 'products',
