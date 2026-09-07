@@ -1,6 +1,14 @@
 {
   "version": "3.1",
-  "currentPhase": "security_hardening",
+  "currentPhase": "final_completion_security_and_infra",
+  "startingHead": "dd2bd1759d4152f962958b89417ee8aa6558200a",
+  "currentHead": "dd2bd1759d4152f962958b89417ee8aa6558200a",
+  "productionBaseline": {
+    "commit": "dd2bd1759d4152f962958b89417ee8aa6558200a",
+    "deploymentId": "dpl_4e1qLSSmjdpVZm8d6j7o4dDYXF3D",
+    "status": "READY",
+    "target": "production"
+  },
   "completed": [
     "baseline_git_and_production_identification",
     "package_script_audit",
@@ -8,23 +16,31 @@
     "supabase_performance_advisor_baseline",
     "migration_history_baseline",
     "platform_admin_security_definer_live_review",
+    "platform_admin_rpc_negative_test",
     "ai_gateway_401_reproduced_on_current_production",
+    "ai_gateway_retry_storm_code_hardening",
     "database_hardening_batch_1",
-    "database_hardening_batch_1_advisor_postcheck"
+    "database_hardening_batch_1_advisor_postcheck",
+    "admin_server_only_grants_hardening",
+    "recovered_candidate_preview_ready",
+    "recovered_candidate_promoted_to_production",
+    "recovered_candidate_home_login_smoke"
   ],
   "inProgress": [
-    "ai_gateway_code_hardening",
-    "platform_admin_rpc_negative_test",
-    "repository_surface_map",
+    "mfa_step_up_backend_enforcement",
+    "ai_gateway_real_authentication",
+    "dependency_security_audit",
+    "preview_automation_access",
     "rls_authorization_map",
-    "zero_policy_table_classification"
+    "zero_policy_table_classification",
+    "final_completion_master_script"
   ],
   "blocked": [
-    "ai_gateway_provider_authentication"
+    "ai_gateway_provider_authentication_until_runtime_credential_is_verified"
   ],
   "externalLimitations": [
-    "Leaked Password Protection is disabled in Supabase Auth and requires control-plane configuration validation before it can be enabled safely.",
-    "The connected Vercel surface does not expose environment-variable mutation. Current production was proven to return AI Gateway 401 and requires a valid AI_GATEWAY_API_KEY or working project OIDC configuration through the Vercel control plane. No credential will be invented or hardcoded."
+    "Leaked Password Protection is currently reported disabled by Supabase Auth and must be changed only through an official supported control-plane path.",
+    "Vercel environment/automation-secret mutation is only considered executable if an official connected action is available; secrets will never be invented, printed, logged, or committed."
   ],
   "bugsFound": [
     "ORC31-001",
@@ -33,24 +49,36 @@
     "ORC31-004",
     "ORC31-005",
     "ORC31-006",
-    "ORC31-007"
+    "ORC31-007",
+    "ORC31-008"
   ],
   "migrations": [
     {
       "name": "orcaly_3_1_db_hardening_batch_1",
       "file": "supabase/migrations/20260907140500_orcaly_3_1_db_hardening_batch_1.sql",
       "status": "APPLIED_AND_ADVISOR_VERIFIED"
+    },
+    {
+      "name": "orcaly_3_1_admin_server_only_grants",
+      "file": "supabase/migrations/20260907142000_orcaly_3_1_admin_server_only_grants.sql",
+      "status": "APPLIED_AND_VERIFIED"
     }
   ],
   "deployments": [
     {
-      "kind": "production_baseline",
-      "deploymentId": "dpl_Bj4QUZDXASduCK3PyNN3KqqDPAHk",
-      "commit": "86267a32131209050c4c4d6788574602f86d5eb4",
+      "kind": "production_baseline_and_current",
+      "deploymentId": "dpl_4e1qLSSmjdpVZm8d6j7o4dDYXF3D",
+      "commit": "dd2bd1759d4152f962958b89417ee8aa6558200a",
+      "status": "READY"
+    },
+    {
+      "kind": "preview_baseline",
+      "deploymentId": "dpl_BL12rRHqocnznoPTjgQ4JQm5hBQz",
+      "commit": "dd2bd1759d4152f962958b89417ee8aa6558200a",
       "status": "READY"
     }
   ],
   "qaScores": {},
-  "lastVerifiedCommit": "5ab754d30741831382acf866890d1d4ef23171a9",
+  "lastVerifiedCommit": "dd2bd1759d4152f962958b89417ee8aa6558200a",
   "finalStatus": "IN_PROGRESS"
 }
