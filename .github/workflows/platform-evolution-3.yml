@@ -43,6 +43,9 @@ jobs:
       - name: Security static checks
         run: npm run security:check
 
+      - name: TypeScript recovery check
+        run: npx tsc --noEmit --pretty false
+
       - name: Production build
         env:
           # Publishable-only compile fixture. Runtime privileged access is never exercised in this step.
