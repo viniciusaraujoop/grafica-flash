@@ -23,6 +23,11 @@ type AssistantResult = {
   action: ChatAction | null
 }
 
+type GatewayCredential = {
+  kind: 'api-key' | 'oidc'
+  value: string
+}
+
 const PRIMARY_MODEL = process.env.ORCALY_HOME_AI_MODEL || 'openai/gpt-5.6-luna'
 const FALLBACK_MODEL = process.env.ORCALY_HOME_AI_FALLBACK_MODEL || 'openai/gpt-5.4'
 const AI_AUTH_CIRCUIT_COOLDOWN_MS = 5 * 60 * 1000
@@ -293,7 +298,23 @@ function openAiAuthCircuit() {
   aiAuthCircuitOpenUntil = Date.now() + AI_AUTH_CIRCUIT_COOLDOWN_MS
 }
 
-async function reportProviderFailure(error: unknown, model: string, operation: string) {
+function gatewayCredentials(): GatewayCredential[] {
+  const candidates: GatewayCredential[] = []
+  const apiKey = String(process.env.AI_GATEWAY_API_KEY || '').trim()
+  const oidc = String(process.env.VERCEL_OIDC_TOKEN || '').trim()
+
+  if (apiKey) candidates.push({ kind: 'api-key', value: apiKey })
+  if (oidc && oidc !== apiKey) candidates.push({ kind: 'oidc', value: oidc })
+
+  return candidates
+}
+
+async function reportProviderFailure(
+  error: unknown,
+  model: string,
+  operation: string,
+  credentialKind?: GatewayCredential['kind'],
+) {
   await reportApplicationError({
     error,
     route: '/api/public/home-chat',
@@ -303,6 +324,7 @@ async function reportProviderFailure(error: unknown, model: string, operation: s
     metadata: {
       model,
       provider: 'vercel-ai-gateway',
+      credentialKind: credentialKind || 'none',
       circuitOpen: isAiAuthCircuitOpen(),
     },
   })
@@ -312,20 +334,12 @@ async function requestModel(
   model: string,
   question: string,
   messages: PublicMessage[],
+  credential: GatewayCredential,
 ) {
-  const apiKey = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN
-
-  if (!apiKey) {
-    throw new AiGatewayError('AI Gateway credentials are not configured.', {
-      model,
-      kind: 'configuration',
-    })
-  }
-
   const response = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions', {
     method: 'POST',
     headers: {
-      authorization: `Bearer ${apiKey}`,
+      authorization: `Bearer ${credential.value}`,
       'content-type': 'application/json',
     },
     body: JSON.stringify({
@@ -366,17 +380,12 @@ async function requestModel(
 
   try {
     const normalized = normalizeResult(JSON.parse(rawContent))
-    if (!normalized) {
-      throw new Error('Assistant response did not match the public contract.')
-    }
+    if (!normalized) throw new Error('Assistant response did not match the public contract.')
     return normalized
   } catch (error) {
     throw new AiGatewayError(
       error instanceof Error ? error.message : 'Assistant response could not be parsed.',
-      {
-        model,
-        kind: 'response',
-      },
+      { model, kind: 'response' },
     )
   }
 }
@@ -384,24 +393,51 @@ async function requestModel(
 async function generateAnswer(question: string, messages: PublicMessage[]) {
   if (isAiAuthCircuitOpen()) return null
 
+  const credentials = gatewayCredentials()
+  if (!credentials.length) {
+    const error = new AiGatewayError('AI Gateway credentials are not configured.', {
+      model: PRIMARY_MODEL,
+      kind: 'configuration',
+    })
+    openAiAuthCircuit()
+    await reportProviderFailure(error, PRIMARY_MODEL, 'public_ai_authentication')
+    return null
+  }
+
   const models = Array.from(new Set([PRIMARY_MODEL, FALLBACK_MODEL]))
 
-  for (const [index, model] of models.entries()) {
-    try {
-      const result = await requestModel(model, question, messages)
-      return { ...result, model }
-    } catch (error) {
-      if (isGatewayAuthFailure(error)) {
-        openAiAuthCircuit()
-        await reportProviderFailure(error, model, 'public_ai_authentication')
+  for (const [modelIndex, model] of models.entries()) {
+    let allCredentialsRejected = true
+
+    for (const credential of credentials) {
+      try {
+        const result = await requestModel(model, question, messages, credential)
+        return { ...result, model }
+      } catch (error) {
+        if (isGatewayAuthFailure(error)) {
+          await reportProviderFailure(
+            error,
+            model,
+            'public_ai_authentication',
+            credential.kind,
+          )
+          continue
+        }
+
+        allCredentialsRejected = false
+        await reportProviderFailure(
+          error,
+          model,
+          modelIndex === 0 ? 'public_ai_primary_model' : 'public_ai_fallback_model',
+          credential.kind,
+        )
         break
       }
+    }
 
-      await reportProviderFailure(
-        error,
-        model,
-        index === 0 ? 'public_ai_primary_model' : 'public_ai_fallback_model',
-      )
+    if (allCredentialsRejected) {
+      openAiAuthCircuit()
+      return null
     }
   }
 
