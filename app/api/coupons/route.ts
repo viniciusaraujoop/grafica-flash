@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
+import { getCompanyAccess, getRequester, getSupabaseAdmin, isUuid } from '@/lib/company-access'
 
-function normalizeCode(value: string) {
+type JsonRecord = Record<string, unknown>
+
+function asRecord(value: unknown): JsonRecord | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? value as JsonRecord
+    : null
+}
+
+function normalizeCode(value: unknown) {
   return String(value || '')
     .trim()
     .toUpperCase()
@@ -35,12 +43,13 @@ async function getAccess(request: NextRequest) {
   }
 
   const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
+  const companyId = String(access.company?.id || '').trim()
 
-  if (!access.company?.id) {
+  if (!isUuid(companyId)) {
     return { supabaseAdmin, error: NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 }) }
   }
 
-  return { supabaseAdmin, requester, access }
+  return { supabaseAdmin, requester, access, companyId }
 }
 
 export async function GET(request: NextRequest) {
@@ -51,7 +60,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await result.supabaseAdmin
       .from('marketplace_coupons')
       .select('*')
-      .eq('company_id', result.access!.company.id)
+      .eq('company_id', result.companyId)
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -68,7 +77,10 @@ export async function POST(request: NextRequest) {
     const result = await getAccess(request)
     if ('error' in result && result.error) return result.error
 
-    const body = await request.json()
+    const rawBody: unknown = await request.json().catch(() => null)
+    const body = asRecord(rawBody)
+    if (!body) return NextResponse.json({ error: 'Payload inválido.' }, { status: 400 })
+
     const codigo = normalizeCode(body.codigo || body.code || '')
 
     if (!codigo || codigo.length < 3) {
@@ -78,7 +90,7 @@ export async function POST(request: NextRequest) {
     const tipoEntrada = String(body.tipo || body.coupon_type || '').toLowerCase()
     const cupomFreteGratis = ['frete_gratis', 'free_delivery', 'frete-gratis'].includes(tipoEntrada)
     const tipo = cupomFreteGratis ? 'fixo' : body.tipo === 'fixo' ? 'fixo' : 'percentual'
-    const coupon_type = cupomFreteGratis ? 'free_delivery' : tipo === 'fixo' ? 'fixed' : 'percentage'
+    const couponType = cupomFreteGratis ? 'free_delivery' : tipo === 'fixo' ? 'fixed' : 'percentage'
     const valor = cupomFreteGratis ? 0 : toNumber(body.valor, 0)
 
     if (!cupomFreteGratis && valor <= 0) {
@@ -90,12 +102,12 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = {
-      company_id: result.access!.company.id,
+      company_id: result.companyId,
       codigo,
       codigo_normalizado: codigo,
       descricao: body.descricao || null,
       tipo,
-      coupon_type,
+      coupon_type: couponType,
       free_delivery: cupomFreteGratis,
       valor,
       valor_minimo_pedido: toNumber(body.valor_minimo_pedido, 0),
