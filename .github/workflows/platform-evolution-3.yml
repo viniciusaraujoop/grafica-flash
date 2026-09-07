@@ -43,6 +43,9 @@ jobs:
       - name: Security static checks
         run: npm run security:check
 
+      - name: Dependency security gate
+        run: npm run security:dependencies
+
       - name: TypeScript recovery check
         run: npx tsc --noEmit --pretty false
 
@@ -56,6 +59,3 @@ jobs:
 
       - name: Diff whitespace validation
         run: git diff --check
-
-      - name: Dependency audit
-        run: npm audit --omit=dev --audit-level=high
