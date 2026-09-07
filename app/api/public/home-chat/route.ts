@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { reportApplicationError } from '@/lib/observability/application-errors'
 import { enforceRateLimit } from '@/lib/security/rate-limit'
 
-// ORCALY_HOME_AI_CHAT_API_V2
+// ORCALY_HOME_AI_CHAT_API_V3
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 type PublicMessage = {
   role: 'assistant' | 'user'
@@ -19,13 +23,32 @@ type AssistantResult = {
   action: ChatAction | null
 }
 
-const PRIMARY_MODEL =
-  process.env.ORCALY_HOME_AI_MODEL ||
-  'openai/gpt-5.6-luna'
+const PRIMARY_MODEL = process.env.ORCALY_HOME_AI_MODEL || 'openai/gpt-5.6-luna'
+const FALLBACK_MODEL = process.env.ORCALY_HOME_AI_FALLBACK_MODEL || 'openai/gpt-5.4'
+const AI_AUTH_CIRCUIT_COOLDOWN_MS = 5 * 60 * 1000
 
-const FALLBACK_MODEL =
-  process.env.ORCALY_HOME_AI_FALLBACK_MODEL ||
-  'openai/gpt-5.4'
+let aiAuthCircuitOpenUntil = 0
+
+class AiGatewayError extends Error {
+  status: number
+  model: string
+  kind: 'auth' | 'provider' | 'configuration' | 'response'
+
+  constructor(
+    message: string,
+    options: {
+      status?: number
+      model: string
+      kind: AiGatewayError['kind']
+    },
+  ) {
+    super(message)
+    this.name = 'AiGatewayError'
+    this.status = options.status || 0
+    this.model = options.model
+    this.kind = options.kind
+  }
+}
 
 const ALLOWED_ACTIONS = new Map<string, string>([
   ['/cadastro', 'Criar minha conta'],
@@ -94,25 +117,17 @@ const RESPONSE_SCHEMA = {
     schema: {
       type: 'object',
       properties: {
-        answer: {
-          type: 'string',
-        },
+        answer: { type: 'string' },
         suggestions: {
           type: 'array',
-          items: {
-            type: 'string',
-          },
+          items: { type: 'string' },
           maxItems: 3,
         },
         action: {
           type: 'object',
           properties: {
-            label: {
-              type: 'string',
-            },
-            href: {
-              type: 'string',
-            },
+            label: { type: 'string' },
+            href: { type: 'string' },
           },
           required: ['label', 'href'],
           additionalProperties: false,
@@ -139,51 +154,34 @@ function normalizeMessages(value: unknown): PublicMessage[] {
     .slice(-10)
     .flatMap((item): PublicMessage[] => {
       if (!item || typeof item !== 'object') return []
-
       const record = item as Record<string, unknown>
-      const role: PublicMessage['role'] =
-        record.role === 'user' ? 'user' : 'assistant'
+      const role: PublicMessage['role'] = record.role === 'user' ? 'user' : 'assistant'
       const content = cleanText(record.content, 700)
-
       return content ? [{ role, content }] : []
     })
 }
 
 function safeSuggestions(value: unknown) {
   if (!Array.isArray(value)) return []
-
-  return Array.from(
-    new Set(
-      value
-        .map((item) => cleanText(item, 80))
-        .filter(Boolean),
-    ),
-  ).slice(0, 3)
+  return Array.from(new Set(value.map((item) => cleanText(item, 80)).filter(Boolean))).slice(0, 3)
 }
 
 function safeAction(value: unknown): ChatAction | null {
   if (!value || typeof value !== 'object') return null
-
   const record = value as Record<string, unknown>
   const href = cleanText(record.href, 100)
-
   if (!ALLOWED_ACTIONS.has(href)) return null
 
   return {
     href,
-    label:
-      cleanText(record.label, 45) ||
-      ALLOWED_ACTIONS.get(href) ||
-      'Continuar',
+    label: cleanText(record.label, 45) || ALLOWED_ACTIONS.get(href) || 'Continuar',
   }
 }
 
 function normalizeResult(value: unknown): AssistantResult | null {
   if (!value || typeof value !== 'object') return null
-
   const record = value as Record<string, unknown>
   const answer = cleanText(record.answer, 1600)
-
   if (!answer) return null
 
   return {
@@ -193,215 +191,121 @@ function normalizeResult(value: unknown): AssistantResult | null {
   }
 }
 
+function includesAny(text: string, terms: string[]) {
+  return terms.some((term) => text.includes(term))
+}
+
 function guidedAnswer(question: string): AssistantResult {
   const text = question
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
 
-  if (
-    text.includes('plano ideal') ||
-    text.includes('qual plano') ||
-    text.includes('recomenda')
-  ) {
+  if (includesAny(text, ['plano ideal', 'qual plano', 'recomenda'])) {
     return {
-      answer:
-        'Para indicar o plano certo, preciso entender sua operação. Sua empresa está começando a organizar pedidos, já trabalha com propostas e acompanhamento, ou precisa de automações para um volume maior?',
-      suggestions: [
-        'Estou começando agora',
-        'Já vendo e preciso organizar',
-        'Preciso de automações',
-      ],
-      action: {
-        label: 'Comparar os planos',
-        href: '#planos',
-      },
+      answer: 'Para indicar o plano certo, preciso entender sua operação. Sua empresa está começando a organizar pedidos, já trabalha com propostas e acompanhamento, ou precisa de automações para um volume maior?',
+      suggestions: ['Estou começando agora', 'Já vendo e preciso organizar', 'Preciso de automações'],
+      action: { label: 'Comparar os planos', href: '#planos' },
     }
   }
 
-  if (
-    text.includes('comecando') ||
-    text.includes('começando') ||
-    text.includes('negocio pequeno')
-  ) {
+  if (includesAny(text, ['comecando', 'negocio pequeno'])) {
     return {
-      answer:
-        'O Plano Básico, por R$ 49,90/mês, tende a ser o melhor ponto de partida. Ele ajuda a criar sua página pública, organizar pedidos e clientes e manter um catálogo essencial sem começar com uma estrutura maior do que você precisa.',
-      suggestions: [
-        'O que vem no Básico?',
-        'Posso mudar de plano depois?',
-      ],
-      action: {
-        label: 'Começar com o Básico',
-        href: '/cadastro',
-      },
+      answer: 'O Plano Básico, por R$ 49,90/mês, tende a ser o melhor ponto de partida. Ele ajuda a criar sua página pública, organizar pedidos e clientes e manter um catálogo essencial sem começar com uma estrutura maior do que você precisa.',
+      suggestions: ['O que vem no Básico?', 'Posso mudar de plano depois?'],
+      action: { label: 'Começar com o Básico', href: '/cadastro' },
     }
   }
 
-  if (
-    text.includes('proposta') ||
-    text.includes('follow-up') ||
-    text.includes('relatorio') ||
-    text.includes('organizar vendas')
-  ) {
+  if (includesAny(text, ['proposta', 'follow-up', 'relatorio', 'organizar vendas'])) {
     return {
-      answer:
-        'O Plano Intermediário, por R$ 99,90/mês, é a opção mais equilibrada para quem já vende e precisa organizar catálogo, propostas, acompanhamento e relatórios operacionais. Ele acrescenta estrutura comercial sem exigir o pacote avançado do Premium.',
-      suggestions: [
-        'Comparar com o Premium',
-        'Quais segmentos atende?',
-      ],
-      action: {
-        label: 'Ver o Intermediário',
-        href: '#planos',
-      },
+      answer: 'O Plano Intermediário, por R$ 99,90/mês, é a opção mais equilibrada para quem já vende e precisa organizar catálogo, propostas, acompanhamento e relatórios operacionais. Ele acrescenta estrutura comercial sem exigir o pacote avançado do Premium.',
+      suggestions: ['Comparar com o Premium', 'Quais segmentos atende?'],
+      action: { label: 'Ver o Intermediário', href: '#planos' },
     }
   }
 
-  if (
-    text.includes('automacao') ||
-    text.includes('automação') ||
-    text.includes('volume') ||
-    text.includes('recuperacao') ||
-    text.includes('recuperação')
-  ) {
+  if (includesAny(text, ['automacao', 'volume', 'recuperacao'])) {
     return {
-      answer:
-        'O Plano Premium, por R$ 149,90/mês, é indicado para operações com maior volume e necessidade de automações, recuperação de oportunidades e recursos avançados. Ele inclui tudo do Intermediário e prioridade no suporte.',
-      suggestions: [
-        'O que o Premium acrescenta?',
-        'Como faço o cadastro?',
-      ],
-      action: {
-        label: 'Conhecer o Premium',
-        href: '#planos',
-      },
+      answer: 'O Plano Premium, por R$ 149,90/mês, é indicado para operações com maior volume e necessidade de automações, recuperação de oportunidades e recursos avançados. Ele inclui tudo do Intermediário e prioridade no suporte.',
+      suggestions: ['O que o Premium acrescenta?', 'Como faço o cadastro?'],
+      action: { label: 'Conhecer o Premium', href: '#planos' },
     }
   }
 
-  if (
-    text.includes('preco') ||
-    text.includes('preço') ||
-    text.includes('valor') ||
-    text.includes('comparar') ||
-    text.includes('planos')
-  ) {
+  if (includesAny(text, ['preco', 'valor', 'comparar', 'planos'])) {
     return {
-      answer:
-        'Os planos são: Básico por R$ 49,90/mês, Intermediário por R$ 99,90/mês e Premium por R$ 149,90/mês. O Básico atende quem está começando, o Intermediário organiza uma operação comercial em crescimento e o Premium acrescenta automações e recursos avançados.',
-      suggestions: [
-        'Descobrir meu plano ideal',
-        'O que muda entre eles?',
-      ],
-      action: {
-        label: 'Comparar os planos',
-        href: '#planos',
-      },
+      answer: 'Os planos são: Básico por R$ 49,90/mês, Intermediário por R$ 99,90/mês e Premium por R$ 149,90/mês. O Básico atende quem está começando, o Intermediário organiza uma operação comercial em crescimento e o Premium acrescenta automações e recursos avançados.',
+      suggestions: ['Descobrir meu plano ideal', 'O que muda entre eles?'],
+      action: { label: 'Comparar os planos', href: '#planos' },
     }
   }
 
-  if (
-    text.includes('segmento') ||
-    text.includes('ramo') ||
-    text.includes('food') ||
-    text.includes('grafica') ||
-    text.includes('gráfica') ||
-    text.includes('beleza') ||
-    text.includes('assistencia') ||
-    text.includes('assistência') ||
-    text.includes('loja')
-  ) {
+  if (includesAny(text, ['segmento', 'ramo', 'food', 'grafica', 'beleza', 'assistencia', 'loja'])) {
     return {
-      answer:
-        'O Orçaly atende Food, Gráficas, Beauty/Estética, Assistências Técnicas, Lojas e empresas de Serviços. A estrutura se adapta ao segmento com cardápio, catálogo, propostas, upload de arte, agendamentos ou acompanhamento do atendimento.',
-      suggestions: [
-        'Como funciona para Food?',
-        'Como funciona para serviços?',
-      ],
-      action: {
-        label: 'Ver todos os segmentos',
-        href: '#segmentos',
-      },
+      answer: 'O Orçaly atende Food, Gráficas, Beauty/Estética, Assistências Técnicas, Lojas e empresas de Serviços. A estrutura se adapta ao segmento com cardápio, catálogo, propostas, upload de arte, agendamentos ou acompanhamento do atendimento.',
+      suggestions: ['Como funciona para Food?', 'Como funciona para serviços?'],
+      action: { label: 'Ver todos os segmentos', href: '#segmentos' },
     }
   }
 
-  if (
-    text.includes('site') ||
-    text.includes('catalogo') ||
-    text.includes('catálogo') ||
-    text.includes('cardapio') ||
-    text.includes('cardápio') ||
-    text.includes('pagina') ||
-    text.includes('página')
-  ) {
+  if (includesAny(text, ['site', 'catalogo', 'cardapio', 'pagina'])) {
     return {
-      answer:
-        'Cada empresa pode ter uma página própria com identidade visual, catálogo ou cardápio, fotos, informações e botões de contato. O objetivo é transformar seu link em uma vitrine organizada para receber pedidos e apresentar melhor o negócio.',
-      suggestions: [
-        'Quais planos têm página própria?',
-        'Quais segmentos são atendidos?',
-      ],
-      action: {
-        label: 'Criar minha página',
-        href: '/cadastro',
-      },
+      answer: 'Cada empresa pode ter uma página própria com identidade visual, catálogo ou cardápio, fotos, informações e botões de contato. O objetivo é transformar seu link em uma vitrine organizada para receber pedidos e apresentar melhor o negócio.',
+      suggestions: ['Quais planos têm página própria?', 'Quais segmentos são atendidos?'],
+      action: { label: 'Criar minha página', href: '/cadastro' },
     }
   }
 
-  if (
-    text.includes('contato') ||
-    text.includes('suporte') ||
-    text.includes('falar') ||
-    text.includes('email') ||
-    text.includes('e-mail')
-  ) {
+  if (includesAny(text, ['contato', 'suporte', 'falar', 'email', 'e-mail'])) {
     return {
-      answer:
-        'Você pode falar diretamente com a equipe do Orçaly pelo e-mail orcalybr@gmail.com. Para começar sem esperar atendimento, também é possível criar sua conta pela página de cadastro.',
-      suggestions: [
-        'Como faço o cadastro?',
-        'Comparar os planos',
-      ],
-      action: {
-        label: 'Falar com a equipe',
-        href: 'mailto:orcalybr@gmail.com',
-      },
+      answer: 'Você pode falar diretamente com a equipe do Orçaly pelo e-mail orcalybr@gmail.com. Para começar sem esperar atendimento, também é possível criar sua conta pela página de cadastro.',
+      suggestions: ['Como faço o cadastro?', 'Comparar os planos'],
+      action: { label: 'Falar com a equipe', href: 'mailto:orcalybr@gmail.com' },
     }
   }
 
-  if (
-    text.includes('o que e') ||
-    text.includes('o que é') ||
-    text.includes('como funciona') ||
-    text.includes('serve')
-  ) {
+  if (includesAny(text, ['o que e', 'como funciona', 'serve'])) {
     return {
-      answer:
-        'O Orçaly reúne presença digital e organização comercial. Ele ajuda sua empresa a apresentar produtos ou serviços, receber pedidos e orçamentos, organizar clientes e acompanhar a operação em um único painel.',
-      suggestions: [
-        'Descobrir meu plano ideal',
-        'Quais segmentos são atendidos?',
-      ],
-      action: {
-        label: 'Conhecer os planos',
-        href: '#planos',
-      },
+      answer: 'O Orçaly reúne presença digital e organização comercial. Ele ajuda sua empresa a apresentar produtos ou serviços, receber pedidos e orçamentos, organizar clientes e acompanhar a operação em um único painel.',
+      suggestions: ['Descobrir meu plano ideal', 'Quais segmentos são atendidos?'],
+      action: { label: 'Conhecer os planos', href: '#planos' },
     }
   }
 
   return {
-    answer:
-      'Posso ajudar com planos, preços, segmentos, página própria, catálogo, pedidos e cadastro no Orçaly. Para uma dúvida específica que não esteja aqui, a equipe atende pelo e-mail orcalybr@gmail.com.',
-    suggestions: [
-      'Descobrir meu plano ideal',
-      'Comparar os três planos',
-      'Quais segmentos são atendidos?',
-    ],
-    action: {
-      label: 'Ver os planos',
-      href: '#planos',
-    },
+    answer: 'Posso ajudar com planos, preços, segmentos, página própria, catálogo, pedidos e cadastro no Orçaly. Para uma dúvida específica que não esteja aqui, a equipe atende pelo e-mail orcalybr@gmail.com.',
+    suggestions: ['Descobrir meu plano ideal', 'Comparar os três planos', 'Quais segmentos são atendidos?'],
+    action: { label: 'Ver os planos', href: '#planos' },
   }
+}
+
+function isGatewayAuthFailure(error: unknown): error is AiGatewayError {
+  return error instanceof AiGatewayError &&
+    (error.kind === 'configuration' || error.status === 401 || error.status === 403)
+}
+
+function isAiAuthCircuitOpen() {
+  return aiAuthCircuitOpenUntil > Date.now()
+}
+
+function openAiAuthCircuit() {
+  aiAuthCircuitOpenUntil = Date.now() + AI_AUTH_CIRCUIT_COOLDOWN_MS
+}
+
+async function reportProviderFailure(error: unknown, model: string, operation: string) {
+  await reportApplicationError({
+    error,
+    route: '/api/public/home-chat',
+    operation,
+    httpStatus: error instanceof AiGatewayError ? error.status || null : null,
+    errorCode: error instanceof AiGatewayError ? `AI_GATEWAY_${error.kind.toUpperCase()}` : 'AI_GATEWAY_UNKNOWN',
+    metadata: {
+      model,
+      provider: 'vercel-ai-gateway',
+      circuitOpen: isAiAuthCircuitOpen(),
+    },
+  })
 }
 
 async function requestModel(
@@ -409,104 +313,96 @@ async function requestModel(
   question: string,
   messages: PublicMessage[],
 ) {
-  const apiKey =
-    process.env.AI_GATEWAY_API_KEY ||
-    process.env.VERCEL_OIDC_TOKEN
+  const apiKey = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN
 
-  if (!apiKey) return null
+  if (!apiKey) {
+    throw new AiGatewayError('AI Gateway credentials are not configured.', {
+      model,
+      kind: 'configuration',
+    })
+  }
 
-  const response = await fetch(
-    'https://ai-gateway.vercel.sh/v1/chat/completions',
-    {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${apiKey}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          {
-            role: 'system',
-            content: SYSTEM_PROMPT,
-          },
-          ...messages,
-          {
-            role: 'user',
-            content: question,
-          },
-        ],
-        response_format: RESPONSE_SCHEMA,
-        max_tokens: 500,
-        stream: false,
-      }),
-      signal: AbortSignal.timeout(14000),
+  const response = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      'content-type': 'application/json',
     },
-  )
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        ...messages,
+        { role: 'user', content: question },
+      ],
+      response_format: RESPONSE_SCHEMA,
+      max_tokens: 500,
+      stream: false,
+    }),
+    signal: AbortSignal.timeout(14000),
+  })
 
   if (!response.ok) {
-    const errorBody = await response.text().catch(() => '')
-
-    throw new Error(
-      `AI Gateway ${response.status}: ${errorBody.slice(0, 250)}`,
+    const errorBody = cleanText(await response.text().catch(() => ''), 250)
+    throw new AiGatewayError(
+      `AI Gateway ${response.status}${errorBody ? `: ${errorBody}` : ''}`,
+      {
+        status: response.status,
+        model,
+        kind: response.status === 401 || response.status === 403 ? 'auth' : 'provider',
+      },
     )
   }
 
   const payload = await response.json()
-  const rawContent =
-    payload?.choices?.[0]?.message?.content
+  const rawContent = payload?.choices?.[0]?.message?.content
 
   if (typeof rawContent !== 'string' || !rawContent.trim()) {
-    throw new Error('A IA retornou conteúdo vazio.')
+    throw new AiGatewayError('AI Gateway returned empty content.', {
+      model,
+      kind: 'response',
+    })
   }
 
-  return normalizeResult(JSON.parse(rawContent))
+  try {
+    const normalized = normalizeResult(JSON.parse(rawContent))
+    if (!normalized) {
+      throw new Error('Assistant response did not match the public contract.')
+    }
+    return normalized
+  } catch (error) {
+    throw new AiGatewayError(
+      error instanceof Error ? error.message : 'Assistant response could not be parsed.',
+      {
+        model,
+        kind: 'response',
+      },
+    )
+  }
 }
 
-async function generateAnswer(
-  question: string,
-  messages: PublicMessage[],
-) {
-  const models = Array.from(
-    new Set([PRIMARY_MODEL, FALLBACK_MODEL]),
-  )
+async function generateAnswer(question: string, messages: PublicMessage[]) {
+  if (isAiAuthCircuitOpen()) return null
 
-  let lastError: unknown = null
+  const models = Array.from(new Set([PRIMARY_MODEL, FALLBACK_MODEL]))
 
-  for (const model of models) {
+  for (const [index, model] of models.entries()) {
     try {
-      const result = await requestModel(
-        model,
-        question,
-        messages,
-      )
-
-      if (result) {
-        return {
-          ...result,
-          model,
-        }
-      }
+      const result = await requestModel(model, question, messages)
+      return { ...result, model }
     } catch (error) {
-      lastError = error
+      if (isGatewayAuthFailure(error)) {
+        openAiAuthCircuit()
+        await reportProviderFailure(error, model, 'public_ai_authentication')
+        break
+      }
 
-      console.error(
-        'home_ai_chat_model_error',
+      await reportProviderFailure(
+        error,
         model,
-        error instanceof Error
-          ? error.message
-          : error,
+        index === 0 ? 'public_ai_primary_model' : 'public_ai_fallback_model',
       )
     }
-  }
-
-  if (lastError) {
-    console.error(
-      'home_ai_chat_all_models_failed',
-      lastError instanceof Error
-        ? lastError.message
-        : lastError,
-    )
   }
 
   return null
@@ -514,7 +410,7 @@ async function generateAnswer(
 
 export async function POST(request: NextRequest) {
   const limited = await enforceRateLimit(request, {
-    scope: 'public-home-ai-chat-v2',
+    scope: 'public-home-ai-chat-v3',
     limit: 24,
     windowSeconds: 600,
     failOpen: true,
@@ -526,10 +422,7 @@ export async function POST(request: NextRequest) {
     const raw = await request.text()
 
     if (raw.length > 20_000) {
-      return NextResponse.json(
-        { error: 'Mensagem muito grande.' },
-        { status: 413 },
-      )
+      return NextResponse.json({ error: 'Mensagem muito grande.' }, { status: 413 })
     }
 
     const body = JSON.parse(raw || '{}')
@@ -537,16 +430,10 @@ export async function POST(request: NextRequest) {
     const messages = normalizeMessages(body.messages)
 
     if (question.length < 2) {
-      return NextResponse.json(
-        { error: 'Digite uma pergunta.' },
-        { status: 400 },
-      )
+      return NextResponse.json({ error: 'Digite uma pergunta.' }, { status: 400 })
     }
 
-    const aiResult = await generateAnswer(
-      question,
-      messages,
-    )
+    const aiResult = await generateAnswer(question, messages)
 
     if (aiResult) {
       return NextResponse.json({
@@ -557,10 +444,8 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const fallback = guidedAnswer(question)
-
     return NextResponse.json({
-      ...fallback,
+      ...guidedAnswer(question),
       source: 'guided',
     })
   } catch {
