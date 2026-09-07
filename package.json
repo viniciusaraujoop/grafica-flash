@@ -8,11 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --check scripts/e2e-auth-first-login.mjs && node scripts/verify-platform-evolution-3-foundation.mjs && node scripts/verify-auth-first-login-race.mjs && node scripts/verify-critical-hotfix.mjs && node scripts/verify-partner-portal-v2.mjs && node scripts/verify-admin-control-center-v2.mjs && node scripts/verify-storefront-marketplace-v2.mjs && node scripts/verify-main-site-v2.mjs",
+    "test": "node --check scripts/e2e-auth-first-login.mjs && node scripts/verify-platform-evolution-3-foundation.mjs && node scripts/verify-auth-first-login-race.mjs && node scripts/verify-critical-hotfix.mjs && node scripts/verify-partner-portal-v2.mjs && node scripts/verify-admin-control-center-v2.mjs && node scripts/verify-storefront-marketplace-v2.mjs && node scripts/verify-main-site-v2.mjs && node scripts/verify-orcaly-3-1-access-control.mjs",
     "e2e:auth": "node scripts/e2e-auth-first-login.mjs",
     "security:check": "node scripts/security-check.mjs",
     "verify:platform": "node scripts/verify-platform-evolution-3-foundation.mjs",
     "verify:auth": "node scripts/verify-auth-first-login-race.mjs",
+    "verify:orcaly31": "node scripts/verify-orcaly-3-1-access-control.mjs",
     "verify:payments": "node scripts/verify-payment-flow-boundaries.mjs",
     "verify:payment-credentials": "node scripts/auditar-isolamento-pagamentos.cjs"
   },
