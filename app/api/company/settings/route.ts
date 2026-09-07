@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { normalizeBusinessType } from '@/lib/business-types'
 import { getCompanyPublicUrl } from '@/lib/company-url'
+import { requireMfaStepUpForRequest } from '@/lib/security/mfa'
+import { getSensitiveSettingsFields } from '@/lib/security/privileged-actions'
+import { recordPrivilegedAudit } from '@/lib/security/privileged-audit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -194,6 +197,16 @@ function publicCompany(company: any) {
   }
 }
 
+function mfaFailurePayload(decision: Awaited<ReturnType<typeof requireMfaStepUpForRequest>>) {
+  return {
+    error: decision.error,
+    code: decision.reason === 'mfa_enrollment_required'
+      ? 'MFA_ENROLLMENT_REQUIRED'
+      : 'MFA_STEP_UP_REQUIRED',
+    reason: decision.reason,
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const requester = await getRequester(request)
@@ -279,6 +292,28 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
+    const sensitiveFields = getSensitiveSettingsFields(body)
+
+    if (sensitiveFields.length > 0) {
+      const mfa = await requireMfaStepUpForRequest(request, 'pix.update')
+      if (!mfa.allowed) {
+        await recordPrivilegedAudit(supabaseAdmin, request, {
+          companyId: company.id,
+          userId: requester.id,
+          action: 'company.settings.sensitive_update',
+          entity: 'company_settings',
+          entityId: company.id,
+          result: 'denied',
+          details: {
+            fields: sensitiveFields,
+            reason: mfa.reason,
+            assurance_level: mfa.state.currentLevel,
+          },
+        })
+        return NextResponse.json(mfaFailurePayload(mfa), { status: mfa.status })
+      }
+    }
+
     const update: Record<string, any> = {}
 
     for (const field of allowedFields) {
@@ -350,6 +385,18 @@ export async function PATCH(request: NextRequest) {
       .single()
 
     if (error) throw error
+
+    if (sensitiveFields.length > 0) {
+      await recordPrivilegedAudit(supabaseAdmin, request, {
+        companyId: company.id,
+        userId: requester.id,
+        action: 'company.settings.sensitive_update',
+        entity: 'company_settings',
+        entityId: company.id,
+        result: 'success',
+        details: { fields: sensitiveFields, assurance_level: 'aal2' },
+      })
+    }
 
     return NextResponse.json({
       ok: true,

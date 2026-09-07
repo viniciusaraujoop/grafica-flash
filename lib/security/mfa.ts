@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import {
   evaluateMfaStepUp,
   type MfaAssuranceLevel,
@@ -16,8 +16,46 @@ export type MfaSecurityState = {
   }>
 }
 
+type HeaderCarrier = {
+  headers: {
+    get(name: string): string | null
+  }
+}
+
 function normalizeLevel(value: unknown): MfaAssuranceLevel {
   return value === 'aal2' ? 'aal2' : value === 'aal1' ? 'aal1' : null
+}
+
+export function getRequestAccessToken(request: HeaderCarrier) {
+  const authorization = String(request.headers.get('authorization') || '').trim()
+  const fallbackSession = String(request.headers.get('x-orcaly-session') || '').trim()
+  return (authorization || fallbackSession).replace(/^Bearer\s+/i, '').trim()
+}
+
+export function createMfaUserClient(request: HeaderCarrier) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const token = getRequestAccessToken(request)
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Configuração pública do Supabase ausente para validação MFA.')
+  }
+  if (!token) {
+    throw new Error('Sessão autenticada ausente para validação MFA.')
+  }
+
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  })
 }
 
 export async function getMfaSecurityState(supabase: SupabaseClient): Promise<MfaSecurityState> {
@@ -68,4 +106,12 @@ export async function requireMfaStepUp(
         ? 'Ative a verificação em duas etapas antes de executar esta ação sensível.'
         : 'Confirme seu código de autenticação para continuar.',
   }
+}
+
+export async function requireMfaStepUpForRequest(
+  request: HeaderCarrier,
+  action: SensitiveAction,
+) {
+  const client = createMfaUserClient(request)
+  return requireMfaStepUp(client, action)
 }

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireMfaStepUpForRequest } from '@/lib/security/mfa'
+import { requiresTeamMutationMfa } from '@/lib/security/privileged-actions'
+import { recordPrivilegedAudit } from '@/lib/security/privileged-audit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -172,6 +175,38 @@ function publicCompany(company: any) {
   }
 }
 
+function mfaFailurePayload(decision: Awaited<ReturnType<typeof requireMfaStepUpForRequest>>) {
+  return {
+    error: decision.error,
+    code: decision.reason === 'mfa_enrollment_required'
+      ? 'MFA_ENROLLMENT_REQUIRED'
+      : 'MFA_STEP_UP_REQUIRED',
+    reason: decision.reason,
+  }
+}
+
+async function enforceElevatedTeamMfa(input: {
+  request: NextRequest
+  companyId: string
+  requesterId: string
+  action: string
+}) {
+  const mfa = await requireMfaStepUpForRequest(input.request, 'team.elevated.manage')
+  if (mfa.allowed) return null
+
+  await recordPrivilegedAudit(supabaseAdmin, input.request, {
+    companyId: input.companyId,
+    userId: input.requesterId,
+    action: input.action,
+    entity: 'company_member',
+    entityId: null,
+    result: 'denied',
+    details: { reason: mfa.reason, assurance_level: mfa.state.currentLevel },
+  })
+
+  return NextResponse.json(mfaFailurePayload(mfa), { status: mfa.status })
+}
+
 export async function GET(request: NextRequest) {
   try {
     const requester = await getRequester(request)
@@ -223,11 +258,6 @@ export async function POST(request: NextRequest) {
     const cargo = cleanCargo(body.cargo || 'atendente')
     const senha = String(body.senha || body.password || '').trim()
 
-    if (!nome) return NextResponse.json({ error: 'Informe o nome do funcionário.' }, { status: 400 })
-    if (!email || !email.includes('@')) return NextResponse.json({ error: 'Informe um e-mail válido.' }, { status: 400 })
-    if (email === 'araujovinicius249@gmail.com') return NextResponse.json({ error: 'Este e-mail é do Admin Master e não pode ser cadastrado como funcionário.' }, { status: 400 })
-    if (senha && senha.length < 6) return NextResponse.json({ error: 'A senha inicial precisa ter pelo menos 6 caracteres.' }, { status: 400 })
-
     const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
 
     if (!company?.id || !isUuid(company.id)) {
@@ -236,6 +266,46 @@ export async function POST(request: NextRequest) {
 
     if (requesterRole !== 'dono' && requester.email?.toLowerCase() !== 'araujovinicius249@gmail.com') {
       return NextResponse.json({ error: 'Somente o dono da empresa pode cadastrar funcionários.' }, { status: 403 })
+    }
+
+    let elevatedMutation = requiresTeamMutationMfa({ operation: 'create', nextRole: cargo })
+    if (elevatedMutation) {
+      const denied = await enforceElevatedTeamMfa({
+        request,
+        companyId: company.id,
+        requesterId: requester.id,
+        action: 'team.member.create_elevated',
+      })
+      if (denied) return denied
+    }
+
+    if (!nome) return NextResponse.json({ error: 'Informe o nome do funcionário.' }, { status: 400 })
+    if (!email || !email.includes('@')) return NextResponse.json({ error: 'Informe um e-mail válido.' }, { status: 400 })
+    if (email === 'araujovinicius249@gmail.com') return NextResponse.json({ error: 'Este e-mail é do Admin Master e não pode ser cadastrado como funcionário.' }, { status: 400 })
+    if (senha && senha.length < 6) return NextResponse.json({ error: 'A senha inicial precisa ter pelo menos 6 caracteres.' }, { status: 400 })
+
+    const { data: existingByEmail, error: existingByEmailError } = await supabaseAdmin
+      .from('company_members')
+      .select('id,cargo,user_id,email')
+      .eq('company_id', company.id)
+      .eq('email', email)
+      .maybeSingle()
+
+    if (existingByEmailError) throw existingByEmailError
+
+    if (!elevatedMutation && requiresTeamMutationMfa({
+      operation: 'update',
+      currentRole: existingByEmail?.cargo,
+      nextRole: cargo,
+    })) {
+      elevatedMutation = true
+      const denied = await enforceElevatedTeamMfa({
+        request,
+        companyId: company.id,
+        requesterId: requester.id,
+        action: 'team.member.update_elevated',
+      })
+      if (denied) return denied
     }
 
     const { data: activeMembers, error: countError } = await supabaseAdmin
@@ -286,6 +356,7 @@ export async function POST(request: NextRequest) {
         .from('company_members')
         .update(payload)
         .eq('id', existingMember.id)
+        .eq('company_id', company.id)
         .select('id,company_id,user_id,nome,email,cargo,status,permissions,created_at,updated_at')
         .single()
 
@@ -300,6 +371,18 @@ export async function POST(request: NextRequest) {
 
       if (error) throw error
       savedMember = data
+    }
+
+    if (elevatedMutation) {
+      await recordPrivilegedAudit(supabaseAdmin, request, {
+        companyId: company.id,
+        userId: requester.id,
+        action: existingMember?.id ? 'team.member.update_elevated' : 'team.member.create_elevated',
+        entity: 'company_member',
+        entityId: savedMember?.id || existingMember?.id || null,
+        result: 'success',
+        details: { next_role: cargo, assurance_level: 'aal2' },
+      })
     }
 
     return NextResponse.json({
@@ -326,11 +409,6 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json()
     const id = String(body.id || '').trim()
-
-    if (!isUuid(id)) {
-      return NextResponse.json({ error: 'Funcionário inválido. Recarregue a página e tente novamente.' }, { status: 400 })
-    }
-
     const cargo = body.cargo ? cleanCargo(body.cargo) : null
     const status = ['ativo', 'bloqueado', 'removido'].includes(body.status) ? body.status : null
     const nome = body.nome ? String(body.nome).trim() : null
@@ -343,6 +421,37 @@ export async function PATCH(request: NextRequest) {
 
     if (requesterRole !== 'dono' && requester.email?.toLowerCase() !== 'araujovinicius249@gmail.com') {
       return NextResponse.json({ error: 'Somente o dono da empresa pode alterar funcionários.' }, { status: 403 })
+    }
+
+    if (!isUuid(id)) {
+      return NextResponse.json({ error: 'Funcionário inválido. Recarregue a página e tente novamente.' }, { status: 400 })
+    }
+
+    const { data: currentMember, error: currentError } = await supabaseAdmin
+      .from('company_members')
+      .select('id,cargo,status')
+      .eq('id', id)
+      .eq('company_id', company.id)
+      .maybeSingle()
+
+    if (currentError) throw currentError
+    if (!currentMember) return NextResponse.json({ error: 'Funcionário não encontrado.' }, { status: 404 })
+
+    const elevatedMutation = requiresTeamMutationMfa({
+      operation: 'update',
+      currentRole: currentMember.cargo,
+      nextRole: cargo,
+      nextStatus: status,
+    })
+
+    if (elevatedMutation) {
+      const denied = await enforceElevatedTeamMfa({
+        request,
+        companyId: company.id,
+        requesterId: requester.id,
+        action: 'team.member.update_elevated',
+      })
+      if (denied) return denied
     }
 
     const update: Record<string, any> = {
@@ -368,6 +477,23 @@ export async function PATCH(request: NextRequest) {
     if (error) throw error
     if (!data) return NextResponse.json({ error: 'Funcionário não encontrado.' }, { status: 404 })
 
+    if (elevatedMutation) {
+      await recordPrivilegedAudit(supabaseAdmin, request, {
+        companyId: company.id,
+        userId: requester.id,
+        action: 'team.member.update_elevated',
+        entity: 'company_member',
+        entityId: id,
+        result: 'success',
+        details: {
+          previous_role: currentMember.cargo,
+          next_role: cargo || currentMember.cargo,
+          next_status: status || currentMember.status,
+          assurance_level: 'aal2',
+        },
+      })
+    }
+
     return NextResponse.json({ ok: true, member: data })
   } catch (error) {
     return NextResponse.json(
@@ -388,10 +514,6 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const id = String(searchParams.get('id') || '').trim()
 
-    if (!isUuid(id)) {
-      return NextResponse.json({ error: 'Funcionário inválido. Recarregue a página e tente novamente.' }, { status: 400 })
-    }
-
     const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
 
     if (!company?.id || !isUuid(company.id)) {
@@ -400,6 +522,35 @@ export async function DELETE(request: NextRequest) {
 
     if (requesterRole !== 'dono' && requester.email?.toLowerCase() !== 'araujovinicius249@gmail.com') {
       return NextResponse.json({ error: 'Somente o dono da empresa pode remover funcionários.' }, { status: 403 })
+    }
+
+    if (!isUuid(id)) {
+      return NextResponse.json({ error: 'Funcionário inválido. Recarregue a página e tente novamente.' }, { status: 400 })
+    }
+
+    const { data: currentMember, error: currentError } = await supabaseAdmin
+      .from('company_members')
+      .select('id,cargo,status')
+      .eq('id', id)
+      .eq('company_id', company.id)
+      .maybeSingle()
+
+    if (currentError) throw currentError
+    if (!currentMember) return NextResponse.json({ error: 'Funcionário não encontrado.' }, { status: 404 })
+
+    const elevatedMutation = requiresTeamMutationMfa({
+      operation: 'delete',
+      currentRole: currentMember.cargo,
+    })
+
+    if (elevatedMutation) {
+      const denied = await enforceElevatedTeamMfa({
+        request,
+        companyId: company.id,
+        requesterId: requester.id,
+        action: 'team.member.remove_elevated',
+      })
+      if (denied) return denied
     }
 
     const { error } = await supabaseAdmin
@@ -412,6 +563,18 @@ export async function DELETE(request: NextRequest) {
       .eq('company_id', company.id)
 
     if (error) throw error
+
+    if (elevatedMutation) {
+      await recordPrivilegedAudit(supabaseAdmin, request, {
+        companyId: company.id,
+        userId: requester.id,
+        action: 'team.member.remove_elevated',
+        entity: 'company_member',
+        entityId: id,
+        result: 'success',
+        details: { previous_role: currentMember.cargo, assurance_level: 'aal2' },
+      })
+    }
 
     return NextResponse.json({ ok: true })
   } catch (error) {

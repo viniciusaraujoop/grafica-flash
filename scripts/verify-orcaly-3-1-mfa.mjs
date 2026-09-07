@@ -1,5 +1,12 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { evaluateMfaStepUp } from '../lib/security/mfa-core.ts'
+import {
+  normalizeSubscriptionMutationAction,
+  requiresSettingsMfa,
+  requiresSubscriptionMfa,
+  requiresTeamMutationMfa,
+} from '../lib/security/privileged-actions.ts'
 
 const base = { action: 'subscription.manage' }
 
@@ -34,4 +41,29 @@ for (const action of [
   )
 }
 
-console.log('Orçaly 3.1 MFA policy checks: PASS')
+assert.equal(requiresSettingsMfa({ pix_key: 'x' }), true)
+assert.equal(requiresSettingsMfa({ aceita_cartao: true }), true)
+assert.equal(requiresSettingsMfa({ nome: 'Empresa' }), false)
+
+assert.equal(normalizeSubscriptionMutationAction(undefined), 'create')
+for (const action of ['create', 'renew', 'cancel', 'create_pix']) {
+  assert.equal(requiresSubscriptionMfa(action), true, `${action} must require subscription step-up`)
+}
+assert.equal(requiresSubscriptionMfa('history'), false)
+assert.equal(requiresSubscriptionMfa('sync'), false)
+
+assert.equal(requiresTeamMutationMfa({ operation: 'create', nextRole: 'gerente' }), true)
+assert.equal(requiresTeamMutationMfa({ operation: 'create', nextRole: 'atendente' }), false)
+assert.equal(requiresTeamMutationMfa({ operation: 'update', currentRole: 'gerente', nextRole: 'atendente' }), true)
+assert.equal(requiresTeamMutationMfa({ operation: 'update', currentRole: 'atendente', nextRole: 'atendente' }), false)
+assert.equal(requiresTeamMutationMfa({ operation: 'delete', currentRole: 'gerente' }), true)
+assert.equal(requiresTeamMutationMfa({ operation: 'delete', currentRole: 'producao' }), false)
+
+const settingsRoute = readFileSync(new URL('../app/api/company/settings/route.ts', import.meta.url), 'utf8')
+const subscriptionRoute = readFileSync(new URL('../app/api/company/subscription/route.ts', import.meta.url), 'utf8')
+const teamRoute = readFileSync(new URL('../app/api/company/team/route.ts', import.meta.url), 'utf8')
+assert.match(settingsRoute, /requireMfaStepUpForRequest\(request, 'pix\.update'\)/)
+assert.match(subscriptionRoute, /requireMfaStepUpForRequest\(request, "subscription\.manage"\)/)
+assert.match(teamRoute, /requireMfaStepUpForRequest\(request, 'team\.elevated\.manage'\)/)
+
+console.log('Orçaly 3.1 MFA policy and server-wiring checks: PASS')
