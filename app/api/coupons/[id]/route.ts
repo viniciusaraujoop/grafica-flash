@@ -1,9 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
-import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
+import { getCompanyAccess, getRequester, getSupabaseAdmin, isUuid } from '@/lib/company-access'
 
 type Context = {
   params: Promise<{ id: string }>
+}
+
+type JsonRecord = Record<string, unknown>
+
+function asRecord(value: unknown): JsonRecord | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? value as JsonRecord
+    : null
 }
 
 async function getAccess(request: NextRequest) {
@@ -15,12 +22,13 @@ async function getAccess(request: NextRequest) {
   }
 
   const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
+  const companyId = String(access.company?.id || '').trim()
 
-  if (!access.company?.id) {
+  if (!isUuid(companyId)) {
     return { supabaseAdmin, error: NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 }) }
   }
 
-  return { supabaseAdmin, requester, access }
+  return { supabaseAdmin, requester, access, companyId }
 }
 
 export async function PATCH(request: NextRequest, context: Context) {
@@ -29,8 +37,11 @@ export async function PATCH(request: NextRequest, context: Context) {
     const result = await getAccess(request)
     if ('error' in result && result.error) return result.error
 
-    const body = await request.json()
-    const update: Record<string, any> = { updated_at: new Date().toISOString() }
+    const rawBody: unknown = await request.json().catch(() => null)
+    const body = asRecord(rawBody)
+    if (!body) return NextResponse.json({ error: 'Payload inválido.' }, { status: 400 })
+
+    const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
 
     if (body.ativo !== undefined) update.ativo = Boolean(body.ativo)
     if (body.descricao !== undefined) update.descricao = body.descricao || null
@@ -53,7 +64,7 @@ export async function PATCH(request: NextRequest, context: Context) {
       .from('marketplace_coupons')
       .update(update)
       .eq('id', id)
-      .eq('company_id', result.access!.company.id)
+      .eq('company_id', result.companyId)
       .select('*')
       .single()
 
