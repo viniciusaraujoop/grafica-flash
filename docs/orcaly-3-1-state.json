@@ -1,0 +1,41 @@
+{
+  "version": "3.1",
+  "currentPhase": "production_incidents_p0",
+  "completed": [
+    "baseline_git_and_production_identification",
+    "package_script_audit",
+    "supabase_security_advisor_baseline",
+    "supabase_performance_advisor_baseline",
+    "migration_history_baseline",
+    "platform_admin_security_definer_live_review"
+  ],
+  "inProgress": [
+    "ai_gateway_401_reproduction",
+    "repository_surface_map",
+    "rls_authorization_map"
+  ],
+  "blocked": [],
+  "externalLimitations": [
+    "Leaked Password Protection is disabled in Supabase Auth and requires control-plane configuration validation before it can be enabled safely.",
+    "The connected Vercel surface does not currently expose environment-variable mutation, so no AI Gateway credential will be invented or hardcoded."
+  ],
+  "bugsFound": [
+    "ORC31-001",
+    "ORC31-004",
+    "ORC31-005",
+    "ORC31-006",
+    "ORC31-007"
+  ],
+  "migrations": [],
+  "deployments": [
+    {
+      "kind": "production_baseline",
+      "deploymentId": "dpl_Bj4QUZDXASduCK3PyNN3KqqDPAHk",
+      "commit": "86267a32131209050c4c4d6788574602f86d5eb4",
+      "status": "READY"
+    }
+  ],
+  "qaScores": {},
+  "lastVerifiedCommit": "86267a32131209050c4c4d6788574602f86d5eb4",
+  "finalStatus": "IN_PROGRESS"
+}

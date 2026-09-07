@@ -1,0 +1,38 @@
+name: Orçaly 3.1 AI Smoke
+
+on:
+  push:
+    branches:
+      - feat/orcaly-3-1
+    paths:
+      - app/api/public/home-chat/route.ts
+      - scripts/orcaly-3-1-ai-smoke.mjs
+      - .github/workflows/orcaly-3-1-ai-smoke.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: orcaly-3-1-ai-smoke
+  cancel-in-progress: true
+
+jobs:
+  production-ai-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate smoke script syntax
+        run: node --check scripts/orcaly-3-1-ai-smoke.mjs
+      - name: Probe current production AI provider
+        env:
+          ORCALY_BASE_URL: https://orcaly.com.br
+        run: |
+          if [[ "${{ github.event.head_commit.message }}" == *"[ai-full]"* ]]; then
+            node scripts/orcaly-3-1-ai-smoke.mjs --full
+          else
+            node scripts/orcaly-3-1-ai-smoke.mjs
+          fi
