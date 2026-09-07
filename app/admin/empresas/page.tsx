@@ -1,5 +1,5 @@
-import InternalAdminClient from '@/components/admin/InternalAdminClient'
+import AdminCompaniesV2 from '@/components/admin/AdminCompaniesV2'
 
 export default function AdminEmpresasPage() {
-  return <InternalAdminClient section="empresas" />
+  return <AdminCompaniesV2 />
 }

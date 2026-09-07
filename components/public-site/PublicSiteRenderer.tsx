@@ -3,7 +3,11 @@
 import { useMemo, useState } from 'react'
 import { getSiteTemplateByBusinessType, normalizeSectionList, type SiteSectionId } from '@/lib/site-templates'
 import PremiumCatalog from '@/components/public-site/PremiumCatalog'
-import { SegmentHeroPanel, SegmentProcessBand } from '@/components/public-site/SegmentHeroPanel'
+import { SegmentProcessBand } from '@/components/public-site/SegmentHeroPanel'
+import MarketplaceHero from '@/components/public-site/MarketplaceHero'
+import PublicCouponsBand, { type PublicCoupon } from '@/components/public-site/PublicCouponsBand'
+
+// ORCALY_PUBLIC_COUPONS_RENDERER_V2
 
 export type PublicSiteCompany = {
   id?: string
@@ -35,6 +39,7 @@ export type PublicSiteCompany = {
   payment_methods?: unknown
   business_hours?: unknown
   marketplace_payment_online_enabled?: boolean | null
+  marketplace_coupons?: PublicCoupon[] | null
 }
 
 export type PublicSiteProduct = {
@@ -279,6 +284,7 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
   const deliveryOptions = asArray<string>(company.site_delivery_options).length ? asArray<string>(company.site_delivery_options) : template.deliveryOptions
   const sections = normalizeSectionList(company.site_sections, template.sections)
     .filter((section) => section.enabled)
+  const publicCoupons = asArray<PublicCoupon>(company.marketplace_coupons)
 
   const activeProducts = products.filter((product) => product.available !== false && product.ativo !== false)
   const categories = Array.from(new Set(activeProducts.map((product) => product.categoria).filter(Boolean) as string[]))
@@ -287,33 +293,16 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
   const renderSection = (id: SiteSectionId) => {
     if (id === 'hero') {
       return (
-        <section className="relative overflow-hidden px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-          <div className="absolute inset-0 opacity-10" style={{ background: `radial-gradient(circle at top left, ${accent}, transparent 32%), radial-gradient(circle at bottom right, ${primary}, transparent 34%)` }} />
-          <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_460px] lg:items-center">
-            <div className="text-center lg:text-left">
-              <div className="inline-flex rounded-full border border-blue-100 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.18em]" style={{ color: primary }}>
-                {template.label}
-              </div>
-              <h1 className="mx-auto mt-5 max-w-5xl text-5xl font-black leading-[0.98] tracking-[-0.07em] text-[#071b3a] sm:text-7xl lg:mx-0">
-                {headline}
-              </h1>
-              <p className="mx-auto mt-5 max-w-3xl text-lg font-bold leading-8 text-slate-500 lg:mx-0">
-                {subheadline}
-              </p>
-
-              <div className="mt-7 flex flex-col gap-3 sm:mx-auto sm:max-w-lg sm:flex-row lg:mx-0">
-                <a href="#catalogo" className="rounded-2xl px-6 py-4 text-center font-black text-white shadow-xl" style={{ background: primary }}>
-                  {cta}
-                </a>
-                <a href={whatsapp} target="_blank" rel="noreferrer" className="rounded-2xl border border-blue-100 bg-white px-6 py-4 text-center font-black" style={{ color: primary }}>
-                  Chamar no WhatsApp
-                </a>
-              </div>
-            </div>
-
-            <SegmentHeroPanel company={company} businessType={businessType} primaryColor={primary} accentColor={accent} />
-          </div>
-        </section>
+        <MarketplaceHero
+          company={company}
+          label={template.label}
+          headline={headline}
+          subheadline={subheadline}
+          cta={cta}
+          whatsapp={whatsapp}
+          primaryColor={primary}
+          accentColor={accent}
+        />
       )
     }
 
@@ -469,6 +458,7 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
           </a>
 
           <nav className="hidden items-center gap-5 text-sm font-black text-slate-500 md:flex">
+            {publicCoupons.length ? <a href="#cupons">Cupons</a> : null}
             <a href="#catalogo">Catálogo</a>
             <a href="#contato">Contato</a>
           </nav>
@@ -480,7 +470,17 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
       </header>
 
       {sections.map((section) => (
-        <div key={section.id}>{renderSection(section.id)}</div>
+        <div key={section.id}>
+          {renderSection(section.id)}
+          {section.id === 'hero' && publicCoupons.length ? (
+            <PublicCouponsBand
+              coupons={publicCoupons}
+              companyKey={String(company.slug || company.subdomain_slug || company.id || 'catalogo')}
+              primaryColor={primary}
+              accentColor={accent}
+            />
+          ) : null}
+        </div>
       ))}
     </main>
   )

@@ -6,6 +6,7 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { signupMercadoPagoRequest } from "@/lib/payments/signup/mercado-pago";
 
 type JsonRecord = Record<string, unknown>;
 type SignupPlanKey = "essencial" | "profissional" | "premium";
@@ -87,19 +88,6 @@ function adminClient() {
       autoRefreshToken: false,
     },
   });
-}
-
-function platformToken() {
-  const value =
-    process.env.MERCADO_PAGO_PLATFORM_ACCESS_TOKEN ||
-    process.env.MERCADO_PAGO_ACCESS_TOKEN ||
-    "";
-
-  if (!value) {
-    throw new Error("Credencial Mercado Pago da plataforma ausente.");
-  }
-
-  return value;
 }
 
 function appUrl() {
@@ -192,42 +180,6 @@ export function verifySignupCheckoutToken(
     received.length === expected.length &&
     timingSafeEqual(received, expected)
   );
-}
-
-async function mercadoPago(
-  path: string,
-  init: RequestInit = {},
-  idempotencyKey?: string,
-) {
-  const response = await fetch(`https://api.mercadopago.com${path}`, {
-    ...init,
-    cache: "no-store",
-    headers: {
-      Authorization: `Bearer ${platformToken()}`,
-      "Content-Type": "application/json",
-      ...(idempotencyKey
-        ? { "X-Idempotency-Key": idempotencyKey }
-        : {}),
-      ...(init.headers || {}),
-    },
-  });
-
-  const payload = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const message =
-      typeof payload?.message === "string"
-        ? payload.message
-        : typeof payload?.error === "string"
-          ? payload.error
-          : `Mercado Pago retornou HTTP ${response.status}.`;
-
-    throw Object.assign(new Error(message), {
-      status: response.status,
-    });
-  }
-
-  return payload as JsonRecord;
 }
 
 async function getLead(leadId: string) {
@@ -358,7 +310,7 @@ export async function createSignupPix(input: {
   const existingPaymentId = text(existingPix.payment_id);
 
   if (existingPaymentId) {
-    const remote = await mercadoPago(
+    const remote = await signupMercadoPagoRequest(
       `/v1/payments/${encodeURIComponent(existingPaymentId)}`,
     );
 
@@ -402,7 +354,7 @@ export async function createSignupPix(input: {
   const idempotency = randomUUID();
   const expiration = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-  const payment = await mercadoPago(
+  const payment = await signupMercadoPagoRequest(
     "/v1/payments",
     {
       method: "POST",
@@ -517,7 +469,7 @@ export async function createSignupCardSubscription(input: {
     });
   }
 
-  const subscription = await mercadoPago("/preapproval", {
+  const subscription = await signupMercadoPagoRequest("/preapproval", {
     method: "POST",
     body: JSON.stringify({
       reason: `Plano ${selected.name} - Orçaly`,
@@ -605,7 +557,7 @@ export async function refreshSignupCheckoutStatus(input: {
     return checkoutSummary(lead);
   }
 
-  const payment = await mercadoPago(
+  const payment = await signupMercadoPagoRequest(
     `/v1/payments/${encodeURIComponent(paymentId)}`,
   );
   const status = text(payment.status) || "pending";

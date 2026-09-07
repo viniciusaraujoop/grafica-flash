@@ -1,0 +1,55 @@
+name: Platform Evolution Source Patch
+
+on:
+  push:
+    branches:
+      - feat/platform-evolution-3
+    paths:
+      - .github/workflows/platform-evolution-source-patch.yml
+      - scripts/platform-evolution-patch-login-progressive.mjs
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: platform-evolution-source-patch-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  patch-login:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout platform branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/platform-evolution-3
+          fetch-depth: 0
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Apply deterministic login patch
+        run: node scripts/platform-evolution-patch-login-progressive.mjs
+
+      - name: Validate diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff --exit-code -- app/login/actions.ts >/dev/null || true
+          git diff -- app/login/page.tsx
+          test -n "$(git status --porcelain -- app/login/page.tsx)"
+
+      - name: Commit patched login page
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "viniciusaraujoop"
+          git config user.email "araujovinicius249@gmail.com"
+          git add app/login/page.tsx
+          git commit -m "fix(auth): make login form hydration-independent"
+          git push origin HEAD:feat/platform-evolution-3

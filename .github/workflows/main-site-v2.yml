@@ -1,0 +1,89 @@
+name: Main Site v2 QA
+
+on:
+  pull_request:
+    paths:
+      - 'app/page.tsx'
+      - 'app/sitemap.ts'
+      - 'app/robots.ts'
+      - 'app/solucoes/**'
+      - 'components/marketing/**'
+      - 'lib/marketing/**'
+      - 'scripts/verify-main-site-v2.mjs'
+      - 'docs/main-site-v2.md'
+      - 'package.json'
+      - '.github/workflows/main-site-v2.yml'
+  workflow_dispatch:
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      MAIN_SITE_BASE_SHA: 079c8d781f074d6e86663f9968596694183ac81a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Domain and regression invariants
+        run: npm test
+      - name: Payment boundary regression
+        run: npm run verify:payments
+      - name: Focused lint
+        run: >-
+          npx eslint
+          app/page.tsx
+          app/sitemap.ts
+          app/robots.ts
+          app/solucoes/[slug]/page.tsx
+          components/marketing/MainSiteV2.tsx
+          components/marketing/ProductDemoTabs.tsx
+          components/marketing/PlanSelector.tsx
+          components/marketing/ReferralBridge.tsx
+          lib/marketing/main-site.ts
+      - name: TypeScript and production build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-build.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-build-placeholder
+          SUPABASE_SERVICE_ROLE_KEY: ci-build-placeholder
+          NEXT_PUBLIC_APP_URL: https://ci.orcaly.invalid
+        run: npm run build
+      - name: Protected checkout and auth diff check
+        run: |
+          touched="$(git diff --name-only "$MAIN_SITE_BASE_SHA...HEAD" | grep -E '^(lib/payments/|lib/mercado-pago|app/api/checkout/|components/checkout/CheckoutClient\.tsx|app/api/marketplace/coupon|app/api/marketplace/payments/|app/cadastro/|app/login/)' || true)"
+          if [ -n "$touched" ]; then
+            echo "Protected checkout/auth files changed:"
+            echo "$touched"
+            exit 1
+          fi
+      - name: Dead-link source invariant
+        run: |
+          if grep -R -n -E 'href=["'"']#(["'"']|$)|javascript:void' app/page.tsx app/solucoes components/marketing; then
+            echo "Dead marketing link found"
+            exit 1
+          fi
+      - name: Diff whitespace check
+        run: git diff --check "$MAIN_SITE_BASE_SHA...HEAD"
+      - name: Dependency audit baseline
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+  global-lint-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Global lint baseline
+        run: npm run lint

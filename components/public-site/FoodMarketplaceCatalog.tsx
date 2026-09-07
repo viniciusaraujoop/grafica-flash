@@ -7,9 +7,22 @@ import {
   getPrimaryProductImage,
   getProductPriceLabel,
   getProductPriceNumber,
+  getProductOldPriceNumber,
+  getProductDiscountPercent,
+  getProductStockInfo,
+  getProductCommercialBadge,
   isProductAvailable,
   isProductConsultOnly,
 } from '@/lib/product-media'
+import {
+  getCheckoutOptionPayload,
+  getOptionSelectionSummary,
+  getOptionSelectionsPrice,
+  getProductOptionGroups,
+  validateProductOptionSelections,
+  type ProductOptionGroup,
+  type ProductOptionSelections,
+} from '@/lib/product-options'
 
 type FoodOption = {
   id: string
@@ -27,6 +40,8 @@ type FoodCartItem = {
   unitPrice: number
   variation: FoodOption | null
   addons: FoodOption[]
+  optionSummary: string
+  optionSelections?: ProductOptionSelections
   notes: string
   subtotal: number
 }
@@ -297,28 +312,111 @@ function ProductConfigurator({
   onAdd: (item: Omit<FoodCartItem, 'localId'>) => void
 }) {
   const [quantity, setQuantity] = useState(1)
-  const [variationId, setVariationId] = useState('')
-  const [addonIds, setAddonIds] = useState<string[]>([])
+  const [optionSelections, setOptionSelections] =
+    useState<ProductOptionSelections>({})
   const [notes, setNotes] = useState('')
-  const variations = useMemo(() => getVariations(product), [product])
-  const addons = useMemo(() => getAddons(product), [product])
-  const selectedVariation = variations.find((option) => option.id === variationId) || null
-  const selectedAddons = addons.filter((addon) => addonIds.includes(addon.id))
-  const subtotal = calculateItem(product, quantity, selectedVariation, selectedAddons)
+  const [optionError, setOptionError] = useState('')
+  const optionGroups = useMemo(
+    () => getProductOptionGroups(product),
+    [product],
+  )
+  const optionsPrice = getOptionSelectionsPrice(
+    optionGroups,
+    optionSelections,
+  )
+  const subtotal = Number(
+    (
+      (getProductPriceNumber(product) + optionsPrice) *
+      Math.max(1, quantity)
+    ).toFixed(2),
+  )
 
-  function toggleAddon(id: string) {
-    setAddonIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
+  function selectOption(
+    group: ProductOptionGroup,
+    optionId: string,
+  ) {
+    setOptionError('')
+
+    setOptionSelections((current) => {
+      const selected = current[group.id] || []
+
+      if (group.selection === 'single') {
+        return {
+          ...current,
+          [group.id]:
+            selected[0] === optionId ? [] : [optionId],
+        }
+      }
+
+      if (selected.includes(optionId)) {
+        return {
+          ...current,
+          [group.id]: selected.filter((id) => id !== optionId),
+        }
+      }
+
+      if (selected.length >= Math.max(1, group.max)) {
+        setOptionError(
+          `Escolha no máximo ${group.max} opções em "${group.name}".`,
+        )
+        return current
+      }
+
+      return {
+        ...current,
+        [group.id]: [...selected, optionId],
+      }
+    })
   }
 
   function addToCart() {
+    const validation = validateProductOptionSelections(
+      optionGroups,
+      optionSelections,
+    )
+
+    if (validation) {
+      setOptionError(validation)
+      return
+    }
+
+    const payload = getCheckoutOptionPayload(
+      optionGroups,
+      optionSelections,
+    )
+    const optionMap = new Map(
+      optionGroups.flatMap((group) =>
+        group.options.map((option) => [
+          option.id,
+          {
+            id: option.id,
+            name: option.name,
+            price: option.price,
+          } satisfies FoodOption,
+        ] as const),
+      ),
+    )
+    const variation = payload.variationId
+      ? optionMap.get(payload.variationId) || null
+      : null
+    const addons = payload.addonIds
+      .map((id) => optionMap.get(id))
+      .filter((option): option is FoodOption => Boolean(option))
+    const optionSummary = getOptionSelectionSummary(
+      optionGroups,
+      optionSelections,
+    )
+
     onAdd({
       productId: product.id,
       productName: product.nome || 'Item do cardápio',
       category: getCategory(product),
       quantity: Math.max(1, quantity),
       unitPrice: getProductPriceNumber(product),
-      variation: selectedVariation,
-      addons: selectedAddons,
+      variation,
+      addons,
+      optionSummary,
+      optionSelections,
       notes: notes.trim(),
       subtotal,
     })
@@ -332,7 +430,7 @@ function ProductConfigurator({
           <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#05245c]">Adicionar ao carrinho</p>
             <h3 className="mt-2 text-3xl font-black tracking-[-0.05em] text-[#071b3a] sm:text-4xl">{product.nome || 'Item'}</h3>
-            <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Escolha quantidade, variação, adicionais e observação do item.</p>
+            <p className="mt-2 text-sm font-bold leading-6 text-slate-500">Escolha quantidade, opções, adicionais e observação do item.</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-500">Fechar</button>
         </div>
@@ -358,44 +456,69 @@ function ProductConfigurator({
               <input type="number" min="1" value={quantity} onChange={(event) => setQuantity(Math.max(1, Number(event.target.value || 1)))} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 font-bold outline-none focus:border-[#05245c]" />
             </label>
 
-            {variations.length ? (
-              <label className="grid gap-2 text-sm font-black text-slate-600">
-                Variação
-                <select value={variationId} onChange={(event) => setVariationId(event.target.value)} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 font-bold outline-none focus:border-[#05245c]">
-                  <option value="">Sem variação</option>
-                  {variations.map((option) => (
-                    <option key={option.id} value={option.id}>{option.name}{option.price ? ` (+ ${money(option.price)})` : ''}</option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
+            {optionGroups.map((group) => {
+              const selected = optionSelections[group.id] || []
+              const rule =
+                group.selection === 'single'
+                  ? group.required
+                    ? 'Escolha 1 opção'
+                    : 'Escolha até 1 opção'
+                  : `${group.required ? `Escolha de ${Math.max(1, group.min)} a` : 'Escolha até'} ${group.max}`
 
-            {addons.length ? (
-              <div className="grid gap-2 text-sm font-black text-slate-600">
-                <span>Adicionais</span>
-                <div className="grid gap-2">
-                  {addons.map((addon) => (
-                    <label key={addon.id} className="flex items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white px-4 py-3">
-                      <span className="flex min-w-0 items-center gap-3">
-                        <input type="checkbox" checked={addonIds.includes(addon.id)} onChange={() => toggleAddon(addon.id)} />
-                        <span className="truncate">{addon.name}</span>
-                      </span>
-                      <span className="shrink-0 text-[#05245c]">+ {money(addon.price)}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+              return (
+                <section key={group.id} className="rounded-[1.4rem] border border-blue-100 bg-[#f8fbff] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="font-black text-[#071b3a]">{group.name}</p>
+                      <p className="mt-1 text-xs font-bold text-slate-500">{rule}</p>
+                    </div>
+                    <span className={`rounded-full px-3 py-1 text-xs font-black ${group.required ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-500'}`}>
+                      {group.required ? 'Obrigatório' : 'Opcional'}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid gap-2">
+                    {group.options.filter((option) => option.active).map((option) => {
+                      const checked = selected.includes(option.id)
+
+                      return (
+                        <label key={option.id} className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3 ${checked ? 'border-blue-300 bg-white' : 'border-blue-100 bg-white/70'}`}>
+                          <span className="flex min-w-0 items-center gap-3">
+                            <input
+                              type={group.selection === 'single' ? 'radio' : 'checkbox'}
+                              name={`food-option-group-${group.id}`}
+                              checked={checked}
+                              onChange={() => selectOption(group, option.id)}
+                            />
+                            <span className="truncate font-black text-slate-700">{option.name}</span>
+                          </span>
+                          <span className="shrink-0 text-sm font-black text-[#05245c]">
+                            {option.price > 0 ? `+ ${money(option.price)}` : 'Incluso'}
+                          </span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </section>
+              )
+            })}
 
             <label className="grid gap-2 text-sm font-black text-slate-600">
               Observação do item
               <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ex: sem cebola, maionese à parte..." className="min-h-24 rounded-2xl border border-blue-100 bg-white px-4 py-3 font-bold outline-none focus:border-[#05245c]" />
             </label>
 
+            {optionError ? (
+              <div className="rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-700">
+                {optionError}
+              </div>
+            ) : null}
+
             <div className="flex flex-col gap-3 rounded-[1.5rem] border border-blue-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Subtotal</p>
                 <p className="text-3xl font-black text-[#071b3a]">{money(subtotal)}</p>
+                {optionsPrice > 0 ? <p className="mt-1 text-xs font-bold text-slate-500">Inclui {money(optionsPrice)} por unidade em opções.</p> : null}
               </div>
               <button type="button" onClick={addToCart} className="rounded-2xl px-5 py-4 font-black text-white" style={{ background: primaryColor }}>Adicionar</button>
             </div>
@@ -418,6 +541,8 @@ export default function FoodMarketplaceCatalog({
   const [category, setCategory] = useState('Todos')
   const [selectedProduct, setSelectedProduct] = useState<FoodProduct | null>(null)
   const [cart, setCart] = useState<FoodCartItem[]>([])
+  const [cartOpen, setCartOpen] = useState(false)
+  const [cartReady, setCartReady] = useState(false)
   const [checkout, setCheckout] = useState<CheckoutState>(emptyCheckout)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -443,6 +568,7 @@ export default function FoodMarketplaceCatalog({
   }, [category, safeProducts, search])
 
   const cartSubtotal = useMemo(() => Number(cart.reduce((acc, item) => acc + item.subtotal, 0).toFixed(2)), [cart])
+  const cartItemCount = useMemo(() => cart.reduce((acc, item) => acc + Math.max(1, Number(item.quantity || 1)), 0), [cart])
   const selectedZone = deliveryZones.find((zone) => zone.id === checkout.deliveryZoneId) || null
   const deliveryFeeBase = checkout.deliveryType === 'delivery' && selectedZone ? numberFrom(selectedZone.fee) : 0
   const couponProductDiscount = useMemo(() => {
@@ -461,13 +587,83 @@ export default function FoodMarketplaceCatalog({
   const total = Number(Math.max(0, cartSubtotal + deliveryFeeBase - totalDiscount).toFixed(2))
   const minimumOrder = selectedZone ? numberFrom(selectedZone.minimum_order) : 0
   const minimumMissing = checkout.deliveryType === 'delivery' && minimumOrder > 0 && cartSubtotal < minimumOrder
+  const companyStorageKey = String(company.slug || company.subdomain_slug || company.id || 'cardapio')
+  const cartStorageKey = `orcaly-cart:${companyStorageKey}:food`
+  const couponStorageKey = `orcaly-coupon:${companyStorageKey}`
+
+  // ORCALY_PUBLIC_COUPON_PREFILL_V2
+  useEffect(() => {
+    function selectCoupon(codeValue: unknown) {
+      const code = String(codeValue || '').trim().toUpperCase()
+      if (!code) return
+      setCoupon((current) => ({ ...current, code, error: '', message: 'Cupom selecionado. Aplique após adicionar os itens.' }))
+    }
+
+    try {
+      selectCoupon(window.localStorage.getItem(couponStorageKey))
+    } catch {}
+
+    function handleCouponSelected(event: Event) {
+      selectCoupon((event as CustomEvent<{ code?: string }>).detail?.code)
+    }
+
+    window.addEventListener('orcaly:coupon-selected', handleCouponSelected)
+    return () => window.removeEventListener('orcaly:coupon-selected', handleCouponSelected)
+  }, [couponStorageKey])
+
+  // ORCALY_CART_DRAWER_1B
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(cartStorageKey)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) setCart(parsed)
+      }
+    } catch {
+      window.localStorage.removeItem(cartStorageKey)
+    } finally {
+      setCartReady(true)
+    }
+  }, [cartStorageKey])
+
+  useEffect(() => {
+    if (!cartReady) return
+
+    if (cart.length) {
+      window.localStorage.setItem(cartStorageKey, JSON.stringify(cart))
+    } else {
+      window.localStorage.removeItem(cartStorageKey)
+    }
+  }, [cart, cartReady, cartStorageKey])
+
+  useEffect(() => {
+    if (!cartOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setCartOpen(false)
+    }
+
+    window.addEventListener('keydown', closeOnEscape)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [cartOpen])
 
   useEffect(() => {
     if (!cart.length && coupon.appliedCode) setCoupon(emptyCoupon)
   }, [cart.length, coupon.appliedCode])
 
   function clearAppliedCoupon(message = '') {
-    setCoupon({ ...emptyCoupon, message })
+    setCoupon((current) => ({
+      ...emptyCoupon,
+      code: current.code,
+      message,
+    }))
   }
 
   function updateCheckout(field: keyof CheckoutState, value: string | boolean) {
@@ -480,7 +676,8 @@ export default function FoodMarketplaceCatalog({
 
   function addToCart(item: Omit<FoodCartItem, 'localId'>) {
     cartIdRef.current += 1
-    setCart((current) => [...current, { ...item, localId: `${item.productId}-${cartIdRef.current}` }])
+    setCart((current) => [...current, { ...item, localId: `${item.productId}-${Date.now()}-${cartIdRef.current}` }])
+    setCartOpen(true)
     clearAppliedCoupon('Cupom removido porque o carrinho mudou.')
     setResult(null)
     setError('')
@@ -608,7 +805,8 @@ export default function FoodMarketplaceCatalog({
           quantity: item.quantity,
           variationId: item.variation?.id || undefined,
           addonIds: item.addons.map((addon) => addon.id),
-          observation: item.notes,
+          optionSelections: item.optionSelections || {},
+          observation: [item.optionSummary, item.notes].filter(Boolean).join(' | '),
         })),
         customer: {
           name: checkout.customerName,
@@ -640,7 +838,7 @@ export default function FoodMarketplaceCatalog({
 
   return (
     <section id="catalogo" className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto grid max-w-7xl gap-8 xl:grid-cols-[minmax(0,1fr)_390px] xl:items-start">
+      <div className="mx-auto max-w-7xl">
         <div className="min-w-0">
           <div className="rounded-[2.3rem] border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-950/8 sm:p-7">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -674,14 +872,24 @@ export default function FoodMarketplaceCatalog({
                 const image = getPrimaryProductImage(product)
                 const variations = getVariations(product)
                 const addons = getAddons(product)
+                const oldPrice = getProductOldPriceNumber(product)
+                const discount = getProductDiscountPercent(product)
+                const stockInfo = getProductStockInfo(product)
+                const commercialBadge = getProductCommercialBadge(product)
 
                 return (
                   <article key={product.id} className="group min-w-0 overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-xl shadow-blue-950/6 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-950/12">
-                    {image ? (
-                      <img src={image} alt={product.nome || 'Item'} className="h-56 w-full rounded-[1.5rem] object-cover" />
-                    ) : (
-                      <div className="grid h-56 place-items-center rounded-[1.5rem] bg-slate-100 text-sm font-black text-slate-400">Sem foto</div>
-                    )}
+                    <div className="relative">
+                      {image ? (
+                        <img src={image} alt={product.nome || 'Item'} className="h-56 w-full rounded-[1.5rem] object-cover" />
+                      ) : (
+                        <div className="grid h-56 place-items-center rounded-[1.5rem] bg-slate-100 text-sm font-black text-slate-400">Sem foto</div>
+                      )}
+                      <div className="absolute left-3 top-3 flex max-w-[70%] flex-wrap gap-2">
+                        {commercialBadge ? <span className="rounded-full bg-[#071b3a]/90 px-3 py-1 text-xs font-black text-white backdrop-blur">{commercialBadge}</span> : null}
+                      </div>
+                      {discount > 0 ? <span className="absolute right-3 top-3 rounded-full bg-amber-400 px-3 py-2 text-xs font-black text-amber-950 shadow-lg">{discount}% OFF</span> : null}
+                    </div>
                     <div className="p-4">
                       <div className="flex flex-wrap gap-2">
                         <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{getCategory(product)}</span>
@@ -696,7 +904,11 @@ export default function FoodMarketplaceCatalog({
                         </div>
                       ) : null}
                       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-2xl font-black text-[#05245c]">{getProductPriceLabel(product)}</p>
+                        <div>
+                          {oldPrice > 0 ? <p className="text-sm font-black text-slate-400 line-through">{money(oldPrice)}</p> : null}
+                          <p className="text-2xl font-black text-[#05245c]">{getProductPriceLabel(product)}</p>
+                          {stockInfo.label ? <p className={`mt-1 text-xs font-black ${stockInfo.low || stockInfo.soldOut ? 'text-amber-700' : 'text-emerald-700'}`}>{stockInfo.label}</p> : null}
+                        </div>
                         <button type="button" onClick={() => available ? setSelectedProduct(product) : null} disabled={!available} className="rounded-2xl px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={available ? { background: primaryColor } : undefined}>
                           Adicionar ao carrinho
                         </button>
@@ -715,24 +927,66 @@ export default function FoodMarketplaceCatalog({
           )}
         </div>
 
-        <aside className="min-w-0 rounded-[2.3rem] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/8 xl:sticky xl:top-24">
-          <div className="flex items-center justify-between gap-3">
+        {cartOpen ? (
+          <button
+            type="button"
+            aria-label="Fechar carrinho"
+            onClick={() => setCartOpen(false)}
+            className="fixed inset-0 z-[60] bg-[#071b3a]/55 backdrop-blur-[2px]"
+          />
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => setCartOpen(true)}
+          className="fixed bottom-4 right-4 z-50 flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full px-5 py-4 font-black text-white shadow-2xl shadow-blue-950/30 transition hover:-translate-y-1"
+          style={{ background: primaryColor }}
+          aria-label="Abrir carrinho"
+        >
+          <span aria-hidden="true">🛒</span>
+          <span className="truncate">{cartItemCount} {cartItemCount === 1 ? 'item' : 'itens'} • {money(cartSubtotal)}</span>
+        </button>
+
+        <aside
+          role="dialog"
+          aria-modal="true"
+          aria-label="Carrinho e finalização"
+          className={`fixed inset-x-0 bottom-0 z-[70] flex h-[min(94dvh,860px)] min-w-0 flex-col overflow-hidden rounded-t-[2rem] border border-blue-100 bg-white shadow-2xl shadow-blue-950/20 transition duration-300 ease-out sm:inset-y-4 sm:left-auto sm:right-4 sm:bottom-auto sm:h-[calc(100dvh-2rem)] sm:w-[460px] sm:rounded-[2rem] ${
+            cartOpen
+              ? 'translate-y-0 opacity-100 sm:translate-x-0'
+              : 'pointer-events-none translate-y-[110%] opacity-0 sm:translate-x-[110%] sm:translate-y-0'
+          }`}
+        >
+          {/* ORCALY_RESPONSIVE_FOOD_CART_V3 */}
+          <div className="shrink-0 border-b border-blue-100 bg-white px-4 pb-3 pt-4 sm:px-5">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Carrinho</p>
               <h3 className="text-2xl font-black tracking-[-0.04em] text-[#071b3a]">Seu pedido</h3>
             </div>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{cart.length} itens</span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{cartItemCount} itens</span>
+              <button
+                type="button"
+                onClick={() => setCartOpen(false)}
+                className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600"
+                aria-label="Fechar carrinho"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
 
-          <div className="mt-4 max-h-[310px] space-y-3 overflow-y-auto pr-1">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 sm:px-5">
+            <div className="mt-4 space-y-3">
             {cart.length ? cart.map((item) => (
               <article key={item.localId} className="rounded-[1.5rem] border border-blue-100 bg-[#f8fbff] p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-black text-[#071b3a]">{item.productName}</p>
                     <p className="mt-1 text-xs font-bold leading-5 text-slate-500">
-                      {item.variation ? `${item.variation.name}. ` : ''}
-                      {item.addons.length ? `Adicionais: ${item.addons.map((addon) => addon.name).join(', ')}. ` : ''}
+                      {item.optionSummary ? `${item.optionSummary}. ` : ''}
+                      {!item.optionSummary && item.variation ? `${item.variation.name}. ` : ''}
+                      {!item.optionSummary && item.addons.length ? `Adicionais: ${item.addons.map((addon) => addon.name).join(', ')}. ` : ''}
                       {item.notes ? `Obs: ${item.notes}` : ''}
                     </p>
                   </div>
@@ -787,41 +1041,47 @@ export default function FoodMarketplaceCatalog({
               <textarea value={checkout.notes} onChange={(event) => updateCheckout('notes', event.target.value)} placeholder="Observações do pedido" className="min-h-20 rounded-2xl border border-blue-100 px-4 py-3 text-sm font-bold outline-none focus:border-[#05245c]" />
             </div>
 
-            <div className="rounded-[1.5rem] border border-blue-100 bg-white p-4">
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Cupom</p>
-              <div className="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row">
-                <input value={coupon.code} onChange={(event) => setCoupon((current) => ({ ...current, code: event.target.value.toUpperCase(), error: '', message: '' }))} placeholder="Digite seu cupom" className="min-w-0 flex-1 rounded-2xl border border-blue-100 px-4 py-3 text-sm font-black uppercase outline-none focus:border-[#05245c]" />
-                {coupon.appliedCode ? (
-                  <button type="button" onClick={() => setCoupon(emptyCoupon)} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-black text-red-600">Remover</button>
-                ) : (
-                  <button type="button" onClick={applyCoupon} disabled={coupon.applying || !cart.length} className="rounded-2xl px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!coupon.applying && cart.length ? { background: primaryColor } : undefined}>{coupon.applying ? 'Aplicando...' : 'Aplicar'}</button>
-                )}
+
+          </div>
+
+          </div>
+
+          <div className="shrink-0 border-t border-blue-100 bg-white/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_40px_rgba(7,27,58,0.08)] backdrop-blur sm:px-5">
+            <div className="flex items-end justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Total do pedido</p>
+                {totalDiscount > 0 ? <p className="mt-1 truncate text-xs font-black text-emerald-700">Cupom {coupon.appliedCode} economizou {money(totalDiscount)}</p> : <p className="mt-1 text-xs font-bold text-slate-500">{cartItemCount} {cartItemCount === 1 ? 'item' : 'itens'} no carrinho</p>}
               </div>
-              {coupon.appliedCode ? <p className="mt-3 rounded-2xl bg-emerald-50 p-3 text-sm font-bold text-emerald-700">{coupon.message || `Cupom ${coupon.appliedCode} aplicado.`}</p> : null}
-              {!coupon.appliedCode && coupon.message ? <p className="mt-3 rounded-2xl bg-blue-50 p-3 text-sm font-bold text-[#05245c]">{coupon.message}</p> : null}
-              {coupon.error ? <p className="mt-3 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{coupon.error}</p> : null}
+              <p className="shrink-0 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">{money(total)}</p>
             </div>
 
-            <div className="rounded-[1.5rem] border border-blue-100 bg-[#f8fbff] p-4 text-sm font-bold text-slate-600">
-              <div className="flex justify-between"><span>Subtotal</span><span>{money(cartSubtotal)}</span></div>
-              <div className="mt-2 flex justify-between"><span>Taxa de entrega</span><span>{money(deliveryFeeBase)}</span></div>
-              {couponDeliveryDiscount > 0 ? <div className="mt-2 flex justify-between text-slate-500"><span>Taxa cobrada</span><span>{money(deliveryFee)}</span></div> : null}
-              {totalDiscount > 0 ? <div className="mt-2 flex justify-between text-emerald-700"><span>Cupom {coupon.appliedCode ? `(${coupon.appliedCode})` : ''}</span><span>-{money(totalDiscount)}</span></div> : null}
-              {minimumMissing ? <p className="mt-3 rounded-2xl bg-amber-50 p-3 text-amber-700">Pedido mínimo desta região: {money(minimumOrder)}.</p> : null}
-              <div className="mt-4 flex justify-between border-t border-blue-100 pt-4 text-xl font-black text-[#071b3a]"><span>Total</span><span>{money(total)}</span></div>
+            <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <input
+                value={coupon.code}
+                onChange={(event) => setCoupon((current) => ({ ...current, code: event.target.value.toUpperCase(), error: '', message: '' }))}
+                placeholder="Cupom de desconto"
+                className="min-w-0 rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-3 text-sm font-black uppercase outline-none focus:border-[#05245c]"
+              />
+              {coupon.appliedCode ? (
+                <button type="button" onClick={() => setCoupon(emptyCoupon)} className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-black text-red-600">Remover</button>
+              ) : (
+                <button type="button" onClick={applyCoupon} disabled={coupon.applying || !cart.length} className="rounded-2xl px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!coupon.applying && cart.length ? { background: primaryColor } : undefined}>{coupon.applying ? 'Aplicando...' : 'Aplicar'}</button>
+              )}
             </div>
 
-            {error ? <div className="rounded-2xl bg-red-50 p-4 text-sm font-bold leading-6 text-red-700">{error}</div> : null}
-            {result ? (
-              <div className="rounded-2xl bg-emerald-50 p-4 text-sm font-bold leading-6 text-emerald-700">
-                Pedido criado com sucesso. Total: {money(result.total)}. Pagamento: {result.paymentLabel}.
-                {result.checkoutUrl ? <a href={result.checkoutUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-xl bg-[#05245c] px-4 py-3 text-sm font-black text-white">Abrir pagamento online</a> : null}
-                {result.pixPayload ? <textarea readOnly value={result.pixPayload} className="mt-3 min-h-20 w-full rounded-xl border border-emerald-100 bg-white p-3 text-xs text-slate-600" /> : null}
-              </div>
-            ) : null}
+            {coupon.message ? <p className="mt-2 text-xs font-black text-emerald-700">{coupon.message}</p> : null}
+            {coupon.error ? <p className="mt-2 text-xs font-black text-red-700">{coupon.error}</p> : null}
+            {minimumMissing ? <p className="mt-2 text-xs font-black text-amber-700">Pedido mínimo: {money(minimumOrder)}.</p> : null}
+            {error ? <div className="mt-2 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</div> : null}
 
-            <button type="button" onClick={submitOrder} disabled={submitting || !cart.length} className="w-full rounded-2xl px-5 py-4 font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!submitting && cart.length ? { background: primaryColor } : undefined}>
-              {submitting ? 'Redirecionando...' : unifiedCheckoutEnabled ? 'Finalizar e pagar' : 'Pagamento online indisponível'}
+            <button
+              type="button"
+              onClick={submitOrder}
+              disabled={submitting || !cart.length}
+              className="mt-3 w-full rounded-2xl px-5 py-4 text-base font-black text-white shadow-lg disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+              style={!submitting && cart.length ? { background: primaryColor } : undefined}
+            >
+              {submitting ? 'Abrindo pagamento...' : unifiedCheckoutEnabled ? `Continuar para pagamento • ${money(total)}` : 'Pagamento online indisponível'}
             </button>
           </div>
         </aside>
@@ -833,4 +1093,3 @@ export default function FoodMarketplaceCatalog({
     </section>
   )
 }
-

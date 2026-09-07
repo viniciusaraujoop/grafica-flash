@@ -6,8 +6,13 @@ import {
   protectMercadoPagoToken,
   verifyMercadoPagoOauthStateAndGetVerifier,
 } from "@/lib/mercado-pago";
+import {
+  getMarketplaceClientId,
+} from "@/lib/payments/marketplace/config";
+// ORCALY_MP_OAUTH_PROOF_V1
 
 export const runtime = "nodejs";
+// ORCALY_MP_AUTO_ENABLE_V1
 
 function panelUrl(
   request: NextRequest,
@@ -130,7 +135,28 @@ export async function GET(request: NextRequest) {
             tokenPayload.public_key || null,
           token_expires_at: tokenExpiresAt,
           onboarding_status: "connected",
+          account_status: "active",
           is_active: true,
+          charges_enabled: true,
+          pix_enabled: true,
+          card_enabled: true,
+          last_status_check_at: new Date().toISOString(),
+          provider_metadata_sanitized: {
+            oauth_grant_type:
+              "authorization_code",
+            marketplace_client_id:
+              getMarketplaceClientId(),
+            token_type:
+              tokenPayload.token_type ||
+              "bearer",
+            scope:
+              tokenPayload.scope || null,
+            live_mode:
+              tokenPayload.live_mode ??
+              null,
+            connected_at:
+              new Date().toISOString(),
+          },
           last_error: null,
           updated_at: new Date().toISOString(),
         },
@@ -172,7 +198,12 @@ export async function GET(request: NextRequest) {
               company_id: oauthState.company_id,
               provider: "mercado_pago",
               onboarding_status: "error",
+              account_status: "error",
               is_active: false,
+              charges_enabled: false,
+              pix_enabled: false,
+              card_enabled: false,
+              last_status_check_at: new Date().toISOString(),
               last_error: message.slice(0, 500),
               updated_at: new Date().toISOString(),
             },

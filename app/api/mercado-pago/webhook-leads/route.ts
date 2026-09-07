@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import {
+  getSignupAccessToken,
+  getSignupWebhookSecret,
+} from "@/lib/payments/signup/mercado-pago";
+import { verifyMercadoPagoWebhookSignature } from "@/lib/mercado-pago";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const mercadoPagoToken =
-  process.env.MERCADO_PAGO_PLATFORM_ACCESS_TOKEN ||
-  process.env.MERCADO_PAGO_ACCESS_TOKEN ||
-  "";
 
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
   auth: {
@@ -37,10 +38,7 @@ async function processPayment(paymentId: string) {
   if (!paymentId) {
     return { ok: false, reason: "payment_id ausente" };
   }
-
-  if (!mercadoPagoToken) {
-    return { ok: false, reason: "access_token ausente" };
-  }
+const mercadoPagoToken = getSignupAccessToken();
 
   const response = await fetch(
     `https://api.mercadopago.com/v1/payments/${paymentId}`,
@@ -115,10 +113,12 @@ async function processPayment(paymentId: string) {
   return { ok: true, lead_id: leadId, status };
 }
 
-export async function GET(request: NextRequest) {
-  return NextResponse.json(
-    await processPayment(getPaymentIdFromUrl(request)),
-  );
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    route: "mercado-pago-signup-webhook",
+    accepts: ["POST"],
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -135,6 +135,20 @@ export async function POST(request: NextRequest) {
     } catch {
       paymentId = "";
     }
+  }
+
+  const valid = verifyMercadoPagoWebhookSignature({
+    xSignature: request.headers.get("x-signature"),
+    xRequestId: request.headers.get("x-request-id"),
+    dataId: String(paymentId || "") || null,
+    secret: getSignupWebhookSecret(),
+  });
+
+  if (!valid) {
+    return NextResponse.json(
+      { error: "Assinatura inválida." },
+      { status: 401 },
+    );
   }
 
   return NextResponse.json(

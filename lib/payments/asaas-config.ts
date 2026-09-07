@@ -139,4 +139,3 @@ export function getAsaasCapabilities() {
     asaasEnabled: flags.asaasEnabled,
   };
 }
-

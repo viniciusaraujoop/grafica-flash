@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 "use client";
+// ORCALY_SELLER_PUBLIC_KEY_V1
 
 import Script from "next/script";
 import {
@@ -32,6 +33,7 @@ type CartItem = {
   quantity: number;
   variationId?: string;
   addonIds: string[];
+  optionSelections?: Record<string, string[]>;
   observation: string;
 };
 
@@ -55,9 +57,12 @@ type CheckoutData = {
     chargesEnabled: boolean;
     pixEnabled: boolean;
     cardEnabled: boolean;
+    publicKey: string;
     lastError?: string | null;
+    connectionRequiresReconnect?: boolean;
   };
 };
+// ORCALY_MP_RECONNECT_MESSAGE_V1
 
 type PixResult = {
   encodedImage?: string;
@@ -105,6 +110,25 @@ function safeRecord(value: unknown): Record<string, unknown> {
   }
 
   return value as Record<string, unknown>;
+}
+
+function normalizeOptionSelections(
+  value: unknown,
+): Record<string, string[]> {
+  const record = safeRecord(value);
+
+  return Object.fromEntries(
+    Object.entries(record).map(([groupId, selected]) => [
+      groupId,
+      Array.from(
+        new Set(
+          (Array.isArray(selected) ? selected : [])
+            .map((item) => String(item || "").trim())
+            .filter(Boolean),
+        ),
+      ),
+    ]),
+  );
 }
 
 function normalizePaymentMethod(
@@ -199,13 +223,16 @@ export default function CheckoutClient({
 }: {
   slug: string;
 }) {
-  const publicKey =
-    process.env.NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY || "";
+  const fallbackPublicKey =
+    process.env.NEXT_PUBLIC_MP_MARKETPLACE_PUBLIC_KEY || "";
 
   const brickControllerRef = useRef<any>(null);
   const processingRef = useRef(false);
 
   const [data, setData] = useState<CheckoutData | null>(null);
+  const publicKey =
+    data?.payment.publicKey ||
+    fallbackPublicKey;
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -216,6 +243,7 @@ export default function CheckoutClient({
   const [notice, setNotice] = useState("");
   const [paymentId, setPaymentId] = useState("");
   const [orderId, setOrderId] = useState("");
+  const [trackingUrl, setTrackingUrl] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
   const [preparedTotal, setPreparedTotal] = useState<number | null>(null);
   const [pix, setPix] = useState<PixResult | null>(null);
@@ -305,30 +333,37 @@ export default function CheckoutClient({
           addonIds: Array.isArray(item.addonIds)
             ? item.addonIds
             : [],
+          optionSelections: normalizeOptionSelections(
+            item.optionSelections,
+          ),
           observation: String(item.observation || ""),
         }));
 
-      if (imported.length) setCart(imported);
+      const restoreTimer = window.setTimeout(() => {
+        if (imported.length) setCart(imported);
 
-      if (parsed.customer) {
-        setCustomer((current) => ({
-          ...current,
-          ...parsed.customer,
-        }));
-      }
+        if (parsed.customer) {
+          setCustomer((current) => ({
+            ...current,
+            ...parsed.customer,
+          }));
+        }
 
-      if (parsed.delivery) {
-        setDelivery((current) => ({
-          ...current,
-          ...parsed.delivery,
-        }));
-      }
+        if (parsed.delivery) {
+          setDelivery((current) => ({
+            ...current,
+            ...parsed.delivery,
+          }));
+        }
 
-      if (parsed.couponCode) {
-        setCouponCode(parsed.couponCode);
-      }
+        if (parsed.couponCode) {
+          setCouponCode(parsed.couponCode);
+        }
 
-      window.sessionStorage.removeItem(key);
+        window.sessionStorage.removeItem(key);
+      }, 0);
+
+      return () => window.clearTimeout(restoreTimer);
     } catch {
       window.sessionStorage.removeItem(key);
     }
@@ -354,6 +389,23 @@ export default function CheckoutClient({
 
       setPaymentStatus(nextStatus);
 
+      const nextTrackingUrl = String(
+        payload.trackingUrl ||
+          trackingUrl ||
+          "",
+      );
+
+      if (
+        nextStatus === "paid" &&
+        nextTrackingUrl
+      ) {
+        window.clearInterval(timer);
+        window.location.assign(
+          nextTrackingUrl,
+        );
+        return;
+      }
+
       if (
         [
           "paid",
@@ -368,7 +420,7 @@ export default function CheckoutClient({
     }, 5000);
 
     return () => window.clearInterval(timer);
-  }, [paymentId, slug]);
+  }, [paymentId, slug, trackingUrl]);
 
   const productMap = useMemo(
     () =>
@@ -414,8 +466,11 @@ export default function CheckoutClient({
 
   useEffect(() => {
     if (!data || cart.length === 0) {
-      setPreparedTotal(null);
-      return;
+      const resetTimer = window.setTimeout(() => {
+        setPreparedTotal(null);
+      }, 0);
+
+      return () => window.clearTimeout(resetTimer);
     }
 
     const controller = new AbortController();
@@ -545,14 +600,27 @@ export default function CheckoutClient({
         setPaymentStatus(nextStatus);
         setPaymentId(String(payload.paymentId || ""));
         setOrderId(String(payload.orderId || ""));
+        const nextTrackingUrl = String(
+          payload.trackingUrl || "",
+        );
+        setTrackingUrl(nextTrackingUrl);
         setPix(payload.pix || null);
         setNotice(
           nextStatus === "paid"
-            ? "Pagamento aprovado. O pedido foi enviado."
+            ? "Pagamento aprovado. Abrindo o acompanhamento do pedido..."
             : paymentMethod === "PIX"
               ? "Pix gerado."
               : "Pagamento enviado para análise.",
         );
+
+        if (
+          nextStatus === "paid" &&
+          nextTrackingUrl
+        ) {
+          window.location.assign(
+            nextTrackingUrl,
+          );
+        }
       } catch (cause) {
         setNotice("");
         setError(
@@ -759,7 +827,17 @@ export default function CheckoutClient({
     setPaymentStatus("");
     setPaymentId("");
     setOrderId("");
+    setTrackingUrl("");
     setPaymentOpen(true);
+
+    window.setTimeout(() => {
+      document
+        .getElementById("checkout-payment-section")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+    }, 60);
   }
 
   function addProduct(productId: string) {
@@ -842,7 +920,7 @@ export default function CheckoutClient({
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb] p-4 text-[#111827] sm:p-6">
+    <main className="min-h-screen bg-[#f5f7fb] p-4 pb-32 text-[#111827] sm:p-6 sm:pb-32 lg:pb-6">
       <Script
         src="https://sdk.mercadopago.com/js/v2"
         strategy="afterInteractive"
@@ -883,9 +961,14 @@ export default function CheckoutClient({
 
         {!data.payment.chargesEnabled ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
-            <p className="font-black">Pagamentos ainda não disponíveis</p>
+            <p className="font-black">
+              {data.payment.connectionRequiresReconnect
+                ? "Reconecte o Mercado Pago"
+                : "Pagamentos ainda não disponíveis"}
+            </p>
             <p className="mt-2 text-sm font-semibold leading-6">
-              Esta loja precisa conectar uma conta Mercado Pago antes de receber pedidos pelo marketplace.
+              {data.payment.lastError ||
+                "Esta loja precisa conectar uma conta Mercado Pago antes de receber pedidos pelo marketplace."}
             </p>
           </div>
         ) : null}
@@ -1229,7 +1312,7 @@ export default function CheckoutClient({
               ) : null}
             </section>
 
-            <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/5 sm:p-7">
+            <section id="checkout-payment-section" className="scroll-mt-5 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/5 sm:p-7">
               <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-black text-[#009ee3]">
@@ -1367,7 +1450,8 @@ export default function CheckoutClient({
                     </div>
                   ) : !data.payment.chargesEnabled ? (
                     <div className="rounded-2xl bg-amber-50 p-4 font-bold text-amber-800">
-                      Esta empresa ainda não ativou os pagamentos online.
+                      {data.payment.lastError ||
+                        "Esta empresa ainda não ativou os pagamentos online."}
                     </div>
                   ) : (
                     <>
@@ -1500,6 +1584,27 @@ export default function CheckoutClient({
           </aside>
         </div>
       </div>
+
+      {/* ORCALY_MOBILE_CHECKOUT_ACTION_V3 */}
+      {!paymentOpen && !pix ? (
+        <div className="fixed inset-x-3 bottom-3 z-50 rounded-[1.5rem] border border-slate-200 bg-white/95 p-3 shadow-2xl shadow-slate-950/20 backdrop-blur lg:hidden">
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Total do pedido</p>
+              <p className="truncate text-xl font-black text-[#061a36]">{currency(finalPreviewTotal)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={openPayment}
+              disabled={cart.length === 0 || !data.payment.chargesEnabled}
+              className="shrink-0 rounded-2xl bg-[#009ee3] px-5 py-4 text-sm font-black text-white shadow-lg shadow-sky-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {data.payment.chargesEnabled ? 'Gerar pagamento' : 'Indisponível'}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
     </main>
   );
 }

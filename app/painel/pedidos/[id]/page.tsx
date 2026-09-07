@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { getAccessTokenClient } from '@/lib/current-company-client'
+import { getOrderStatusVisual, isOrderPaid } from '@/lib/order-status'
+import { buildOrderWhatsAppLink, hasOrderWhatsAppPhone } from '@/lib/order-whatsapp'
 
 const statusFlow = ['Recebido', 'Em análise', 'Aprovado', 'Em produção', 'Pronto', 'Entregue']
 
@@ -37,25 +39,6 @@ function inputDate(value?: string | null) {
   return date.toISOString().slice(0, 16)
 }
 
-function phoneOnly(value?: string | null) {
-  return String(value || '').replace(/\D/g, '')
-}
-
-function whatsappLink(phone?: string | null, text?: string) {
-  const clean = phoneOnly(phone)
-  if (!clean) return '#'
-  const finalPhone = clean.startsWith('55') ? clean : `55${clean}`
-  return `https://wa.me/${finalPhone}?text=${encodeURIComponent(text || 'Olá! Vim falar sobre meu pedido.')}`
-}
-
-function statusColor(status?: string | null) {
-  const value = String(status || '').toLowerCase()
-
-  if (value.includes('entregue') || value.includes('pronto') || value.includes('aprovado')) return 'bg-emerald-50 text-emerald-700 border-emerald-100'
-  if (value.includes('cancel')) return 'bg-red-50 text-red-700 border-red-100'
-  if (value.includes('produção') || value.includes('producao')) return 'bg-amber-50 text-amber-700 border-amber-100'
-  return 'bg-blue-50 text-[#05245c] border-blue-100'
-}
 
 export default function PedidoDetalheProPage() {
   const params = useParams()
@@ -71,8 +54,30 @@ export default function PedidoDetalheProPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  const total = useMemo(() => Number(order?.valor_total || order?.preco_estimado || 0), [order])
-  const currentIndex = Math.max(0, statusFlow.indexOf(order?.status || 'Recebido'))
+  // ORCALY_PAYMENT_AWARE_ORDER_DETAIL_V1
+  const total = useMemo(
+    () =>
+      Number(
+        order?.total_amount ||
+          order?.total ||
+          order?.valor_total ||
+          order?.preco_estimado ||
+          0,
+      ),
+    [order],
+  )
+  const paymentConfirmed = isOrderPaid(
+    order?.payment_status,
+    order?.paid_at,
+  )
+  const currentIndex = paymentConfirmed
+    ? statusFlow.indexOf(order?.status || 'Recebido')
+    : -1
+  const orderVisual = getOrderStatusVisual(
+    order?.status,
+    order?.payment_status,
+    order?.paid_at,
+  )
 
   async function load() {
     setLoading(true)
@@ -261,8 +266,8 @@ export default function PedidoDetalheProPage() {
           <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className={`rounded-full border px-3 py-1 text-xs font-black ${statusColor(order.status)}`}>
-                  {order.status || 'Recebido'}
+                <span className={`rounded-full border px-3 py-1 text-xs font-black ${orderVisual.className}`}>
+                  {orderVisual.label}
                 </span>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
                   {order.prioridade || 'normal'}
@@ -278,9 +283,9 @@ export default function PedidoDetalheProPage() {
             </div>
 
             <div className="rounded-[1.5rem] bg-[#05245c] p-5 text-white">
-              <p className="text-sm font-black text-white/60">Valor estimado</p>
+              <p className="text-sm font-black text-white/60">{paymentConfirmed ? 'Pagamento confirmado' : 'Valor do pedido'}</p>
               <p className="mt-2 text-4xl font-black">{moeda(total)}</p>
-              <p className="mt-2 text-sm font-bold text-white/70">{formatDate(order.created_at)}</p>
+              <p className="mt-2 text-sm font-bold text-white/70">{paymentConfirmed ? formatDate(order.paid_at || order.created_at) : orderVisual.label}</p>
             </div>
           </div>
         </header>
@@ -298,7 +303,10 @@ export default function PedidoDetalheProPage() {
 
           <div className="mt-6 grid gap-3 md:grid-cols-6">
             {statusFlow.map((status, index) => {
-              const reached = index <= currentIndex && order.status !== 'Cancelado'
+              const reached =
+                paymentConfirmed &&
+                index <= currentIndex &&
+                order.status !== 'Cancelado'
               const current = status === order.status
 
               return (
@@ -330,6 +338,9 @@ export default function PedidoDetalheProPage() {
                 <label className="grid gap-2">
                   <span className="text-sm font-black">Status</span>
                   <select value={order.status || 'Recebido'} onChange={(event) => update('status', event.target.value)} className="rounded-2xl border border-slate-200 px-4 py-4 font-bold outline-none">
+                    {order.status && !statusOptions.includes(order.status) ? (
+                      <option value={order.status}>{orderVisual.label}</option>
+                    ) : null}
                     {statusOptions.map((status) => <option key={status} value={status}>{status}</option>)}
                   </select>
                 </label>
@@ -391,7 +402,7 @@ export default function PedidoDetalheProPage() {
                 </button>
                 <button onClick={createTask} className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-sm font-black text-[#05245c]">Transformar em tarefa</button>
                 <button onClick={createProposal} className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-sm font-black text-[#05245c]">Criar proposta</button>
-                <a href={whatsappLink(order.telefone, `Olá, ${order.nome || ''}! Vim falar sobre seu pedido: ${order.produto || ''}.`)} target="_blank" rel="noreferrer" className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-sm font-black text-[#05245c]">Enviar WhatsApp</a>
+                <a href={buildOrderWhatsAppLink(order)} target="_blank" rel="noreferrer" className={`rounded-2xl border border-blue-100 px-5 py-4 text-sm font-black ${hasOrderWhatsAppPhone(order) ? 'bg-white text-[#05245c]' : 'pointer-events-none bg-slate-100 text-slate-400'}`}>Enviar WhatsApp</a>
                 {fileUrl ? <a href={fileUrl} target="_blank" rel="noreferrer" className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-sm font-black text-[#05245c]">Abrir arquivo</a> : null}
               </div>
             </div>
@@ -436,7 +447,12 @@ export default function PedidoDetalheProPage() {
               <div className="mt-5 grid gap-3">
                 {timeline.map((item) => (
                   <article key={item.id} className="rounded-2xl border border-blue-100 bg-[#f5f8ff] p-4">
-                    <p className="font-black">{item.old_status || 'Início'} → {item.new_status}</p>
+                    <p className="font-black">
+                      {item.old_status
+                        ? getOrderStatusVisual(item.old_status).label
+                        : 'Início'}{' '}
+                      → {getOrderStatusVisual(item.new_status).label}
+                    </p>
                     {item.note ? <p className="mt-1 text-sm font-bold text-slate-500">{item.note}</p> : null}
                     <p className="mt-2 text-xs font-black text-slate-400">
                       {item.changed_by_email || 'Equipe'} • {formatDate(item.created_at)}

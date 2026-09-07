@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import SitePreview from '@/components/site-builder/SitePreview'
 import LogoUploader from '@/components/site-builder/LogoUploader'
+import BannerUploader from '@/components/site-builder/BannerUploader'
 import ColorPalettePicker from '@/components/site-builder/ColorPalettePicker'
 import BenefitsEditor, { cleanBenefits, type BenefitEditorItem } from '@/components/site-builder/BenefitsEditor'
 import FaqEditor, { cleanFaq, type FaqEditorItem } from '@/components/site-builder/FaqEditor'
@@ -18,6 +19,7 @@ import { getCompanyLocalSitePath, getCompanyPublicUrl } from '@/lib/company-url'
 type Tab = 'identidade' | 'segmento' | 'capa' | 'cores' | 'secoes' | 'conteudo' | 'catalogo' | 'checkout' | 'preview' | 'publicacao'
 type PreviewMode = 'desktop' | 'mobile'
 
+// ORCALY_MINHA_VITRINE_PANEL_V1
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: 'identidade', label: 'Identidade' },
   { id: 'segmento', label: 'Segmento' },
@@ -33,6 +35,22 @@ const tabs: Array<{ id: Tab; label: string }> = [
 
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? value as T[] : []
+}
+
+type GalleryItem = {
+  url?: string
+  image_url?: string
+  title?: string
+  kind?: string
+  type?: string
+}
+
+function getBannerUrl(value: unknown) {
+  const banner = asArray<GalleryItem>(value).find(
+    (item) => item.kind === 'banner' || item.type === 'banner',
+  )
+
+  return banner?.url || banner?.image_url || ''
 }
 
 function publicLink(company: PublicSiteCompany | null) {
@@ -96,7 +114,7 @@ function whatsappShareLink(company: PublicSiteCompany | null) {
 }
 
 export default function SiteBuilderPage() {
-  const [tab, setTab] = useState<Tab>('identidade')
+  const [tab, setTab] = useState<Tab>('preview')
   const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop')
   const [company, setCompany] = useState<PublicSiteCompany | null>(null)
   const [products, setProducts] = useState<PublicSiteProduct[]>([])
@@ -161,6 +179,19 @@ export default function SiteBuilderPage() {
     setFaq(next)
     setCompany((current) => ({ ...(current || {}), site_faq: next }))
     markDirty()
+  }
+
+  function updateBanner(url: string | null) {
+    const gallery = asArray<GalleryItem>(company?.site_gallery).filter(
+      (item) => item.kind !== 'banner' && item.type !== 'banner',
+    )
+
+    update(
+      'site_gallery',
+      url
+        ? [{ kind: 'banner', type: 'banner', title: 'Banner principal', url }, ...gallery]
+        : gallery,
+    )
   }
 
   async function load() {
@@ -349,11 +380,11 @@ export default function SiteBuilderPage() {
         <header className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-xl shadow-blue-950/5">
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
             <div className="min-w-0">
-              <Link href="/painel" className="text-sm font-black text-[#05245c]">← Voltar ao painel</Link>
-              <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#05245c]">Editor visual do site</p>
-              <h1 className="mt-2 text-4xl font-black tracking-[-0.06em] sm:text-5xl">Configure sem mexer em código</h1>
+              <Link href="/painel/inicio" className="text-sm font-black text-[#05245c]">← Ir para visão geral</Link>
+              <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#05245c]">Minha Vitrine</p>
+              <h1 className="mt-2 text-4xl font-black tracking-[-0.06em] sm:text-5xl">Edite o site que seus clientes veem</h1>
               <p className="mt-3 max-w-3xl font-bold leading-7 text-slate-500">
-                O usuário configura visualmente. O sistema salva tecnicamente por baixo.
+                Site, catálogo, cardápio, identidade e checkout ficam reunidos nesta única experiência.
               </p>
             </div>
 
@@ -476,6 +507,13 @@ export default function SiteBuilderPage() {
 
               {tab === 'capa' ? (
                 <div className="grid gap-5">
+                  <BannerUploader
+                    companyId={company.id}
+                    value={getBannerUrl(company.site_gallery)}
+                    disabled={saving}
+                    onChange={updateBanner}
+                  />
+
                   <div className="rounded-[1.7rem] border border-blue-100 bg-[#f8fbff] p-5">
                     <p className="font-black text-[#05245c]">Modelo recomendado para {template.label}</p>
                     <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
@@ -571,7 +609,7 @@ export default function SiteBuilderPage() {
                     <p className="text-sm font-black text-[#05245c]">Nome da seção</p>
                     <p className="mt-1 text-3xl font-black tracking-[-0.05em]">{template.catalogLabel}</p>
                     <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
-                      Os produtos, serviços ou itens do cardápio são editados na área de Produtos/Marketplace.
+                      Os produtos, serviços ou itens do cardápio são editados na área Itens da Vitrine.
                     </p>
                   </div>
 

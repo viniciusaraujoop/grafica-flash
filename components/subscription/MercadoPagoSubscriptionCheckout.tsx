@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 "use client";
 
 import Script from "next/script";
@@ -60,6 +60,39 @@ const plans: Array<{
     description: "Recursos avançados para operações em crescimento.",
   },
 ];
+
+
+async function fetchWithPaymentTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = 30000,
+) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(
+    () => controller.abort(),
+    timeoutMs,
+  );
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (cause) {
+    if (
+      cause instanceof DOMException &&
+      cause.name === "AbortError"
+    ) {
+      throw new Error(
+        "O servidor de pagamentos demorou para responder. Tente novamente.",
+      );
+    }
+
+    throw cause;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
 
 function money(value: number) {
   return value.toLocaleString("pt-BR", {
@@ -169,7 +202,7 @@ function PixIcon() {
 
 export default function MercadoPagoSubscriptionCheckout() {
   const publicKey =
-    process.env.NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY || "";
+    process.env.NEXT_PUBLIC_MP_SUBSCRIPTION_PUBLIC_KEY || "";
 
   const brickControllerRef = useRef<any>(null);
   const processingRef = useRef(false);
@@ -194,7 +227,24 @@ export default function MercadoPagoSubscriptionCheckout() {
 
   const getToken = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
-    return data.session?.access_token || "";
+    const session = data.session;
+    const expiresAt = Number(session?.expires_at || 0);
+    const stillValid =
+      Boolean(session?.access_token) &&
+      expiresAt > Math.floor(Date.now() / 1000) + 60;
+
+    if (stillValid) {
+      return session?.access_token || "";
+    }
+
+    const { data: refreshed } =
+      await supabase.auth.refreshSession();
+
+    return (
+      refreshed.session?.access_token ||
+      session?.access_token ||
+      ""
+    );
   }, []);
 
   const load = useCallback(async () => {
@@ -236,8 +286,26 @@ export default function MercadoPagoSubscriptionCheckout() {
   }, [getToken]);
 
   useEffect(() => {
-    void load();
+    const timer = window.setTimeout(() => {
+      void load();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [load]);
+
+  useEffect(() => {
+    if (!checkoutOpen || publicKey) return;
+
+    const timer = window.setTimeout(() => {
+      console.error("subscription_public_key_missing");
+      setError(
+        "O checkout de assinatura ainda nÃ£o recebeu a chave pÃºblica do Mercado Pago neste deploy.",
+      );
+      setBrickReady(false);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [checkoutOpen, publicKey]);
 
   const submitPayment = useCallback(
     async (formData: Record<string, unknown>) => {
@@ -267,13 +335,14 @@ export default function MercadoPagoSubscriptionCheckout() {
               ? (formData.payer as Record<string, unknown>)
               : {};
 
-          const response = await fetch(
+          const response = await fetchWithPaymentTimeout(
             "/api/assinatura/mercado-pago",
             {
               method: "POST",
               headers: {
                 "content-type": "application/json",
                 authorization: `Bearer ${token}`,
+            "x-orcaly-session": token,
               },
               body: JSON.stringify({
                 plan: planKey,
@@ -301,11 +370,12 @@ export default function MercadoPagoSubscriptionCheckout() {
           return;
         }
 
-        const response = await fetch("/api/assinatura/checkout", {
+        const response = await fetchWithPaymentTimeout("/api/assinatura/checkout", {
           method: "POST",
           headers: {
             "content-type": "application/json",
             authorization: `Bearer ${token}`,
+            "x-orcaly-session": token,
             "idempotency-key": crypto.randomUUID(),
           },
           body: JSON.stringify({
@@ -352,7 +422,7 @@ export default function MercadoPagoSubscriptionCheckout() {
         setProcessing(false);
       }
     },
-    [getToken, load, mode, planKey, snapshot?.company?.email],
+    [getToken, load, mode, planKey, snapshot],
   );
 
   useEffect(() => {
@@ -467,7 +537,18 @@ export default function MercadoPagoSubscriptionCheckout() {
       brickControllerRef.current = controller;
     }
 
-    void renderBrick();
+    void renderBrick().catch((cause) => {
+      console.error("subscription_payment_brick_render_error", cause);
+
+      if (!cancelled) {
+        setBrickReady(false);
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "NÃ£o foi possÃ­vel iniciar o pagamento.",
+        );
+      }
+    });
 
     return () => {
       cancelled = true;
@@ -506,6 +587,7 @@ export default function MercadoPagoSubscriptionCheckout() {
           cache: "no-store",
           headers: {
             authorization: `Bearer ${token}`,
+            "x-orcaly-session": token,
           },
         },
       );

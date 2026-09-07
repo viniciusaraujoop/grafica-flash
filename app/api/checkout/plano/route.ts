@@ -1,46 +1,38 @@
-// ORCALY_ASAAS_MIGRATION_V2
-import { NextRequest } from "next/server";
-import { POST as asaasPost } from "@/app/api/assinatura/asaas/route";
-import { POST as mercadoPagoPost } from "./route.mercado-pago";
-import {
-  canUseAsaasSubscriptions,
-  getDefaultPaymentProvider,
-} from "@/lib/payments/asaas-config";
+import { NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
-  const useAsaas =
-    getDefaultPaymentProvider() === "asaas" &&
-    canUseAsaasSubscriptions();
+export async function GET() {
+  return NextResponse.json(
+    {
+      ok: false,
+      deprecated: true,
+      route: "/api/checkout/plano",
+      replacement: {
+        one_time: "/api/assinatura/checkout",
+        recurring: "/api/assinatura/mercado-pago",
+        management: "/api/company/subscription",
+      },
+    },
+    {
+      status: 410,
+      headers: { "Cache-Control": "no-store" },
+    },
+  );
+}
 
-  if (!useAsaas) {
-    return mercadoPagoPost(request);
-  }
-
-  const body = await request.clone().json().catch(() => ({}));
-  const method = String(
-    body.paymentMethod ||
-      body.metodo ||
-      body.formaPagamento ||
-      body.payment_method ||
-      "PIX",
-  ).toUpperCase();
-
-  const normalized = new NextRequest(request.url, {
-    method: "POST",
-    headers: request.headers,
-    body: JSON.stringify({
-      ...body,
-      planKey:
-        body.planKey ||
-        body.plano ||
-        body.plan ||
-        body.planoKey,
-      paymentMethod:
-        method.includes("CARD") || method.includes("CART")
-          ? "CREDIT_CARD"
-          : "PIX",
-    }),
-  });
-
-  return asaasPost(normalized);
+export async function POST() {
+  return NextResponse.json(
+    {
+      error:
+        "Esta rota foi desativada para impedir conflito entre implementaÃ§Ãµes de assinatura.",
+      code: "LEGACY_PAYMENT_ROUTE_DISABLED",
+      replacement: {
+        one_time: "/api/assinatura/checkout",
+        recurring: "/api/assinatura/mercado-pago",
+      },
+    },
+    {
+      status: 410,
+      headers: { "Cache-Control": "no-store" },
+    },
+  );
 }

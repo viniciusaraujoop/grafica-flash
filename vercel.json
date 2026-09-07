@@ -3,6 +3,10 @@
     {
       "path": "/api/admin/scan",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/founder-billing",
+      "schedule": "15 6 * * *"
     }
   ]
 }

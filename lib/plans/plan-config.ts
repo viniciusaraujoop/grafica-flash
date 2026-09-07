@@ -2,9 +2,9 @@
 export type PlanKey = "essencial" | "profissional" | "premium";
 
 export const PLAN_CONFIG = {
-  essencial: { label: "Essencial", monthlyPrice: 49.9, marketplaceFeePercent: 3 },
-  profissional: { label: "Profissional", monthlyPrice: 99.9, marketplaceFeePercent: 2 },
-  premium: { label: "Premium", monthlyPrice: 149.9, marketplaceFeePercent: 1 },
+  essencial: { label: "Essencial", monthlyPrice: 49.9, marketplaceFeePercent: 3.5 },
+  profissional: { label: "Profissional", monthlyPrice: 99.9, marketplaceFeePercent: 3 },
+  premium: { label: "Premium", monthlyPrice: 149.9, marketplaceFeePercent: 2 },
 } as const;
 
 const ALIASES: Record<string, PlanKey> = {

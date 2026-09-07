@@ -1,0 +1,121 @@
+
+========================================================================
+ORCALY - AUDITORIA PARA MERCADO PAGO TRANSPARENTE
+========================================================================
+Raiz: C:\Users\arauj\grafica-flash
+Data: 26/07/2026 12:30:04
+
+========================================================================
+GIT
+========================================================================
+Branch: feature/asaas-sandbox
+Alteracoes locais:
+ M app/api/payments/asaas/account/route.ts
+ M components/payments/AsaasFinancialPanel.tsx
+?? auditar-mercado-pago-transparente-orcaly.ps1
+?? corrigir-cpf-cnpj-segmento-recebimentos-orcaly-v2.ps1
+?? corrigir-cpf-cnpj-segmento-recebimentos-orcaly.ps1
+?? reparar-build-cpf-cnpj-orcaly.ps1
+
+========================================================================
+ARQUIVOS IMPORTANTES
+========================================================================
+
+Arquivo                                                       Existe Linhas Tamanho
+-------                                                       ------ ------ -------
+package.json                                                    True     30     631
+lib/mercado-pago.ts                                             True    182    5758
+lib/payments/credential-encryption.ts                           True     49    1723
+lib/payments/server-context.ts                                  True    259    6158
+lib/payments/checkout-service.ts                                True    668   18830
+lib/payments/subscription-asaas.ts                              True    256    9671
+app/painel/assinatura/page.tsx                                  True      7     211
+components/subscription/AsaasSubscriptionPayment.tsx            True    241    9458
+app/api/assinatura/asaas/route.ts                               True     29     744
+app/api/assinatura/asaas/cancelar/route.ts                      True     29     743
+app/api/assinatura/cancelar/route.ts                            True     19     547
+components/payments/PaymentsHub.tsx                             True    125    4014
+components/payments/AsaasFinancialPanel.tsx                     True   2145   78070
+app/painel/pagamentos/page.tsx                                  True      7     187
+app/painel/pagamentos/configuracao/page.tsx                     True      6     133
+components/painel/MarketplacePaymentsPanel.tsx                  True    406   22508
+app/api/marketplace/payments/settings/route.ts                  True     73    3088
+app/api/marketplace/payments/sales/route.ts                     True     26    1327
+app/api/marketplace/payments/create/route.ts                    True     18     490
+app/api/marketplace/payments/mercado-pago/connect/route.ts      True     20     338
+app/api/marketplace/payments/mercado-pago/callback/route.ts     True     20     338
+app/api/marketplace/payments/mercado-pago/disconnect/route.ts   True     33    1375
+app/api/marketplace/payments/webhook/mercado-pago/route.ts      True    166    6628
+app/checkout/[slug]/page.tsx                                    True     12     298
+components/checkout/CheckoutClient.tsx                          True    877   29441
+app/api/checkout/[slug]/route.ts                                True     62    1378
+app/api/checkout/[slug]/prepare/route.ts                        True     22     644
+app/api/checkout/[slug]/pix/route.ts                            True     30     796
+app/api/checkout/[slug]/pix/[paymentId]/route.ts                True     53    1406
+app/api/checkout/[slug]/card/route.ts                           True     43    1118
+app/api/checkout/[slug]/status/route.ts                         True     80    2106
+
+========================================================================
+MARCADORES DO ESTADO ATUAL
+========================================================================
+
+Arquivo                                                     Marcador                 Ocorrencias
+-------                                                     --------                 -----------
+app/api/marketplace/payments/mercado-pago/connect/route.ts  LEGACY_PROVIDER_DISABLED           1
+app/api/marketplace/payments/mercado-pago/callback/route.ts LEGACY_PROVIDER_DISABLED           1
+app/api/marketplace/payments/create/route.ts                LEGACY_CHECKOUT_DISABLED           1
+app/painel/assinatura/page.tsx                              AsaasSubscriptionPayment           3
+components/payments/PaymentsHub.tsx                         AsaasFinancialPanel                3
+components/checkout/CheckoutClient.tsx                      CREDIT_CARD                        5
+components/checkout/CheckoutClient.tsx                      MercadoPago                        0
+app/api/checkout/[slug]/route.ts                            Asaas                              0
+app/api/checkout/[slug]/route.ts                            mercado_pago                       0
+
+========================================================================
+VARIAVEIS DE AMBIENTE SEM EXIBIR SEGREDOS
+========================================================================
+
+Variavel                            Configurada Tamanho
+--------                            ----------- -------
+MERCADO_PAGO_CLIENT_ID                    False       0
+MERCADO_PAGO_CLIENT_SECRET                False       0
+MERCADO_PAGO_ACCESS_TOKEN                 False       0
+MERCADO_PAGO_PUBLIC_KEY                   False       0
+NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY       False       0
+MERCADO_PAGO_REDIRECT_URI                 False       0
+MERCADO_PAGO_WEBHOOK_SECRET               False       0
+PAYMENT_CREDENTIALS_ENCRYPTION_KEY        False       0
+NEXT_PUBLIC_APP_URL                       False       0
+NEXT_PUBLIC_SITE_URL                      False       0
+ORCALY_APP_URL                            False       0
+NEXT_PUBLIC_SUPABASE_URL                  False       0
+SUPABASE_SERVICE_ROLE_KEY                 False       0
+
+========================================================================
+MIGRACOES RELACIONADAS
+========================================================================
+
+Name                                               Length LastWriteTime      
+----                                               ------ -------------      
+20260706_assinatura_pix_avulso.sql                   3171 06/07/2026 20:31:28
+20260706_marketplace_checkout_cupons_segmentos.sql  13549 06/07/2026 20:31:28
+20260706_marketplace_food_checkout.sql              28010 06/07/2026 20:31:28
+20260706_marketplace_mercado_pago_split.sql          8517 06/07/2026 20:31:28
+20260717_subscription_trial_cancellation.sql         3876 17/07/2026 21:01:50
+20260723_migracao_gradual_asaas_orcaly.sql          14687 23/07/2026 13:13:37
+20260723213000_checkout_asaas_pix_payout.sql         1852 23/07/2026 17:48:39
+20260723234500_subscription_webhook_unified.sql       665 23/07/2026 19:10:30
+
+========================================================================
+DEPENDENCIAS
+========================================================================
+Next.js: 16.2.9
+React: 19.2.4
+Supabase: ^2.108.1
+Nao foi possivel ler package.json: A propriedade 'mercadopago' não foi encontrada neste objeto. Verifique se a propriedade existe.
+
+========================================================================
+RESUMO
+========================================================================
+A auditoria nao modificou codigo, banco de dados ou variaveis.
+Relatorio: C:\Users\arauj\grafica-flash\auditoria-mercado-pago-transparente-20260726-123004.txt

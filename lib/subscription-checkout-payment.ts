@@ -1,7 +1,13 @@
+// ORCALY_AFFILIATE_INTEGRATION_V1
 import "server-only";
 
 import { randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
+import {
+  buildSubscriptionReference,
+  normalizePlanKey,
+  parseSubscriptionReference,
+} from "@/lib/payments/core/contracts";
 import {
   createMercadoPagoPayment,
   getMercadoPagoPayment,
@@ -14,8 +20,10 @@ import {
   getSupabaseAdmin,
   ORCALY_PLANS,
   resolveSubscriptionContext,
-  type PlanKey,
 } from "@/lib/subscription-service";
+import {
+  reverseAffiliateCommissionForPayment,
+} from "@/lib/affiliates/server";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -29,32 +37,6 @@ function record(value: unknown): JsonRecord {
   }
 
   return value as JsonRecord;
-}
-
-function normalizePlan(value: unknown): PlanKey {
-  const normalized = text(value).toLowerCase();
-
-  if (
-    normalized === "basico" ||
-    normalized === "básico" ||
-    normalized === "essencial"
-  ) {
-    return "basico";
-  }
-
-  if (
-    normalized === "profissional" ||
-    normalized === "intermediario" ||
-    normalized === "intermediário"
-  ) {
-    return "profissional";
-  }
-
-  if (normalized === "premium") {
-    return "premium";
-  }
-
-  return "profissional";
 }
 
 function digits(value: unknown) {
@@ -182,10 +164,30 @@ async function persistRemoteStatus(
   );
 
   if (remoteStatus !== "approved") {
+    if (
+      alreadyApproved &&
+      ["refunded", "charged_back", "cancelled", "canceled"].includes(
+        remoteStatus,
+      )
+    ) {
+      await reverseAffiliateCommissionForPayment(
+        admin,
+        paymentId,
+        `Pagamento ${remoteStatus} no Mercado Pago.`,
+      ).catch((affiliateError) => {
+        console.error(
+          "orcaly_affiliate_reversal_error",
+          affiliateError instanceof Error
+            ? affiliateError.message
+            : affiliateError,
+        );
+      });
+    }
+
     await admin
       .from("plan_payments")
       .update({
-        status: remoteStatus,
+        status: mappedStatus,
         mercado_pago_payment_id: paymentId || null,
         payment_method: text(payment.payment_method_id) || null,
         raw_payment: payment,
@@ -235,7 +237,7 @@ async function persistRemoteStatus(
         await admin
           .from("plan_payments")
           .update({
-            status: "approved",
+            status: "paid",
             mercado_pago_payment_id: paymentId || null,
             payment_method: text(payment.payment_method_id) || null,
             raw_payment: payment,
@@ -250,7 +252,7 @@ async function persistRemoteStatus(
         await admin
           .from("plan_payments")
           .update({
-            status: "approval_error",
+            status: "failed",
             raw_payment: payment,
             updated_at: new Date().toISOString(),
           })
@@ -272,20 +274,18 @@ async function persistRemoteStatus(
 }
 
 function parseReference(value: unknown) {
-  const raw = text(value);
-  const parts = raw.split(":");
+  const parsed = parseSubscriptionReference(value);
 
-  if (parts[0] !== "orcaly_subscription_checkout") {
+  if (!parsed || parsed.kind !== "checkout" || !parsed.paymentRowId) {
     return null;
   }
 
-  const companyId = parts[1] || "";
-  const plan = normalizePlan(parts[2]);
-  const paymentRowId = parts[3] || "";
-
-  if (!companyId || !paymentRowId) return null;
-
-  return { companyId, plan, paymentRowId };
+  return {
+    kind: parsed.kind,
+    companyId: parsed.companyId,
+    plan: parsed.plan,
+    paymentRowId: parsed.paymentRowId,
+  };
 }
 
 export async function createSubscriptionCheckoutPayment(
@@ -318,7 +318,7 @@ export async function createSubscriptionCheckoutPayment(
   const identification = record(payer.identification);
   const company = context.company as JsonRecord;
   const companyId = text(company.id);
-  const planKey = normalizePlan(
+  const planKey = normalizePlanKey(
     body.plan || company.assinatura_plano || company.plano,
   );
   const plan = ORCALY_PLANS[planKey];
@@ -370,7 +370,7 @@ export async function createSubscriptionCheckoutPayment(
         company_id: companyId,
         plano: planKey,
         valor: plan.price,
-        status: "creating",
+        status: "created",
         tipo: kind === "pix" ? "pix_avulso" : "card_avulso",
         payment_method: paymentMethodId,
         email: payerEmail,
@@ -390,10 +390,29 @@ export async function createSubscriptionCheckoutPayment(
   }
 
   const paymentRowId = text(paymentRow.id);
-  const externalReference =
-    `orcaly_subscription_checkout:${companyId}:${planKey}:${paymentRowId}`;
+  const externalReference = buildSubscriptionReference({
+    kind: "checkout",
+    companyId,
+    plan: planKey,
+    paymentRowId,
+  });
   const idempotencyKey =
     text(request.headers.get("idempotency-key")) || randomUUID();
+
+  const { error: referenceError } = await context.admin
+    .from("plan_payments")
+    .update({
+      provider: "mercado_pago",
+      external_reference: externalReference,
+      idempotency_key: idempotencyKey,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", paymentRowId)
+    .eq("company_id", companyId);
+
+  if (referenceError) {
+    throw referenceError;
+  }
 
   const payload: JsonRecord = {
     transaction_amount: plan.price,
@@ -456,7 +475,7 @@ export async function createSubscriptionCheckoutPayment(
     await context.admin
       .from("plan_payments")
       .update({
-        status: "error",
+        status: "failed",
         updated_at: new Date().toISOString(),
       })
       .eq("id", paymentRowId)

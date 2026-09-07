@@ -1,0 +1,84 @@
+name: Partner Portal v2 QA
+
+on:
+  pull_request:
+    paths:
+      - 'app/parceiros/**'
+      - 'app/demo/**'
+      - 'app/cadastro/codigo/**'
+      - 'app/admin/indicacoes/**'
+      - 'app/api/parceiros/**'
+      - 'app/api/public/partner-demo/**'
+      - 'app/api/public/partner-code/**'
+      - 'app/api/admin/affiliates/**'
+      - 'app/api/checkout/lead/route.ts'
+      - 'components/parceiros/**'
+      - 'lib/affiliates/**'
+      - 'supabase/migrations/20260819221500_partner_portal_v2_indexes.sql'
+      - 'scripts/verify-partner-portal-v2.mjs'
+      - 'package.json'
+      - 'eslint.config.mjs'
+      - '.github/workflows/partner-portal-v2.yml'
+  workflow_dispatch:
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Partner invariant tests
+        run: npm test
+      - name: Focused lint
+        run: >-
+          npx eslint
+          app/api/parceiros/portal-v2/route.ts
+          app/api/parceiros/demos/route.ts
+          app/api/parceiros/ai/route.ts
+          app/api/public/partner-demo/[token]/route.ts
+          app/api/public/partner-code/[code]/route.ts
+          app/api/admin/affiliates/growth/route.ts
+          app/api/checkout/lead/route.ts
+          app/cadastro/codigo/page.tsx
+          app/parceiros/painel/page.tsx
+          app/parceiros/painel/layout.tsx
+          app/parceiros/demo/page.tsx
+          app/parceiros/notificacoes/page.tsx
+          app/parceiros/pipeline/page.tsx
+          app/demo/[token]/page.tsx
+          app/admin/indicacoes/growth/page.tsx
+          components/parceiros/PartnerPortalV2.tsx
+          components/parceiros/PartnerNotificationsCenter.tsx
+          components/parceiros/PartnerDemoHub.tsx
+          components/parceiros/TrackedPartnerDemo.tsx
+          components/parceiros/PartnerPipelineV2.tsx
+          lib/affiliates/portal-v2.ts
+      - name: TypeScript and production build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-build.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-build-placeholder
+          SUPABASE_SERVICE_ROLE_KEY: ci-build-placeholder
+        run: npm run build
+      - name: Dependency audit (report debt, do not auto-upgrade)
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+  global-lint-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Global lint baseline
+        run: npm run lint

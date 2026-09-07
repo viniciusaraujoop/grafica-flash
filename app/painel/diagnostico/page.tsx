@@ -1,5 +1,5 @@
-import PanelPlaceholderPage from '@/components/painel/PanelPlaceholderPage'
+import SegmentOperationQueue from '@/components/operations/SegmentOperationQueue'
 
-export default function Page() {
-  return <PanelPlaceholderPage moduleId="diagnostico" />
+export default function DiagnosticoPage() {
+  return <SegmentOperationQueue kind="diagnosis" />
 }

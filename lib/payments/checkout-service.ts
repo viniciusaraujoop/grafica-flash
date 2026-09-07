@@ -1,10 +1,13 @@
 import "server-only";
+import { validateCheckoutPayload } from "@/lib/payments/checkout-validation";
+// ORCALY_MP_TRANSPARENT_CHECKOUT_V1
 import {
   createHash,
   randomUUID,
 } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { getPlanConfig } from "@/lib/plans/plan-config";
+// ORCALY_MP_APPLICATION_FEE_OAUTH_V1
 import {
   createMercadoPagoPayment,
   getMercadoPagoPayment,
@@ -17,6 +20,14 @@ import {
 import {
   resolveCompanyBySlug,
 } from "@/lib/payments/server-context";
+import {
+  getCheckoutOptionPayload,
+  getOptionSelectionSummary,
+  getOptionSelectionsPrice,
+  getProductOptionGroups,
+  validateProductOptionSelections,
+  type ProductOptionSelections,
+} from "@/lib/product-options";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -25,6 +36,7 @@ type CheckoutItem = {
   quantity: number;
   variationId?: string;
   addonIds?: string[];
+  optionSelections?: ProductOptionSelections;
   observation?: string;
 };
 
@@ -105,6 +117,38 @@ const money = (value: unknown) => {
 const array = (value: unknown) =>
   Array.isArray(value) ? value : [];
 
+function normalizeMarketplaceCouponCode(value: unknown) {
+  return text(value)
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/Ç/g, "C")
+    .replace(/[^A-Z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 32);
+}
+
+function normalizeMarketplaceCouponType(coupon: JsonRecord) {
+  const raw = text(
+    coupon.coupon_type ||
+      coupon.tipo,
+  ).toLowerCase();
+
+  if (
+    coupon.free_delivery === true ||
+    ["free_delivery", "frete_gratis", "frete-gratis"].includes(raw)
+  ) {
+    return "free_delivery";
+  }
+
+  if (["fixed", "fixo"].includes(raw)) {
+    return "fixed";
+  }
+
+  return "percentage";
+}
+
 function digits(value: unknown) {
   return text(value).replace(/\D/g, "");
 }
@@ -115,6 +159,327 @@ function asRecord(value: unknown): JsonRecord {
   }
 
   return value as JsonRecord;
+}
+
+function marketplacePublicKey() {
+  return text(
+    process.env.NEXT_PUBLIC_MP_MARKETPLACE_PUBLIC_KEY,
+  );
+}
+
+function verifiedMarketplaceOauth(value: unknown) {
+  const metadata = asRecord(value);
+  const configuredClientId = text(
+    process.env.MP_MARKETPLACE_CLIENT_ID,
+  );
+
+  return Boolean(
+    configuredClientId &&
+      metadata.oauth_grant_type === "authorization_code" &&
+      text(metadata.marketplace_client_id) ===
+        configuredClientId,
+  );
+}
+
+function mercadoPagoProviderErrorCode(cause: unknown) {
+  if (!cause || typeof cause !== "object") return 0;
+
+  const providerPayload =
+    "providerPayload" in cause
+      ? asRecord(
+          (
+            cause as {
+              providerPayload?: unknown;
+            }
+          ).providerPayload,
+        )
+      : {};
+  const directCode = Number(
+    providerPayload.code ||
+      providerPayload.status ||
+      0,
+  );
+
+  if (directCode) return directCode;
+
+  for (const rawCause of array(providerPayload.cause)) {
+    const record = asRecord(rawCause);
+    const code = Number(
+      record.code ||
+        record.status ||
+        0,
+    );
+
+    if (code) return code;
+  }
+
+  return 0;
+}
+
+// ORCALY_SERVER_OPTION_VALIDATION_1C1
+function normalizeOptionSelections(
+  value: unknown,
+): ProductOptionSelections {
+  const record = asRecord(value);
+
+  return Object.fromEntries(
+    Object.entries(record).map(([groupId, selected]) => [
+      groupId,
+      Array.from(
+        new Set(
+          array(selected)
+            .map((item) => text(item))
+            .filter(Boolean),
+        ),
+      ),
+    ]),
+  ) as ProductOptionSelections;
+}
+
+function assertProductAvailability(
+  product: JsonRecord,
+  quantity: number,
+) {
+  if (product.available === false) {
+    throw Object.assign(
+      new Error("Um produto ficou indisponivel."),
+      { status: 409 },
+    );
+  }
+
+  const extras = asRecord(product.extras);
+  const controlled =
+    extras.controle_estoque === true ||
+    extras.stock_control === true ||
+    product.controle_estoque === true ||
+    product.stock_control === true;
+
+  if (!controlled) return;
+
+  const rawStock =
+    extras.estoque ??
+    extras.stock ??
+    product.estoque ??
+    product.stock ??
+    0;
+  const parsedStock = Number(rawStock);
+  const stock = Number.isFinite(parsedStock)
+    ? Math.max(0, Math.floor(parsedStock))
+    : 0;
+
+  if (quantity > stock) {
+    throw Object.assign(
+      new Error(
+        stock > 0
+          ? `Estoque insuficiente para ${productName(product)}. Disponivel: ${stock}.`
+          : `${productName(product)} esta esgotado.`,
+      ),
+      { status: 409 },
+    );
+  }
+}
+
+function resolveConfiguredProductOptions(
+  product: JsonRecord,
+  input: CheckoutItem,
+) {
+  const groups = getProductOptionGroups({
+    extras: asRecord(product.extras),
+    variations: product.variations,
+    addons: product.addons,
+    variacoes: product.variacoes,
+    adicionais: product.adicionais,
+    configuracoes: asRecord(product.configuracoes),
+  });
+
+  if (!groups.length) return null;
+
+  const provided = normalizeOptionSelections(
+    input.optionSelections,
+  );
+  const groupIds = new Set(
+    groups.map((group) => group.id),
+  );
+  const ownerByOptionId = new Map<string, string>();
+
+  for (const group of groups) {
+    for (const option of group.options) {
+      const previousOwner =
+        ownerByOptionId.get(option.id);
+
+      if (
+        previousOwner &&
+        previousOwner !== group.id
+      ) {
+        throw Object.assign(
+          new Error(
+            `A configuracao de opcoes de ${productName(product)} possui identificadores duplicados.`,
+          ),
+          { status: 409 },
+        );
+      }
+
+      ownerByOptionId.set(
+        option.id,
+        group.id,
+      );
+    }
+  }
+
+  for (const [groupId, selected] of Object.entries(provided)) {
+    if (selected.length && !groupIds.has(groupId)) {
+      throw Object.assign(
+        new Error(
+          "Um grupo de opcoes nao esta mais disponivel.",
+        ),
+        { status: 400 },
+      );
+    }
+  }
+
+  const compatibilityIds = [
+    text(input.variationId),
+    ...array(input.addonIds)
+      .map((item) => text(item)),
+  ].filter(Boolean);
+  const submittedIds = new Set([
+    ...compatibilityIds,
+    ...Object.values(provided).flat(),
+  ]);
+
+  for (const optionIdValue of submittedIds) {
+    if (!ownerByOptionId.has(optionIdValue)) {
+      throw Object.assign(
+        new Error(
+          "Uma opcao selecionada nao esta mais disponivel.",
+        ),
+        { status: 400 },
+      );
+    }
+  }
+
+  const selections: ProductOptionSelections =
+    Object.fromEntries(
+      groups.map((group) => [
+        group.id,
+        Array.from(
+          new Set([
+            ...(provided[group.id] || []),
+            ...compatibilityIds.filter(
+              (optionIdValue) =>
+                ownerByOptionId.get(
+                  optionIdValue,
+                ) === group.id,
+            ),
+          ]),
+        ),
+      ]),
+    );
+
+  const validation =
+    validateProductOptionSelections(
+      groups,
+      selections,
+    );
+
+  if (validation) {
+    throw Object.assign(
+      new Error(validation),
+      { status: 400 },
+    );
+  }
+
+  const payload = getCheckoutOptionPayload(
+    groups,
+    selections,
+  );
+  const selectedById = new Map<
+    string,
+    {
+      groupId: string;
+      groupName: string;
+      selection: string;
+      id: string;
+      name: string;
+      price: number;
+    }
+  >();
+
+  for (const group of groups) {
+    const selectedIds = new Set(
+      selections[group.id] || [],
+    );
+
+    for (const option of group.options) {
+      if (!selectedIds.has(option.id)) continue;
+
+      selectedById.set(option.id, {
+        groupId: group.id,
+        groupName: group.name,
+        selection: group.selection,
+        id: option.id,
+        name: option.name,
+        price: option.price,
+      });
+    }
+  }
+
+  const variationEntry = payload.variationId
+    ? selectedById.get(payload.variationId)
+    : undefined;
+  const variation: JsonRecord | null =
+    variationEntry
+      ? {
+          id: variationEntry.id,
+          name: `${variationEntry.groupName}: ${variationEntry.name}`,
+          nome: `${variationEntry.groupName}: ${variationEntry.name}`,
+          price: variationEntry.price,
+          priceDelta: variationEntry.price,
+          price_delta: variationEntry.price,
+          preco: variationEntry.price,
+          preco_adicional:
+            variationEntry.price,
+          group_id: variationEntry.groupId,
+          group_name:
+            variationEntry.groupName,
+          selection:
+            variationEntry.selection,
+        }
+      : null;
+  const addons: JsonRecord[] = [];
+
+  for (const addonId of payload.addonIds) {
+    const entry = selectedById.get(addonId);
+    if (!entry) continue;
+
+    addons.push({
+      id: entry.id,
+      name: `${entry.groupName}: ${entry.name}`,
+      nome: `${entry.groupName}: ${entry.name}`,
+      price: entry.price,
+      preco: entry.price,
+      preco_adicional: entry.price,
+      group_id: entry.groupId,
+      group_name: entry.groupName,
+      selection: entry.selection,
+    });
+  }
+
+  return {
+    selections,
+    variation,
+    addons,
+    optionsPrice: money(
+      getOptionSelectionsPrice(
+        groups,
+        selections,
+      ),
+    ),
+    summary: getOptionSelectionSummary(
+      groups,
+      selections,
+    ),
+  };
 }
 
 function resolveCheckoutPaymentMethod(
@@ -269,6 +634,86 @@ function terminalStatus(status: unknown) {
   ].includes(text(status).toLowerCase());
 }
 
+// ORCALY_ATOMIC_STOCK_RESERVATION_1C2
+async function expireMarketplaceStockReservations(
+  supabase: CheckoutCalculation["supabase"],
+) {
+  const { error } = await supabase.rpc(
+    "expire_marketplace_stock_reservations",
+    { p_limit: 100 },
+  );
+
+  if (error) {
+    throw Object.assign(
+      new Error(
+        `Nao foi possivel liberar reservas vencidas: ${error.message}`,
+      ),
+      { status: 500 },
+    );
+  }
+}
+
+async function reserveMarketplaceStock(
+  calculation: CheckoutCalculation,
+  transaction: {
+    id: string;
+    orderId: string;
+    expiresAt: string;
+  },
+) {
+  const { data, error } = await calculation.supabase.rpc(
+    "reserve_marketplace_stock",
+    {
+      p_company_id: calculation.companyId,
+      p_order_id: transaction.orderId,
+      p_marketplace_payment_id: transaction.id,
+      p_expires_at: transaction.expiresAt,
+      p_items: calculation.calculated.map((item) => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+      })),
+    },
+  );
+
+  if (error) {
+    throw Object.assign(
+      new Error(error.message || "Estoque insuficiente."),
+      { status: 409 },
+    );
+  }
+
+  return data;
+}
+
+async function settleMarketplaceStock(
+  supabase: CheckoutCalculation["supabase"],
+  companyId: string,
+  transactionId: string,
+  status: string,
+  reason?: string,
+) {
+  const { data, error } = await supabase.rpc(
+    "settle_marketplace_stock",
+    {
+      p_company_id: companyId,
+      p_marketplace_payment_id: transactionId,
+      p_payment_status: status,
+      p_reason: reason || null,
+    },
+  );
+
+  if (error) {
+    throw Object.assign(
+      new Error(
+        `Nao foi possivel liquidar o estoque: ${error.message}`,
+      ),
+      { status: 500 },
+    );
+  }
+
+  return data;
+}
+
 function pixData(payment: JsonRecord) {
   const point =
     payment.point_of_interaction &&
@@ -305,7 +750,7 @@ async function getSellerAccessToken(
     await supabase
       .from("marketplace_payment_settings")
       .select(
-        "id,access_token,refresh_token,public_key,token_expires_at,onboarding_status,is_active,last_error",
+        "id,access_token,refresh_token,public_key,token_expires_at,onboarding_status,is_active,last_error,provider_metadata_sanitized",
       )
       .eq("company_id", companyId)
       .eq("provider", "mercado_pago")
@@ -321,6 +766,19 @@ async function getSellerAccessToken(
     throw Object.assign(
       new Error(
         "Esta empresa ainda nao conectou uma conta Mercado Pago para receber.",
+      ),
+      { status: 409 },
+    );
+  }
+
+  if (
+    !verifiedMarketplaceOauth(
+      setting.provider_metadata_sanitized,
+    )
+  ) {
+    throw Object.assign(
+      new Error(
+        "Reconecte a conta Mercado Pago pelo painel. A conexão atual não foi validada como OAuth Marketplace.",
       ),
       { status: 409 },
     );
@@ -442,6 +900,8 @@ async function calculateCheckout(
   slug: string,
   body: CheckoutBody,
 ): Promise<CheckoutCalculation> {
+  // ORCALY_CHECKOUT_VALIDATION_V1
+  validateCheckoutPayload(body, { requireCustomer: false });
   if (
     !Array.isArray(body.items) ||
     body.items.length === 0
@@ -454,6 +914,11 @@ async function calculateCheckout(
 
   const { supabase, company } =
     await resolveCompanyBySlug(slug);
+
+  await expireMarketplaceStockReservations(
+    supabase,
+  );
+
   const companyRecord =
     company as JsonRecord;
   const companyId = text(company.id);
@@ -528,53 +993,97 @@ async function calculateCheckout(
         ),
       );
 
-      const variation =
-        productVariations(product).find(
-          (item) =>
-            optionId(item) ===
-            text(input.variationId),
-        );
-
-      if (
-        input.variationId &&
-        !variation
-      ) {
-        throw Object.assign(
-          new Error(
-            "A variacao selecionada nao esta disponivel.",
-          ),
-          { status: 400 },
-        );
-      }
-
-      const addonIds = new Set(
-        input.addonIds || [],
+      assertProductAvailability(
+        product,
+        quantity,
       );
 
-      const addons =
-        productAddons(product).filter(
-          (item) =>
-            addonIds.has(optionId(item)),
+      const configuredOptions =
+        resolveConfiguredProductOptions(
+          product,
+          input,
         );
+      let variation: unknown = null;
+      let addons: unknown[] = [];
+      let optionsPrice = 0;
 
-      if (addons.length !== addonIds.size) {
-        throw Object.assign(
-          new Error(
-            "Um adicional nao esta disponivel.",
-          ),
-          { status: 400 },
+      if (configuredOptions) {
+        variation =
+          configuredOptions.variation;
+        addons = configuredOptions.addons;
+        optionsPrice =
+          configuredOptions.optionsPrice;
+      } else {
+        variation =
+          productVariations(product).find(
+            (item) =>
+              optionId(item) ===
+              text(input.variationId),
+          );
+
+        if (
+          input.variationId &&
+          !variation
+        ) {
+          throw Object.assign(
+            new Error(
+              "A variacao selecionada nao esta disponivel.",
+            ),
+            { status: 400 },
+          );
+        }
+
+        const addonIds = new Set(
+          array(input.addonIds)
+            .map((item) => text(item))
+            .filter(Boolean),
         );
+        const legacyAddons: unknown[] =
+          productAddons(product).filter(
+            (item) =>
+              addonIds.has(optionId(item)),
+          ) as unknown[];
+
+        if (
+          legacyAddons.length !==
+          addonIds.size
+        ) {
+          throw Object.assign(
+            new Error(
+              "Um adicional nao esta disponivel.",
+            ),
+            { status: 400 },
+          );
+        }
+
+        addons = legacyAddons;
+        optionsPrice =
+          optionPrice(variation) +
+          legacyAddons.reduce<number>(
+            (sum, item) =>
+              sum + optionPrice(item),
+            0,
+          );
       }
 
       const unitPrice = money(
         productPrice(product) +
-          optionPrice(variation) +
-          addons.reduce(
-            (sum, item) =>
-              sum + optionPrice(item),
-            0,
-          ),
+          optionsPrice,
       );
+      const suppliedObservation = text(
+        input.observation,
+      );
+      const optionSummary =
+        configuredOptions?.summary || "";
+      const observation =
+        optionSummary &&
+        !suppliedObservation.includes(
+          optionSummary,
+        )
+          ? [optionSummary, suppliedObservation]
+              .filter(Boolean)
+              .join(" | ")
+          : suppliedObservation;
 
       return {
         productId: text(product.id),
@@ -587,9 +1096,7 @@ async function calculateCheckout(
         ),
         variation: variation || null,
         addons,
-        observation: text(
-          input.observation,
-        ),
+        observation,
       };
     },
   );
@@ -603,20 +1110,95 @@ async function calculateCheckout(
   );
 
   let discountAmount = 0;
+  let productDiscount = 0;
+  let deliveryDiscount = 0;
   let couponId: string | null = null;
+  let deliveryFeeBase = 0;
+  let deliveryFee = 0;
+  let deliveryZoneId:
+    | string
+    | null = null;
 
-  if (text(body.couponCode)) {
-    const { data: coupon } =
+  if (
+    body.delivery?.type === "delivery"
+  ) {
+    const { data: zone, error: zoneError } =
       await supabase
-        .from("coupons")
+        .from("delivery_zones")
+        .select("*")
+        .eq(
+          "id",
+          body.delivery.zoneId || "",
+        )
+        .eq("company_id", companyId)
+        .maybeSingle();
+
+    if (zoneError) throw zoneError;
+
+    const record =
+      zone as JsonRecord | null;
+    const enabled = Boolean(
+      record &&
+      (
+        record.is_active === true ||
+        record.active === true ||
+        (
+          record.is_active == null &&
+          record.active == null
+        )
+      )
+    );
+
+    if (!record || !enabled) {
+      throw Object.assign(
+        new Error(
+          "A regiao de entrega nao esta disponivel.",
+        ),
+        { status: 400 },
+      );
+    }
+
+    const minimum = money(
+      record.minimum_order ??
+        record.min_order ??
+        0,
+    );
+
+    if (subtotal < minimum) {
+      throw Object.assign(
+        new Error(
+          "O pedido nao atingiu o minimo para esta regiao.",
+        ),
+        { status: 400 },
+      );
+    }
+
+    deliveryFeeBase = money(
+      record.fee ?? 0,
+    );
+    deliveryFee = deliveryFeeBase;
+    deliveryZoneId =
+      text(record.id);
+  }
+
+  const normalizedCouponCode =
+    normalizeMarketplaceCouponCode(
+      body.couponCode,
+    );
+
+  if (normalizedCouponCode) {
+    const { data: coupon, error: couponError } =
+      await supabase
+        .from("marketplace_coupons")
         .select("*")
         .eq("company_id", companyId)
-        .ilike(
-          "codigo",
-          text(body.couponCode),
+        .eq(
+          "codigo_normalizado",
+          normalizedCouponCode,
         )
-        .eq("ativo", true)
         .maybeSingle();
+
+    if (couponError) throw couponError;
 
     if (!coupon) {
       throw Object.assign(
@@ -629,9 +1211,45 @@ async function calculateCheckout(
 
     const record =
       coupon as JsonRecord;
+    const now = Date.now();
+    const startsAt = record.starts_at
+      ? new Date(
+          text(record.starts_at),
+        ).getTime()
+      : 0;
+    const endsAt = record.ends_at
+      ? new Date(
+          text(record.ends_at),
+        ).getTime()
+      : 0;
+    const usageLimit =
+      record.usage_limit == null
+        ? null
+        : Number(record.usage_limit);
+    const usedCount = Number(
+      record.used_count || 0,
+    );
+
+    if (
+      record.ativo === false ||
+      (startsAt && startsAt > now) ||
+      (endsAt && endsAt < now) ||
+      (
+        usageLimit !== null &&
+        usedCount >= usageLimit
+      )
+    ) {
+      throw Object.assign(
+        new Error(
+          "Cupom invalido, expirado ou esgotado.",
+        ),
+        { status: 400 },
+      );
+    }
+
     const minimum = money(
-      record.valor_minimo ||
-        record.minimum_amount,
+      record.valor_minimo_pedido ??
+        0,
     );
 
     if (subtotal < minimum) {
@@ -643,82 +1261,75 @@ async function calculateCheckout(
       );
     }
 
-    const type = text(
-      record.tipo || record.type,
-    ).toLowerCase();
+    const type =
+      normalizeMarketplaceCouponType(
+        record,
+      );
     const value = money(
-      record.valor || record.value,
+      record.valor,
     );
+    const maxDiscount =
+      record.valor_maximo_desconto == null
+        ? null
+        : money(
+            record.valor_maximo_desconto,
+          );
 
-    discountAmount =
-      type.includes("percent")
-        ? money(
-            subtotal * (value / 100),
-          )
-        : Math.min(subtotal, value);
+    if (type === "free_delivery") {
+      if (deliveryFeeBase <= 0) {
+        throw Object.assign(
+          new Error(
+            "Este cupom exige uma entrega com taxa.",
+          ),
+          { status: 400 },
+        );
+      }
 
+      deliveryDiscount =
+        deliveryFeeBase;
+    } else if (type === "fixed") {
+      productDiscount =
+        Math.min(subtotal, value);
+    } else {
+      productDiscount = money(
+        subtotal * (value / 100),
+      );
+    }
+
+    if (
+      maxDiscount !== null &&
+      maxDiscount > 0 &&
+      type !== "free_delivery"
+    ) {
+      productDiscount = Math.min(
+        productDiscount,
+        maxDiscount,
+      );
+    }
+
+    productDiscount = Math.min(
+      subtotal,
+      money(productDiscount),
+    );
+    deliveryDiscount = Math.min(
+      deliveryFeeBase,
+      money(deliveryDiscount),
+    );
+    deliveryFee = money(
+      deliveryFeeBase -
+        deliveryDiscount,
+    );
+    discountAmount = money(
+      productDiscount +
+        deliveryDiscount,
+    );
     couponId =
       text(record.id) || null;
   }
 
-  let deliveryFee = 0;
-  let deliveryZoneId:
-    | string
-    | null = null;
-
-  if (
-    body.delivery?.type === "delivery"
-  ) {
-    const { data: zone } =
-      await supabase
-        .from("delivery_zones")
-        .select("*")
-        .eq(
-          "id",
-          body.delivery.zoneId || "",
-        )
-        .eq("company_id", companyId)
-        .eq("ativo", true)
-        .maybeSingle();
-
-    if (!zone) {
-      throw Object.assign(
-        new Error(
-          "A regiao de entrega nao esta disponivel.",
-        ),
-        { status: 400 },
-      );
-    }
-
-    const record =
-      zone as JsonRecord;
-    const minimum = money(
-      record.pedido_minimo ||
-        record.minimum_order,
-    );
-
-    if (
-      subtotal - discountAmount <
-      minimum
-    ) {
-      throw Object.assign(
-        new Error(
-          "O pedido nao atingiu o minimo para esta regiao.",
-        ),
-        { status: 400 },
-      );
-    }
-
-    deliveryFee = money(
-      record.taxa || record.fee,
-    );
-    deliveryZoneId =
-      text(record.id);
-  }
-
   const total = money(
     subtotal -
-      discountAmount +
+      productDiscount +
       deliveryFee,
   );
 
@@ -736,6 +1347,8 @@ async function calculateCheckout(
       companyRecord.plano ||
       companyRecord.plan,
   );
+
+  // Marketplace fee is active and follows the seller plan.
   const feePercent =
     plan.marketplaceFeePercent;
   const commissionAmount = money(
@@ -763,12 +1376,13 @@ export async function getCheckoutCatalog(
 ) {
   const { supabase, company } =
     await resolveCompanyBySlug(slug);
+
   const companyId = text(company.id);
 
   const [
-    { data: products },
-    { data: zones },
-    { data: account },
+    { data: products, error: productsError },
+    { data: zones, error: zonesError },
+    { data: account, error: accountError },
   ] = await Promise.all([
     supabase
       .from("products")
@@ -780,25 +1394,67 @@ export async function getCheckoutCatalog(
       .from("delivery_zones")
       .select("*")
       .eq("company_id", companyId)
-      .eq("ativo", true)
-      .order("nome"),
+      .order("name"),
     supabase
-      .from(
-        "marketplace_payment_settings",
-      )
+      .from("marketplace_payment_settings")
       .select(
-        "access_token,onboarding_status,is_active,last_error",
+        "access_token,public_key,onboarding_status,account_status,is_active,charges_enabled,pix_enabled,card_enabled,last_error,provider_metadata_sanitized",
       )
       .eq("company_id", companyId)
       .eq("provider", "mercado_pago")
       .maybeSingle(),
   ]);
 
+  if (productsError) throw productsError;
+  if (zonesError) throw zonesError;
+  if (accountError) throw accountError;
+
+  const publicKey =
+    marketplacePublicKey();
+  const oauthVerified =
+    verifiedMarketplaceOauth(
+      account?.provider_metadata_sanitized,
+    );
+  const connectionRequiresReconnect =
+    Boolean(
+      account?.access_token &&
+        !oauthVerified,
+    );
+
   const connected = Boolean(
     account?.is_active &&
       account?.access_token &&
+      publicKey &&
+      oauthVerified &&
       account?.onboarding_status ===
         "connected",
+  );
+
+  const chargesEnabled = Boolean(
+    connected &&
+      account?.charges_enabled !== false,
+  );
+
+  const pixEnabled = Boolean(
+    chargesEnabled &&
+      account?.pix_enabled !== false,
+  );
+
+  const cardEnabled = Boolean(
+    chargesEnabled &&
+      account?.card_enabled !== false,
+  );
+
+  const activeZones = (zones || []).filter(
+    (raw) => {
+      const zone = raw as JsonRecord;
+
+      return (
+        zone.ativo !== false &&
+        zone.active !== false &&
+        zone.is_active !== false
+      );
+    },
   );
 
   return {
@@ -816,6 +1472,7 @@ export async function getCheckoutCatalog(
       ),
       slug,
     },
+
     products: (products || []).map(
       (raw) => {
         const product =
@@ -823,89 +1480,120 @@ export async function getCheckoutCatalog(
 
         return {
           id: text(product.id),
-          name: productName(product),
+
+          name:
+            productName(product),
+
           description: text(
             product.descricao ||
               product.description,
           ),
-          price: productPrice(product),
+
+          price:
+            productPrice(product),
+
           imageUrl: text(
             product.imagem_url ||
               product.image_url,
           ),
+
           variations:
-            productVariations(
-              product,
-            ).map((item) => {
-              const record =
-                item as JsonRecord;
+            productVariations(product).map(
+              (item) => {
+                const record =
+                  item as JsonRecord;
 
-              return {
-                id: optionId(item),
-                name:
-                  text(
-                    record.nome ||
-                      record.name,
-                  ) || optionId(item),
-                priceDelta:
-                  optionPrice(item),
-              };
-            }),
+                return {
+                  id: optionId(item),
+
+                  name:
+                    text(
+                      record.nome ||
+                        record.name,
+                    ) ||
+                    optionId(item),
+
+                  priceDelta:
+                    optionPrice(item),
+                };
+              },
+            ),
+
           addons:
-            productAddons(
-              product,
-            ).map((item) => {
-              const record =
-                item as JsonRecord;
+            productAddons(product).map(
+              (item) => {
+                const record =
+                  item as JsonRecord;
 
-              return {
-                id: optionId(item),
-                name:
-                  text(
-                    record.nome ||
-                      record.name,
-                  ) || optionId(item),
-                price:
-                  optionPrice(item),
-              };
-            }),
+                return {
+                  id: optionId(item),
+
+                  name:
+                    text(
+                      record.nome ||
+                        record.name,
+                    ) ||
+                    optionId(item),
+
+                  price:
+                    optionPrice(item),
+                };
+              },
+            ),
         };
       },
     ),
-    deliveryZones: (zones || []).map(
-      (raw) => {
+
+    deliveryZones:
+      activeZones.map((raw) => {
         const zone =
           raw as JsonRecord;
 
         return {
           id: text(zone.id),
+
           name: text(
             zone.nome ||
               zone.name,
           ),
+
           fee: money(
-            zone.taxa || zone.fee,
+            zone.taxa ||
+              zone.fee,
           ),
+
           minimumOrder: money(
             zone.pedido_minimo ||
-              zone.minimum_order,
+              zone.minimum_order ||
+              zone.min_order,
           ),
         };
-      },
-    ),
+      }),
+
     payment: {
       provider: "mercado_pago",
-      configured: connected,
-      chargesEnabled: connected,
-      pixEnabled: connected,
-      cardEnabled:
-        connected &&
-        Boolean(
-          process.env
-            .NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY,
-        ),
+
+      configured:
+        connected,
+
+      chargesEnabled,
+
+      pixEnabled,
+
+      cardEnabled,
+
+      publicKey:
+        connected
+          ? publicKey
+          : "",
+
       lastError:
-        account?.last_error || null,
+        connectionRequiresReconnect
+          ? "Reconecte a conta Mercado Pago para ativar o split de pagamentos."
+          : !publicKey
+            ? "A chave pública do integrador Mercado Pago não está configurada."
+            : account?.last_error || null,
+      connectionRequiresReconnect,
     },
   };
 }
@@ -927,6 +1615,270 @@ export async function prepareCheckoutPayment(
     commissionPercentage:
       calculation.feePercent,
   };
+}
+
+// ORCALY_ORDER_TRACKING_FINANCE_V1
+async function getOrderTracking(
+  supabase: CheckoutCalculation["supabase"],
+  orderId: string,
+) {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("customer_portal_token")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  const trackingToken = text(
+    data?.customer_portal_token,
+  );
+
+  return {
+    trackingToken,
+    trackingUrl: trackingToken
+      ? `/pedido/${encodeURIComponent(
+          trackingToken,
+        )}`
+      : "",
+  };
+}
+
+async function syncPaidOrderArtifacts(
+  calculation: Pick<
+    CheckoutCalculation,
+    "supabase" | "companyId"
+  >,
+  transaction: {
+    id: string;
+    orderId: string;
+  },
+  payment: JsonRecord,
+  paidAt: string,
+) {
+  const { data: order, error: orderError } =
+    await calculation.supabase
+      .from("orders")
+      .select(
+        "id,customer_name,nome,customer_phone,telefone,produto,total,total_amount,payment_method,delivery_type,delivery_fee,delivery_zone_id,address,neighborhood,complement,reference_point",
+      )
+      .eq("id", transaction.orderId)
+      .eq(
+        "company_id",
+        calculation.companyId,
+      )
+      .maybeSingle();
+
+  if (orderError) throw orderError;
+  if (!order) return;
+
+  const customerName = text(
+    order.customer_name || order.nome,
+  ) || "Cliente";
+  const grossAmount = money(
+    payment.transaction_amount ||
+      order.total_amount ||
+      order.total,
+  );
+  const paymentMethod =
+    text(
+      payment.payment_method_id ||
+        order.payment_method,
+    ) || "Mercado Pago";
+  const code = transaction.orderId
+    .slice(0, 8)
+    .toUpperCase();
+  const financialDescription =
+    `Venda #${code} - ${customerName}`;
+
+  const { error: financialError } =
+    await calculation.supabase
+      .from("financial_transactions")
+      .upsert(
+        {
+          id: transaction.id,
+          company_id:
+            calculation.companyId,
+          tipo: "entrada",
+          type: "income",
+          categoria: "Venda",
+          descricao:
+            financialDescription,
+          description:
+            financialDescription,
+          valor: grossAmount,
+          amount: grossAmount,
+          data_competencia:
+            paidAt.slice(0, 10),
+          status: "pago",
+          forma_pagamento:
+            paymentMethod,
+          payment_method:
+            paymentMethod,
+          fornecedor_cliente:
+            customerName,
+          order_id:
+            transaction.orderId,
+          origem:
+            "marketplace_checkout",
+          paid_at: paidAt,
+          notes:
+            "Venda online confirmada pelo Mercado Pago.",
+          raw_data: {
+            marketplace_payment_id:
+              transaction.id,
+            provider_payment_id:
+              text(payment.id) || null,
+            provider:
+              "mercado_pago",
+          },
+          updated_at:
+            new Date().toISOString(),
+        },
+        {
+          onConflict: "id",
+        },
+      );
+
+  if (financialError) {
+    throw financialError;
+  }
+
+  if (
+    text(order.delivery_type).toLowerCase() !==
+    "delivery"
+  ) {
+    return;
+  }
+
+  let neighborhood =
+    text(order.neighborhood);
+
+  if (
+    !neighborhood &&
+    order.delivery_zone_id
+  ) {
+    const { data: zone } =
+      await calculation.supabase
+        .from("delivery_zones")
+        .select("name")
+        .eq(
+          "id",
+          String(order.delivery_zone_id),
+        )
+        .eq(
+          "company_id",
+          calculation.companyId,
+        )
+        .maybeSingle();
+
+    neighborhood = text(zone?.name);
+  }
+
+  const deliveryPayload = {
+    company_id:
+      calculation.companyId,
+    order_id:
+      transaction.orderId,
+    customer_name:
+      customerName,
+    customer_phone:
+      text(
+        order.customer_phone ||
+          order.telefone,
+      ) || null,
+    address:
+      text(order.address) || null,
+    neighborhood:
+      neighborhood || null,
+    delivery_zone_id:
+      order.delivery_zone_id || null,
+    delivery_fee:
+      money(order.delivery_fee),
+    status:
+      "waiting_preparation",
+    notes:
+      [
+        text(order.complement)
+          ? `Complemento: ${text(
+              order.complement,
+            )}`
+          : "",
+        text(order.reference_point)
+          ? `Referencia: ${text(
+              order.reference_point,
+            )}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" | ") || null,
+    updated_at:
+      new Date().toISOString(),
+  };
+
+  const {
+    data: existingDelivery,
+    error: existingError,
+  } = await calculation.supabase
+    .from("deliveries")
+    .select("id,status")
+    .eq(
+      "company_id",
+      calculation.companyId,
+    )
+    .eq(
+      "order_id",
+      transaction.orderId,
+    )
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (existingDelivery?.id) {
+    const existingStatus =
+      text(existingDelivery.status);
+
+    const patch = {
+      ...deliveryPayload,
+      ...(existingStatus &&
+      ![
+        "aguardando_pagamento",
+        "pending_payment",
+      ].includes(existingStatus)
+        ? { status: existingStatus }
+        : {}),
+    };
+
+    const { error } =
+      await calculation.supabase
+        .from("deliveries")
+        .update(patch)
+        .eq(
+          "id",
+          String(existingDelivery.id),
+        );
+
+    if (error) throw error;
+    return;
+  }
+
+  // O id deterministico evita duas entregas se o webhook
+  // e a consulta de status confirmarem o mesmo pagamento juntos.
+  const { error: deliveryError } =
+    await calculation.supabase
+      .from("deliveries")
+      .upsert(
+        {
+          id: transaction.orderId,
+          ...deliveryPayload,
+        },
+        { onConflict: "id" },
+      );
+
+  if (deliveryError) {
+    throw deliveryError;
+  }
 }
 
 async function persistPaymentStatus(
@@ -962,6 +1914,147 @@ async function persistPaymentStatus(
   const lastFour = text(
     card.last_four_digits,
   );
+  const feeDetails = array(payment.fee_details)
+    .map((item) => asRecord(item));
+  const chargesDetails = array(payment.charges_details)
+    .map((item) => asRecord(item));
+  const applicationFeeFromFees = money(
+    feeDetails
+      .filter(
+        (fee) =>
+          text(fee.type).toLowerCase() ===
+          "application_fee",
+      )
+      .reduce(
+        (sum, fee) =>
+          sum + Math.max(0, Number(fee.amount || 0)),
+        0,
+      ),
+  );
+  const applicationFeeFromCharges = money(
+    chargesDetails
+      .filter((charge) => {
+        const accounts = asRecord(charge.accounts);
+
+        return (
+          text(charge.name).toLowerCase() ===
+            "third_payment" &&
+          text(accounts.from).toLowerCase() ===
+            "collector" &&
+          text(accounts.to).toLowerCase() ===
+            "marketplace_owner"
+        );
+      })
+      .reduce((sum, charge) => {
+        const amounts = asRecord(charge.amounts);
+
+        return (
+          sum +
+          Math.max(
+            0,
+            Number(amounts.original || 0),
+          )
+        );
+      }, 0),
+  );
+  const platformFeeAmount = money(
+    Math.max(
+      applicationFeeFromFees,
+      applicationFeeFromCharges,
+    ),
+  );
+  const providerFeeAmount = money(
+    feeDetails
+      .filter(
+        (fee) =>
+          text(fee.type).toLowerCase() !==
+          "application_fee",
+      )
+      .reduce(
+        (sum, fee) =>
+          sum + Math.max(0, Number(fee.amount || 0)),
+        0,
+      ),
+  );
+  const transactionDetails =
+    asRecord(payment.transaction_details);
+  const reportedNetAmount = money(
+    transactionDetails.net_received_amount,
+  );
+  const grossAmount = money(
+    payment.transaction_amount,
+  );
+
+  const {
+    data: splitExpectation,
+    error: splitExpectationError,
+  } = await calculation.supabase
+    .from("marketplace_payments")
+    .select(
+      "commission_amount,platform_fee_amount",
+    )
+    .eq("id", transaction.id)
+    .eq(
+      "company_id",
+      calculation.companyId,
+    )
+    .maybeSingle();
+
+  if (splitExpectationError) {
+    throw splitExpectationError;
+  }
+
+  const expectedPlatformFee = money(
+    splitExpectation?.commission_amount ||
+      splitExpectation?.platform_fee_amount ||
+      0,
+  );
+
+  const splitApplied =
+    mappedStatus !== "paid" ||
+    expectedPlatformFee <= 0 ||
+    (
+      platformFeeAmount > 0 &&
+      platformFeeAmount + 0.005 >=
+        expectedPlatformFee
+    );
+
+  const effectiveStatus =
+    mappedStatus === "paid" && !splitApplied
+      ? "pending"
+      : mappedStatus;
+
+  const effectivePaidAt =
+    effectiveStatus === "paid"
+      ? paidAt
+      : null;
+
+  const sellerNetAmount =
+    mappedStatus === "paid"
+      ? reportedNetAmount > 0
+        ? reportedNetAmount
+        : money(
+            grossAmount -
+              providerFeeAmount -
+              platformFeeAmount,
+          )
+      : null;
+  const splitStatus =
+    mappedStatus === "paid"
+      ? splitApplied
+        ? "applied"
+        : "missing"
+      : "pending";
+
+  await settleMarketplaceStock(
+    calculation.supabase,
+    calculation.companyId,
+    transaction.id,
+    effectiveStatus,
+    splitApplied
+      ? remoteStatus || effectiveStatus
+      : "payment_paid_without_confirmed_application_fee",
+  );
 
   await Promise.all([
     calculation.supabase
@@ -971,13 +2064,31 @@ async function persistPaymentStatus(
           paymentId || null,
         provider_status:
           remoteStatus || null,
-        status: mappedStatus,
+        status: effectiveStatus,
+        gross_amount:
+          grossAmount || null,
+        amount:
+          grossAmount || null,
+        provider_fee_amount:
+          providerFeeAmount,
+        provider_net_amount:
+          sellerNetAmount,
+        platform_fee_amount:
+          platformFeeAmount,
+        seller_net_amount:
+          sellerNetAmount,
+        split_status:
+          splitStatus,
+        last_error:
+          mappedStatus === "paid" && !splitApplied
+            ? "Pagamento aprovado sem confirmaÃ§Ã£o da taxa do marketplace."
+            : null,
         raw_payload: payment,
         card_brand:
           methodId || null,
         card_last4:
           lastFour || null,
-        paid_at: paidAt,
+        paid_at: effectivePaidAt,
         updated_at:
           new Date().toISOString(),
       })
@@ -994,12 +2105,12 @@ async function persistPaymentStatus(
         payment_provider:
           "mercado_pago",
         payment_status:
-          mappedStatus,
+          effectiveStatus,
         status:
-          mappedStatus === "paid"
+          effectiveStatus === "paid"
             ? "Recebido"
             : "pending_payment",
-        paid_at: paidAt,
+        paid_at: effectivePaidAt,
         updated_at:
           new Date().toISOString(),
       })
@@ -1017,22 +2128,22 @@ async function persistPaymentStatus(
           paymentId || null,
         provider_status:
           remoteStatus || null,
-        status: mappedStatus,
+        status: effectiveStatus,
         paid_amount:
-          mappedStatus === "paid"
+          effectiveStatus === "paid"
             ? Number(
                 payment.transaction_amount ||
                   0,
               )
             : 0,
         remaining_amount:
-          mappedStatus === "paid"
+          effectiveStatus === "paid"
             ? 0
             : Number(
                 payment.transaction_amount ||
                   0,
               ),
-        paid_at: paidAt,
+        paid_at: effectivePaidAt,
         updated_at:
           new Date().toISOString(),
       })
@@ -1043,7 +2154,33 @@ async function persistPaymentStatus(
       ),
   ]);
 
-  if (mappedStatus === "paid") {
+  if (
+    mappedStatus === "paid" &&
+    splitApplied
+  ) {
+    await syncPaidOrderArtifacts(
+      calculation,
+      transaction,
+      payment,
+      effectivePaidAt ||
+        new Date().toISOString(),
+    );
+
+    const { error: couponConsumeError } =
+      await calculation.supabase.rpc(
+        "consume_marketplace_coupon",
+        {
+          p_company_id:
+            calculation.companyId,
+          p_order_id:
+            transaction.orderId,
+        },
+      );
+
+    if (couponConsumeError) {
+      throw couponConsumeError;
+    }
+
     await calculation.supabase
       .from(
         "marketplace_commissions",
@@ -1066,9 +2203,9 @@ async function persistPaymentStatus(
   }
 
   return {
-    mappedStatus,
+    mappedStatus: effectiveStatus,
     remoteStatus,
-    paidAt,
+    paidAt: effectivePaidAt,
   };
 }
 
@@ -1077,6 +2214,7 @@ export async function createCheckoutPayment(
   body: CheckoutBody,
   request: NextRequest,
 ) {
+  validateCheckoutPayload(body, { requireCustomer: true });
   body.paymentMethod = resolveCheckoutPaymentMethod(body);
 
   if (
@@ -1151,6 +2289,11 @@ export async function createCheckoutPayment(
         "object"
         ? (existing.raw_payload as JsonRecord)
         : {};
+    const tracking =
+      await getOrderTracking(
+        supabase,
+        String(existing.order_id),
+      );
 
     return {
       repeated: true,
@@ -1163,6 +2306,10 @@ export async function createCheckoutPayment(
         existing.gross_amount ||
           existing.amount,
       ),
+      trackingToken:
+        tracking.trackingToken,
+      trackingUrl:
+        tracking.trackingUrl,
       pix:
         body.paymentMethod === "PIX"
           ? pixData(raw)
@@ -1228,11 +2375,21 @@ export async function createCheckoutPayment(
           null,
         checkout_idempotency_key:
           key,
+        customer_portal_token:
+          randomUUID(),
         delivery_type:
           body.delivery?.type ||
           "pickup",
+        delivery_zone_id:
+          calculation.deliveryZoneId,
+        address:
+          body.delivery?.address || null,
+        complement:
+          body.delivery?.complement || null,
+        reference_point:
+          body.delivery?.reference || null,
       })
-      .select("id")
+      .select("id,customer_portal_token")
       .single();
 
   if (orderError || !order?.id) {
@@ -1246,6 +2403,11 @@ export async function createCheckoutPayment(
   }
 
   const orderId = String(order.id);
+  const trackingToken =
+    text(order.customer_portal_token);
+  const trackingUrl = trackingToken
+    ? `/pedido/${encodeURIComponent(trackingToken)}`
+    : "";
 
   const { error: itemsError } =
     await supabase
@@ -1301,43 +2463,15 @@ export async function createCheckoutPayment(
     );
   }
 
-  if (
-    body.delivery?.type === "delivery"
-  ) {
-    await supabase
-      .from("deliveries")
-      .insert({
-        order_id: orderId,
-        company_id: companyId,
-        delivery_zone_id:
-          calculation.deliveryZoneId,
-        customer_name:
-          body.customer.name,
-        customer_phone:
-          body.customer.phone,
-        endereco:
-          body.delivery.address ||
-          "",
-        address:
-          body.delivery.address ||
-          "",
-        complemento:
-          body.delivery.complement ||
-          "",
-        referencia:
-          body.delivery.reference ||
-          "",
-        taxa:
-          calculation.deliveryFee,
-        delivery_fee:
-          calculation.deliveryFee,
-        status:
-          "aguardando_pagamento",
-      });
-  }
+  // A entrega e criada somente depois da confirmacao
+  // do pagamento, evitando pedidos nao pagos na central.
 
   const transactionId =
     randomUUID();
+  const reservationExpiresAt =
+    new Date(
+      Date.now() + 30 * 60 * 1000,
+    ).toISOString();
   const externalReference =
     `orcaly:${companyId}:${orderId}:${transactionId}`;
   const sellerNetEstimate = money(
@@ -1384,10 +2518,7 @@ export async function createCheckoutPayment(
           externalReference,
         idempotency_key: key,
         expires_at:
-          new Date(
-            Date.now() +
-              30 * 60 * 1000,
-          ).toISOString(),
+          reservationExpiresAt,
         payer_name:
           body.customer.name,
         payer_email:
@@ -1499,12 +2630,11 @@ export async function createCheckoutPayment(
       )}`.slice(0, 120),
     external_reference:
       externalReference,
-    application_fee:
-      calculation.commissionAmount,
     notification_url:
       `${appUrl}/api/marketplace/payments/webhook/mercado-pago` +
       `?company_id=${encodeURIComponent(companyId)}` +
-      `&marketplace_payment_id=${encodeURIComponent(transactionId)}`,
+      `&marketplace_payment_id=${encodeURIComponent(transactionId)}` +
+      `&source_news=webhooks`,
     statement_descriptor: "ORCALY",
     binary_mode: false,
     metadata: {
@@ -1552,15 +2682,19 @@ export async function createCheckoutPayment(
   };
 
   if (
+    calculation.commissionAmount > 0
+  ) {
+    paymentPayload.application_fee =
+      calculation.commissionAmount;
+  }
+
+  if (
     body.paymentMethod === "PIX"
   ) {
     paymentPayload.payment_method_id =
       "pix";
     paymentPayload.date_of_expiration =
-      new Date(
-        Date.now() +
-          30 * 60 * 1000,
-      ).toISOString();
+      reservationExpiresAt;
   } else {
     const card =
       body.cardPayment;
@@ -1617,6 +2751,16 @@ export async function createCheckoutPayment(
   }
 
   try {
+    await reserveMarketplaceStock(
+      calculation,
+      {
+        id: transactionId,
+        orderId,
+        expiresAt:
+          reservationExpiresAt,
+      },
+    );
+
     const payment =
       (await createMercadoPagoPayment(
         accessToken,
@@ -1646,6 +2790,8 @@ export async function createCheckoutPayment(
       total: calculation.total,
       commissionAmount:
         calculation.commissionAmount,
+      trackingToken,
+      trackingUrl,
       pix:
         body.paymentMethod === "PIX"
           ? pixData(payment)
@@ -1656,6 +2802,14 @@ export async function createCheckoutPayment(
       cause instanceof Error
         ? cause.message
         : "Falha no Mercado Pago.";
+
+    await settleMarketplaceStock(
+      supabase,
+      companyId,
+      transactionId,
+      "failed",
+      message,
+    ).catch(() => null);
 
     await Promise.all([
       supabase
@@ -1692,6 +2846,42 @@ export async function createCheckoutPayment(
         ),
     ]);
 
+    const providerCode =
+      mercadoPagoProviderErrorCode(
+        cause,
+      );
+    const applicationFeeOauthRejected =
+      providerCode === 2059 ||
+      message
+        .toLowerCase()
+        .includes("application_fee");
+
+    if (applicationFeeOauthRejected) {
+      const reconnectMessage =
+        "A conta Mercado Pago precisa ser reconectada por OAuth usando uma aplicação configurada como Marketplace.";
+
+      await supabase
+        .from(
+          "marketplace_payment_settings",
+        )
+        .update({
+          onboarding_status:
+            "reconnect_required",
+          charges_enabled: false,
+          last_error:
+            reconnectMessage,
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq("company_id", companyId)
+        .eq("provider", "mercado_pago");
+
+      throw Object.assign(
+        new Error(reconnectMessage),
+        { status: 409 },
+      );
+    }
+
     throw cause;
   }
 }
@@ -1727,12 +2917,35 @@ export async function getCheckoutPaymentStatus(
     );
   }
 
+  const tracking =
+    await getOrderTracking(
+      supabase,
+      String(transaction.order_id),
+    );
+
   if (
     terminalStatus(
       transaction.status,
     )
   ) {
-    return transaction;
+    await settleMarketplaceStock(
+      supabase,
+      companyId,
+      String(transaction.id),
+      String(transaction.status),
+      String(
+        transaction.provider_status ||
+          transaction.status,
+      ),
+    );
+
+    return {
+      ...transaction,
+      trackingToken:
+        tracking.trackingToken,
+      trackingUrl:
+        tracking.trackingUrl,
+    };
   }
 
   const accessToken =
@@ -1763,5 +2976,9 @@ export async function getCheckoutPaymentStatus(
     providerStatus:
       status.remoteStatus,
     paidAt: status.paidAt,
+    trackingToken:
+      tracking.trackingToken,
+    trackingUrl:
+      tracking.trackingUrl,
   };
 }

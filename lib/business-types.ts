@@ -177,7 +177,7 @@ export const businessTypes: BusinessTypeConfig[] = [
     ],
     defaultFaq: [
       { pergunta: 'Posso pedir para entrega?', resposta: 'Sim. A empresa informa entrega ou retirada conforme disponibilidade.' },
-      { pergunta: 'O pagamento é online?', resposta: 'Nesta versão, o pagamento é combinado com a empresa pelo WhatsApp.' },
+      { pergunta: 'O pagamento é online?', resposta: 'Sim. Os pagamentos online do marketplace são processados exclusivamente pelo Mercado Pago, com Pix e cartão conforme disponibilidade da conta conectada.' },
     ],
     defaultFeatures: [
       { titulo: 'Cardápio', texto: 'Itens organizados por categoria.' },

@@ -1,7 +1,9 @@
+// ORCALY_AFFILIATE_INTEGRATION_V1
 "use client";
 
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   businessTypes,
   getBusinessTypeConfig,
@@ -154,6 +156,8 @@ function isEmail(value: string) {
 }
 
 function CadastroContent() {
+  const searchParams = useSearchParams();
+  const [referralCode, setReferralCode] = useState("");
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<CadastroForm>({
     nome_responsavel: "",
@@ -204,6 +208,68 @@ function CadastroContent() {
   ) {
     setForm((atual) => ({ ...atual, [campo]: valor }));
   }
+
+  useEffect(() => {
+    const queryCode = String(searchParams.get("ref") || "")
+      .toUpperCase()
+      .replace(/[^A-Z0-9_-]/g, "")
+      .slice(0, 32);
+    const storageKey = "orcaly_affiliate_referral_v1";
+    let storedCode = "";
+
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      const saved = raw
+        ? (JSON.parse(raw) as { code?: string; expiresAt?: number })
+        : null;
+
+      if (saved?.code && Number(saved.expiresAt || 0) > Date.now()) {
+        storedCode = String(saved.code);
+      }
+    } catch {
+      storedCode = "";
+    }
+
+    const code = queryCode || storedCode;
+    if (!code) return;
+
+    setReferralCode(code);
+
+    try {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          code,
+          expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000,
+        }),
+      );
+
+      const sessionKey = "orcaly_affiliate_click_session_v1";
+      let sessionId = window.localStorage.getItem(sessionKey);
+
+      if (!sessionId) {
+        sessionId =
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : Math.random().toString(36).slice(2);
+        window.localStorage.setItem(sessionKey, sessionId);
+      }
+
+      void fetch("/api/parceiros/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          code,
+          sessionId,
+          landingPath: window.location.pathname + window.location.search,
+          referrer: document.referrer,
+        }),
+      });
+    } catch {
+      // A referência ainda segue no formulário.
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     async function carregarCidades() {
@@ -418,6 +484,7 @@ function CadastroContent() {
           modelo_categoria: config.siteSubheadline,
           subdomain_slug: normalizeSubdomainSlug(form.subdomain_slug),
           marketing_opt_in: true,
+          referral_code: referralCode || null,
         }),
       });
 

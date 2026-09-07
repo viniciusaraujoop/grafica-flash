@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PublicSiteCompany, PublicSiteProduct } from '@/components/public-site/PublicSiteRenderer'
 import {
   getCatalogLabels,
@@ -13,9 +13,22 @@ import {
   getPrimaryProductImage,
   getProductPriceLabel,
   getProductPriceNumber,
+  getProductOldPriceNumber,
+  getProductDiscountPercent,
+  getProductStockInfo,
+  getProductCommercialBadge,
   isProductAvailable,
   isProductConsultOnly,
 } from '@/lib/product-media'
+import {
+  getCheckoutOptionPayload,
+  getOptionSelectionSummary,
+  getOptionSelectionsPrice,
+  getProductOptionGroups,
+  validateProductOptionSelections,
+  type ProductOptionGroup,
+  type ProductOptionSelections,
+} from '@/lib/product-options'
 
 type CartItem = {
   localId: string
@@ -26,6 +39,10 @@ type CartItem = {
   unitPrice: number
   notes: string
   answers: Record<string, string>
+  variationId?: string
+  addonIds: string[]
+  optionSummary: string
+  optionSelections?: ProductOptionSelections
   subtotal: number
 }
 
@@ -233,6 +250,8 @@ export default function SegmentMarketplaceCatalog({
   const [category, setCategory] = useState('Todos')
   const [selected, setSelected] = useState<PublicSiteProduct | null>(null)
   const [cart, setCart] = useState<CartItem[]>([])
+  const [cartOpen, setCartOpen] = useState(false)
+  const [cartReady, setCartReady] = useState(false)
   const [checkout, setCheckout] = useState<CheckoutState>(initialCheckout)
   const [coupon, setCoupon] = useState<CouponState>(initialCoupon)
   const [submitting, setSubmitting] = useState(false)
@@ -260,6 +279,7 @@ export default function SegmentMarketplaceCatalog({
 
   const selectedZone = deliveryZones.find((zone) => zone.id === checkout.deliveryZoneId) || null
   const subtotal = useMemo(() => Number(cart.reduce((acc, item) => acc + item.subtotal, 0).toFixed(2)), [cart])
+  const cartItemCount = useMemo(() => cart.reduce((acc, item) => acc + Math.max(1, Number(item.quantity || 1)), 0), [cart])
   const deliveryFeeBase = checkout.deliveryType === 'delivery' && selectedZone ? numberFrom(selectedZone.fee) : 0
   const productDiscount = coupon.appliedCode && coupon.type !== 'free_delivery'
     ? Math.min(subtotal, coupon.maxDiscount && coupon.maxDiscount > 0 ? Math.min(coupon.value, coupon.maxDiscount) : coupon.type === 'fixed' ? coupon.value : subtotal * (coupon.value / 100))
@@ -271,19 +291,122 @@ export default function SegmentMarketplaceCatalog({
   const checkoutTitle = getSegmentCheckoutTitle(normalizedType)
   const logisticsEnabled = shouldUseDelivery(normalizedType)
   const onlineEnabled = unifiedCheckoutEnabled
+  const companyStorageKey = String(company.slug || company.subdomain_slug || company.id || 'catalogo')
+  const cartStorageKey = `orcaly-cart:${companyStorageKey}:segment`
+  const couponStorageKey = `orcaly-coupon:${companyStorageKey}`
+
+  // ORCALY_PUBLIC_COUPON_PREFILL_V2
+  useEffect(() => {
+    function selectCoupon(codeValue: unknown) {
+      const code = String(codeValue || '').trim().toUpperCase()
+      if (!code) return
+      setCoupon((current) => ({ ...current, code, error: '', message: 'Cupom selecionado. Aplique após adicionar os itens.' }))
+    }
+
+    try {
+      selectCoupon(window.localStorage.getItem(couponStorageKey))
+    } catch {}
+
+    function handleCouponSelected(event: Event) {
+      selectCoupon((event as CustomEvent<{ code?: string }>).detail?.code)
+    }
+
+    window.addEventListener('orcaly:coupon-selected', handleCouponSelected)
+    return () => window.removeEventListener('orcaly:coupon-selected', handleCouponSelected)
+  }, [couponStorageKey])
+
+  // ORCALY_CART_DRAWER_1B
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(cartStorageKey)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) setCart(parsed)
+      }
+    } catch {
+      window.localStorage.removeItem(cartStorageKey)
+    } finally {
+      setCartReady(true)
+    }
+  }, [cartStorageKey])
+
+  useEffect(() => {
+    if (!cartReady) return
+
+    if (cart.length) {
+      window.localStorage.setItem(cartStorageKey, JSON.stringify(cart))
+    } else {
+      window.localStorage.removeItem(cartStorageKey)
+    }
+  }, [cart, cartReady, cartStorageKey])
+
+  useEffect(() => {
+    if (!cartOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setCartOpen(false)
+    }
+
+    window.addEventListener('keydown', closeOnEscape)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [cartOpen])
+
+  function resetCoupon(message = '') {
+    setCoupon((current) => ({
+      ...initialCoupon,
+      code: current.code,
+      message,
+    }))
+  }
 
   function updateCheckout(field: keyof CheckoutState, value: string) {
     setCheckout((current) => ({ ...current, [field]: value }))
-    if (field === 'deliveryType' || field === 'deliveryZoneId') setCoupon(initialCoupon)
+    if (field === 'deliveryType' || field === 'deliveryZoneId') {
+      resetCoupon('Aplique novamente o cupom após alterar a entrega.')
+    }
   }
 
-  function addToCart(product: PublicSiteProduct, quantity: number, notes: string, answers: Record<string, string>) {
-    const unitPrice = getProductPriceNumber(product)
-    if (!isProductAvailable(product) || isProductConsultOnly(product) || unitPrice <= 0) return
+  function addToCart(
+    product: PublicSiteProduct,
+    quantity: number,
+    notes: string,
+    answers: Record<string, string>,
+    optionSelections: ProductOptionSelections,
+  ) {
+    const basePrice = getProductPriceNumber(product)
+    if (!isProductAvailable(product) || isProductConsultOnly(product) || basePrice <= 0) return
+
+    const optionGroups = getProductOptionGroups(product)
+    const validation = validateProductOptionSelections(
+      optionGroups,
+      optionSelections,
+    )
+
+    if (validation) {
+      setError(validation)
+      return
+    }
+
+    const optionPrice = getOptionSelectionsPrice(
+      optionGroups,
+      optionSelections,
+    )
+    const checkoutOptions = getCheckoutOptionPayload(
+      optionGroups,
+      optionSelections,
+    )
+    const unitPrice = Number((basePrice + optionPrice).toFixed(2))
 
     localIdRef.current += 1
     const next: CartItem = {
-      localId: `${product.id}-${localIdRef.current}`,
+      localId: `${product.id}-${Date.now()}-${localIdRef.current}`,
       productId: product.id,
       productName: getProductName(product),
       category: getCategory(product),
@@ -291,19 +414,27 @@ export default function SegmentMarketplaceCatalog({
       unitPrice,
       notes,
       answers,
+      variationId: checkoutOptions.variationId,
+      addonIds: checkoutOptions.addonIds,
+      optionSummary: getOptionSelectionSummary(
+        optionGroups,
+        optionSelections,
+      ),
+      optionSelections,
       subtotal: Number((unitPrice * quantity).toFixed(2)),
     }
 
     setCart((current) => [...current, next])
+    setCartOpen(true)
     setSelected(null)
-    setCoupon(initialCoupon)
+    resetCoupon()
     setError('')
     setSuccess('Item adicionado ao carrinho/solicitação.')
   }
 
   function removeItem(localId: string) {
     setCart((current) => current.filter((item) => item.localId !== localId))
-    setCoupon(initialCoupon)
+    resetCoupon()
   }
 
   function updateQuantity(localId: string, quantity: number) {
@@ -311,7 +442,7 @@ export default function SegmentMarketplaceCatalog({
       ? { ...item, quantity: Math.max(1, quantity), subtotal: Number((item.unitPrice * Math.max(1, quantity)).toFixed(2)) }
       : item
     ))
-    setCoupon(initialCoupon)
+    resetCoupon()
   }
 
   async function applyCoupon() {
@@ -403,8 +534,11 @@ export default function SegmentMarketplaceCatalog({
         items: cart.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-          addonIds: [],
+          variationId: item.variationId || undefined,
+          addonIds: Array.isArray(item.addonIds) ? item.addonIds : [],
+          optionSelections: item.optionSelections || {},
           observation: [
+            item.optionSummary,
             item.notes,
             ...Object.entries(item.answers || {}).map(
               ([key, value]) => `${key}: ${value}`,
@@ -446,7 +580,7 @@ export default function SegmentMarketplaceCatalog({
 
   return (
     <section id="catalogo" className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto grid max-w-7xl gap-8 xl:grid-cols-[minmax(0,1fr)_390px] xl:items-start">
+      <div className="mx-auto max-w-7xl">
         <div className="min-w-0">
           <div className="rounded-[2.3rem] border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-950/8 sm:p-7">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -483,10 +617,20 @@ export default function SegmentMarketplaceCatalog({
               {filteredProducts.map((product) => {
                 const available = isProductAvailable(product) && !isProductConsultOnly(product) && getProductPriceNumber(product) > 0
                 const image = getPrimaryProductImage(product)
+                const oldPrice = getProductOldPriceNumber(product)
+                const discount = getProductDiscountPercent(product)
+                const stockInfo = getProductStockInfo(product)
+                const commercialBadge = getProductCommercialBadge(product)
 
                 return (
                   <article key={product.id} className="group min-w-0 overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-xl shadow-blue-950/6 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-950/12">
-                    {image ? <img src={image} alt={getProductName(product)} className="h-56 w-full rounded-[1.5rem] object-cover" /> : <div className="grid h-56 place-items-center rounded-[1.5rem] bg-slate-100 text-sm font-black text-slate-400">Sem foto</div>}
+                    <div className="relative">
+                      {image ? <img src={image} alt={getProductName(product)} className="h-56 w-full rounded-[1.5rem] object-cover" /> : <div className="grid h-56 place-items-center rounded-[1.5rem] bg-slate-100 text-sm font-black text-slate-400">Sem foto</div>}
+                      <div className="absolute left-3 top-3 flex max-w-[70%] flex-wrap gap-2">
+                        {commercialBadge ? <span className="rounded-full bg-[#071b3a]/90 px-3 py-1 text-xs font-black text-white backdrop-blur">{commercialBadge}</span> : null}
+                      </div>
+                      {discount > 0 ? <span className="absolute right-3 top-3 rounded-full bg-amber-400 px-3 py-2 text-xs font-black text-amber-950 shadow-lg">{discount}% OFF</span> : null}
+                    </div>
                     <div className="p-4">
                       <div className="flex flex-wrap gap-2">
                         <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{getCategory(product)}</span>
@@ -495,7 +639,11 @@ export default function SegmentMarketplaceCatalog({
                       <h3 className="mt-4 text-2xl font-black tracking-[-0.045em] text-[#071b3a]">{getProductName(product)}</h3>
                       <p className="mt-2 line-clamp-3 text-sm font-bold leading-6 text-slate-500">{product.descricao_curta || product.descricao || 'Confira detalhes e envie uma solicitação.'}</p>
                       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-2xl font-black text-[#05245c]">{getProductPriceLabel(product)}</p>
+                        <div>
+                          {oldPrice > 0 ? <p className="text-sm font-black text-slate-400 line-through">{money(oldPrice)}</p> : null}
+                          <p className="text-2xl font-black text-[#05245c]">{getProductPriceLabel(product)}</p>
+                          {stockInfo.label ? <p className={`mt-1 text-xs font-black ${stockInfo.low || stockInfo.soldOut ? 'text-amber-700' : 'text-emerald-700'}`}>{stockInfo.label}</p> : null}
+                        </div>
                         <button type="button" onClick={() => available ? setSelected(product) : null} disabled={!available} className="rounded-2xl px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={available ? { background: primaryColor } : undefined}>
                           {isStoreLike(normalizedType) ? 'Adicionar' : labels.actionLabel}
                         </button>
@@ -514,22 +662,64 @@ export default function SegmentMarketplaceCatalog({
           )}
         </div>
 
-        <aside className="min-w-0 rounded-[2.3rem] border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/8 xl:sticky xl:top-24">
-          <div className="flex items-center justify-between gap-3">
+        {cartOpen ? (
+          <button
+            type="button"
+            aria-label="Fechar carrinho"
+            onClick={() => setCartOpen(false)}
+            className="fixed inset-0 z-[60] bg-[#071b3a]/55 backdrop-blur-[2px]"
+          />
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => setCartOpen(true)}
+          className="fixed bottom-4 right-4 z-50 flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full px-5 py-4 font-black text-white shadow-2xl shadow-blue-950/30 transition hover:-translate-y-1"
+          style={{ background: primaryColor }}
+          aria-label="Abrir carrinho"
+        >
+          <span aria-hidden="true">🛒</span>
+          <span className="truncate">{cartItemCount} {cartItemCount === 1 ? 'item' : 'itens'} • {money(subtotal)}</span>
+        </button>
+
+        <aside
+          role="dialog"
+          aria-modal="true"
+          aria-label="Carrinho e finalização"
+          className={`fixed inset-x-0 bottom-0 z-[70] flex h-[min(94dvh,860px)] min-w-0 flex-col overflow-hidden rounded-t-[2rem] border border-blue-100 bg-white shadow-2xl shadow-blue-950/20 transition duration-300 ease-out sm:inset-y-4 sm:left-auto sm:right-4 sm:bottom-auto sm:h-[calc(100dvh-2rem)] sm:w-[460px] sm:rounded-[2rem] ${
+            cartOpen
+              ? 'translate-y-0 opacity-100 sm:translate-x-0'
+              : 'pointer-events-none translate-y-[110%] opacity-0 sm:translate-x-[110%] sm:translate-y-0'
+          }`}
+        >
+          {/* ORCALY_RESPONSIVE_SEGMENT_CART_V3 */}
+          <div className="shrink-0 border-b border-blue-100 bg-white px-4 pb-3 pt-4 sm:px-5">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Checkout</p>
               <h3 className="text-2xl font-black tracking-[-0.04em] text-[#071b3a]">{checkoutTitle}</h3>
             </div>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{cart.length} itens</span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{cartItemCount} itens</span>
+              <button
+                type="button"
+                onClick={() => setCartOpen(false)}
+                className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600"
+                aria-label="Fechar carrinho"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
 
-          <div className="mt-4 grid gap-3">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 sm:px-5">
+            <div className="mt-4 grid gap-3">
             {cart.length ? cart.map((item) => (
               <div key={item.localId} className="rounded-2xl border border-blue-100 bg-[#f8fbff] p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate font-black text-[#071b3a]">{item.productName}</p>
                     <p className="text-xs font-bold text-slate-500">{money(item.unitPrice)} unidade</p>
+                    {item.optionSummary ? <p className="mt-1 line-clamp-2 text-xs font-bold text-slate-500">{item.optionSummary}</p> : null}
                     {item.notes ? <p className="mt-1 line-clamp-2 text-xs font-bold text-slate-500">{item.notes}</p> : null}
                   </div>
                   <button type="button" onClick={() => removeItem(item.localId)} className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black text-red-600">remover</button>
@@ -544,26 +734,6 @@ export default function SegmentMarketplaceCatalog({
                 Escolha itens para montar o pedido, orçamento ou solicitação.
               </div>
             )}
-          </div>
-
-          <div className="mt-5 grid gap-3 rounded-[1.7rem] bg-[#f8fbff] p-4">
-            <div className="grid grid-cols-[1fr_auto] gap-3 text-sm font-bold text-slate-500"><span>Subtotal</span><span>{money(subtotal)}</span></div>
-            {logisticsEnabled ? <div className="grid grid-cols-[1fr_auto] gap-3 text-sm font-bold text-slate-500"><span>Taxa de entrega</span><span>{money(deliveryFee)}</span></div> : null}
-            {coupon.appliedCode ? <div className="grid grid-cols-[1fr_auto] gap-3 text-sm font-bold text-emerald-700"><span>Cupom {coupon.appliedCode}</span><span>-{money(totalDiscount)}</span></div> : null}
-            <div className="border-t border-blue-100 pt-3 grid grid-cols-[1fr_auto] gap-3 text-xl font-black text-[#071b3a]"><span>Total estimado</span><span>{money(total)}</span></div>
-          </div>
-
-          <div className="mt-4 grid gap-2">
-            <div className="flex gap-2">
-              <input value={coupon.code} onChange={(event) => setCoupon((current) => ({ ...current, code: event.target.value, error: '', message: '' }))} placeholder="Digite seu cupom" className="min-w-0 flex-1 rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold outline-none" />
-              {coupon.appliedCode ? (
-                <button type="button" onClick={() => setCoupon(initialCoupon)} className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-black text-slate-600">Remover</button>
-              ) : (
-                <button type="button" onClick={applyCoupon} disabled={coupon.applying} className="rounded-2xl px-4 py-3 text-sm font-black text-white disabled:opacity-60" style={{ background: primaryColor }}>{coupon.applying ? '...' : 'Aplicar'}</button>
-              )}
-            </div>
-            {coupon.message ? <p className="text-xs font-black text-emerald-700">{coupon.message}</p> : null}
-            {coupon.error ? <p className="text-xs font-black text-red-700">{coupon.error}</p> : null}
           </div>
 
           <div className="mt-5 grid gap-3">
@@ -605,13 +775,51 @@ export default function SegmentMarketplaceCatalog({
           {error ? <div className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</div> : null}
           {success ? <div className="mt-4 rounded-2xl bg-emerald-50 p-3 text-sm font-bold text-emerald-700">{success}</div> : null}
 
-          <button type="button" onClick={submitOrder} disabled={submitting || !cart.length} className="mt-5 w-full rounded-2xl px-5 py-4 font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!submitting && cart.length ? { background: primaryColor } : undefined}>
-            {submitting ? 'Enviando...' : unifiedCheckoutEnabled && isStoreLike(normalizedType) ? 'Finalizar e pagar' : checkoutTitle}
-          </button>
+
 
           <a href={whatsappLink(company, `Olá, tenho uma dúvida sobre ${company.nome || 'a empresa'}.`)} target="_blank" rel="noreferrer" className="mt-3 block rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-center text-sm font-black text-emerald-700">
             Tirar dúvida no WhatsApp
           </a>
+
+          </div>
+
+          <div className="shrink-0 border-t border-blue-100 bg-white/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_40px_rgba(7,27,58,0.08)] backdrop-blur sm:px-5">
+            <div className="flex items-end justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Total estimado</p>
+                {coupon.appliedCode ? <p className="mt-1 truncate text-xs font-black text-emerald-700">Cupom {coupon.appliedCode} aplicado</p> : <p className="mt-1 text-xs font-bold text-slate-500">{cartItemCount} {cartItemCount === 1 ? 'item' : 'itens'}</p>}
+              </div>
+              <p className="shrink-0 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">{money(total)}</p>
+            </div>
+
+            <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <input
+                value={coupon.code}
+                onChange={(event) => setCoupon((current) => ({ ...current, code: event.target.value.toUpperCase(), error: '', message: '' }))}
+                placeholder="Cupom de desconto"
+                className="min-w-0 rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-3 text-sm font-black uppercase outline-none focus:border-[#05245c]"
+              />
+              {coupon.appliedCode ? (
+                <button type="button" onClick={() => setCoupon(initialCoupon)} className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-black text-red-600">Remover</button>
+              ) : (
+                <button type="button" onClick={applyCoupon} disabled={coupon.applying || !cart.length} className="rounded-2xl px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300" style={!coupon.applying && cart.length ? { background: primaryColor } : undefined}>{coupon.applying ? 'Aplicando...' : 'Aplicar'}</button>
+              )}
+            </div>
+
+            {coupon.message ? <p className="mt-2 text-xs font-black text-emerald-700">{coupon.message}</p> : null}
+            {coupon.error ? <p className="mt-2 text-xs font-black text-red-700">{coupon.error}</p> : null}
+            {error ? <div className="mt-2 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</div> : null}
+
+            <button
+              type="button"
+              onClick={submitOrder}
+              disabled={submitting || !cart.length}
+              className="mt-3 w-full rounded-2xl px-5 py-4 text-base font-black text-white shadow-lg disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+              style={!submitting && cart.length ? { background: primaryColor } : undefined}
+            >
+              {submitting ? 'Continuando...' : unifiedCheckoutEnabled && isStoreLike(normalizedType) ? `Continuar para pagamento • ${money(total)}` : checkoutTitle}
+            </button>
+          </div>
         </aside>
       </div>
 
@@ -642,15 +850,95 @@ function ProductRequestModal({
   primaryColor: string
   accentColor: string
   onClose: () => void
-  onAdd: (product: PublicSiteProduct, quantity: number, notes: string, answers: Record<string, string>) => void
+  onAdd: (
+    product: PublicSiteProduct,
+    quantity: number,
+    notes: string,
+    answers: Record<string, string>,
+    optionSelections: ProductOptionSelections,
+  ) => void
 }) {
   const [quantity, setQuantity] = useState(1)
   const [notes, setNotes] = useState('')
   const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [optionSelections, setOptionSelections] =
+    useState<ProductOptionSelections>({})
+  const [optionError, setOptionError] = useState('')
   const fields = segmentFields[businessType] || segmentFields.services
+  const optionGroups = useMemo(
+    () => getProductOptionGroups(product),
+    [product],
+  )
   const price = getProductPriceNumber(product)
-  const subtotal = Number((price * Math.max(1, quantity)).toFixed(2))
+  const optionsPrice = getOptionSelectionsPrice(
+    optionGroups,
+    optionSelections,
+  )
+  const subtotal = Number(
+    (
+      (price + optionsPrice) *
+      Math.max(1, quantity)
+    ).toFixed(2),
+  )
   const image = getPrimaryProductImage(product)
+
+  function selectOption(
+    group: ProductOptionGroup,
+    optionId: string,
+  ) {
+    setOptionError('')
+
+    setOptionSelections((current) => {
+      const selected = current[group.id] || []
+
+      if (group.selection === 'single') {
+        return {
+          ...current,
+          [group.id]:
+            selected[0] === optionId ? [] : [optionId],
+        }
+      }
+
+      if (selected.includes(optionId)) {
+        return {
+          ...current,
+          [group.id]: selected.filter((id) => id !== optionId),
+        }
+      }
+
+      if (selected.length >= Math.max(1, group.max)) {
+        setOptionError(
+          `Escolha no máximo ${group.max} opções em "${group.name}".`,
+        )
+        return current
+      }
+
+      return {
+        ...current,
+        [group.id]: [...selected, optionId],
+      }
+    })
+  }
+
+  function addConfiguredItem() {
+    const validation = validateProductOptionSelections(
+      optionGroups,
+      optionSelections,
+    )
+
+    if (validation) {
+      setOptionError(validation)
+      return
+    }
+
+    onAdd(
+      product,
+      quantity,
+      notes,
+      answers,
+      optionSelections,
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[#071b3a]/60 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true">
@@ -680,6 +968,53 @@ function ProductRequestModal({
                 <input type="number" min={1} value={quantity} onChange={(event) => setQuantity(Math.max(1, Number(event.target.value || 1)))} className="rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-3 font-bold outline-none" />
               </label>
 
+              {optionGroups.map((group) => {
+                const selected = optionSelections[group.id] || []
+                const rule =
+                  group.selection === 'single'
+                    ? group.required
+                      ? 'Escolha 1 opção'
+                      : 'Escolha até 1 opção'
+                    : `${group.required ? `Escolha de ${Math.max(1, group.min)} a` : 'Escolha até'} ${group.max}`
+
+                return (
+                  <section key={group.id} className="rounded-[1.4rem] border border-blue-100 bg-[#f8fbff] p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="font-black text-[#071b3a]">{group.name}</p>
+                        <p className="mt-1 text-xs font-bold text-slate-500">{rule}</p>
+                      </div>
+                      <span className={`rounded-full px-3 py-1 text-xs font-black ${group.required ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-500'}`}>
+                        {group.required ? 'Obrigatório' : 'Opcional'}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 grid gap-2">
+                      {group.options.filter((option) => option.active).map((option) => {
+                        const checked = selected.includes(option.id)
+
+                        return (
+                          <label key={option.id} className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3 ${checked ? 'border-blue-300 bg-white' : 'border-blue-100 bg-white/70'}`}>
+                            <span className="flex min-w-0 items-center gap-3">
+                              <input
+                                type={group.selection === 'single' ? 'radio' : 'checkbox'}
+                                name={`option-group-${group.id}`}
+                                checked={checked}
+                                onChange={() => selectOption(group, option.id)}
+                              />
+                              <span className="truncate font-black text-slate-700">{option.name}</span>
+                            </span>
+                            <span className="shrink-0 text-sm font-black text-[#05245c]">
+                              {option.price > 0 ? `+ ${money(option.price)}` : 'Incluso'}
+                            </span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </section>
+                )
+              })}
+
               {fields.map((field) => (
                 <label key={field.key} className="grid gap-2 text-sm font-black text-slate-600">
                   {field.label}
@@ -696,12 +1031,19 @@ function ProductRequestModal({
                 <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Detalhes adicionais, prazo, preferências ou dúvidas." rows={4} className="resize-none rounded-2xl border border-blue-100 bg-[#f8fbff] px-4 py-3 font-bold outline-none" />
               </label>
 
+              {optionError ? (
+                <div className="rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-700">
+                  {optionError}
+                </div>
+              ) : null}
+
               <div className="flex flex-col gap-3 rounded-[1.5rem] border border-blue-100 bg-[#f8fbff] p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Subtotal estimado</p>
                   <p className="text-3xl font-black text-[#071b3a]">{money(subtotal)}</p>
+                  {optionsPrice > 0 ? <p className="mt-1 text-xs font-bold text-slate-500">Inclui {money(optionsPrice)} por unidade em opções.</p> : null}
                 </div>
-                <button type="button" onClick={() => onAdd(product, quantity, notes, answers)} className="rounded-2xl px-5 py-4 font-black text-white" style={{ background: primaryColor }}>
+                <button type="button" onClick={addConfiguredItem} className="rounded-2xl px-5 py-4 font-black text-white" style={{ background: primaryColor }}>
                   Adicionar
                 </button>
               </div>
@@ -712,4 +1054,3 @@ function ProductRequestModal({
     </div>
   )
 }
-

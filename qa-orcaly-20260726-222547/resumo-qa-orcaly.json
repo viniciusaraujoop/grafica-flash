@@ -1,0 +1,23 @@
+{
+    "generatedAt":  "2026-07-26T22:26:49.5961254-03:00",
+    "root":  "C:\\Users\\arauj\\grafica-flash",
+    "branch":  "feature/asaas-sandbox",
+    "commit":  "3a2aea07d1fd5b9afc06f41a27b4417cc6a4a780",
+    "productionBaseUrl":  "https://orcaly.com.br",
+    "p0":  [
+
+           ],
+    "p1":  [
+               "O lint encontrou erros.",
+               "Fluxos desativados: 35 ocorrencia(s).",
+               "Trabalho incompleto: 150 ocorrencia(s).",
+               "Dependencia antiga Asaas em fluxo ativo: 87 ocorrencia(s)."
+           ],
+    "p2":  [
+               "package.json nao possui testes automatizados.",
+               "Riscos de depuracao em producao: 42 ocorrencia(s).",
+               "Existem paginas com nomes de modulo repetidos."
+           ],
+    "readyForValidation":  false,
+    "report":  "C:\\Users\\arauj\\grafica-flash\\qa-orcaly-20260726-222547\\relatorio-qa-orcaly.txt"
+}
