@@ -145,7 +145,7 @@ export async function getCompanyAccess(
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
   email?: string | null,
-): Promise<CompanyAccess> {
+) {
   const adminRole = await getAdminRole(supabaseAdmin, email)
   const isAdminMaster =
     adminRole === 'owner' ||
