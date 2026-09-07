@@ -1,32 +1,47 @@
 {
   "version": "3.1",
-  "currentPhase": "production_incidents_p0",
+  "currentPhase": "security_hardening",
   "completed": [
     "baseline_git_and_production_identification",
     "package_script_audit",
     "supabase_security_advisor_baseline",
     "supabase_performance_advisor_baseline",
     "migration_history_baseline",
-    "platform_admin_security_definer_live_review"
+    "platform_admin_security_definer_live_review",
+    "ai_gateway_401_reproduced_on_current_production",
+    "database_hardening_batch_1",
+    "database_hardening_batch_1_advisor_postcheck"
   ],
   "inProgress": [
-    "ai_gateway_401_reproduction",
+    "ai_gateway_code_hardening",
+    "platform_admin_rpc_negative_test",
     "repository_surface_map",
-    "rls_authorization_map"
+    "rls_authorization_map",
+    "zero_policy_table_classification"
   ],
-  "blocked": [],
+  "blocked": [
+    "ai_gateway_provider_authentication"
+  ],
   "externalLimitations": [
     "Leaked Password Protection is disabled in Supabase Auth and requires control-plane configuration validation before it can be enabled safely.",
-    "The connected Vercel surface does not currently expose environment-variable mutation, so no AI Gateway credential will be invented or hardcoded."
+    "The connected Vercel surface does not expose environment-variable mutation. Current production was proven to return AI Gateway 401 and requires a valid AI_GATEWAY_API_KEY or working project OIDC configuration through the Vercel control plane. No credential will be invented or hardcoded."
   ],
   "bugsFound": [
     "ORC31-001",
+    "ORC31-002",
+    "ORC31-003",
     "ORC31-004",
     "ORC31-005",
     "ORC31-006",
     "ORC31-007"
   ],
-  "migrations": [],
+  "migrations": [
+    {
+      "name": "orcaly_3_1_db_hardening_batch_1",
+      "file": "supabase/migrations/20260907140500_orcaly_3_1_db_hardening_batch_1.sql",
+      "status": "APPLIED_AND_ADVISOR_VERIFIED"
+    }
+  ],
   "deployments": [
     {
       "kind": "production_baseline",
@@ -36,6 +51,6 @@
     }
   ],
   "qaScores": {},
-  "lastVerifiedCommit": "86267a32131209050c4c4d6788574602f86d5eb4",
+  "lastVerifiedCommit": "5ab754d30741831382acf866890d1d4ef23171a9",
   "finalStatus": "IN_PROGRESS"
 }

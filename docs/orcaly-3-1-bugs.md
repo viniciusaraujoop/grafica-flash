@@ -1,14 +1,15 @@
 # ORÇALY 3.1 — Bug Ledger
 
 ## ORC31-001 — Public AI Gateway authentication failure
-- **Sintoma:** `/api/public/home-chat` registrou `AI Gateway 401 Authentication failed` para `openai/gpt-5.6-luna` e `openai/gpt-5.4` em execução recente.
-- **Impacto:** assistente retorna resposta guiada em vez de resposta do provider; saúde da IA fica mascarada por HTTP 200.
-- **Causa raiz:** em investigação. O código usa o padrão documentado `AI_GATEWAY_API_KEY || VERCEL_OIDC_TOKEN`, portanto é necessário reproduzir no deployment atual e separar configuração de credencial de comportamento de código.
-- **Arquivo/região:** `app/api/public/home-chat/route.ts`, `requestModel()` / `generateAnswer()`.
-- **Correção:** pendente de reprodução no deployment atual. Não hardcodar segredo.
-- **Teste criado:** smoke HTTP da IA 3.1.
-- **Status:** INVESTIGATING.
-- **Deploy validado:** pendente.
+- **Sintoma:** `/api/public/home-chat` responde HTTP 200, mas o smoke da produção atual recebeu `source: guided`; os logs do mesmo request registraram `AI Gateway 401 Authentication failed` para `openai/gpt-5.6-luna` e `openai/gpt-5.4`.
+- **Impacto:** assistente cai para resposta guiada em vez de usar o provider; HTTP 200 sozinho mascara a indisponibilidade da IA.
+- **Causa raiz:** autenticação do AI Gateway inválida/ausente no ambiente de produção atual. O código usa o padrão documentado `AI_GATEWAY_API_KEY || VERCEL_OIDC_TOKEN`; a superfície conectada da Vercel nesta execução não permite criar/alterar a credencial de ambiente.
+- **Arquivo/região:** `app/api/public/home-chat/route.ts`, `requestModel()` / `generateAnswer()` e configuração Vercel AI Gateway.
+- **Correção:** provider bloqueado por configuração externa. Em código, endurecer para não tentar outro modelo com a mesma autenticação rejeitada, adicionar circuit breaker/observabilidade e preservar fallback canônico sem fingir saúde do provider. Nunca hardcodar segredo.
+- **Teste criado:** `scripts/orcaly-3-1-ai-smoke.mjs` + workflow `Orçaly 3.1 AI Smoke`.
+- **Evidência:** run `34129868443`, job `101767140678`: `status=200`, `source=guided`, `AI_PROVIDER_NOT_USED`; runtime do deployment baseline registrou os dois 401.
+- **Status:** BLOCKED_EXTERNAL_CREDENTIAL + CODE_HARDENING_IN_PROGRESS.
+- **Deploy validado:** produção baseline `dpl_Bj4QUZDXASduCK3PyNN3KqqDPAHk` reproduziu o defeito.
 
 ## ORC31-002 — Leaked Password Protection disabled
 - **Sintoma:** Supabase Security Advisor reporta `auth_leaked_password_protection`.
@@ -26,8 +27,8 @@
 - **Causa raiz:** desenho intencional de RPC SECURITY DEFINER para ler somente o acesso administrativo do próprio `auth.uid()`.
 - **Arquivo/região:** função PostgreSQL `public.get_my_platform_admin_access()`.
 - **Correção:** nenhuma alteração até teste negativo. Live review confirmou `PUBLIC=false`, `anon=false`, `authenticated=true`, `search_path=pg_catalog, public` e filtro `p.user_id = auth.uid()`.
-- **Teste criado:** pendente BOLA/RPC negative test.
-- **Status:** REVIEWED_NOT_YET_A_B_TESTED.
+- **Teste criado:** BOLA/RPC negative test em execução.
+- **Status:** REVIEWED_NOT_YET_NEGATIVE_TESTED.
 - **Deploy validado:** produção atual.
 
 ## ORC31-004 — RLS auth functions re-evaluated per row
@@ -51,21 +52,21 @@
 - **Deploy validado:** pendente.
 
 ## ORC31-006 — Support foreign keys without covering indexes
-- **Sintoma:** duas FKs do Control Center não têm índice de cobertura.
-- **Impacto:** joins/deletes/updates relacionados podem degradar com crescimento.
+- **Sintoma:** duas FKs do Control Center não tinham índice de cobertura.
+- **Impacto:** joins/deletes/updates relacionados poderiam degradar com crescimento.
 - **Causa raiz:** índices não foram criados junto das FKs.
 - **Arquivo/região:** `platform_support_ticket_events.admin_id`, `platform_support_tickets.assignee_admin_id`.
-- **Correção:** confirmar workload e criar índices aditivos se justificados.
-- **Teste criado:** advisor before/after.
-- **Status:** OPEN.
-- **Deploy validado:** pendente.
+- **Correção:** migration `orcaly_3_1_db_hardening_batch_1` adicionou índices dedicados. As tabelas estavam vazias no momento da mudança.
+- **Teste criado:** Performance Advisor before/after.
+- **Status:** FIXED_AND_VERIFIED.
+- **Deploy validado:** banco de produção; aviso `unindexed_foreign_keys` desapareceu no advisor pós-migration.
 
 ## ORC31-007 — Duplicate index on plan_payments
-- **Sintoma:** advisor confirma índices idênticos `idx_plan_payments_admin_company_created` e `plan_payments_company_created_idx`.
+- **Sintoma:** advisor confirmou índices idênticos `idx_plan_payments_admin_company_created` e `plan_payments_company_created_idx`.
 - **Impacto:** write amplification e armazenamento redundante.
 - **Causa raiz:** migrations históricas criaram índices equivalentes.
 - **Arquivo/região:** `public.plan_payments`.
-- **Correção:** comparar definições/constraints e remover somente a duplicata comprovadamente redundante em migration versionada.
-- **Teste criado:** advisor before/after e inspeção de catálogo.
-- **Status:** OPEN.
-- **Deploy validado:** pendente.
+- **Correção:** catálogo provou ambos como btree não-unique `(company_id, created_at DESC)`, sem constraint associada. A migration removeu somente `idx_plan_payments_admin_company_created` e preservou `plan_payments_company_created_idx`.
+- **Teste criado:** inspeção de catálogo + Performance Advisor before/after.
+- **Status:** FIXED_AND_VERIFIED.
+- **Deploy validado:** banco de produção; aviso `duplicate_index` desapareceu no advisor pós-migration.
