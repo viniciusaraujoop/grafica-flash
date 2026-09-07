@@ -2,7 +2,31 @@ import { enforceRateLimit } from '@/lib/security/rate-limit'
 import { readJsonBody, requestBodyErrorResponse } from '@/lib/security/request'
 // ORCALY_AI_LIMITS_V1
 import { NextRequest, NextResponse } from 'next/server'
-import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
+import { getCompanyAccess, getRequester, getSupabaseAdmin, isUuid } from '@/lib/company-access'
+
+type JsonRecord = Record<string, unknown>
+type QuoteBody = { text?: unknown }
+
+function asRecord(value: unknown): JsonRecord | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? value as JsonRecord
+    : null
+}
+
+function stringValue(value: unknown) {
+  return String(value || '').trim()
+}
+
+function providerErrorMessage(payload: unknown) {
+  const root = asRecord(payload)
+  const error = asRecord(root?.error)
+  return stringValue(error?.message)
+}
+
+function providerOutputText(payload: unknown) {
+  const root = asRecord(payload)
+  return stringValue(root?.output_text)
+}
 
 function heuristic(text: string) {
   const lower = text.toLowerCase()
@@ -93,23 +117,26 @@ function heuristic(text: string) {
   }
 }
 
-function normalizeParsed(value: any, original: string) {
-  const fallback = heuristic(original)
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return fallback
+function normalizeStringArray(value: unknown, fallback: string[], limit: number) {
+  return Array.isArray(value)
+    ? value.map((item) => String(item).trim()).filter(Boolean).slice(0, limit)
+    : fallback
+}
 
-  const questions = Array.isArray(value.perguntas_faltantes)
-    ? value.perguntas_faltantes.map((item: unknown) => String(item).trim()).filter(Boolean).slice(0, 12)
-    : fallback.perguntas_faltantes
-  const missing = Array.isArray(value.informacoes_faltantes)
-    ? value.informacoes_faltantes.map((item: unknown) => String(item).trim()).filter(Boolean).slice(0, 12)
-    : fallback.informacoes_faltantes
+function normalizeParsed(value: unknown, original: string): JsonRecord {
+  const fallback = heuristic(original)
+  const record = asRecord(value)
+  if (!record) return { ...fallback }
+
+  const questions = normalizeStringArray(record.perguntas_faltantes, fallback.perguntas_faltantes, 12)
+  const missing = normalizeStringArray(record.informacoes_faltantes, fallback.informacoes_faltantes, 12)
 
   return {
     ...fallback,
-    ...value,
-    resumo: String(value.resumo || original).slice(0, 4000),
-    caracteristicas: Array.isArray(value.caracteristicas) ? value.caracteristicas.slice(0, 20) : fallback.caracteristicas,
-    informacoes_confirmadas: Array.isArray(value.informacoes_confirmadas) ? value.informacoes_confirmadas.slice(0, 20) : fallback.informacoes_confirmadas,
+    ...record,
+    resumo: String(record.resumo || original).slice(0, 4000),
+    caracteristicas: normalizeStringArray(record.caracteristicas, fallback.caracteristicas, 20),
+    informacoes_confirmadas: normalizeStringArray(record.informacoes_confirmadas, fallback.informacoes_confirmadas, 20),
     informacoes_faltantes: missing,
     perguntas_faltantes: questions,
     pode_completar: missing.length > 0 || questions.length > 0,
@@ -124,10 +151,12 @@ export async function POST(request: NextRequest) {
     if (!requester) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
 
     const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
-    if (!access.company?.id) return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
+    const company = asRecord(access.company)
+    const companyId = stringValue(company?.id)
+    if (!company || !isUuid(companyId)) return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
 
-    const plan = String(access.company.assinatura_plano || access.company.plano || 'basico').toLowerCase()
-    const dailyLimit = plan === 'premium' ? 600 : plan === 'profissional' ? 120 : 25
+    const plan = stringValue(company.assinatura_plano || company.plano || 'basico').toLowerCase()
+    const dailyLimit = plan === 'premium' ? 600 : ['profissional', 'intermediario', 'intermediário'].includes(plan) ? 120 : 25
 
     const burstBlocked = await enforceRateLimit(request, {
       scope: 'ai-user-minute', identity: requester.id, limit: 10, windowSeconds: 60,
@@ -135,15 +164,15 @@ export async function POST(request: NextRequest) {
     if (burstBlocked) return burstBlocked
 
     const dailyBlocked = await enforceRateLimit(request, {
-      scope: 'ai-company-daily', identity: access.company.id, limit: dailyLimit, windowSeconds: 86400,
+      scope: 'ai-company-daily', identity: companyId, limit: dailyLimit, windowSeconds: 86400,
     })
     if (dailyBlocked) return dailyBlocked
 
-    const body = await readJsonBody<any>(request, 16 * 1024)
-    const text = String(body.text || '').trim().slice(0, 8000)
-    if (!text) return NextResponse.json({ error: 'Texto do pedido é obrigatório.' }, { status: 400 })
+    const body = await readJsonBody<QuoteBody>(request, 16 * 1024)
+    const requestText = stringValue(body.text).slice(0, 8000)
+    if (!requestText) return NextResponse.json({ error: 'Texto do pedido é obrigatório.' }, { status: 400 })
 
-    const fallback = heuristic(text)
+    const fallback = heuristic(requestText)
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) return NextResponse.json({ ok: true, source: 'heuristic', parsed: fallback })
 
@@ -162,9 +191,9 @@ Regras:
 - não escolha material, medida, prazo ou quantidade pelo cliente;
 - status deve ser "briefing incompleto" quando houver lacunas e "pronto para precificar" quando estiver suficiente.
 
-Empresa: ${access.company.nome}
-Segmento: ${access.company.business_type || access.company.segmento || access.company.modelo_nome || 'services'}
-Pedido: ${text}
+Empresa: ${stringValue(company.nome)}
+Segmento: ${stringValue(company.business_type || company.segmento || company.modelo_nome || 'services')}
+Pedido: ${requestText}
 `.trim()
 
     const response = await fetch('https://api.openai.com/v1/responses', {
@@ -172,14 +201,26 @@ Pedido: ${text}
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: process.env.ORCALY_AI_MODEL || 'gpt-4.1-mini', input: prompt, max_output_tokens: 800 }),
     })
-    const data = await response.json().catch(() => ({}))
+    const data: unknown = await response.json().catch(() => null)
 
     if (!response.ok) {
-      return NextResponse.json({ ok: true, source: 'heuristic', warning: data?.error?.message || 'IA indisponível, usando extração local.', parsed: fallback })
+      return NextResponse.json({
+        ok: true,
+        source: 'heuristic',
+        warning: providerErrorMessage(data) || 'IA indisponível, usando extração local.',
+        parsed: fallback,
+      })
     }
 
-    let parsed: any = fallback
-    try { parsed = normalizeParsed(JSON.parse(String(data.output_text || '{}').trim()), text) } catch { parsed = fallback }
+    let parsed: JsonRecord = { ...fallback }
+    const outputText = providerOutputText(data)
+    if (outputText) {
+      try {
+        parsed = normalizeParsed(JSON.parse(outputText), requestText)
+      } catch {
+        parsed = { ...fallback }
+      }
+    }
 
     return NextResponse.json({ ok: true, source: 'openai', parsed })
   } catch (error) {
