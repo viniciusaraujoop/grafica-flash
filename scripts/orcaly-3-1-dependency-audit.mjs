@@ -70,6 +70,14 @@ function runAudit(extraArgs = []) {
   }
 }
 
+function printAudit(label, audit) {
+  console.log(`ORCALY_DEP_AUDIT_${label}_SUMMARY`, JSON.stringify({ ok: audit.ok, error: audit.error, summary: audit.summary }))
+  for (const vulnerability of audit.vulnerabilities) {
+    console.log(`ORCALY_DEP_AUDIT_${label}_PACKAGE`, JSON.stringify(vulnerability))
+  }
+}
+
 const full = runAudit()
 const runtime = runAudit(['--omit=dev'])
-console.log('ORCALY_DEP_AUDIT', JSON.stringify({ full, runtime }))
+printAudit('FULL', full)
+printAudit('RUNTIME', runtime)
