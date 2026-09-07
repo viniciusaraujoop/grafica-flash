@@ -14,14 +14,14 @@ function classify(status) {
 function safeMessage(raw) {
   return String(raw || '')
     .replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer [REDACTED]')
-    .replace(/vck_[A-Za-z0-9_-]+/g, 'vck_[REDACTED]')
+    .replace(/(?:vck_|sk-)[A-Za-z0-9_-]+/g, '[REDACTED]')
     .replace(/[A-Za-z0-9_-]{80,}/g, '[REDACTED]')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 220)
 }
 
-async function runRequest(source, credential, endpoint, init) {
+async function runRequest(source, credential, baseUrl, endpoint, init) {
   if (!credential) {
     return {
       source,
@@ -39,7 +39,7 @@ async function runRequest(source, credential, endpoint, init) {
 
   const startedAt = Date.now()
   try {
-    const response = await fetch(`https://ai-gateway.vercel.sh${endpoint}`, {
+    const response = await fetch(`${baseUrl}${endpoint}`, {
       ...init,
       headers: {
         authorization: `Bearer ${credential}`,
@@ -90,8 +90,8 @@ async function runRequest(source, credential, endpoint, init) {
 
 const results = []
 for (const [source, credential] of credentials) {
-  results.push(await runRequest(source, credential, '/v1/credits', { method: 'GET' }))
-  results.push(await runRequest(source, credential, '/v1/chat/completions', {
+  results.push(await runRequest(source, credential, 'https://ai-gateway.vercel.sh', '/v1/credits', { method: 'GET' }))
+  results.push(await runRequest(source, credential, 'https://ai-gateway.vercel.sh', '/v1/chat/completions', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
@@ -102,6 +102,17 @@ for (const [source, credential] of credentials) {
     }),
   }))
 }
+
+const openaiKey = String(process.env.OPENAI_API_KEY || '').trim()
+results.push(await runRequest('openai-direct', openaiKey, 'https://api.openai.com', '/v1/chat/completions', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({
+    model: process.env.ORCALY_AI_MODEL || 'gpt-4.1-mini',
+    messages: [{ role: 'user', content: 'Responda somente OK.' }],
+    max_tokens: 8,
+  }),
+}))
 
 console.log('ORCALY_AI_GATEWAY_BUILD_PROBE', JSON.stringify({
   environment: process.env.VERCEL_ENV || null,
