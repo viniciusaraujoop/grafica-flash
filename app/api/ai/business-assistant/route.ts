@@ -66,7 +66,8 @@ export async function POST(request: NextRequest) {
     if (!requester) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
 
     const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
-    if (!access.company?.id) return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
+    const companyId = text(access.company?.id)
+    if (!isUuid(companyId)) return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
 
     const body = await readJsonBody<any>(request, 16 * 1024)
     const requestedMode = text(body.mode) as Mode
@@ -75,14 +76,14 @@ export async function POST(request: NextRequest) {
     const leadId = text(body.lead_id)
     if (mode === 'free' && !prompt) return NextResponse.json({ error: 'Digite uma solicitação.' }, { status: 400 })
 
-    const companyId = access.company.id
+    const company = access.company as Record<string, unknown>
     const context: any = {
       empresa: {
-        nome: access.company.nome,
-        segmento: access.company.business_type || access.company.segmento || access.company.modelo_negocio || access.company.site_template,
-        cidade: access.company.cidade,
-        estado: access.company.estado,
-        plano: access.company.assinatura_plano || access.company.plano,
+        nome: company.nome,
+        segmento: company.business_type || company.segmento || company.modelo_negocio || company.site_template,
+        cidade: company.cidade,
+        estado: company.estado,
+        plano: company.assinatura_plano || company.plano,
       },
     }
 
@@ -115,8 +116,8 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) return NextResponse.json({ ok: true, source: 'fallback', answer: fallback })
 
-    const plan = text(access.company.assinatura_plano || access.company.plano || 'basico').toLowerCase()
-    const dailyLimit = plan === 'premium' ? 600 : plan === 'profissional' ? 120 : 25
+    const plan = text(company.assinatura_plano || company.plano || 'basico').toLowerCase()
+    const dailyLimit = plan === 'premium' ? 600 : ['profissional', 'intermediario', 'intermediário'].includes(plan) ? 120 : 25
     const burstBlocked = await enforceRateLimit(request, { scope: 'ai-user-minute', identity: requester.id, limit: 10, windowSeconds: 60 })
     if (burstBlocked) return burstBlocked
     const dailyBlocked = await enforceRateLimit(request, { scope: 'ai-company-daily', identity: companyId, limit: dailyLimit, windowSeconds: 86400 })
