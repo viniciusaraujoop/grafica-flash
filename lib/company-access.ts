@@ -9,6 +9,20 @@ export type CurrentRole =
   | 'super_admin'
   | 'funcionario'
 
+export type CompanyAccess = {
+  company: Record<string, unknown> | null
+  role: CurrentRole | null
+  isOwner: boolean
+  isAdminMaster: boolean
+  canManage: boolean
+  canFinance: boolean
+  canConfig: boolean
+  canProducts: boolean
+  canProposal: boolean
+  canSubscription: boolean
+  canProduction: boolean
+}
+
 export function getSupabaseAdmin() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -131,7 +145,7 @@ export async function getCompanyAccess(
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
   email?: string | null,
-) {
+): Promise<CompanyAccess> {
   const adminRole = await getAdminRole(supabaseAdmin, email)
   const isAdminMaster =
     adminRole === 'owner' ||
