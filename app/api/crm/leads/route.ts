@@ -1,8 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
+import { getCompanyAccess, getRequester, getSupabaseAdmin, isUuid } from '@/lib/company-access'
 import { createAuditLog, createNotification } from '@/lib/orcaly-audit'
 
-function cleanLead(body: any) {
+type JsonRecord = Record<string, unknown>
+
+type CleanLead = {
+  nome: string
+  telefone: string | null
+  email: string | null
+  origem: string
+  etapa: string
+  status: string
+  valor_estimado: number
+  proximo_contato_em: unknown
+  observacoes: string | null
+  tags: string[]
+  order_id: unknown
+  proposal_id: unknown
+}
+
+function asRecord(value: unknown): JsonRecord | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? value as JsonRecord
+    : null
+}
+
+function cleanLead(body: JsonRecord): CleanLead {
   const nome = String(body.nome || '').trim()
   if (!nome) throw new Error('Informe o nome do cliente ou lead.')
 
@@ -16,7 +39,7 @@ function cleanLead(body: any) {
     valor_estimado: Number(body.valor_estimado || 0),
     proximo_contato_em: body.proximo_contato_em || null,
     observacoes: String(body.observacoes || '').trim() || null,
-    tags: Array.isArray(body.tags) ? body.tags.map((tag: unknown) => String(tag).trim()).filter(Boolean).slice(0, 20) : [],
+    tags: Array.isArray(body.tags) ? body.tags.map((tag) => String(tag).trim()).filter(Boolean).slice(0, 20) : [],
     order_id: body.order_id || null,
     proposal_id: body.proposal_id || null,
   }
@@ -31,12 +54,13 @@ async function access(request: NextRequest) {
   }
 
   const companyAccess = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
+  const companyId = String(companyAccess.company?.id || '').trim()
 
-  if (!companyAccess.company?.id) {
+  if (!isUuid(companyId)) {
     return { supabaseAdmin, error: NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 }) }
   }
 
-  return { supabaseAdmin, requester, companyAccess }
+  return { supabaseAdmin, requester, companyAccess, companyId }
 }
 
 export async function GET(request: NextRequest) {
@@ -51,7 +75,7 @@ export async function GET(request: NextRequest) {
     let query = result.supabaseAdmin
       .from('crm_leads')
       .select('*')
-      .eq('company_id', result.companyAccess!.company.id)
+      .eq('company_id', result.companyId)
       .order('updated_at', { ascending: false })
       .limit(200)
 
@@ -73,11 +97,14 @@ export async function POST(request: NextRequest) {
     const result = await access(request)
     if ('error' in result && result.error) return result.error
 
-    const body = await request.json()
-    const payload = cleanLead(body)
-    const companyId = result.companyAccess!.company.id
+    const rawBody: unknown = await request.json().catch(() => null)
+    const body = asRecord(rawBody)
+    if (!body) return NextResponse.json({ error: 'Payload inválido.' }, { status: 400 })
 
-    let existing: any = null
+    const payload = cleanLead(body)
+    const companyId = result.companyId
+
+    let existing: JsonRecord | null = null
     if (payload.email) {
       const { data } = await result.supabaseAdmin
         .from('crm_leads')
@@ -87,7 +114,7 @@ export async function POST(request: NextRequest) {
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle()
-      existing = data
+      existing = asRecord(data)
     }
 
     if (!existing && payload.telefone) {
@@ -99,14 +126,16 @@ export async function POST(request: NextRequest) {
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle()
-      existing = data
+      existing = asRecord(data)
     }
 
     if (existing?.id) {
-      const incomingStage = payload.etapa === 'novo_lead' && existing.etapa && existing.etapa !== 'novo_lead' ? existing.etapa : payload.etapa
-      const mergedTags = Array.from(new Set([...(Array.isArray(existing.tags) ? existing.tags : []), ...payload.tags])).slice(0, 20)
+      const existingStage = String(existing.etapa || '')
+      const incomingStage = payload.etapa === 'novo_lead' && existingStage && existingStage !== 'novo_lead' ? existingStage : payload.etapa
+      const existingTags = Array.isArray(existing.tags) ? existing.tags.map((tag) => String(tag)) : []
+      const mergedTags = Array.from(new Set([...existingTags, ...payload.tags])).slice(0, 20)
       const update = {
-        nome: payload.nome || existing.nome,
+        nome: payload.nome || String(existing.nome || ''),
         telefone: payload.telefone || existing.telefone,
         email: payload.email || existing.email,
         origem: payload.origem === 'manual' && existing.origem ? existing.origem : payload.origem,
@@ -124,7 +153,7 @@ export async function POST(request: NextRequest) {
       const { data, error } = await result.supabaseAdmin
         .from('crm_leads')
         .update(update)
-        .eq('id', existing.id)
+        .eq('id', String(existing.id))
         .eq('company_id', companyId)
         .select('*')
         .single()
@@ -133,7 +162,7 @@ export async function POST(request: NextRequest) {
 
       await createAuditLog(result.supabaseAdmin, {
         company_id: companyId,
-        user_id: result.requester!.id,
+        user_id: result.requester.id,
         action: 'crm.lead.reused',
         entity: 'crm_leads',
         entity_id: data.id,
@@ -149,7 +178,7 @@ export async function POST(request: NextRequest) {
       .insert({
         ...payload,
         company_id: companyId,
-        created_by: result.requester!.id,
+        created_by: result.requester.id,
       })
       .select('*')
       .single()
@@ -158,7 +187,7 @@ export async function POST(request: NextRequest) {
 
     await createAuditLog(result.supabaseAdmin, {
       company_id: companyId,
-      user_id: result.requester!.id,
+      user_id: result.requester.id,
       action: 'crm.lead.created',
       entity: 'crm_leads',
       entity_id: data.id,
@@ -168,7 +197,7 @@ export async function POST(request: NextRequest) {
 
     await createNotification(result.supabaseAdmin, {
       company_id: companyId,
-      user_id: result.requester!.id,
+      user_id: result.requester.id,
       tipo: 'crm',
       titulo: 'Novo lead criado',
       mensagem: `${data.nome} entrou no funil comercial.`,
