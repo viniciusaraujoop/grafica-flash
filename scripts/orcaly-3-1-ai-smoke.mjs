@@ -1,6 +1,14 @@
 const baseUrl = String(process.env.ORCALY_BASE_URL || 'https://orcaly.com.br').replace(/\/$/, '')
 const full = process.argv.includes('--full')
 const timeoutMs = 20000
+const trustedOidcToken = String(process.env.VERCEL_TRUSTED_OIDC_TOKEN || '').trim()
+
+const requestHeaders = {
+  'content-type': 'application/json',
+  ...(trustedOidcToken
+    ? { 'x-vercel-trusted-oidc-idp-token': trustedOidcToken }
+    : {}),
+}
 
 const questions = full
   ? [
@@ -16,12 +24,12 @@ const questions = full
 const evidence = []
 let messages = []
 
-for (const question of questions) {
+async function ask(question, currentMessages) {
   const startedAt = Date.now()
   const response = await fetch(`${baseUrl}/api/public/home-chat`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ question, messages }),
+    headers: requestHeaders,
+    body: JSON.stringify({ question, messages: currentMessages }),
     signal: AbortSignal.timeout(timeoutMs),
   })
 
@@ -33,17 +41,25 @@ for (const question of questions) {
     payload = null
   }
 
-  const row = {
-    question,
-    status: response.status,
-    source: payload?.source || null,
-    latencyMs: Date.now() - startedAt,
-    hasAnswer: Boolean(payload?.answer),
+  return {
+    response,
+    payload,
+    row: {
+      question,
+      status: response.status,
+      source: payload?.source || null,
+      latencyMs: Date.now() - startedAt,
+      hasAnswer: Boolean(payload?.answer),
+    },
   }
+}
+
+for (const question of questions) {
+  const { response, payload, row } = await ask(question, messages)
   evidence.push(row)
 
   if (!response.ok) {
-    console.error(JSON.stringify({ ok: false, evidence }, null, 2))
+    console.error(JSON.stringify({ ok: false, reason: 'HTTP_FAILURE', evidence }, null, 2))
     process.exit(1)
   }
 
@@ -66,19 +82,9 @@ for (const question of questions) {
 
 if (full) {
   const question = 'e para uma gráfica pequena que já faz orçamentos todos os dias?'
-  const response = await fetch(`${baseUrl}/api/public/home-chat`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ question, messages }),
-    signal: AbortSignal.timeout(timeoutMs),
-  })
-  const payload = await response.json().catch(() => null)
-  evidence.push({
-    question: '[multi-turn]',
-    status: response.status,
-    source: payload?.source || null,
-    hasAnswer: Boolean(payload?.answer),
-  })
+  const { response, payload, row } = await ask(question, messages)
+  evidence.push({ ...row, question: '[multi-turn]' })
+
   if (!response.ok || payload?.source !== 'ai' || !payload?.answer) {
     console.error(JSON.stringify({ ok: false, reason: 'MULTI_TURN_FAILED', evidence }, null, 2))
     process.exit(4)
