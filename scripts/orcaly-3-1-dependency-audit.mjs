@@ -6,6 +6,7 @@ const rootDependencies = {
   ...(lock.packages?.['']?.dependencies || {}),
   ...(lock.packages?.['']?.devDependencies || {}),
 }
+const gate = process.argv.includes('--gate')
 
 function runAudit(extraArgs = []) {
   const result = spawnSync('npm', ['audit', '--json', ...extraArgs], {
@@ -77,7 +78,24 @@ function printAudit(label, audit) {
   }
 }
 
+function highOrCriticalCount(audit) {
+  return Number(audit.summary?.high || 0) + Number(audit.summary?.critical || 0)
+}
+
 const full = runAudit()
 const runtime = runAudit(['--omit=dev'])
 printAudit('FULL', full)
 printAudit('RUNTIME', runtime)
+
+if (gate && (!full.ok || !runtime.ok || highOrCriticalCount(runtime) > 0)) {
+  console.error('ORCALY_DEP_AUDIT_GATE_FAIL', JSON.stringify({
+    fullOk: full.ok,
+    runtimeOk: runtime.ok,
+    runtimeHighOrCritical: highOrCriticalCount(runtime),
+  }))
+  process.exit(1)
+}
+
+if (gate) {
+  console.log('ORCALY_DEP_AUDIT_GATE_PASS')
+}
