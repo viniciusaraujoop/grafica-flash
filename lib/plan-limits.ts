@@ -17,6 +17,7 @@ export type FeatureId =
   | 'dominio_proprio'
   | 'modulos_avancados'
   | 'permissoes_equipe'
+  | 'automacoes'
 
 export type PlanLimits = {
   id: PlanId
@@ -36,7 +37,7 @@ export const planLimits: Record<PlanId, PlanLimits> = {
   },
   intermediate: {
     id: 'intermediate',
-    label: 'Profissional',
+    label: 'Intermediário',
     monthlyPrice: 99.9,
     maxProducts: 150,
     features: ['site', 'pedidos', 'produtos', 'whatsapp', 'crm', 'financeiro', 'cupons', 'galeria', 'video_produtos'],
@@ -63,6 +64,7 @@ export const planLimits: Record<PlanId, PlanLimits> = {
       'dominio_proprio',
       'modulos_avancados',
       'permissoes_equipe',
+      'automacoes',
     ],
   },
 }
@@ -71,7 +73,7 @@ export function normalizePlan(plan: unknown): PlanId {
   const value = String(plan || '').trim().toLowerCase()
 
   if (value === 'premium') return 'premium'
-  if (value === 'pro' || value === 'profissional' || value === 'intermediate' || value === 'intermediario') return 'intermediate'
+  if (value === 'pro' || value === 'profissional' || value === 'intermediate' || value === 'intermediario' || value === 'intermediário') return 'intermediate'
 
   return 'basic'
 }
