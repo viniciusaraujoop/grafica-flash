@@ -1,18 +1,20 @@
-name: Platform Evolution 3
+name: Orçaly Platform Quality Gate
 
 on:
   push:
     branches:
       - feat/platform-evolution-3
+      - feat/orcaly-3-1
+      - main
   pull_request:
     branches:
-      - feat/main-site-v2
+      - main
 
 permissions:
   contents: read
 
 concurrency:
-  group: platform-evolution-3-${{ github.ref }}
+  group: orcaly-quality-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -52,6 +54,5 @@ jobs:
       - name: Diff whitespace validation
         run: git diff --check
 
-      - name: Dependency audit baseline
-        continue-on-error: true
+      - name: Dependency audit
         run: npm audit --omit=dev --audit-level=high
