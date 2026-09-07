@@ -64,6 +64,6 @@ const subscriptionRoute = readFileSync(new URL('../app/api/company/subscription/
 const teamRoute = readFileSync(new URL('../app/api/company/team/route.ts', import.meta.url), 'utf8')
 assert.match(settingsRoute, /requireMfaStepUpForRequest\(request, 'pix\.update'\)/)
 assert.match(subscriptionRoute, /requireMfaStepUpForRequest\(request, "subscription\.manage"\)/)
-assert.match(teamRoute, /requireMfaStepUpForRequest\(request, 'team\.elevated\.manage'\)/)
+assert.match(teamRoute, /requireMfaStepUpForRequest\(input\.request, 'team\.elevated\.manage'\)/)
 
 console.log('Orçaly 3.1 MFA policy and server-wiring checks: PASS')
