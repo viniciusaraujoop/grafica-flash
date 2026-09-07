@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
@@ -85,10 +86,7 @@ export default function MfaSettings() {
 
     setBusy(true)
     setError('')
-    const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({
-      factorId: pending.id,
-      code,
-    })
+    const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({ factorId: pending.id, code })
     setBusy(false)
 
     if (verifyError) {
@@ -112,10 +110,7 @@ export default function MfaSettings() {
 
     setBusy(true)
     setError('')
-    const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({
-      factorId: factor.id,
-      code,
-    })
+    const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code })
     setBusy(false)
 
     if (verifyError) {
@@ -202,7 +197,14 @@ export default function MfaSettings() {
               <h3 className="font-black text-slate-950">Escaneie o QR Code</h3>
               <p className="mt-1 text-sm leading-6 text-slate-600">Abra seu aplicativo autenticador, escaneie o código e depois confirme com os 6 dígitos gerados.</p>
             </div>
-            <img src={pending.qrCode} alt="QR Code para configurar o autenticador" className="h-44 w-44 rounded-xl border border-slate-200 bg-white p-2" />
+            <Image
+              src={pending.qrCode}
+              alt="QR Code para configurar o autenticador"
+              width={176}
+              height={176}
+              unoptimized
+              className="h-44 w-44 rounded-xl border border-slate-200 bg-white p-2"
+            />
             <details className="text-sm text-slate-600">
               <summary className="cursor-pointer font-bold text-slate-800">Não consigo escanear o QR Code</summary>
               <p className="mt-2 break-all rounded-xl bg-white p-3 font-mono text-xs">{pending.secret}</p>
@@ -214,6 +216,7 @@ export default function MfaSettings() {
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 placeholder="000000"
+                aria-label="Código TOTP para confirmar ativação"
                 className="h-12 min-w-40 rounded-xl border border-slate-200 bg-white px-4 text-center font-black tracking-[0.28em] outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               />
               <button type="button" onClick={confirmEnrollment} disabled={busy || verifyCode.length !== 6} className="rounded-xl bg-[#082b62] px-5 py-3 text-sm font-black text-white disabled:opacity-50">
@@ -235,6 +238,7 @@ export default function MfaSettings() {
               inputMode="numeric"
               autoComplete="one-time-code"
               placeholder="000000"
+              aria-label="Código TOTP para confirmar identidade"
               className="h-12 w-40 rounded-xl border border-amber-200 bg-white px-4 text-center font-black tracking-[0.28em] outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
             />
             <button type="button" onClick={confirmStepUp} disabled={busy || stepUpCode.length !== 6} className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-black text-white disabled:opacity-50">
