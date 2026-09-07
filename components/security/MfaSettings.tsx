@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
 type Factor = {
@@ -16,6 +16,35 @@ type PendingEnrollment = {
   secret: string
 }
 
+type MfaSnapshot = {
+  factors: Factor[]
+  currentLevel: string
+}
+
+async function loadMfaState(): Promise<MfaSnapshot> {
+  const [{ data: factorData, error: factorError }, { data: aalData, error: aalError }] = await Promise.all([
+    supabase.auth.mfa.listFactors(),
+    supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+  ])
+
+  if (factorError) throw factorError
+  if (aalError) throw aalError
+
+  const verified = [
+    ...(factorData?.totp || []),
+    ...(factorData?.phone || []),
+  ].filter((factor) => factor.status === 'verified')
+
+  return {
+    factors: verified.map((factor) => ({
+      id: factor.id,
+      friendlyName: factor.friendly_name || 'Autenticador',
+      type: factor.factor_type,
+    })),
+    currentLevel: aalData?.currentLevel || 'aal1',
+  }
+}
+
 export default function MfaSettings() {
   const [factors, setFactors] = useState<Factor[]>([])
   const [currentLevel, setCurrentLevel] = useState<string>('aal1')
@@ -26,31 +55,30 @@ export default function MfaSettings() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const refresh = useCallback(async () => {
-    const [{ data: factorData, error: factorError }, { data: aalData, error: aalError }] = await Promise.all([
-      supabase.auth.mfa.listFactors(),
-      supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
-    ])
-
-    if (factorError) throw factorError
-    if (aalError) throw aalError
-
-    const verified = [
-      ...(factorData?.totp || []),
-      ...(factorData?.phone || []),
-    ].filter((factor) => factor.status === 'verified')
-
-    setFactors(verified.map((factor) => ({
-      id: factor.id,
-      friendlyName: factor.friendly_name || 'Autenticador',
-      type: factor.factor_type,
-    })))
-    setCurrentLevel(aalData?.currentLevel || 'aal1')
-  }, [])
+  async function refresh() {
+    const snapshot = await loadMfaState()
+    setFactors(snapshot.factors)
+    setCurrentLevel(snapshot.currentLevel)
+  }
 
   useEffect(() => {
-    refresh().catch(() => setError('Não foi possível carregar o estado da verificação em duas etapas.'))
-  }, [refresh])
+    let active = true
+
+    void loadMfaState()
+      .then((snapshot) => {
+        if (!active) return
+        setFactors(snapshot.factors)
+        setCurrentLevel(snapshot.currentLevel)
+      })
+      .catch(() => {
+        if (!active) return
+        setError('Não foi possível carregar o estado da verificação em duas etapas.')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   async function startEnrollment() {
     setBusy(true)
