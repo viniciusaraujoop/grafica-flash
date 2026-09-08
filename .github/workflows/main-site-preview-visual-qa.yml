@@ -1,0 +1,180 @@
+name: Main Site Preview Visual QA
+
+on:
+  push:
+    branches:
+      - feat/main-site-premium-redesign
+    paths:
+      - 'app/page.tsx'
+      - 'app/MainSitePremium.module.css'
+      - 'app/MainSiteAssistantPremium.module.css'
+      - 'components/marketing/**'
+      - 'components/home/HomeAiChat.tsx'
+      - 'lib/marketing/main-site.ts'
+      - 'scripts/verify-main-site-visual-lock.mjs'
+      - '.github/workflows/main-site-preview-visual-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PREVIEW_URL: https://orcaly-git-feat-main-site-prem-d7826f-vinicius-araujos-projects.vercel.app
+      EXPECTED_SHA: ${{ github.sha }}
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verify automation bypass secret
+        run: |
+          if [ -z "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then
+            echo "VERCEL_AUTOMATION_BYPASS_SECRET is not configured"
+            exit 1
+          fi
+          echo "::add-mask::$VERCEL_AUTOMATION_BYPASS_SECRET"
+
+      - name: Wait for exact preview SHA
+        shell: bash
+        run: |
+          node <<'NODE'
+          const url = `${process.env.PREVIEW_URL}/api/internal/preview-build`
+          const deadline = Date.now() + 6 * 60_000
+          while (Date.now() < deadline) {
+            try {
+              const response = await fetch(url, {
+                redirect: 'manual',
+                headers: {
+                  'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+                  'x-vercel-set-bypass-cookie': 'true',
+                },
+              })
+              const text = await response.text()
+              if (response.ok) {
+                const data = JSON.parse(text)
+                if (data.environment === 'preview' && data.commit === process.env.EXPECTED_SHA) {
+                  console.log(`Exact preview certified: ${data.commit}`)
+                  process.exit(0)
+                }
+              }
+              console.log(`Preview not ready for expected SHA yet (${response.status}).`)
+            } catch (error) {
+              console.log(`Preview check retry: ${error instanceof Error ? error.message : String(error)}`)
+            }
+            await new Promise((resolve) => setTimeout(resolve, 8_000))
+          }
+          console.error('Preview did not reach expected SHA before timeout.')
+          process.exit(1)
+          NODE
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run responsive browser QA
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts
+          node <<'NODE'
+          const { chromium } = require('playwright')
+          const fs = require('node:fs')
+
+          const viewports = [
+            [320, 800], [375, 812], [390, 844], [430, 900],
+            [768, 900], [1024, 900], [1280, 900], [1440, 900], [1920, 1080],
+          ]
+          const browser = await chromium.launch({ headless: true })
+          const failures = []
+          const report = []
+          const previewUrl = process.env.PREVIEW_URL
+          const headers = {
+            'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+            'x-vercel-set-bypass-cookie': 'true',
+          }
+
+          for (const [width, height] of viewports) {
+            const context = await browser.newContext({ viewport: { width, height }, extraHTTPHeaders: headers })
+            const page = await context.newPage()
+            const consoleErrors = []
+            const pageErrors = []
+            page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()) })
+            page.on('pageerror', (error) => pageErrors.push(error.message))
+
+            const response = await page.goto(previewUrl, { waitUntil: 'networkidle', timeout: 60_000 })
+            if (!response || response.status() !== 200) failures.push(`${width}: home status ${response?.status() ?? 'none'}`)
+            const h1 = await page.locator('h1').first().textContent().catch(() => '')
+            if (h1?.trim() !== 'Seu site, pedidos, clientes e operação. Tudo trabalhando junto.') failures.push(`${width}: H1 changed/missing`)
+
+            const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+            if (overflow > 1) failures.push(`${width}: horizontal overflow ${overflow}px`)
+
+            for (const text of ['Básico', 'Intermediário', 'Premium', 'R$ 49,90', 'R$ 99,90', 'R$ 149,90']) {
+              const visible = await page.getByText(text, { exact: false }).first().count()
+              if (!visible) failures.push(`${width}: pricing text missing ${text}`)
+            }
+
+            if (width <= 430) {
+              const mobileMenu = page.locator('header details').last()
+              await mobileMenu.locator('summary').click()
+              if (!(await mobileMenu.getAttribute('open')).toString()) failures.push(`${width}: mobile menu did not open`)
+              await mobileMenu.locator('summary').click()
+            }
+
+            const faq = page.locator('section details').filter({ has: page.getByText('O que é o Orçaly?', { exact: true }) }).first()
+            if (await faq.count()) {
+              await faq.locator('summary').click()
+              if ((await faq.getAttribute('open')) === null) failures.push(`${width}: FAQ did not open`)
+            } else failures.push(`${width}: FAQ missing`)
+
+            const launcher = page.getByRole('button', { name: 'Abrir assistente virtual do Orçaly' })
+            if (await launcher.count()) {
+              await launcher.click()
+              const dialog = page.getByRole('dialog', { name: 'Assistente virtual do Orçaly' })
+              if (!(await dialog.isVisible())) failures.push(`${width}: assistant did not open`)
+              await page.getByRole('button', { name: 'Fechar assistente' }).click()
+            } else failures.push(`${width}: assistant launcher missing`)
+
+            if (consoleErrors.length) failures.push(`${width}: console errors: ${consoleErrors.join(' | ')}`)
+            if (pageErrors.length) failures.push(`${width}: page errors: ${pageErrors.join(' | ')}`)
+
+            if (width === 390 || width === 1440) {
+              await page.screenshot({ path: `qa-artifacts/home-${width}.png`, fullPage: true })
+            }
+
+            report.push({ width, height, h1, overflow, consoleErrors, pageErrors })
+            await context.close()
+          }
+
+          const routeContext = await browser.newContext({ viewport: { width: 1280, height: 900 }, extraHTTPHeaders: headers })
+          const routePage = await routeContext.newPage()
+          for (const route of ['/cadastro', '/login', '/parceiros', '/suporte', '/solucoes/graficas']) {
+            const response = await routePage.goto(`${previewUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+            if (!response || response.status() >= 400) failures.push(`route ${route}: status ${response?.status() ?? 'none'}`)
+          }
+          await routeContext.close()
+          await browser.close()
+
+          fs.writeFileSync('qa-artifacts/report.json', JSON.stringify({ expectedSha: process.env.EXPECTED_SHA, report, failures }, null, 2))
+          if (failures.length) {
+            console.error(failures.join('\n'))
+            process.exit(1)
+          }
+          console.log(`Browser QA PASS across ${viewports.length} viewports.`)
+          NODE
+
+      - name: Upload visual QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-site-preview-visual-qa-${{ github.sha }}
+          path: qa-artifacts
+          if-no-files-found: warn
+          retention-days: 7
