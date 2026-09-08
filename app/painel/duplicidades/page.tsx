@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 type Customer = { id: string; display_name?: string | null; phone_normalized?: string | null; email_normalized?: string | null; phone_raw?: string | null; email_raw?: string | null }
 type Candidate = { id: string; reasons: string[]; confidence: number; left_customer_id: string; right_customer_id: string; left?: Customer; right?: Customer }
 
-async function authHeaders() {
+async function authHeaders(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession()
   const token = data.session?.access_token
   return token ? { Authorization: `Bearer ${token}` } : {}
