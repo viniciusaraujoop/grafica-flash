@@ -21,63 +21,46 @@ permissions:
 jobs:
   visual-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      PREVIEW_URL: https://orcaly-git-feat-main-site-prem-d7826f-vinicius-araujos-projects.vercel.app
-      EXPECTED_SHA: ${{ github.sha }}
-      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
 
-      - name: Verify automation bypass secret
-        run: |
-          if [ -z "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then
-            echo "VERCEL_AUTOMATION_BYPASS_SECRET is not configured"
-            exit 1
-          fi
-          echo "::add-mask::$VERCEL_AUTOMATION_BYPASS_SECRET"
+      - name: Install project dependencies
+        run: npm ci
 
-      - name: Wait for exact preview SHA
-        shell: bash
-        run: |
-          node <<'NODE'
-          const url = `${process.env.PREVIEW_URL}/api/internal/preview-build`
-          const deadline = Date.now() + 6 * 60_000
-          while (Date.now() < deadline) {
-            try {
-              const response = await fetch(url, {
-                redirect: 'manual',
-                headers: {
-                  'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
-                  'x-vercel-set-bypass-cookie': 'true',
-                },
-              })
-              const text = await response.text()
-              if (response.ok) {
-                const data = JSON.parse(text)
-                if (data.environment === 'preview' && data.commit === process.env.EXPECTED_SHA) {
-                  console.log(`Exact preview certified: ${data.commit}`)
-                  process.exit(0)
-                }
-              }
-              console.log(`Preview not ready for expected SHA yet (${response.status}).`)
-            } catch (error) {
-              console.log(`Preview check retry: ${error instanceof Error ? error.message : String(error)}`)
-            }
-            await new Promise((resolve) => setTimeout(resolve, 8_000))
-          }
-          console.error('Preview did not reach expected SHA before timeout.')
-          process.exit(1)
-          NODE
+      - name: Candidate production build
+        run: npm run build
 
       - name: Install Playwright Chromium
         run: |
           npm install --no-save --ignore-scripts playwright@1.55.0
           npx playwright install --with-deps chromium
+
+      - name: Start exact candidate locally
+        shell: bash
+        run: |
+          npm start -- -p 4173 > /tmp/orcaly-main-site.log 2>&1 &
+          echo $! > /tmp/orcaly-main-site.pid
+          node <<'NODE'
+          const deadline = Date.now() + 90_000
+          while (Date.now() < deadline) {
+            try {
+              const response = await fetch('http://127.0.0.1:4173/')
+              if (response.ok) {
+                console.log('Candidate server is ready.')
+                process.exit(0)
+              }
+            } catch {}
+            await new Promise((resolve) => setTimeout(resolve, 1_000))
+          }
+          console.error('Candidate server did not become ready.')
+          process.exit(1)
+          NODE
 
       - name: Run responsive browser QA
         shell: bash
@@ -87,6 +70,7 @@ jobs:
           const { chromium } = require('playwright')
           const fs = require('node:fs')
 
+          const baseUrl = 'http://127.0.0.1:4173'
           const viewports = [
             [320, 800], [375, 812], [390, 844], [430, 900],
             [768, 900], [1024, 900], [1280, 900], [1440, 900], [1920, 1080],
@@ -94,42 +78,44 @@ jobs:
           const browser = await chromium.launch({ headless: true })
           const failures = []
           const report = []
-          const previewUrl = process.env.PREVIEW_URL
-          const headers = {
-            'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
-            'x-vercel-set-bypass-cookie': 'true',
-          }
 
           for (const [width, height] of viewports) {
-            const context = await browser.newContext({ viewport: { width, height }, extraHTTPHeaders: headers })
+            const context = await browser.newContext({ viewport: { width, height } })
             const page = await context.newPage()
             const consoleErrors = []
             const pageErrors = []
             page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()) })
             page.on('pageerror', (error) => pageErrors.push(error.message))
 
-            const response = await page.goto(previewUrl, { waitUntil: 'networkidle', timeout: 60_000 })
+            const response = await page.goto(baseUrl, { waitUntil: 'networkidle', timeout: 60_000 })
             if (!response || response.status() !== 200) failures.push(`${width}: home status ${response?.status() ?? 'none'}`)
+
             const h1 = await page.locator('h1').first().textContent().catch(() => '')
             if (h1?.trim() !== 'Seu site, pedidos, clientes e operação. Tudo trabalhando junto.') failures.push(`${width}: H1 changed/missing`)
 
             const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
             if (overflow > 1) failures.push(`${width}: horizontal overflow ${overflow}px`)
 
-            for (const text of ['Básico', 'Intermediário', 'Premium', 'R$ 49,90', 'R$ 99,90', 'R$ 149,90']) {
-              const visible = await page.getByText(text, { exact: false }).first().count()
-              if (!visible) failures.push(`${width}: pricing text missing ${text}`)
+            for (const text of ['Básico', 'Intermediário', 'Premium']) {
+              if (!(await page.getByText(text, { exact: true }).first().count())) failures.push(`${width}: plan missing ${text}`)
             }
+            for (const text of ['R$ 49,90', 'R$ 99,90', 'R$ 149,90']) {
+              if (!(await page.getByText(text, { exact: false }).first().count())) failures.push(`${width}: price missing ${text}`)
+            }
+
+            const createAccount = page.getByRole('link', { name: 'Criar minha conta', exact: true }).first()
+            if (!(await createAccount.count()) || (await createAccount.getAttribute('href')) !== '/cadastro') failures.push(`${width}: primary signup CTA changed`)
 
             if (width <= 430) {
               const mobileMenu = page.locator('header details').last()
               await mobileMenu.locator('summary').click()
-              if (!(await mobileMenu.getAttribute('open')).toString()) failures.push(`${width}: mobile menu did not open`)
+              if ((await mobileMenu.getAttribute('open')) === null) failures.push(`${width}: mobile menu did not open`)
               await mobileMenu.locator('summary').click()
             }
 
-            const faq = page.locator('section details').filter({ has: page.getByText('O que é o Orçaly?', { exact: true }) }).first()
-            if (await faq.count()) {
+            const faqSummary = page.getByText('O que é o Orçaly?', { exact: true }).first()
+            if (await faqSummary.count()) {
+              const faq = faqSummary.locator('xpath=ancestor::details')
               await faq.locator('summary').click()
               if ((await faq.getAttribute('open')) === null) failures.push(`${width}: FAQ did not open`)
             } else failures.push(`${width}: FAQ missing`)
@@ -153,22 +139,26 @@ jobs:
             await context.close()
           }
 
-          const routeContext = await browser.newContext({ viewport: { width: 1280, height: 900 }, extraHTTPHeaders: headers })
+          const routeContext = await browser.newContext({ viewport: { width: 1280, height: 900 } })
           const routePage = await routeContext.newPage()
           for (const route of ['/cadastro', '/login', '/parceiros', '/suporte', '/solucoes/graficas']) {
-            const response = await routePage.goto(`${previewUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+            const response = await routePage.goto(`${baseUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
             if (!response || response.status() >= 400) failures.push(`route ${route}: status ${response?.status() ?? 'none'}`)
           }
           await routeContext.close()
           await browser.close()
 
-          fs.writeFileSync('qa-artifacts/report.json', JSON.stringify({ expectedSha: process.env.EXPECTED_SHA, report, failures }, null, 2))
+          fs.writeFileSync('qa-artifacts/report.json', JSON.stringify({ sha: process.env.GITHUB_SHA, report, failures }, null, 2))
           if (failures.length) {
             console.error(failures.join('\n'))
             process.exit(1)
           }
           console.log(`Browser QA PASS across ${viewports.length} viewports.`)
           NODE
+
+      - name: Capture candidate server log
+        if: always()
+        run: cp /tmp/orcaly-main-site.log qa-artifacts/server.log 2>/dev/null || true
 
       - name: Upload visual QA evidence
         if: always()
