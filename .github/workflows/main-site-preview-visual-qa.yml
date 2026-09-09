@@ -70,11 +70,12 @@ jobs:
         shell: bash
         run: |
           mkdir -p qa-artifacts
-          node <<'NODE'
-          const { chromium } = require('playwright')
-          const fs = require('node:fs')
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright'
+          import fs from 'node:fs'
 
           const baseUrl = 'http://127.0.0.1:4173'
+          const productionUrl = 'https://orcaly.com.br'
           const viewports = [
             [320, 800], [375, 812], [390, 844], [430, 900],
             [768, 900], [1024, 900], [1280, 900], [1440, 900], [1920, 1080],
@@ -82,6 +83,22 @@ jobs:
           const browser = await chromium.launch({ headless: true })
           const failures = []
           const report = []
+
+          async function captureBaseline(width, height) {
+            const context = await browser.newContext({ viewport: { width, height } })
+            const page = await context.newPage()
+            try {
+              const response = await page.goto(productionUrl, { waitUntil: 'networkidle', timeout: 60_000 })
+              if (response?.ok()) {
+                await page.screenshot({ path: `qa-artifacts/before-${width}.png`, fullPage: true })
+              }
+            } finally {
+              await context.close()
+            }
+          }
+
+          await captureBaseline(390, 844)
+          await captureBaseline(1440, 900)
 
           for (const [width, height] of viewports) {
             const context = await browser.newContext({ viewport: { width, height } })
@@ -136,7 +153,7 @@ jobs:
             if (pageErrors.length) failures.push(`${width}: page errors: ${pageErrors.join(' | ')}`)
 
             if (width === 390 || width === 1440) {
-              await page.screenshot({ path: `qa-artifacts/home-${width}.png`, fullPage: true })
+              await page.screenshot({ path: `qa-artifacts/after-${width}.png`, fullPage: true })
             }
 
             report.push({ width, height, h1, overflow, consoleErrors, pageErrors })
