@@ -19,22 +19,33 @@ on:
 
 permissions:
   contents: read
+  id-token: write
+
+concurrency:
+  group: main-site-preview-visual-qa-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   visual-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: visual-qa-placeholder-anon-key
       SUPABASE_SERVICE_ROLE_KEY: visual-qa-placeholder-service-role-key
+      PREVIEW_URL: https://orcaly-git-feat-main-site-prem-d7826f-vinicius-araujos-projects.vercel.app
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
+
+      - name: Diff whitespace gate
+        run: git diff --check origin/main...HEAD
 
       - name: Install project dependencies
         run: npm ci
@@ -68,7 +79,46 @@ jobs:
           process.exit(1)
           NODE
 
-      - name: Run responsive browser QA
+      - name: Run local responsive browser QA
+        run: node scripts/main-site-browser-qa.mjs
+
+      - name: Mint trusted GitHub OIDC token
+        uses: actions/github-script@v7
+        id: oidc
+        with:
+          script: |
+            const token = await core.getIDToken()
+            core.setSecret(token)
+            core.setOutput('token', token)
+
+      - name: Wait for exact protected Preview commit
+        env:
+          VERCEL_TRUSTED_OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          observed=''
+          for attempt in $(seq 1 60); do
+            body=$(curl -fsS \
+              -H "x-vercel-trusted-oidc-idp-token: ${VERCEL_TRUSTED_OIDC_TOKEN}" \
+              "${PREVIEW_URL}/api/internal/preview-build" 2>/dev/null || true)
+            observed=$(BODY="$body" node -e "try{process.stdout.write(JSON.parse(process.env.BODY||'{}').commit||'')}catch{}")
+            if [ "$observed" = "$EXPECTED_SHA" ]; then
+              echo "Protected Preview converged to ${EXPECTED_SHA}"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Protected Preview did not converge. expected=${EXPECTED_SHA} observed=${observed:-none}" >&2
+          exit 1
+
+      - name: Run protected Preview browser QA
+        env:
+          MAIN_SITE_QA_URL: ${{ env.PREVIEW_URL }}
+          MAIN_SITE_CAPTURE_BASELINE: '0'
+          MAIN_SITE_QA_ARTIFACT_DIR: qa-artifacts-preview
+          VERCEL_TRUSTED_OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
         run: node scripts/main-site-browser-qa.mjs
 
       - name: Capture candidate server log
@@ -77,11 +127,20 @@ jobs:
           mkdir -p qa-artifacts
           cp /tmp/orcaly-main-site.log qa-artifacts/server.log 2>/dev/null || true
 
-      - name: Upload visual QA evidence
+      - name: Upload local visual QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-site-local-visual-qa-${{ github.sha }}
+          path: qa-artifacts
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload protected Preview QA evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: main-site-preview-visual-qa-${{ github.sha }}
-          path: qa-artifacts
+          path: qa-artifacts-preview
           if-no-files-found: warn
           retention-days: 7
