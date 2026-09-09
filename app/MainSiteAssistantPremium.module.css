@@ -1,0 +1,89 @@
+.assistantPremium :global(section[role='dialog'][aria-label='Assistente virtual do Orçaly']) {
+  border-color: rgba(22, 77, 132, 0.14);
+  border-radius: 26px;
+  box-shadow: 0 32px 90px rgba(4, 26, 58, 0.24);
+  backdrop-filter: blur(16px);
+}
+
+.assistantPremium :global(section[role='dialog'][aria-label='Assistente virtual do Orçaly'] > header) {
+  background:
+    radial-gradient(circle at 88% -15%, rgba(70, 174, 255, 0.26), transparent 34%),
+    linear-gradient(145deg, #061a36 0%, #0a2d59 100%);
+  padding: 1.15rem 1.2rem;
+}
+
+.assistantPremium :global(section[role='dialog'][aria-label='Assistente virtual do Orçaly'] > header button) {
+  border-color: rgba(255,255,255,0.13);
+  background: rgba(255,255,255,0.07);
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.assistantPremium :global(section[role='dialog'][aria-label='Assistente virtual do Orçaly'] > header button:hover) {
+  background: rgba(255,255,255,0.14);
+  transform: translateY(-1px);
+}
+
+.assistantPremium :global(section[role='dialog'][aria-label='Assistente virtual do Orçaly'] > div:nth-of-type(1)) {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(23, 118, 207, 0.05), transparent 28%),
+    #f6f9fd;
+}
+
+.assistantPremium :global(section[role='dialog'][aria-label='Assistente virtual do Orçaly'] > div:last-child) {
+  border-color: rgba(22, 77, 132, 0.1);
+  background: rgba(255,255,255,0.97);
+}
+
+.assistantPremium :global(section[role='dialog'][aria-label='Assistente virtual do Orçaly'] form) {
+  border-color: rgba(22, 77, 132, 0.12);
+  border-radius: 16px;
+  background: #f6f9fd;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.assistantPremium :global(section[role='dialog'][aria-label='Assistente virtual do Orçaly'] form:focus-within) {
+  border-color: rgba(23, 118, 207, 0.32);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(23, 118, 207, 0.08);
+}
+
+.assistantPremium :global(section[role='dialog'][aria-label='Assistente virtual do Orçaly'] a),
+.assistantPremium :global(section[role='dialog'][aria-label='Assistente virtual do Orçaly'] button) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.assistantPremium :global(button[aria-label='Abrir assistente virtual do Orçaly']) {
+  border-width: 3px;
+  border-color: rgba(255,255,255,0.94);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 72% 20%, rgba(78, 180, 255, 0.34), transparent 32%),
+    #082f62;
+  box-shadow: 0 20px 50px rgba(6, 36, 78, 0.28);
+  transition: transform 180ms cubic-bezier(.2,.7,.2,1), box-shadow 180ms ease;
+}
+
+.assistantPremium :global(button[aria-label='Abrir assistente virtual do Orçaly']:hover) {
+  transform: translateY(-3px) scale(1.025);
+  box-shadow: 0 26px 58px rgba(6, 36, 78, 0.32);
+}
+
+.assistantPremium :global(button[aria-label='Abrir assistente virtual do Orçaly'] > span:last-child) {
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(4, 25, 56, 0.22);
+}
+
+@media (max-width: 639px) {
+  .assistantPremium :global(section[role='dialog'][aria-label='Assistente virtual do Orçaly']) {
+    border-radius: 22px !important;
+    box-shadow: 0 24px 70px rgba(4, 26, 58, 0.24);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistantPremium :global(section[role='dialog'][aria-label='Assistente virtual do Orçaly'] *),
+  .assistantPremium :global(button[aria-label='Abrir assistente virtual do Orçaly']) {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
+}

@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import MainSiteV2 from '@/components/marketing/MainSiteV2'
+import MainSiteMotion from '@/components/marketing/MainSiteMotion'
 import { marketingPlans } from '@/lib/marketing/main-site'
+import styles from './MainSitePremium.module.css'
+import assistantStyles from './MainSiteAssistantPremium.module.css'
 
 const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://orcaly.com.br').replace(/\/$/, '')
 
@@ -50,7 +53,10 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }}
       />
-      <MainSiteV2 />
+      <div className={`${styles.premiumHome} ${assistantStyles.assistantPremium}`}>
+        <MainSiteMotion />
+        <MainSiteV2 />
+      </div>
     </>
   )
 }

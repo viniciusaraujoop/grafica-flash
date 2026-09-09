@@ -1,0 +1,146 @@
+name: Main Site Preview Visual QA
+
+on:
+  push:
+    branches:
+      - feat/main-site-premium-redesign
+    paths:
+      - 'app/page.tsx'
+      - 'app/MainSitePremium.module.css'
+      - 'app/MainSiteAssistantPremium.module.css'
+      - 'components/marketing/**'
+      - 'components/home/HomeAiChat.tsx'
+      - 'lib/marketing/main-site.ts'
+      - 'scripts/verify-main-site-v2.mjs'
+      - 'scripts/verify-main-site-visual-lock.mjs'
+      - 'scripts/main-site-browser-qa.mjs'
+      - '.github/workflows/main-site-preview-visual-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: main-site-preview-visual-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: visual-qa-placeholder-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: visual-qa-placeholder-service-role-key
+      PREVIEW_URL: https://orcaly-git-feat-main-site-prem-d7826f-vinicius-araujos-projects.vercel.app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Diff whitespace gate
+        run: git diff --check origin/main...HEAD
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Candidate production build
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start exact candidate locally
+        shell: bash
+        run: |
+          npm start -- -p 4173 > /tmp/orcaly-main-site.log 2>&1 &
+          echo $! > /tmp/orcaly-main-site.pid
+          node <<'NODE'
+          const deadline = Date.now() + 90_000
+          while (Date.now() < deadline) {
+            try {
+              const response = await fetch('http://127.0.0.1:4173/')
+              if (response.ok) {
+                console.log('Candidate server is ready.')
+                process.exit(0)
+              }
+            } catch {}
+            await new Promise((resolve) => setTimeout(resolve, 1_000))
+          }
+          console.error('Candidate server did not become ready.')
+          process.exit(1)
+          NODE
+
+      - name: Run local responsive browser QA
+        run: node scripts/main-site-browser-qa.mjs
+
+      - name: Mint trusted GitHub OIDC token
+        uses: actions/github-script@v7
+        id: oidc
+        with:
+          script: |
+            const token = await core.getIDToken()
+            core.setSecret(token)
+            core.setOutput('token', token)
+
+      - name: Wait for exact protected Preview commit
+        env:
+          VERCEL_TRUSTED_OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          observed=''
+          for attempt in $(seq 1 60); do
+            body=$(curl -fsS \
+              -H "x-vercel-trusted-oidc-idp-token: ${VERCEL_TRUSTED_OIDC_TOKEN}" \
+              "${PREVIEW_URL}/api/internal/preview-build" 2>/dev/null || true)
+            observed=$(BODY="$body" node -e "try{process.stdout.write(JSON.parse(process.env.BODY||'{}').commit||'')}catch{}")
+            if [ "$observed" = "$EXPECTED_SHA" ]; then
+              echo "Protected Preview converged to ${EXPECTED_SHA}"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Protected Preview did not converge. expected=${EXPECTED_SHA} observed=${observed:-none}" >&2
+          exit 1
+
+      - name: Run protected Preview browser QA
+        env:
+          MAIN_SITE_QA_URL: ${{ env.PREVIEW_URL }}
+          MAIN_SITE_CAPTURE_BASELINE: '0'
+          MAIN_SITE_QA_ARTIFACT_DIR: qa-artifacts-preview
+          VERCEL_TRUSTED_OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+        run: node scripts/main-site-browser-qa.mjs
+
+      - name: Capture candidate server log
+        if: always()
+        run: |
+          mkdir -p qa-artifacts
+          cp /tmp/orcaly-main-site.log qa-artifacts/server.log 2>/dev/null || true
+
+      - name: Upload local visual QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-site-local-visual-qa-${{ github.sha }}
+          path: qa-artifacts
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload protected Preview QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-site-preview-visual-qa-${{ github.sha }}
+          path: qa-artifacts-preview
+          if-no-files-found: warn
+          retention-days: 7

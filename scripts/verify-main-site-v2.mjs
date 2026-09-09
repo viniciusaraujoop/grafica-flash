@@ -7,6 +7,8 @@ const assert = (condition, message) => { if (!condition) throw new Error(message
 
 const page = read('app/page.tsx')
 const main = read('components/marketing/MainSiteV2.tsx')
+const motion = read('components/marketing/MainSiteMotion.tsx')
+const visualStyles = read('app/MainSitePremium.module.css')
 const productDemo = read('components/marketing/ProductDemoTabs.tsx')
 const selector = read('components/marketing/PlanSelector.tsx')
 const referral = read('components/marketing/ReferralBridge.tsx')
@@ -19,6 +21,7 @@ assert(!page.includes("'use client'") && !page.includes('"use client"'), 'Homepa
 assert(page.includes('export const metadata'), 'Homepage metadata missing')
 assert(page.includes('SoftwareApplication'), 'Homepage product structured data missing')
 assert(page.includes("replace(/</g"), 'JSON-LD must escape < characters')
+assert(page.includes('MainSiteMotion'), 'Homepage motion island missing')
 
 for (const phrase of ['Seu site, pedidos, clientes e operação', 'Veja o Orçaly funcionando', 'Continue usando o WhatsApp']) {
   assert(main.includes(phrase), `Product-led homepage copy missing: ${phrase}`)
@@ -28,7 +31,8 @@ for (const weakMetric of ['6 segmentos', '1 painel central', '24h', '99,9%', 'Ma
 }
 for (const route of ['/cadastro', '/login', '/parceiros', '/suporte']) assert(main.includes(route), `Required public route missing from homepage: ${route}`)
 assert(!main.includes('javascript:void') && !main.includes('href="#"'), 'Dead marketing link found')
-assert(main.includes('prefers-reduced-motion'), 'Reduced-motion support missing')
+assert(visualStyles.includes('@media (prefers-reduced-motion: reduce)'), 'Reduced-motion CSS support missing')
+assert(motion.includes('matchMedia') && motion.includes('prefers-reduced-motion: reduce'), 'Motion island must honor reduced-motion preference')
 assert(main.includes('Mercado Pago'), 'Existing Mercado Pago trust disclosure missing')
 assert(main.includes('orcalybr@gmail.com'), 'Verified public contact channel missing')
 
