@@ -7,6 +7,7 @@ export default function MainSiteMotion() {
     const root = document.documentElement
     const header = document.querySelector<HTMLElement>('main > header')
     const sections = Array.from(document.querySelectorAll<HTMLElement>('.marketing-section'))
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     root.dataset.siteMotion = 'ready'
 
@@ -18,7 +19,7 @@ export default function MainSiteMotion() {
     updateHeader()
     window.addEventListener('scroll', updateHeader, { passive: true })
 
-    if (!('IntersectionObserver' in window)) {
+    if (reducedMotion || !('IntersectionObserver' in window)) {
       sections.forEach((section) => { section.dataset.revealed = 'true' })
       return () => {
         window.removeEventListener('scroll', updateHeader)
