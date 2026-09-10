@@ -8,6 +8,7 @@ export type IntegrationOAuthState = {
   nonce: string
   exp: number
   next: string
+  scopeHash: string
 }
 
 function stateSecret() {
@@ -26,7 +27,16 @@ export function safeIntegrationRedirect(value: unknown, fallback = '/painel/inte
   return path
 }
 
-export function createIntegrationOAuthState(input: Omit<IntegrationOAuthState, 'nonce' | 'exp' | 'next'> & { ttlSeconds?: number; next?: string }) {
+export function normalizeOAuthScopes(scopes: readonly string[]) {
+  return [...new Set(scopes.map((scope) => String(scope || '').trim()).filter(Boolean))].sort()
+}
+
+export function hashIntegrationOAuthScopes(scopes: readonly string[]) {
+  return createHash('sha256').update(normalizeOAuthScopes(scopes).join('\n')).digest('hex')
+}
+
+export function createIntegrationOAuthState(input: Omit<IntegrationOAuthState, 'nonce' | 'exp' | 'next' | 'scopeHash'> & { ttlSeconds?: number; next?: string; requestedScopes?: readonly string[] }) {
+  const requestedScopes = normalizeOAuthScopes(input.requestedScopes || [])
   const state: IntegrationOAuthState = {
     userId: input.userId,
     companyId: input.companyId,
@@ -34,9 +44,10 @@ export function createIntegrationOAuthState(input: Omit<IntegrationOAuthState, '
     nonce: randomBytes(18).toString('base64url'),
     exp: Math.floor(Date.now() / 1000) + Math.max(60, Math.min(input.ttlSeconds || 600, 900)),
     next: safeIntegrationRedirect(input.next),
+    scopeHash: hashIntegrationOAuthScopes(requestedScopes),
   }
   const payload = Buffer.from(JSON.stringify(state), 'utf8').toString('base64url')
-  return { value: `${payload}.${sign(payload)}`, state }
+  return { value: `${payload}.${sign(payload)}`, state, requestedScopes }
 }
 
 export function verifyIntegrationOAuthState(value: string): IntegrationOAuthState | null {
@@ -49,7 +60,7 @@ export function verifyIntegrationOAuthState(value: string): IntegrationOAuthStat
 
   try {
     const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as IntegrationOAuthState
-    if (!parsed.userId || !parsed.companyId || !parsed.provider || !parsed.nonce) return null
+    if (!parsed.userId || !parsed.companyId || !parsed.provider || !parsed.nonce || !parsed.scopeHash) return null
     if (!Number.isFinite(parsed.exp) || parsed.exp < Math.floor(Date.now() / 1000)) return null
     parsed.next = safeIntegrationRedirect(parsed.next)
     return parsed

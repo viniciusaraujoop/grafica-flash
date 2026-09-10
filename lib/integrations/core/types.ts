@@ -139,6 +139,9 @@ export type IntegrationRuntimeContext = {
   loadCredentials: () => Promise<Record<string, unknown> | null>
   saveCredentials: (credentials: Record<string, unknown>) => Promise<void>
   emitAudit: (event: string, details?: Record<string, unknown>) => Promise<void>
+  setConnectionStatus?: (status: IntegrationStatus, errorCode?: string | null) => Promise<void>
+  acquireCredentialRefreshLock?: () => Promise<string | null>
+  releaseCredentialRefreshLock?: (lockId: string) => Promise<void>
 }
 
 export interface IntegrationAdapter {
