@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/founder-billing",
       "schedule": "15 6 * * *"
+    },
+    {
+      "path": "/api/cron/jobs",
+      "schedule": "45 5 * * *"
     }
   ]
 }
