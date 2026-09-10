@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import GoogleCalendarSettings from '@/components/integrations/GoogleCalendarSettings'
 import type { IntegrationHubItem } from '@/lib/integrations/hub'
 import type { IntegrationCategory, IntegrationStatus } from '@/lib/integrations/core/types'
 
@@ -52,7 +53,7 @@ export default function IntegrationHub({ items, permissions }: {
     setNotice(null)
     try {
       const response = await fetch(`/api/integrations/${item.provider.key}/sync`, { method: 'POST' })
-      const payload = await response.json().catch(() => ({}))
+      const payload = await response.json().catch(() => ({})) as { error?: string }
       if (!response.ok) throw new Error(payload.error || 'Não foi possível iniciar a sincronização.')
       setNotice('Sincronização colocada na fila com segurança.')
     } catch (error) {
@@ -68,7 +69,7 @@ export default function IntegrationHub({ items, permissions }: {
     setNotice(null)
     try {
       const response = await fetch(`/api/integrations/${item.provider.key}`, { method: 'DELETE' })
-      const payload = await response.json().catch(() => ({}))
+      const payload = await response.json().catch(() => ({})) as { error?: string }
       if (!response.ok) throw new Error(payload.error || 'Não foi possível desconectar.')
       setNotice('Integração desconectada. Atualize a página para refletir o novo estado.')
       setSelected(null)
@@ -96,14 +97,8 @@ export default function IntegrationHub({ items, permissions }: {
 
       <section className="mt-6 rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
-          <label className="relative block">
-            <span className="sr-only">Buscar integração</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por ferramenta ou capacidade" className="min-h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-50" />
-          </label>
-          <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Categorias de integrações">
-            <FilterButton active={category === 'all'} onClick={() => setCategory('all')}>Todas</FilterButton>
-            {categories.map((value) => <FilterButton key={value} active={category === value} onClick={() => setCategory(value)}>{categoryLabels[value]}</FilterButton>)}
-          </div>
+          <label className="relative block"><span className="sr-only">Buscar integração</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por ferramenta ou capacidade" className="min-h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-50" /></label>
+          <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Categorias de integrações"><FilterButton active={category === 'all'} onClick={() => setCategory('all')}>Todas</FilterButton>{categories.map((value) => <FilterButton key={value} active={category === value} onClick={() => setCategory(value)}>{categoryLabels[value]}</FilterButton>)}</div>
         </div>
       </section>
 
@@ -111,22 +106,10 @@ export default function IntegrationHub({ items, permissions }: {
         {filtered.map((item) => {
           const status = item.connection?.status || item.health.status
           return <article key={item.provider.key} className="group flex min-h-[300px] flex-col rounded-[1.55rem] border border-slate-200 bg-white p-5 shadow-[0_10px_35px_rgba(15,43,79,.05)] transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_18px_45px_rgba(15,43,79,.09)]">
-            <div className="flex items-start justify-between gap-3">
-              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#eef5ff] text-base font-black text-[#0b3b78]" aria-hidden="true">{item.provider.name.split(/\s+/).slice(0,2).map((part) => part[0]).join('').toUpperCase()}</div>
-              <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[.08em] ${statusClass(status)}`}>{statusLabel[status]}</span>
-            </div>
-            <div className="mt-4">
-              <div className="flex flex-wrap items-center gap-2"><h2 className="text-lg font-black text-[#071b3a]">{item.provider.name}</h2>{item.recommended ? <span className="rounded-full bg-cyan-50 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-cyan-700">Recomendado</span> : null}</div>
-              <p className="mt-2 text-sm leading-6 text-slate-500">{item.provider.description}</p>
-            </div>
+            <div className="flex items-start justify-between gap-3"><div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#eef5ff] text-base font-black text-[#0b3b78]" aria-hidden="true">{item.provider.name.split(/\s+/).slice(0,2).map((part) => part[0]).join('').toUpperCase()}</div><span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[.08em] ${statusClass(status)}`}>{statusLabel[status]}</span></div>
+            <div className="mt-4"><div className="flex flex-wrap items-center gap-2"><h2 className="text-lg font-black text-[#071b3a]">{item.provider.name}</h2>{item.recommended ? <span className="rounded-full bg-cyan-50 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-cyan-700">Recomendado</span> : null}</div><p className="mt-2 text-sm leading-6 text-slate-500">{item.provider.description}</p></div>
             <div className="mt-4 flex flex-wrap gap-1.5">{item.provider.capabilities.slice(0, 3).map((capability) => <span key={capability} className="rounded-lg bg-slate-50 px-2 py-1 text-[10px] font-bold text-slate-500">{capability}</span>)}</div>
-            <div className="mt-auto pt-5">
-              <p className="mb-3 text-[11px] font-semibold text-slate-400">{item.connection ? `Última sync: ${formatDate(item.connection.lastSyncAt)}` : item.health.message}</p>
-              <div className="flex gap-2">
-                {item.rolloutEnabled && permissions.manage && (!item.connection || ['NOT_CONFIGURED','DISCONNECTED','REAUTH_REQUIRED'].includes(status)) ? <a href={`/api/integrations/${item.provider.key}/connect`} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-[#0b3b78] px-3 text-sm font-black text-white transition hover:bg-[#082f62]">{status === 'REAUTH_REQUIRED' ? 'Reautenticar' : 'Conectar'}</a> : <button type="button" onClick={() => setSelected(item)} className="min-h-11 flex-1 rounded-xl border border-slate-200 px-3 text-sm font-black text-slate-700 transition hover:border-blue-200 hover:text-[#0b3b78]">Ver detalhes</button>}
-                {!item.rolloutEnabled ? <span className="inline-flex items-center rounded-xl bg-slate-100 px-3 text-[10px] font-black uppercase tracking-wide text-slate-400">Rollout fechado</span> : null}
-              </div>
-            </div>
+            <div className="mt-auto pt-5"><p className="mb-3 text-[11px] font-semibold text-slate-400">{item.connection ? `Última sync: ${formatDate(item.connection.lastSyncAt)}` : item.health.message}</p><div className="flex gap-2">{item.rolloutEnabled && permissions.manage && (!item.connection || ['NOT_CONFIGURED','DISCONNECTED','REAUTH_REQUIRED'].includes(status)) ? <a href={`/api/integrations/${item.provider.key}/connect`} className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-[#0b3b78] px-3 text-sm font-black text-white transition hover:bg-[#082f62]">{status === 'REAUTH_REQUIRED' ? 'Reautenticar' : 'Conectar'}</a> : <button type="button" onClick={() => setSelected(item)} className="min-h-11 flex-1 rounded-xl border border-slate-200 px-3 text-sm font-black text-slate-700 transition hover:border-blue-200 hover:text-[#0b3b78]">Ver detalhes</button>}{!item.rolloutEnabled ? <span className="inline-flex items-center rounded-xl bg-slate-100 px-3 text-[10px] font-black uppercase tracking-wide text-slate-400">Rollout fechado</span> : null}</div></div>
           </article>
         })}
       </section>
@@ -143,8 +126,9 @@ export default function IntegrationHub({ items, permissions }: {
         {selected.connection?.lastErrorCode ? <Detail label="Último erro" value={selected.connection.lastErrorCode} /> : null}
         <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-4"><p className="text-[10px] font-black uppercase tracking-[.12em] text-slate-400">Capacidades</p><div className="mt-3 flex flex-wrap gap-2">{selected.provider.capabilities.map((capability) => <span key={capability} className="rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-bold text-[#0b3b78]">{capability}</span>)}</div></section>
         <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-4"><p className="text-[10px] font-black uppercase tracking-[.12em] text-slate-400">Configuração externa</p><p className="mt-2 text-sm leading-6 text-slate-600">{selected.provider.externalRequirement || 'Nenhuma exigência externa adicional.'}</p></section>
+        {selected.provider.key === 'google_calendar' && selected.connection && ['CONNECTED','DEGRADED'].includes(selected.connection.status) ? <GoogleCalendarSettings canManage={permissions.manage} /> : null}
         <div className="mt-6 grid gap-2 sm:grid-cols-2">
-          {selected.rolloutEnabled && selected.connection?.status === 'CONNECTED' && permissions.sync ? <button type="button" disabled={busy === selected.provider.key} onClick={() => sync(selected)} className="min-h-12 rounded-xl bg-[#0b3b78] px-4 text-sm font-black text-white disabled:opacity-50">{busy === selected.provider.key ? 'Enfileirando…' : 'Sincronizar agora'}</button> : null}
+          {selected.rolloutEnabled && selected.connection && ['CONNECTED','DEGRADED'].includes(selected.connection.status) && permissions.sync ? <button type="button" disabled={busy === selected.provider.key} onClick={() => sync(selected)} className="min-h-12 rounded-xl bg-[#0b3b78] px-4 text-sm font-black text-white disabled:opacity-50">{busy === selected.provider.key ? 'Enfileirando…' : 'Sincronizar agora'}</button> : null}
           {selected.rolloutEnabled && selected.connection && permissions.disconnect ? <button type="button" disabled={busy === selected.provider.key} onClick={() => disconnect(selected)} className="min-h-12 rounded-xl border border-rose-200 bg-white px-4 text-sm font-black text-rose-700 disabled:opacity-50">Desconectar</button> : null}
         </div>
       </aside></div> : null}
