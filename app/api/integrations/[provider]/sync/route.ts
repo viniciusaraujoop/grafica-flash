@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { canUseFeature, requireFeatureDecision } from '@/lib/access-control'
 import { enqueueIntegrationSync } from '@/lib/integrations/core/sync'
 import { getCompanyIntegrationConnection } from '@/lib/integrations/core/connections'
+import { normalizeIntegrationHttpStatus } from '@/lib/integrations/core/http'
 import { getIntegrationProvider } from '@/lib/integrations/core/registry'
 import { resolveIntegrationServerContext } from '@/lib/integrations/server-context'
 
@@ -20,7 +21,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ pr
     permission: 'integrations.sync',
     featureFlag: provider.featureFlag,
   }))
-  if (!decision.allowed) return NextResponse.json({ error: 'error' in decision ? decision.error : 'Sem acesso.' }, { status: 'status' in decision ? decision.status : 403 })
+  if (!decision.allowed) {
+    const status = normalizeIntegrationHttpStatus('status' in decision ? decision.status : undefined)
+    return NextResponse.json({ error: 'error' in decision ? decision.error : 'Sem acesso.' }, { status })
+  }
 
   const connection = await getCompanyIntegrationConnection(context.admin, context.companyId, provider.key)
   if (!connection || connection.status !== 'CONNECTED') return NextResponse.json({ error: 'A integração não está conectada.' }, { status: 409 })

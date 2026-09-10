@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { canUseFeature, requireFeatureDecision } from '@/lib/access-control'
 import { deleteIntegrationCredentials } from '@/lib/integrations/core/credentials'
 import { getCompanyIntegrationConnection, updateIntegrationConnection } from '@/lib/integrations/core/connections'
+import { normalizeIntegrationHttpStatus } from '@/lib/integrations/core/http'
 import { getIntegrationAdapter, getIntegrationProvider } from '@/lib/integrations/core/registry'
 import { recordIntegrationAudit } from '@/lib/integrations/core/audit'
 import { resolveIntegrationServerContext } from '@/lib/integrations/server-context'
@@ -22,7 +23,10 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     permission: 'integrations.disconnect',
     featureFlag: provider.featureFlag,
   }))
-  if (!decision.allowed) return NextResponse.json({ error: 'error' in decision ? decision.error : 'Sem acesso.' }, { status: 'status' in decision ? decision.status : 403 })
+  if (!decision.allowed) {
+    const status = normalizeIntegrationHttpStatus('status' in decision ? decision.status : undefined)
+    return NextResponse.json({ error: 'error' in decision ? decision.error : 'Sem acesso.' }, { status })
+  }
 
   const mfa = await requireMfaStepUp(context.userClient, 'integrations.credentials.manage')
   if (!mfa.allowed) return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status })
