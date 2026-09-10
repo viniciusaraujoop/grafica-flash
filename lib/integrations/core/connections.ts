@@ -101,7 +101,7 @@ export async function updateIntegrationConnection(db: SupabaseClient, input: {
   provider: IntegrationProviderKey
   patch: Record<string, unknown>
 }) {
-  const clean = { ...input.patch, updated_at: new Date().toISOString() }
+  const clean: Record<string, unknown> = { ...input.patch, updated_at: new Date().toISOString() }
   delete clean.company_id
   delete clean.provider
   delete clean.credentials_reference

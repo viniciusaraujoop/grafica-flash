@@ -15,15 +15,19 @@ export function createIntegrationRuntimeContext(db: SupabaseClient, input: {
     connection: input.connection,
     requestId: input.requestId || randomUUID(),
     loadCredentials: () => loadIntegrationCredentials(db, input.companyId, input.connection.id),
-    saveCredentials: (credentials) => storeIntegrationCredentials(db, input.companyId, input.connection.id, credentials),
-    emitAudit: (event, details) => recordIntegrationAudit(db, {
-      companyId: input.companyId,
-      userId: input.userId || null,
-      provider: input.connection.provider,
-      connectionId: input.connection.id,
-      action: event,
-      details,
-    }),
+    saveCredentials: async (credentials) => {
+      await storeIntegrationCredentials(db, input.companyId, input.connection.id, credentials)
+    },
+    emitAudit: async (event, details) => {
+      await recordIntegrationAudit(db, {
+        companyId: input.companyId,
+        userId: input.userId || null,
+        provider: input.connection.provider,
+        connectionId: input.connection.id,
+        action: event,
+        details,
+      })
+    },
     setConnectionStatus: async (status: IntegrationStatus, errorCode?: string | null) => {
       await updateIntegrationConnection(db, {
         companyId: input.companyId,
