@@ -1,6 +1,7 @@
 // ORCALY_SETTINGS_PREMIUM_PAGE_WRAPPER_V2
 import Link from 'next/link'
 import SettingsPremiumShell from '@/components/settings/SettingsPremiumShell'
+import CompanyTimezoneSettings from '@/components/settings/CompanyTimezoneSettings'
 import ConfiguracoesLegacy from './ConfiguracoesLegacy'
 
 export default function ConfiguracoesPage() {
@@ -14,6 +15,7 @@ export default function ConfiguracoesPage() {
           Segurança da conta
         </Link>
       </div>
+      <CompanyTimezoneSettings />
       <ConfiguracoesLegacy />
     </SettingsPremiumShell>
   )
