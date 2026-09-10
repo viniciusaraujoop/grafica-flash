@@ -1,11 +1,10 @@
 import { registerIntegrationAdapter } from '@/lib/integrations/core/registry'
+import { googleCalendarAdapter } from '@/lib/integrations/google/calendar'
 
 let bootstrapped = false
 
 export function bootstrapIntegrationAdapters() {
   if (bootstrapped) return
+  registerIntegrationAdapter(googleCalendarAdapter)
   bootstrapped = true
-  // Provider adapters are registered here as they become implementation-complete.
-  // Keeping registration centralized makes workers/routes deterministic without a giant switch.
-  void registerIntegrationAdapter
 }

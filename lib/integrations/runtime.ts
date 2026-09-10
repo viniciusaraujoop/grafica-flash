@@ -12,6 +12,7 @@ export function createIntegrationRuntimeContext(db: SupabaseClient, input: {
   requestId?: string
 }): IntegrationRuntimeContext {
   return {
+    db,
     connection: input.connection,
     requestId: input.requestId || randomUUID(),
     loadCredentials: () => loadIntegrationCredentials(db, input.companyId, input.connection.id),

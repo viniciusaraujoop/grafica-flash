@@ -5,13 +5,13 @@ export async function enqueueIntegrationSync(db: SupabaseClient, input: {
   companyId: string
   connectionId: string
   provider: string
-  requestedBy: string
+  requestedBy?: string | null
   request?: IntegrationSyncRequest
 }) {
   const payload = {
     connection_id: input.connectionId,
     provider: input.provider,
-    requested_by: input.requestedBy,
+    requested_by: input.requestedBy || null,
     mode: input.request?.mode || 'incremental',
     cursor: input.request?.cursor || null,
     entity: input.request?.entity || null,

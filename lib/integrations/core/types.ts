@@ -1,3 +1,5 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 export type IntegrationStatus =
   | 'NOT_CONFIGURED'
   | 'CONNECTING'
@@ -134,6 +136,7 @@ export type IntegrationWebhookResult = {
 }
 
 export type IntegrationRuntimeContext = {
+  db: SupabaseClient
   connection: IntegrationConnection
   requestId: string
   loadCredentials: () => Promise<Record<string, unknown> | null>
