@@ -6,6 +6,8 @@ import { normalizeIntegrationHttpStatus } from '@/lib/integrations/core/http'
 import { getIntegrationAdapter, getIntegrationProvider } from '@/lib/integrations/core/registry'
 import { recordIntegrationAudit } from '@/lib/integrations/core/audit'
 import { resolveIntegrationServerContext } from '@/lib/integrations/server-context'
+import { createIntegrationRuntimeContext } from '@/lib/integrations/runtime'
+import { bootstrapIntegrationAdapters } from '@/lib/integrations/adapters'
 import { requireMfaStepUp } from '@/lib/security/mfa'
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ provider: string }> }) {
@@ -33,15 +35,15 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
 
   const connection = await getCompanyIntegrationConnection(context.admin, context.companyId, provider.key)
   if (!connection) return NextResponse.json({ error: 'Conexão não encontrada.' }, { status: 404 })
+
+  bootstrapIntegrationAdapters()
   const adapter = getIntegrationAdapter(provider.key)
   if (adapter?.disconnect) {
-    await adapter.disconnect({
+    await adapter.disconnect(createIntegrationRuntimeContext(context.admin, {
+      companyId: context.companyId,
       connection,
-      requestId: crypto.randomUUID(),
-      loadCredentials: async () => null,
-      saveCredentials: async () => undefined,
-      emitAudit: async () => undefined,
-    })
+      userId: context.userId,
+    }))
   }
 
   await deleteIntegrationCredentials(context.admin, context.companyId, connection.id)
