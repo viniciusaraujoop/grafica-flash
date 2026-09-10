@@ -36,7 +36,7 @@ export function createIntegrationOAuthState(input: Omit<IntegrationOAuthState, '
     next: safeIntegrationRedirect(input.next),
   }
   const payload = Buffer.from(JSON.stringify(state), 'utf8').toString('base64url')
-  return `${payload}.${sign(payload)}`
+  return { value: `${payload}.${sign(payload)}`, state }
 }
 
 export function verifyIntegrationOAuthState(value: string): IntegrationOAuthState | null {
@@ -56,6 +56,10 @@ export function verifyIntegrationOAuthState(value: string): IntegrationOAuthStat
   } catch {
     return null
   }
+}
+
+export function hashIntegrationOAuthNonce(nonce: string) {
+  return createHash('sha256').update(nonce).digest('hex')
 }
 
 export function createPkcePair() {
