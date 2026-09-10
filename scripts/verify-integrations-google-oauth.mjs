@@ -2,13 +2,14 @@ import assert from 'node:assert/strict'
 process.env.INTEGRATION_OAUTH_STATE_SECRET = 'integration-google-oauth-test-secret'
 
 const { createIntegrationOAuthState, verifyIntegrationOAuthState, hashIntegrationOAuthScopes } = await import('../lib/integrations/core/auth.ts')
-const { buildGoogleAuthorizationUrl, googleScopesForProvider, isGoogleOAuthProvider } = await import('../lib/integrations/google/oauth.ts')
+const { buildGoogleAuthorizationUrl, googleScopesForProviderKey, isGoogleOAuthProviderKey } = await import('../lib/integrations/google/oauth-contract.ts')
 
-const scopes = googleScopesForProvider('google_calendar')
+const scopes = googleScopesForProviderKey('google_calendar')
+assert.ok(scopes)
 assert.ok(scopes.includes('https://www.googleapis.com/auth/calendar.events'))
 assert.ok(scopes.includes('https://www.googleapis.com/auth/calendar.calendarlist.readonly'))
-assert.equal(isGoogleOAuthProvider('google_calendar'), true)
-assert.equal(isGoogleOAuthProvider('google_maps'), false)
+assert.equal(isGoogleOAuthProviderKey('google_calendar'), true)
+assert.equal(isGoogleOAuthProviderKey('google_maps'), false)
 
 const oauth = createIntegrationOAuthState({
   userId: '11111111-1111-4111-8111-111111111111',
@@ -34,7 +35,8 @@ assert.equal(authUrl.searchParams.get('state'), oauth.value)
 assert.ok((authUrl.searchParams.get('scope') || '').includes('calendar.events'))
 assert.equal(authUrl.searchParams.has('client_secret'), false)
 
-const driveScopes = googleScopesForProvider('google_drive')
+const driveScopes = googleScopesForProviderKey('google_drive')
+assert.ok(driveScopes)
 assert.ok(driveScopes.includes('https://www.googleapis.com/auth/drive.file'))
 assert.equal(driveScopes.some((scope) => scope === 'https://www.googleapis.com/auth/drive'), false)
 
