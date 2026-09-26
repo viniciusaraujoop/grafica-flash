@@ -1,0 +1,75 @@
+{
+  "label": "baseline-comparison",
+  "expectedSha256": "072edb945da729c4963f1c3a9427b09bb0378a2b128c57d1f4671f0d80416faa",
+  "actualSha256": "d4081ddf8b22c429681d6397db57e4167af8bcb4576791481c7975dea2c279fe",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2525,
+      "actual": 2525
+    },
+    "indexes": {
+      "expected": 644,
+      "actual": 644
+    },
+    "schemas": {
+      "expected": 11,
+      "actual": 11
+    },
+    "policies": {
+      "expected": 147,
+      "actual": 147
+    },
+    "triggers": {
+      "expected": 38,
+      "actual": 38
+    },
+    "functions": {
+      "expected": 108,
+      "actual": 108
+    },
+    "relations": {
+      "expected": 163,
+      "actual": 163
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 615,
+      "actual": 615
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 0,
+  "changes": [],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

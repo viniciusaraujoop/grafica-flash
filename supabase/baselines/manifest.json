@@ -1,0 +1,29 @@
+{
+  "version": "20260926030809",
+  "name": "production_schema_baseline",
+  "file": "supabase/baselines/20260926030809_production_schema_baseline.sql",
+  "sha256": "87c63653f6d382d7674eb034f3a61d0daea4bd1fc9a34b6c73dddf94c4f53036",
+  "sourceProject": "ozrasuktfthsvbqprtel",
+  "onlyAllowedTarget": "zwxulgpjucxudadjdqov",
+  "capturedAt": "2026-09-26T03:21:15.700Z",
+  "sourceSnapshotSha256": "072edb945da729c4963f1c3a9427b09bb0378a2b128c57d1f4671f0d80416faa",
+  "kind": "schema-only-catalog-baseline",
+  "counts": {
+    "tables": 113,
+    "views": 11,
+    "sequences": 3,
+    "functions": 85,
+    "policies": 147,
+    "triggers": 31
+  },
+  "excluded": [
+    "All application rows",
+    "auth.users and other auth data",
+    "storage objects",
+    "Vault secrets",
+    "Migration ledger data",
+    "Cron jobs",
+    "External webhooks and connector credentials"
+  ],
+  "followingMigration": "supabase/migrations/20260926014103_ecosystem_identity_wealth.sql"
+}

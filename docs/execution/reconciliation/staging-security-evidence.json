@@ -1,0 +1,190 @@
+{
+  "baselineEquivalent": true,
+  "deltaOnlyIntentionalEcosystemObjects": true,
+  "deltaCount": 154,
+  "grants": [
+    {
+      "table": "ecosystem_product_entitlements",
+      "rls": true,
+      "authenticated": "r",
+      "acl": "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=r/postgres}",
+      "policies": [
+        "entitlement_read_own"
+      ],
+      "columnGrants": []
+    },
+    {
+      "table": "ecosystem_context_consents",
+      "rls": true,
+      "authenticated": "r",
+      "acl": "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=r/postgres}",
+      "policies": [
+        "consents_read_own",
+        "consents_revoke_own"
+      ],
+      "columnGrants": [
+        {
+          "column": "revoked_at",
+          "acl": "{authenticated=w/postgres}"
+        }
+      ]
+    },
+    {
+      "table": "wealth_profiles",
+      "rls": true,
+      "authenticated": "arwd",
+      "acl": "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=arwd/postgres}",
+      "policies": [
+        "wealth_delete_own",
+        "wealth_insert_own",
+        "wealth_read_own",
+        "wealth_update_own"
+      ],
+      "columnGrants": []
+    },
+    {
+      "table": "wealth_entries",
+      "rls": true,
+      "authenticated": "arwd",
+      "acl": "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=arwd/postgres}",
+      "policies": [
+        "wealth_delete_own",
+        "wealth_insert_own",
+        "wealth_read_own",
+        "wealth_update_own"
+      ],
+      "columnGrants": []
+    },
+    {
+      "table": "wealth_goals",
+      "rls": true,
+      "authenticated": "arwd",
+      "acl": "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=arwd/postgres}",
+      "policies": [
+        "wealth_delete_own",
+        "wealth_insert_own",
+        "wealth_read_own",
+        "wealth_update_own"
+      ],
+      "columnGrants": []
+    },
+    {
+      "table": "ecosystem_audit_events",
+      "rls": true,
+      "authenticated": "none",
+      "acl": "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+      "policies": [],
+      "columnGrants": []
+    }
+  ],
+  "functions": [
+    {
+      "name": "has_personal_access",
+      "securityDefiner": false,
+      "searchPath": [
+        "search_path=\"\""
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "name": "record_change",
+      "securityDefiner": true,
+      "searchPath": [
+        "search_path=\"\""
+      ],
+      "acl": "{postgres=X/postgres}"
+    }
+  ],
+  "advisors": {
+    "security": {
+      "production": [
+        {
+          "name": "rls_enabled_no_policy",
+          "level": "INFO",
+          "count": 44,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "level": "WARN",
+          "count": 1,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+        },
+        {
+          "name": "auth_leaked_password_protection",
+          "level": "WARN",
+          "count": 1,
+          "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+        }
+      ],
+      "staging": [
+        {
+          "name": "rls_enabled_no_policy",
+          "level": "INFO",
+          "count": 45,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "level": "WARN",
+          "count": 1,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+        }
+      ]
+    },
+    "performance": {
+      "production": [
+        {
+          "name": "unindexed_foreign_keys",
+          "level": "INFO",
+          "count": 1,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys"
+        },
+        {
+          "name": "auth_rls_initplan",
+          "level": "WARN",
+          "count": 63,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan"
+        },
+        {
+          "name": "unused_index",
+          "level": "INFO",
+          "count": 176,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+        },
+        {
+          "name": "multiple_permissive_policies",
+          "level": "WARN",
+          "count": 54,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies"
+        }
+      ],
+      "staging": [
+        {
+          "name": "unindexed_foreign_keys",
+          "level": "INFO",
+          "count": 1,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys"
+        },
+        {
+          "name": "auth_rls_initplan",
+          "level": "WARN",
+          "count": 63,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan"
+        },
+        {
+          "name": "unused_index",
+          "level": "INFO",
+          "count": 316,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+        },
+        {
+          "name": "multiple_permissive_policies",
+          "level": "WARN",
+          "count": 54,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies"
+        }
+      ]
+    }
+  }
+}

@@ -1,5 +1,15 @@
 # Orçaly Ecosystem — Final checkpoint report
 
+## Current staging checkpoint — 26/09/2026
+
+Production remains read-only. Staging `zwxulgpjucxudadjdqov` now contains a catalog-derived schema-only baseline plus the existing Wealth migration. Audit covers 71 local files and 51 remote ledger entries. Baseline comparison: zero semantic differences in audited metadata. Final delta: 154 additions belonging only to the six Wealth/ecosystem tables and their supporting objects; no existing object changed.
+
+Hosted Supabase E2E: 13 checks PASS, fixture users/audit rows cleaned. Types generated. Build/typecheck/60 regression tests/scoped lint PASS. Real E2E found and fixed login destination loss after rerender and consent revocation clock/microsecond skew. No historical replay, production db push, migration repair, data copy or production promotion occurred.
+
+Vercel CLI authentication was renewed by the owner. Preview-only variables for branch `codex/orcaly-ecosystem` now target staging and enable Wealth there. Verification of the Vercel URL is still in progress at this checkpoint. Production configuration is unchanged. See `reconciliation/STAGING_VALIDATION.md`, `BASELINE_STRATEGY.md`, the complete migration matrix and comparison JSONs. These current results supersede the earlier no-staging/no-hosted-test statements preserved below.
+
+## Prior implementation checkpoint (historical context)
+
 Date: 2026-09-26 UTC. Overall status: PARTIAL. This is a verified implementation checkpoint, not completion of the entire master specification.
 
 ## Executive Summary
