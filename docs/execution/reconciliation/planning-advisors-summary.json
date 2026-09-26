@@ -1,0 +1,59 @@
+{
+  "capturedAt": "2026-09-26T21:07:41.374Z",
+  "newWarnings": [],
+  "notes": [
+    "One new private command table has RLS with no policies intentionally; authenticated access denied.",
+    "Unused-index count is workload dependent. No new security or performance WARN from this unit."
+  ],
+  "groups": [
+    {
+      "type": "security",
+      "name": "rls_enabled_no_policy",
+      "level": "INFO",
+      "count": 47,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+    },
+    {
+      "type": "security",
+      "name": "authenticated_security_definer_function_executable",
+      "level": "WARN",
+      "count": 1,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+    },
+    {
+      "type": "security",
+      "name": "auth_leaked_password_protection",
+      "level": "WARN",
+      "count": 1,
+      "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+    },
+    {
+      "type": "performance",
+      "name": "unindexed_foreign_keys",
+      "level": "INFO",
+      "count": 1,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys"
+    },
+    {
+      "type": "performance",
+      "name": "auth_rls_initplan",
+      "level": "WARN",
+      "count": 63,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan"
+    },
+    {
+      "type": "performance",
+      "name": "unused_index",
+      "level": "INFO",
+      "count": 296,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+    },
+    {
+      "type": "performance",
+      "name": "multiple_permissive_policies",
+      "level": "WARN",
+      "count": 54,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies"
+    }
+  ]
+}

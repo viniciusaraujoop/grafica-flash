@@ -45,3 +45,7 @@ Portfolios/holdings/transactions/recibos, índices/FKs/checks/RLS/grants/audit, 
 27 adições + ACL EXECUTE autenticado para o helper privado puro de aritmética de datas (sem leitura). 426 adições cumulativas vs produção, nenhum objeto legado alterado/removido, produção atual read-only sem diferenças. Snapshot, ledger e boundaries nos relatórios staging-calendar-*.json. Todas as 14 versões verificadas por conteúdo; baseline corresponde ao hash raw com CRLF original, não ao hash LF — arquivo preservado. Nenhuma migration aplicada editada/renomeada. UNKNOWNs históricos preservados.
 
 121 testes domínio/SQL e 43 E2E Preview PASS; cleanup API/SQL completo e cron pausado. Sem WARN novo nos advisors. Herdados/Auth continuam pendentes antes da produção. Preview SHA 1b5328190bd1ad81ef9c957bdf2f4856a9f0f7d3.
+
+## V6 — goal funding and life plans
+
+Applied only to staging: 20260926205052_wealth_goal_funding_life_plans.sql. SHA normalized LF 7ff665992f1813f1888ea6e430c6f047f8f717774acdb017f253ca023b408bcb. Predecessor Calendar, exactly 14 applied versions required, now 15. All local/ledger hashes matched. No prior migration or baseline edited. Tables wealth_goal_funding, wealth_life_plans, private command receipts; RLS owner/read, public DML denied, guarded RPC CAS/PT409/idempotency. 74 additive catalog changes; 500 cumulative additions against unchanged production. Types and advisors updated; no new WARN. Preview certification evidence in planning QA report when complete.

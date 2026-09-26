@@ -8487,6 +8487,44 @@ export type Database = {
         }
         Relationships: []
       }
+      wealth_goal_funding: {
+        Row: {
+          category: string
+          id: string
+          notes: string
+          priority: string
+          sources: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          id: string
+          notes: string
+          priority: string
+          sources: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          id?: string
+          notes?: string
+          priority?: string
+          sources?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_goal_funding_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "wealth_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wealth_goals: {
         Row: {
           archived_at: string | null
@@ -8594,6 +8632,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wealth_life_plans: {
+        Row: {
+          assumptions: string
+          created_at: string
+          current_funding_cents: number
+          event_type: string
+          id: string
+          impact_months: number
+          links: Json
+          monthly_capacity_cents: number
+          monthly_impact_cents: number
+          notes: string
+          reserve_cents: number | null
+          reserve_draw_cents: number
+          scenario: string
+          status: string
+          target_date: string
+          title: string
+          updated_at: string
+          upfront_cents: number
+          user_id: string
+          version: number
+        }
+        Insert: {
+          assumptions: string
+          created_at?: string
+          current_funding_cents: number
+          event_type: string
+          id?: string
+          impact_months: number
+          links: Json
+          monthly_capacity_cents: number
+          monthly_impact_cents: number
+          notes: string
+          reserve_cents?: number | null
+          reserve_draw_cents: number
+          scenario: string
+          status: string
+          target_date: string
+          title: string
+          updated_at?: string
+          upfront_cents: number
+          user_id: string
+          version?: number
+        }
+        Update: {
+          assumptions?: string
+          created_at?: string
+          current_funding_cents?: number
+          event_type?: string
+          id?: string
+          impact_months?: number
+          links?: Json
+          monthly_capacity_cents?: number
+          monthly_impact_cents?: number
+          notes?: string
+          reserve_cents?: number | null
+          reserve_draw_cents?: number
+          scenario?: string
+          status?: string
+          target_date?: string
+          title?: string
+          updated_at?: string
+          upfront_cents?: number
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
       }
       wealth_net_worth_snapshots: {
         Row: {
@@ -10848,6 +10955,10 @@ export type Database = {
           updated_at: string
           verified_at: string
         }[]
+      }
+      manage_wealth_planning: {
+        Args: { p_input: Json; p_operation: string }
+        Returns: string
       }
       manage_wealth_portfolio: {
         Args: { p_input: Json; p_operation: string }
