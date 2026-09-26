@@ -2,6 +2,10 @@
 
 ## Checkpoint vigente — MASTER CONTINUATION FINAL
 
+Preview certificado: https://orcaly-hbabdndwa-vinicius-araujos-projects.vercel.app, deployment `dpl_3TYWmENqUvwiaX5uV97kbY2f9zjN`, SHA `510b38aeb7aacd15ecbc8e50b113eb1269998920`, READY/Preview. **21 checks hospedados PASS**, zero erros/requests de produção; cleanup com zero usuários e auditoria. Evidência: `docs/qa/ORCALY_WEALTH_LIFECYCLE_VERCEL_E2E.json`. Proteção do Preview preservada. Continuação automática: recorrências; ainda não aplicadas no staging.
+
+E2E hospedado: usar URL/SHA acima, `ORCALY_STAGING_ACCESS_FILE=.local-qa/reconciliation/vercel-lifecycle-access.json` (ignorado), flags RECORDS/EDIT/LIFECYCLE. Não repetir a certificação sem alterações ou suspeita concreta. Staging continua vazio e consistente na migration lifecycle; arquivo de recorrências criado localmente não significa aplicado.
+
 O usuário agora manda executar integralmente `C:\Users\arauj\Downloads\CODEX_ORCALY_MASTER_CONTINUATION_FINAL.md`, lido linha a linha nesta retomada. Não encerrar após um módulo; seguir automaticamente enquanto houver contexto útil.
 
 Retomada de `34dcc06bf0c8a0bbf44bf4e2e596e313b112bc93`. Migration nova **já aplicada no staging**: `20260926103114_wealth_lifecycle_aggregates.sql`, SHA LF `a1ab880670c493a4fe8b3a3a856d16f13991404b438d1dd377779620584d8f83`. Ledger agora tem três versões. Não reaplicar nem resetar. Arquivamento/restauração, metas/status/paginação e RPC de agregados completos implementados. Types reais atualizados; 75 testes + typecheck/build/scoped lint PASS; 20 E2E local com Supabase hospedado PASS, limpeza zero. Falta certificar o novo Preview; detalhes em `docs/qa/ORCALY_WEALTH_LIFECYCLE.md`.

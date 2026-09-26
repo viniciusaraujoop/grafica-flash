@@ -2,6 +2,8 @@
 
 ## Continuação vigente: lifecycle e totais integrais
 
+Preview certificado: https://orcaly-hbabdndwa-vinicius-araujos-projects.vercel.app, deployment `dpl_3TYWmENqUvwiaX5uV97kbY2f9zjN`, SHA `510b38aeb7aacd15ecbc8e50b113eb1269998920`, READY/Preview. **21 checks hospedados PASS**, zero erros/requests de produção; cleanup com zero usuários e auditoria. Evidência: `docs/qa/ORCALY_WEALTH_LIFECYCLE_VERCEL_E2E.json`. Proteção do Preview preservada. Continuação automática: recorrências; ainda não aplicadas no staging.
+
 Master ativo: `C:\Users\arauj\Downloads\CODEX_ORCALY_MASTER_CONTINUATION_FINAL.md`, lido integralmente. Retomada de `34dcc06bf0c8a0bbf44bf4e2e596e313b112bc93`, branch autorizada, árvore inicialmente limpa. As seções históricas abaixo preservam certificados anteriores; este bloco registra a ampliação atual.
 
 Aplicada **somente ao staging** a migration `20260926103114_wealth_lifecycle_aggregates.sql`. Ledger agora tem três versões. Arquivamento/restauração de lançamentos, ciclo completo de metas com paginação, versão monotônica e agregações integrais implementados. 75 testes de domínio/PostgreSQL, TypeScript, lint de escopo e build PASS. E2E local com Supabase real: 20 checks PASS, zero fixtures restantes; revisão visual ampliada em andamento. Preview desta ampliação ainda a certificar. Evidência e delta de 20 alterações intencionais: `docs/qa/ORCALY_WEALTH_LIFECYCLE.md` e `reconciliation/staging-lifecycle-delta.json`. Nenhum objeto legado, migration histórica ou produção alterado.

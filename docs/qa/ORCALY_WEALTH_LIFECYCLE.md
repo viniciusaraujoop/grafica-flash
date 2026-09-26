@@ -2,6 +2,8 @@
 
 Unidade 6.1–6.3 do MASTER CONTINUATION FINAL, 26/09/2026. Produção não alterada.
 
+Preview certificado: https://orcaly-hbabdndwa-vinicius-araujos-projects.vercel.app, deployment `dpl_3TYWmENqUvwiaX5uV97kbY2f9zjN`, SHA `510b38aeb7aacd15ecbc8e50b113eb1269998920`, READY/Preview. **21 checks hospedados PASS**, zero erros/requests de produção; cleanup com zero usuários e auditoria. Evidência: `docs/qa/ORCALY_WEALTH_LIFECYCLE_VERCEL_E2E.json`. Proteção do Preview preservada. Continuação automática: recorrências; ainda não aplicadas no staging.
+
 ## Implementação e limites
 - Lançamentos: arquivar/restaurar, confirmação visual, filtros e CSV consistentes; não há exclusão física pelo fluxo.
 - Metas: edição, status active/paused/completed, prazo, progresso, arquivar/restaurar e paginação estável de 25 itens.
