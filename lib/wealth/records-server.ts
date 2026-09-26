@@ -4,7 +4,7 @@ import { monthBounds, type WealthFilters } from './records'
 
 export function ownedEntriesQuery(db: SupabaseClient, userId: string, filters: WealthFilters) {
   let query = db.from('wealth_entries')
-    .select('id,title,kind,category,amount_cents,financial_date,currency,recurrence,archived_at,version', { count: 'exact' })
+    .select('id,title,kind,category,amount_cents,financial_date,currency,recurrence,archived_at,version,valuation_status', { count: 'exact' })
     .eq('user_id', userId)
     .order('financial_date', { ascending: false }).order('id', { ascending: false })
   if (filters.kind) query = query.eq('kind', filters.kind)

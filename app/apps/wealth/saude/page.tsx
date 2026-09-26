@@ -20,6 +20,7 @@ export default async function FinancialHealthPage(){
   <Link className={styles.textButton} href="/apps/wealth">← Visão geral</Link><p className={styles.eyebrow}>Orçaly Wealth · Clareza financeira</p><h1>Entenda os sinais.<br/>Veja de onde vêm.</h1>
   <p className={styles.lead}>Indicadores dos seus registros pessoais, com regras abertas. Não há nota única de saúde financeira. Dados incompletos não viram conclusões sobre sua vida.</p>
   <p><Link href="/apps/wealth/patrimonio">Patrimônio e snapshots</Link> · <Link href="/apps/wealth/dividas">Central de Dívidas</Link> · <Link href="/apps/wealth/recorrencias">Recorrências</Link></p>
+  {input.positions.unknownValuations&&input.positions.unknownValuations!=='0'&&<p className={styles.notice}>Indicadores de patrimônio parciais: {input.positions.unknownValuations} posições sem avaliação. <Link href="/apps/wealth/carteiras">Revisar carteiras</Link>.</p>}
   {healthIndicators(input).map(indicator=><article key={indicator.id} className={styles.panel} aria-label={indicator.title}>
    <h2>{indicator.title}</h2><p className={styles.debtResult}><strong>{indicator.value}</strong></p>
    <dl className={styles.healthDetails}><dt>Fonte</dt><dd>{indicator.source}</dd><dt>Período</dt><dd>{indicator.period}</dd><dt>Regra</dt><dd>{indicator.rule}</dd><dt>Interpretação</dt><dd>{indicator.interpretation}</dd><dt>Limitação</dt><dd>{indicator.limitation}</dd></dl>

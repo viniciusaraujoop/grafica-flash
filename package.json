@@ -21,7 +21,7 @@
     "verify:resend": "node scripts/verify-resend-email.mjs",
     "verify:payments": "node scripts/verify-payment-flow-boundaries.mjs",
     "verify:payment-credentials": "node scripts/auditar-isolamento-pagamentos.cjs",
-    "test:ecosystem": "node --test scripts/test-ecosystem.mjs scripts/test-ecosystem-database.mjs scripts/test-wealth-lifecycle-database.mjs scripts/test-wealth-recurrence-database.mjs && node --test scripts/test-wealth-recurrence-clock.mjs && node --test scripts/test-wealth-debt.mjs scripts/test-wealth-debt-database.mjs && node --test scripts/test-wealth-net-worth.mjs && node --test scripts/test-wealth-health.mjs",
+    "test:ecosystem": "node --test scripts/test-ecosystem.mjs scripts/test-ecosystem-database.mjs scripts/test-wealth-lifecycle-database.mjs scripts/test-wealth-recurrence-database.mjs && node --test scripts/test-wealth-recurrence-clock.mjs && node --test scripts/test-wealth-debt.mjs scripts/test-wealth-debt-database.mjs && node --test scripts/test-wealth-net-worth.mjs && node --test scripts/test-wealth-health.mjs && node --test scripts/test-wealth-portfolio.mjs",
     "typecheck": "next typegen && tsc --noEmit --incremental false",
     "e2e:ecosystem": "node scripts/e2e-ecosystem.mjs"
   },

@@ -1,0 +1,905 @@
+{
+  "label": "staging-portfolio-delta",
+  "expectedSha256": "2be1e1f2e8d6ff17510370a8f834371679312ed8a179faf4255948dfc6512f28",
+  "actualSha256": "ec7fc41d2ad16c6c9f02d2fdaa7ff8ac4367ee9b2a503d489cccf3bd17f00323",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2635,
+      "actual": 2675
+    },
+    "indexes": {
+      "expected": 672,
+      "actual": 683
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 166,
+      "actual": 169
+    },
+    "triggers": {
+      "expected": 49,
+      "actual": 53
+    },
+    "functions": {
+      "expected": 132,
+      "actual": 136
+    },
+    "relations": {
+      "expected": 173,
+      "actual": 177
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 711,
+      "actual": 744
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 103,
+  "changes": [
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_portfolio_commands.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "18becadbd39f0400d31ad53e164f38e9b440cea1c9d7687f9d709cef67e16368"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_portfolio_commands.token",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "89e26c21d8e2a744b30791570a0dcbb3f5c586103ee56c947a40e015b74a18c8"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_portfolio_commands.operation",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8e10324b73785c36185f024fb47351e4ff9f24c8c6520e33cf331217cffa608c"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_portfolio_commands.input",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "cb37c75cf74b81540d419e50f37f206aaa6b3ed87f1876b810a0c84cddb5f080"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_portfolio_commands.result_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e9439f91e5f3218af00ebff6a4a77444def99416e1655c8e319174b16c8a1d1e"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_entries.valuation_status",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a6b4583735308f136637b96bc3fff6df2f284820db907853703dcd1b00c947e5"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_holdings.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d56eae8e9fcfd12579452fa564848811743796632a310588fa0ffae616dac739"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_holdings.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "48dc5bd0f67ad866efa7afdcb800f65dbbe61b2f5381bd849f38adba49fad403"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_holdings.portfolio_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c549d0b2e059adccd56e10ce1a54fdd6d61a3c3e2f0c6b4f1c19e852affe7475"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_holdings.instrument",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "6e8d19810abf150410b150b991ab441ef4dfac9edc2de58686b8dabcf52bb64a"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_holdings.quantity",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "060a1d046faa33d335dcbbca404c3f12d6fae9a781ea2ffb1ddf7df2cef1721a"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_holdings.cost_basis_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5f23539fabaa25db209726041211b397ea3509a091d1bc84e1dca3a47bfc950d"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_holdings.issuer",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8f1dbda429ab0b6e99b80d40ccc9f24d7532ba83f72e37e7fd4c7ed1af01a05b"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_holdings.sector",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1a580f47945cf9ae15ae599594f2a3b4f8e9ad5e0f13395ad16c131aac7b6f0e"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_holdings.exposure_currency",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "48fd1185bf8f16279fba45c5d098b1223321ecee5518d9abd2f67423709d8fe4"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_holdings.maturity",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "123b67f0009d2a4ee88cea2449ae3de5714ab1514a3e436e9dfa64d3b9558c07"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_holdings.valuation_source",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d3f68c1d576b4feb50dbdb6e7d69d10e48563d1ab0e8149d6349c7e6f33ad3fc"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ddae9107cf06c4f89e1bda992b99126d6b7bd00ddddc5e8df2ad6abdb9e9487f"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d2c30f1166b944dfd648a10cc516f77ff6d1dfb208819bae752ff917252cb14a"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.holding_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "59275dfe3d3108053a7c510a9bdcd170247b07e624d24d4b7235955c43733173"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.destination_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e01ab8766b80ad54436a80d8fa63aec9139e60b0ce9f1a378f441cb80ff06a60"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.type",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b114f4c17daeb735ab28c747c652ea1accfc5ae6e43bdd4db2efdffd527c1961"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.quantity",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e6121e527d9aeb11d0a9aaacd080303317f7cae102442e12150d6cd4fd47ce93"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.amount_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b56295e87a607ae42eafd65f6876aa0be814293b312b459785ec6e83d4df8725"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.basis_removed_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "519f189f8ad8c831df4318a3842df0ed7febc661b18080e4a293198de7895a17"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.realized_gain_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5e286885636626ace6ac45d911aabdd77603116862e7e0675518f665077ff1c4"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.position_before",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "725aefcd1a348c699453135e3928e98b5e8a97f02ee77dc5792c8b6130ffea98"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.position_after",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "48cafe0dadf794f4704cadd3ad15499c74a6caa9859701e2699176bb4297ef11"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.financial_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c802e7d80ca1d9cc2689449439001d1d0346f202cf91c92bcb75132c8b52e8a9"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.reference",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9b7bf5ff68f3d955b746db6f4a431b542a8f800a571cd0e380cc757525f092e1"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolio_transactions.created_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1cbd27cb5b13ee4f059b10f76e2e0c8099953584063edee68a0122a73352ac80"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolios.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c6853468383e1618d8a5c18c5ba63c69643447e5fda3beb44e49c313526734a3"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolios.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "699b30a357c9b3482c59cbf6d451edb928d11dfc338efb252c936ced9d60205b"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolios.name",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c0d08cff1966e7265b07d87f8a59b2f63fa1a8274a9429b350f2f7dbc9f9bb80"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolios.kind",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "6634ad9f5c301d24ead313c872080dc2b5e4024b03e2cec4e045e820b82129c4"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolios.goal_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "648c1ede4486778872b5dbec8705a70f5db2b87ad783499326480d9ad38c8d08"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolios.targets",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "81a2f78b74f1c54f5aa6494a1871ae894faed2e27c8bc8d58683b1ff423bdcad"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolios.lab_positions",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d5610abdd366bb052418475e9e035fee627536277022f8dd6111a2a4d8566da5"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolios.version",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8dc516e1a97ae95dac9e4a143932afb3d05a4ea074a12b0e100672ed85f972d2"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_portfolios.created_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "543d07ed8286d13bae51fde1cd32cc52a7b3c8002e609608de489414256fc016"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_portfolio_commands_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "fe3a0a498b689196f9d40dff0af4732d31bfd935ebb76dd93f6e65e7290468be"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_holdings_owner",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9f294a7e62b90f080446697ed4d4b95953e4d5e2d19a033189104030bac44b19"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_holdings_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8d81a60a174165f5252b28a2f13658c5a3dd1ccbe2e23d361fb6a834ffd9d516"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_holdings_portfolio",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d44d6215cd830445c6e7a2abca3b3b2ea3c3eb7381f9fe6f9376c0823ce1bdb3"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_portfolio_transactions_destination",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a00582d2121e216547cfd1770fdfdaeba554c52056afa3df6ce0595157bfb272"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_portfolio_transactions_holding",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5c8c4a47513c83f19a6ff960c5cdb32cfd32ebbd088abb31d1b6c3fbb1bcecd1"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_portfolio_transactions_owner",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1d8d21abb6b3c84f0b903fac270b45e5033a425c4716d2edaad8b38ac39aa1e3"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_portfolio_transactions_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "93ffd5858c963c8633c16d7a4ea7167e4fe5945a91f58de54a4b865643bb6372"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_portfolios_goal",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3984943ee4c7bc9399747eafce4e36cd4088545e13607175904bd6003b4c78c4"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_portfolios_owner",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9d838f4a9b49e4387d9f8edd45bbde3dd2d77f6e9a2e5820131bfc537815ac1f"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_portfolios_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c002fc39b4154b6000a8132cd488480ce45791b2012fd3514479fa3f54cc278b"
+    },
+    {
+      "category": "policies",
+      "id": "public.wealth_holdings.portfolio_owner_read",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "644746031cb2c31a4671213ba8b1261d82a88e424ede9079a0e745bcd4cf34ed"
+    },
+    {
+      "category": "policies",
+      "id": "public.wealth_portfolio_transactions.portfolio_owner_read",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "20911c6cdcd87f68318a8f294cd82d2c9bc32c744184479975587488c09232ad"
+    },
+    {
+      "category": "policies",
+      "id": "public.wealth_portfolios.portfolio_owner_read",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "28f21d7c2f723794d20f5743498bd6dfa8bc3cf5e700eba3943eef5317be35ee"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_entries.wealth_holding_entry_guard",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b4765f41c8c0b25fbdd3c30e10630ae08128603344737d7fc1a016d94b56dd9f"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_holdings.portfolio_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c3b112a6a6cfa3b6102cf5807e049eae656f599fcade237da811c7ccfb48acfb"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_portfolio_transactions.portfolio_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f3b8868ee50b0a64598c67bac2f7d4708822301db1fc0dd1832892ff6e1d6021"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_portfolios.portfolio_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5e27d1af9973817e29c2457d23e6144349ab93c7e193448eb4c1ae3bca56e7d9"
+    },
+    {
+      "category": "functions",
+      "id": "public.wealth_net_worth.",
+      "kind": "changed",
+      "fields": [
+        "definition"
+      ],
+      "beforeSha256": "32a3486d39a17a42440b27470b87c2ca85015aa1a5b6cc5c54c85c56d2b78ada",
+      "afterSha256": "abc0eb7d712e7e07bbaee237566cd7a9017a85ca5496b32848394529c74d5edf"
+    },
+    {
+      "category": "functions",
+      "id": "public.wealth_summary.p_month date",
+      "kind": "changed",
+      "fields": [
+        "definition"
+      ],
+      "beforeSha256": "a3caec81029bdb996da338390c66b34c748a5d350f06560b175fe0994b946aaf",
+      "afterSha256": "2d9d68d89e6894c46ba25899e12b9fcdb92303108c23ad9aa8f19b85f60bb954"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.guard_wealth_holding_entry.",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ac3ac2a8f30ad88fb37c8a723589f23b7369377e351ac97fd21837cbe33fadf6"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.manage_wealth_portfolio.p_operation text, p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c66e6afbfd3cf771e6c6229b6673748006048817fb33c19351c562680c5434a1"
+    },
+    {
+      "category": "functions",
+      "id": "public.manage_wealth_portfolio.p_operation text, p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ec9f25a1e9eca6629b93f3595b09babbcf1c44a6dc02ce39ab0f98cc1ed4f07a"
+    },
+    {
+      "category": "functions",
+      "id": "public.wealth_portfolio_view.p_id uuid, p_page integer",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "78c5ea7860d351374d3956ddba5b25288489a2a30a91276479a619e39318c420"
+    },
+    {
+      "category": "relations",
+      "id": "ecosystem_private.wealth_portfolio_commands",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "da332754a3fc06d3c5f21e1e942b451e647dae446990bd0db6c48ed2e930559b"
+    },
+    {
+      "category": "relations",
+      "id": "public.wealth_holdings",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3154fa7a007d2fb50cd777e876d1e56ce14ed1911a8438157cd2a65c9607fb38"
+    },
+    {
+      "category": "relations",
+      "id": "public.wealth_portfolio_transactions",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9962c3861e9942f30e1658051c0ed0b5164847edb2e4bb505e19764e627b3d76"
+    },
+    {
+      "category": "relations",
+      "id": "public.wealth_portfolios",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "100bf4423e3f6061e584b131564042e17f233e68e4190d02feee0aeffc187afe"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_entries.wealth_entries_amount_cents_check",
+      "kind": "changed",
+      "fields": [
+        "definition"
+      ],
+      "beforeSha256": "ecc4db67ddb2f939f840615e8bcc4a979567d1a73f13c24f608a94cf93192e84",
+      "afterSha256": "fa890452bb88f7fbb8e84e86ed8e55b0b9f119e049a004d36d67db92af50bb90"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_portfolio_commands.wealth_portfolio_commands_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9169a76ca0ed12d1be00daf8fceccf2c952270c924fb1790f2d992e6738e2aed"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_portfolio_commands.wealth_portfolio_commands_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "602069af8cbdeec8480ec956c557eb24a7409cde3e7537fad32896ccc7bb037e"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_entries.wealth_valuation_status_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "133d0a227f82a1b9f454c6c5a721fb7655913b67305ad8fde23cdbd71df780d7"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "306e1c6c5d43e49fa5c9d1ab0718b0ee93743cc909b13de99e9333973c1cdc44"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_cost_basis_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5db2bec6199182863d9eeceb481bfb5f770e1f0549d89c8c7c05369e98979ae8"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_exposure_currency_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5eebe80bee50de19b59681c0d9722b297f41faa40f11f7471b40bf43825721eb"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a1f92f4d42058a9a82a3eb1c996c5a077a7307a28233a5dd8b1949528b7e1858"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_instrument_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "76fd86020965fe7baead318233a94b401b994db7ff5863f2de8e2d919f380c3a"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_issuer_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "21a2a72c1fe78d8a83ba2a24ab886f317f79ef1724d0ab7003e4539a1863da20"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_maturity_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "2bdd50da859a6df57037ce97b6eac748b8dd665aa0679633e696123c816654aa"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "db9413754bac7c7d35c3be3d71f599b9b018949f2211f6148c0bb3cb75878171"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_portfolio_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0ebfac9b949bdb988e85eaa58d919e06c5ca2dd698d34fc910f5ab582f2e86b7"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_quantity_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f4078f0c49f8860eea19e0cd9b3ece7a594e34f82ae1123478eb5e1ce3b048a3"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_sector_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a0aaaeac951db8bcd94c6c25fcac73c7370489cc14943bd51bb6cbdaa67e8f39"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9664eb2c64b34777a7feabad018aa190f77d471439870314e92d1443a6550590"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_holdings.wealth_holdings_valuation_source_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f92e238b63b741e78e769b42ad1d9bf6cbceb6593ba1a5c3dd19f7d627711989"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolio_transactions.wealth_portfolio_transactions_amount_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "4a7fdc6e791074af9250689da82bd8b99e1988140c2df9c7ff981a0927f899cf"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolio_transactions.wealth_portfolio_transactions_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7e0eb6bfc5e9aaec531fd6e5d3e44778145117ba3eca336a18256a5097282edb"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolio_transactions.wealth_portfolio_transactions_destination_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "79748866146c546161d94b07c91acaf98830ab14653c6149e7415c816d77c115"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolio_transactions.wealth_portfolio_transactions_financial_date_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8a48806b4c8ba1a0e73df85ce8c4c3bcf50a67495cbedf6dc7eeaaa15b19190c"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolio_transactions.wealth_portfolio_transactions_holding_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "968b822e2f86790fda9bf8b84891742934b2756909c87ece2608ec48e082110e"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolio_transactions.wealth_portfolio_transactions_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3777f1e85015f54cc141791e0d6bf8ad69c41ecb5b77912cf07d26859918b614"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolio_transactions.wealth_portfolio_transactions_reference_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ba06d1018222a48ed6d39d17ca6fa9048dcbeeeedba708d4472d876d4412ddc9"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolio_transactions.wealth_portfolio_transactions_type_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "434bcf092c597b7577354b191aff04bebfcced33f5515257aa9d9400c5cbbadd"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolio_transactions.wealth_portfolio_transactions_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "dda717a74c383a7e14a202ad17860120248222c8bf3d1395ff7e12616933e679"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolios.wealth_portfolios_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "21ffa15bbb673fad40adaf47a8dbfcec7ddab0e98c5979b7d1ade2708370e906"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolios.wealth_portfolios_check1",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "bf07f815a055a8ca299ca7fb147ae05e7d00c16417cfc9bb0b6b50d7203f5fc3"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolios.wealth_portfolios_goal_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "68698c26fc566ed9f95ba2920d64d3ebd7634b9a6f03e3027ca0be7fe68d3f31"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolios.wealth_portfolios_kind_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a5c08af972ab2b0c5fd7af9792a47fdd3a81e2fe1f2bf37c8b7e9eb0459964a0"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolios.wealth_portfolios_name_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a1999254cdcd5b030f40a9776cbd45bfcfe6632227e29530d392529c86bd8e27"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolios.wealth_portfolios_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ff4747f6fa7d7f8f43ca1cb302b73e680fc774cdd8f7f69f851d39fb151937e9"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolios.wealth_portfolios_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "44f548e8d9b4c397d0c86d51a6d0c36824dfb1987105cea7cea5a1a4cfd34513"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_portfolios.wealth_portfolios_version_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b428896d7036fa5500b9f1370b3b671fc853c41232b81b252172bb016500270a"
+    },
+    {
+      "category": "column_order",
+      "id": "public.wealth_entries",
+      "kind": "changed",
+      "beforeSha256": "608dafe56e3be7eff6947fc4ec1600ce7e2510f1aeb25b24fbba5b24f2be7db0",
+      "afterSha256": "4cdf4431f71f974244f472a411185b9ffcfab55b82c1a096e6ff585a400d127c"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

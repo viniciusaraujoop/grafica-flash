@@ -8399,6 +8399,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          valuation_status: string
           version: number
         }
         Insert: {
@@ -8417,6 +8418,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          valuation_status?: string
           version?: number
         }
         Update: {
@@ -8435,6 +8437,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          valuation_status?: string
           version?: number
         }
         Relationships: []
@@ -8490,6 +8493,63 @@ export type Database = {
         }
         Relationships: []
       }
+      wealth_holdings: {
+        Row: {
+          cost_basis_cents: number | null
+          exposure_currency: string | null
+          id: string
+          instrument: string
+          issuer: string | null
+          maturity: string | null
+          portfolio_id: string
+          quantity: number
+          sector: string | null
+          user_id: string
+          valuation_source: string
+        }
+        Insert: {
+          cost_basis_cents?: number | null
+          exposure_currency?: string | null
+          id: string
+          instrument: string
+          issuer?: string | null
+          maturity?: string | null
+          portfolio_id: string
+          quantity: number
+          sector?: string | null
+          user_id: string
+          valuation_source: string
+        }
+        Update: {
+          cost_basis_cents?: number | null
+          exposure_currency?: string | null
+          id?: string
+          instrument?: string
+          issuer?: string | null
+          maturity?: string | null
+          portfolio_id?: string
+          quantity?: number
+          sector?: string | null
+          user_id?: string
+          valuation_source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_holdings_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "wealth_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wealth_holdings_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wealth_net_worth_snapshots: {
         Row: {
           captured_at: string
@@ -8522,6 +8582,116 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      wealth_portfolio_transactions: {
+        Row: {
+          amount_cents: number
+          basis_removed_cents: number | null
+          created_at: string
+          destination_id: string | null
+          financial_date: string
+          holding_id: string
+          id: string
+          position_after: Json
+          position_before: Json
+          quantity: number
+          realized_gain_cents: number | null
+          reference: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          basis_removed_cents?: number | null
+          created_at?: string
+          destination_id?: string | null
+          financial_date: string
+          holding_id: string
+          id?: string
+          position_after: Json
+          position_before: Json
+          quantity: number
+          realized_gain_cents?: number | null
+          reference: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          basis_removed_cents?: number | null
+          created_at?: string
+          destination_id?: string | null
+          financial_date?: string
+          holding_id?: string
+          id?: string
+          position_after?: Json
+          position_before?: Json
+          quantity?: number
+          realized_gain_cents?: number | null
+          reference?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_portfolio_transactions_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_holdings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wealth_portfolio_transactions_holding_id_fkey"
+            columns: ["holding_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_holdings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wealth_portfolios: {
+        Row: {
+          created_at: string
+          goal_id: string | null
+          id: string
+          kind: string
+          lab_positions: Json
+          name: string
+          targets: Json
+          user_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          goal_id?: string | null
+          id?: string
+          kind: string
+          lab_positions?: Json
+          name: string
+          targets?: Json
+          user_id: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          goal_id?: string | null
+          id?: string
+          kind?: string
+          lab_positions?: Json
+          name?: string
+          targets?: Json
+          user_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_portfolios_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_goals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wealth_profiles: {
         Row: {
@@ -10634,6 +10804,10 @@ export type Database = {
           verified_at: string
         }[]
       }
+      manage_wealth_portfolio: {
+        Args: { p_input: Json; p_operation: string }
+        Returns: string
+      }
       mark_affiliate_payout_paid_admin: {
         Args: {
           p_payout_id: string
@@ -11092,6 +11266,10 @@ export type Database = {
       }
       wealth_health_inputs: { Args: never; Returns: Json }
       wealth_net_worth: { Args: never; Returns: Json }
+      wealth_portfolio_view: {
+        Args: { p_id: string; p_page?: number }
+        Returns: Json
+      }
       wealth_summary: { Args: { p_month: string }; Returns: Json }
     }
     Enums: {

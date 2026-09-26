@@ -3,7 +3,7 @@ export const liabilityClasses = {credit_card:'Cartão de crédito',personal_loan
 export const liquidityLabels = {immediate:'Imediata',short_term:'Curto prazo',medium_term:'Médio prazo',illiquid:'Ilíquido',unknown:'Não informada'}
 export const classLabels:Record<string,string> = {...assetClasses,...liabilityClasses,unclassified:'Não classificado'}
 export type NetWorth = {
- currency:'BRL';source:'owner_declared';capturedAt:string;localDate:string;timezone:string;assets:string;liabilities:string;netWorth:string;positionCount:string;
+ currency:'BRL';source:'owner_declared';capturedAt:string;localDate:string;timezone:string;assets:string;liabilities:string;netWorth:string;positionCount:string;unknownValuations?:string;
  classes:{kind:'asset'|'liability';class:string;amount:string;count:string}[];
  liquidity:{liquidity:keyof typeof liquidityLabels;amount:string;count:string}[];
  largest:{id:string;title:string;kind:'asset'|'liability';amount:string;class:string;liquidity:keyof typeof liquidityLabels}[];
@@ -15,6 +15,7 @@ const kind=(v:unknown)=>v==='asset'||v==='liability'
 export function readNetWorth(v:unknown):NetWorth {
  if(!object(v)||v.currency!=='BRL'||v.source!=='owner_declared'||typeof v.capturedAt!=='string'||!Number.isFinite(Date.parse(v.capturedAt))||typeof v.timezone!=='string'||typeof v.localDate!=='string')throw Error('Snapshot inválido')
  new Intl.DateTimeFormat('pt-BR',{timeZone:v.timezone})
+ if(v.unknownValuations!==undefined&&!positive(v.unknownValuations))throw Error('Cobertura inválida')
  if(!positive(v.assets)||!positive(v.liabilities)||!cents(v.netWorth)||!positive(v.positionCount)||BigInt(v.assets)-BigInt(v.liabilities)!==BigInt(v.netWorth))throw Error('Totais inconsistentes')
  if(!Array.isArray(v.classes)||!v.classes.every(r=>object(r)&&kind(r.kind)&&typeof r.class==='string'&&Object.hasOwn(classLabels,r.class)&&positive(r.amount)&&positive(r.count)))throw Error('Composição inválida')
  if(!Array.isArray(v.liquidity)||!v.liquidity.every(r=>object(r)&&typeof r.liquidity==='string'&&Object.hasOwn(liquidityLabels,r.liquidity)&&positive(r.amount)&&positive(r.count)))throw Error('Liquidez inválida')

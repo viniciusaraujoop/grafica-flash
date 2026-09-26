@@ -1,0 +1,20 @@
+{
+  "project": "zwxulgpjucxudadjdqov",
+  "applicationOrder": [
+    "20260926190000 (previously applied)",
+    "20260926181546",
+    "20260926185024"
+  ],
+  "migrations": [
+    {
+      "version": "20260926181546",
+      "name": "wealth_portfolio_foundation",
+      "sha256": "65587f9653b26d3a39456b300f3c23ee013bb4918ab3f475171aa7cf3d8dda4d"
+    },
+    {
+      "version": "20260926185024",
+      "name": "wealth_portfolio_target_binding",
+      "sha256": "7ec8a877ec19a08a4468478027bf36f40c01a7858d3dc9c960f543a81a647668"
+    }
+  ]
+}

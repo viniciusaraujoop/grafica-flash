@@ -7,6 +7,7 @@ import AxeBuilder from '@axe-core/playwright'
 import {stagingRef,stagingUrl,anonKey,serviceKey} from './helpers/staging-credentials.mjs'
 import {cleanupWealthSchedules,wealthScheduleFixtureCounts} from './helpers/cleanup-wealth-schedules.mjs'
 import {testWealthRecurrence} from './e2e-wealth-recurrence.mjs'
+import {testWealthPortfolio} from './e2e-wealth-portfolio.mjs'
 import {testWealthHealth} from './e2e-wealth-health.mjs'
 import {testWealthNetWorth} from './e2e-wealth-net-worth.mjs'
 import {testWealthDebt} from './e2e-wealth-debt.mjs'
@@ -378,6 +379,7 @@ try{
  if(process.env.ORCALY_QA_RECURRENCE==='true')await testWealthRecurrence({page,context,other,a,b,admin,appUrl,grant,active,ok,pass,errors,output})
  if(process.env.ORCALY_QA_DEBT==='true')await testWealthDebt({page,context,other,a,b,admin,appUrl,grant,active,ok,pass,errors,output})
  if(process.env.ORCALY_QA_NET_WORTH==='true')await testWealthNetWorth({page,context,a,b,admin,appUrl,grant,active,ok,pass,errors,output})
+ if(process.env.ORCALY_QA_PORTFOLIO==='true')await testWealthPortfolio({page,context,a,b,admin,appUrl,grant,active,ok,pass,errors,output})
  if(process.env.ORCALY_QA_HEALTH==='true')await testWealthHealth({page,other,a,b,admin,appUrl,grant,active,ok,pass,output})
  assert.deepEqual(errors,[])
  pass('no-browser-errors-or-production-requests')
@@ -387,7 +389,7 @@ finally{
  // Collect fixture entity IDs before user cascades; triggers during cascades retain only IDs.
  for(const user of users){
   await cleanupWealthSchedules(admin,user.id,entities)
-  for(const table of ['ecosystem_product_entitlements','ecosystem_context_consents','wealth_entries','wealth_goals','wealth_net_worth_snapshots']){
+  for(const table of ['ecosystem_product_entitlements','ecosystem_context_consents','wealth_entries','wealth_goals','wealth_net_worth_snapshots','wealth_portfolios','wealth_holdings','wealth_portfolio_transactions']){
    for(let offset=0;;offset+=500){const rows=ok(await admin.from(table).select('id').eq('user_id',user.id).order('id').range(offset,offset+499));for(const row of rows)entities.add(row.id);if(rows.length<500)break}
   }
   entities.add(user.id)
@@ -400,6 +402,7 @@ finally{
  Object.assign(cleanup,await wealthScheduleFixtureCounts(admin))
  if(process.env.ORCALY_QA_DEBT==='true')cleanup.debtTermsRemaining=(await admin.from('wealth_debt_terms').select('id',{count:'exact',head:true})).count
  if(process.env.ORCALY_QA_NET_WORTH==='true')cleanup.snapshotsRemaining=(await admin.from('wealth_net_worth_snapshots').select('id',{count:'exact',head:true})).count
+ if(process.env.ORCALY_QA_PORTFOLIO==='true')for(const t of ['wealth_portfolios','wealth_holdings','wealth_portfolio_transactions'])cleanup[t]=(await admin.from(t).select('id',{count:'exact',head:true})).count
  if(Object.values(cleanup).some(value=>value!==0))process.exitCode=1
  if(cleanup.usersRemaining!==0||cleanup.auditRowsRemaining!==0)process.exitCode=1
  await fs.writeFile(`${output}/report.json`,JSON.stringify({project:stagingRef,appUrl,commit:accessUrl?process.env.ORCALY_EXPECTED_COMMIT:null,startedAt,finishedAt:new Date().toISOString(),report,errors,cleanup,limits:[accessUrl?'Next.js served by protected Vercel Preview; Supabase staging hosted in sa-east-1':'Next.js application served locally; Supabase staging hosted in sa-east-1','Auth, JWT, refresh, PostgREST, RLS, grants and persistence use real hosted Supabase staging','No production data or credentials used; no email sent; all accounts confirmed by staging Admin API']},null,2))

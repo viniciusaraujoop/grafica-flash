@@ -15,6 +15,9 @@ export default async function WealthEntryPage({ params }: { params: Promise<{ en
   const result = await read.identity.db.from('wealth_entries').select('id,title,kind,category,amount_cents,financial_date,currency,recurrence,version,archived_at').eq('user_id', read.identity.user.id).eq('id', id).maybeSingle()
   if (result.error) return <><h1>Editar lançamento</h1><p className={styles.notice}>Não foi possível consultar o lançamento agora.</p><Link href="/apps/wealth/lancamentos">Voltar ao histórico</Link></>
   if (!result.data) notFound()
+  const holding=await read.identity.db.from('wealth_holdings').select('portfolio_id').eq('id',id).eq('user_id',read.identity.user.id).maybeSingle()
+  if(holding.error)return <><h1>Editar lançamento</h1><p>Não foi possível confirmar o vínculo com Portfolio. Tente novamente.</p></>
+  if(holding.data)return <><h1>Posição de investimento</h1><p>Este ativo pertence a uma carteira. Avaliações, movimentos e arquivamento são gerenciados em Portfolio para preservar quantidade e custo.</p><Link href={`/apps/wealth/carteiras/${holding.data.portfolio_id}`}>Abrir carteira</Link></>
   const entry = result.data as WealthEntry
   return <>
     <Link className={styles.textButton} href="/apps/wealth/lancamentos">← Histórico pessoal</Link>

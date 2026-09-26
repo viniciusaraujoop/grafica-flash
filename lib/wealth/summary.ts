@@ -1,5 +1,5 @@
 export type WealthSummary = {
- currency:'BRL';month:string;income:string;expenses:string;assets:string;liabilities:string;netWorth:string;cashFlow:string;entryCount:string;goalCount:string;completedGoals:string;goalTarget:string;goalSaved:string;goalContributions:string;reserveTarget:string;contributionCapacity:string;
+ currency:'BRL';month:string;income:string;expenses:string;assets:string;liabilities:string;netWorth:string;cashFlow:string;entryCount:string;goalCount:string;completedGoals:string;goalTarget:string;goalSaved:string;goalContributions:string;reserveTarget:string;contributionCapacity:string;unknownValuations?:string;
  months:{month:string;income:string;expenses:string;cashFlow:string}[];
  categories:{kind:'income'|'expense';category:string;amount:string}[];
 }

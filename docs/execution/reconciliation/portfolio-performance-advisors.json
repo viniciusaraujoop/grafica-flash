@@ -1,0 +1,91 @@
+{
+  "project": "zwxulgpjucxudadjdqov",
+  "scope": "performance",
+  "notices": [
+    {
+      "name": "unindexed_foreign_keys",
+      "level": "INFO",
+      "count": 1,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+      "newPortfolioFindings": []
+    },
+    {
+      "name": "auth_rls_initplan",
+      "level": "WARN",
+      "count": 63,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+      "newPortfolioFindings": []
+    },
+    {
+      "name": "unused_index",
+      "level": "INFO",
+      "count": 301,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+      "newPortfolioFindings": [
+        {
+          "detail": "Index \\`wealth_portfolios_owner\\` on table \\`public.wealth_portfolios\\` has not been used",
+          "metadata": {
+            "name": "wealth_portfolios",
+            "type": "table",
+            "schema": "public"
+          }
+        },
+        {
+          "detail": "Index \\`wealth_portfolios_goal\\` on table \\`public.wealth_portfolios\\` has not been used",
+          "metadata": {
+            "name": "wealth_portfolios",
+            "type": "table",
+            "schema": "public"
+          }
+        },
+        {
+          "detail": "Index \\`wealth_holdings_owner\\` on table \\`public.wealth_holdings\\` has not been used",
+          "metadata": {
+            "name": "wealth_holdings",
+            "type": "table",
+            "schema": "public"
+          }
+        },
+        {
+          "detail": "Index \\`wealth_holdings_portfolio\\` on table \\`public.wealth_holdings\\` has not been used",
+          "metadata": {
+            "name": "wealth_holdings",
+            "type": "table",
+            "schema": "public"
+          }
+        },
+        {
+          "detail": "Index \\`wealth_portfolio_transactions_owner\\` on table \\`public.wealth_portfolio_transactions\\` has not been used",
+          "metadata": {
+            "name": "wealth_portfolio_transactions",
+            "type": "table",
+            "schema": "public"
+          }
+        },
+        {
+          "detail": "Index \\`wealth_portfolio_transactions_holding\\` on table \\`public.wealth_portfolio_transactions\\` has not been used",
+          "metadata": {
+            "name": "wealth_portfolio_transactions",
+            "type": "table",
+            "schema": "public"
+          }
+        },
+        {
+          "detail": "Index \\`wealth_portfolio_transactions_destination\\` on table \\`public.wealth_portfolio_transactions\\` has not been used",
+          "metadata": {
+            "name": "wealth_portfolio_transactions",
+            "type": "table",
+            "schema": "public"
+          }
+        }
+      ]
+    },
+    {
+      "name": "multiple_permissive_policies",
+      "level": "WARN",
+      "count": 54,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+      "newPortfolioFindings": []
+    }
+  ]
+}

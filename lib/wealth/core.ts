@@ -42,7 +42,7 @@ export function uuid(value: unknown): string {
   return value
 }
 
-export type WealthLifecycle = { version?: number; archived_at?: string | null; updated_at?: string }
+export type WealthLifecycle = { version?: number; archived_at?: string | null; updated_at?: string; valuation_status?:string }
 export type WealthEntry = WealthLifecycle & { id: string; title: string; kind: WealthKind; category: string; amount_cents: number; financial_date: string; currency: 'BRL'; recurrence: 'none' | 'monthly' | 'yearly' }
 export type WealthGoal = WealthLifecycle & { id: string; title: string; target_cents: number; saved_cents: number; monthly_contribution_cents: number; target_date: string; status?: 'active' | 'paused' | 'completed' }
 

@@ -45,12 +45,13 @@ export function csvCell(value: string) {
 
 export function entriesCsv(entries: readonly WealthEntry[]) {
   assertExportSize(entries.length)
-  const lines = [['id', 'nome', 'tipo', 'categoria', 'data', 'valor_brl', 'valor_centavos', 'moeda', 'recorrencia', 'arquivado_em'].map(csvCell).join(';')]
+  const lines = [['id', 'nome', 'tipo', 'categoria', 'data', 'valor_brl', 'valor_centavos', 'moeda', 'recorrencia', 'arquivado_em', 'avaliacao'].map(csvCell).join(';')]
   for (const entry of entries) {
-    if (!Number.isSafeInteger(entry.amount_cents) || entry.amount_cents < 1 || entry.amount_cents > 100_000_000_000_000) throw new Error('Valor monetário inválido para exportação.')
+    if (!Number.isSafeInteger(entry.amount_cents) || entry.amount_cents < (['asset','liability'].includes(entry.kind)?0:1) || entry.amount_cents > 100_000_000_000_000) throw new Error('Valor monetário inválido para exportação.')
     const cents = BigInt(entry.amount_cents)
     const amount = `${cents / BigInt(100)},${String(cents % BigInt(100)).padStart(2, '0')}`
-    lines.push([entry.id, entry.title, entryKindLabels[entry.kind], entry.category, entry.financial_date, amount, String(entry.amount_cents), entry.currency, entry.recurrence, entry.archived_at ?? ''].map(csvCell).join(';'))
+    const unknown=entry.valuation_status==='NOT_AVAILABLE'
+    lines.push([entry.id, entry.title, entryKindLabels[entry.kind], entry.category, entry.financial_date, unknown?'':amount, unknown?'':String(entry.amount_cents), entry.currency, entry.recurrence, entry.archived_at ?? '',entry.valuation_status??'MANUAL_VALUE'].map(csvCell).join(';'))
   }
   return '\uFEFF' + lines.join('\r\n') + '\r\n'
 }
