@@ -185,6 +185,54 @@ try{
  await page.reload();assert.equal(await page.getByRole('button',{name:'Revogar consentimento',exact:true}).count(),0)
  await page.goto(appUrl);await page.waitForURL(url=>url.pathname==='/apps')
  pass('consent-Server-Action-clock-skew-microseconds-and-authenticated-home-redirect')
+ if(process.env.ORCALY_QA_RECORDS==='true'){
+  const rows=ok(await admin.from('wealth_entries').insert([
+   ...Array.from({length:26},(_,i)=>({...entry(a.id,`Página QA ${String(i).padStart(2,'0')}`),kind:i===0?'expense':'income'})),
+   {...entry(a.id,'Outro mês QA'),financial_date:'2026-08-01'},
+   entry(a.id,'=HYPERLINK("https://example.test")'),
+  ]).select('id'))
+  for(const row of rows)entities.add(row.id)
+  await page.goto(`${appUrl}/apps/wealth/lancamentos?month=2026-09`)
+  await page.getByRole('heading',{name:'Seus lançamentos',exact:true}).waitFor()
+  assert.equal(await page.locator('tbody tr').count(),25)
+  const firstPage=await page.locator('tbody tr td:first-child').allTextContents()
+  await page.getByRole('link',{name:'Próxima página',exact:true}).click()
+  await page.getByText('Lançamentos pessoais · página 2 de 2',{exact:true}).waitFor()
+  const secondPage=await page.locator('tbody tr td:first-child').allTextContents()
+  assert.equal(secondPage.length,4);assert.ok(secondPage.every(title=>!firstPage.includes(title)))
+  assert.ok([...firstPage,...secondPage].every(title=>title!=='API synthetic B'&&title!=='Outro mês QA'))
+  const exportPath=`${appUrl}/apps/wealth/exportar?month=2026-09&user_id=${b.id}`
+  assert.equal((await context.request.get(exportPath)).status(),403)
+  await grant(a,{...active,permissions:['wealth.read','wealth.write','wealth.export']})
+  await page.reload()
+  const csvResponse=await context.request.get(exportPath)
+  assert.equal(csvResponse.status(),200);assert.ok(csvResponse.headers()['cache-control'].includes('no-store'))
+  assert.ok(csvResponse.headers()['content-disposition'].includes('attachment'))
+  const csv=await csvResponse.text()
+  assert.ok(csv.includes('"\'=HYPERLINK(""https://example.test"")"'))
+  assert.ok(!csv.includes('API synthetic B'));assert.ok(!csv.includes('Outro mês QA'));assert.ok(csv.includes('"499,90";"49990"'))
+  const downloadPromise=page.waitForEvent('download')
+  await page.getByRole('link',{name:'Baixar CSV dos resultados',exact:true}).click()
+  const download=await downloadPromise;await download.saveAs(`${output}/wealth-synthetic.csv`)
+  assert.equal(download.suggestedFilename(),'orcaly-wealth-lancamentos.csv')
+  assert.equal((await context.request.get(`${appUrl}/apps/wealth/exportar?month=2026-13`)).status(),400)
+  assert.equal((await context.request.get(`${appUrl}/apps/wealth/exportar?kind=income&kind=expense`)).status(),400)
+  assert.ok(ok(await admin.from('ecosystem_audit_events').select('id').eq('actor_id',a.id).eq('event_type','wealth_entries.export')).length>=1)
+  const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();assert.deepEqual(result.violations.map(v=>v.id),[])
+  await page.screenshot({path:`${output}/records-hosted.png`,fullPage:true})
+  await page.getByLabel('Tipo de lançamento').selectOption('expense')
+  await page.getByRole('button',{name:'Aplicar filtros',exact:true}).click()
+  await page.waitForURL(url=>url.searchParams.get('kind')==='expense'&&url.searchParams.get('month')==='2026-09')
+  assert.equal(await page.locator('tbody tr').count(),1)
+  assert.ok(await page.locator('tbody').innerText().then(text=>text.includes('Despesa')))
+  for(const width of [320,390,768]){
+   await page.setViewportSize({width,height:900})
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),`History overflow at ${width}`)
+  }
+  await page.setViewportSize({width:390,height:844})
+  await page.screenshot({path:`${output}/records-mobile.png`,fullPage:true})
+  pass('history-pagination-month-filter-cross-user-exclusion-CSV-permission-escaping-download-and-audit')
+ }
  assert.deepEqual(errors,[])
  pass('no-browser-errors-or-production-requests')
 }catch(error){report.push({check:'execution',status:'FAIL',message:error.message});process.exitCode=1;console.error(error.stack)}

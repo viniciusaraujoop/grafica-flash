@@ -5,8 +5,43 @@ import { safeNextPath } from '../lib/auth-navigation.ts'
 import { products, getProduct, productIds, isProductId } from '../lib/ecosystem/products.ts'
 import { activeGrant, evaluateProductAccess, permitsContextTransfer } from '../lib/ecosystem/access.ts'
 import { parseMoney, parseRateBps, financialDate, simulateGoal, summarizeEntries, validateEntry, validateProfile, validateGoal } from '../lib/wealth/core.ts'
+import { assertExportSize, csvCell, entriesCsv, monthBounds, parseWealthFilters, recordsQuery } from '../lib/wealth/records.ts'
 
 const now = Date.parse('2026-09-26T12:00:00Z')
+test('history filters reject duplicated, injected, overflow and malformed values',()=>{
+ assert.deepEqual(parseWealthFilters({}),{kind:null,month:null,page:1})
+ for(const input of [{kind:'__proto__'},{kind:'income,or(user_id.eq.other)'},{month:'2026-13'},{month:'2201-01'},{month:['2026-01','2026-02']},{page:'0'},{page:'1e3'},{page:'1.5'},{page:'10000'}])assert.throws(()=>parseWealthFilters(input))
+ assert.deepEqual(parseWealthFilters({kind:'income',month:'2028-02',page:'2',user_id:'other'}),{kind:'income',month:'2028-02',page:2})
+})
+test('financial month bounds include leap day without local-time conversion',()=>{
+ assert.deepEqual(monthBounds('2028-02'),{from:'2028-02-01',through:'2028-02-29'})
+ assert.equal(monthBounds('2026-02').through,'2026-02-28')
+ assert.equal(monthBounds('2200-12').through,'2200-12-31')
+ assert.throws(()=>monthBounds('2026-00'))
+})
+test('pagination links preserve only validated financial filters',()=>{
+ assert.equal(recordsQuery({kind:'expense',month:'2026-09',page:2},3),'kind=expense&month=2026-09&page=3')
+ assert.equal(recordsQuery({kind:null,month:null,page:1}),'')
+})
+test('CSV quotes delimiters and formula prefixes including whitespace and fullwidth text',()=>{
+ for(const input of ['=1+2','+SUM(A1)','-1+2','@SUM(A1)','  =1+2','\tformula','\rformula','\nformula','＝1+2','＋1','－1','＠SUM(A1)'])assert.ok(csvCell(input).startsWith('"\''))
+ assert.equal(csvCell('=1+2";=1+2'),'"\'=1+2"";=1+2"')
+ assert.equal(csvCell('Mercado; almoço "domingo"'),'"Mercado; almoço ""domingo"""')
+})
+test('CSV retains exact cents, BRL amounts and quoted names without user identity fields',()=>{
+ const row={id:'entry',title:'Salário',kind:'income',category:'salary',amount_cents:29,financial_date:'2026-09-26',currency:'BRL',recurrence:'none'}
+ const csv=entriesCsv([row,{...row,id:'large',amount_cents:100_000_000_000_000}])
+ assert.ok(csv.startsWith('\uFEFF'));assert.ok(csv.includes('"0,29";"29"'));assert.ok(csv.includes('"1000000000000,00";"100000000000000"'))
+ assert.ok(!csv.includes('user_id'));assert.equal(csv.split('\r\n').length,4)
+})
+test('exports refuse oversized or unknown counts instead of silent truncation',()=>{
+ assert.doesNotThrow(()=>assertExportSize(0));assert.doesNotThrow(()=>assertExportSize(1000))
+ for(const count of [null,1001,-1,Infinity,NaN])assert.throws(()=>assertExportSize(count))
+ assert.throws(()=>entriesCsv(Array(1001).fill({})))
+})
+test('CSV rejects noninteger, zero or imprecise financial amounts',()=>{
+ for(const amount_cents of [0,-1,0.29,NaN,Number.MAX_SAFE_INTEGER])assert.throws(()=>entriesCsv([{amount_cents}]))
+})
 test('auth redirects preserve product paths and deny protocol-relative/backslash/encoded targets',()=>{
  assert.equal(safeNextPath('/apps/wealth'),'/apps/wealth')
  for(const target of ['https://evil.test','//evil.test','/\\evil.test','/%5cevil.test','/%255cevil.test','/apps%0d%0aLocation:evil.test','/login','/mfa'])assert.equal(safeNextPath(target),'/painel/inicio')
