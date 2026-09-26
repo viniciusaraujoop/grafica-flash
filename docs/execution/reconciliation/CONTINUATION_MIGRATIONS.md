@@ -25,3 +25,7 @@ Não copiar dados reais, auth.users, secrets ou configurações operacionais. Ne
 ## Adendo Net Worth
 
 20260926180000_wealth_net_worth: LOCAL_ONLY vs produção atual; EXACT_MATCH local/staging (SQL normalizado LF bed98f1bb3e78d88154aab1739c9796e241691c24c20fdde7ea354f76dad0af8). Novas colunas position_class/liquidity e constraints em wealth_entries; snapshots/índices/RLS/grants/audit; wealth_net_worth, classify_wealth_position e capture público invoker/privado com auth/entitlement. Nove migrations em staging, 78 arquivos históricos/novos no diretório local. Nenhuma migration aplicada editada. Produção permanece em 51 versões históricas; schema atual idêntico ao capturado antes desta unidade. Delta staging-net-worth-delta.json: 27 adições e uma expansão da ordem de colunas, somente na tabela Wealth nova; cumulativo 298 adições e nenhum objeto antigo de produção alterado/removido. UNKNOWNs históricos continuam explícitos.
+
+## Adendo Financial Health
+
+20260926190000_wealth_financial_health: LOCAL_ONLY vs produção; EXACT_MATCH local/staging (SQL LF cb6b4a34a2387627b62f801ed94751b16c21bce67e5c91fd2e3987b48c9efdca). Uma função wealth_health_inputs STABLE/INVOKER/search_path vazio, execução anon negada/auth concedida, com verificações internas e RLS das fontes. Dez migrations no staging, 79 SQLs locais. Delta uma função nova; cumulativo 299 adições e nenhuma alteração/remoção de objeto antigo de produção. Reutiliza snapshots, resumo, dívidas e recorrências; não grava dados nem modifica políticas existentes.

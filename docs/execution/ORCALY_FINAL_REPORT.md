@@ -15,3 +15,5 @@ Delta vs Debt: 27 adições e expansão intencional de column_order de wealth_en
 Próxima unidade: Wealth 6.7 Financial Health do V3. Dez indicadores com valor, fonte, período, regra, interpretação e limitação; sem score arbitrário. Reutilizar wealth_summary, wealth_net_worth, snapshots, termos de dívida e recorrências; não refazer 6.1–6.6. Depois seguir Wealth restante e demais seções do V3. Pendências de produção incluem o master inteiro, MFA real, billing comercial, fluxos legados integrais, provedores/consentimentos, UNKNOWNs/avisos legados, backup/rollback e release gate.
 
 Main permanece d940debf9556e1180fa3c709da0f560d3aa96374; deployment de produção conhecido dpl_3HeTKTcSdeM2kvzYUk5Drw5yJVtf. Nenhuma alteração ou promoção de produção.
+
+Atualização Health em andamento: 6.7 implementado, migration 20260926190000 aplicada somente em staging (dez versões), três testes novos e 19 checks locais PASS. Build/Preview no novo SHA em certificação; o último Preview certificado permanece Net Worth acima até a evidência hospedada de Health. Não reaplicar SQL; ver ORCALY_WEALTH_FINANCIAL_HEALTH.md.

@@ -1,0 +1,84 @@
+{
+  "label": "staging-health-delta",
+  "expectedSha256": "6380ae4c1ea26833c7d174da776f8217c87c387118477ba5557214b6fc198945",
+  "actualSha256": "2be1e1f2e8d6ff17510370a8f834371679312ed8a179faf4255948dfc6512f28",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2635,
+      "actual": 2635
+    },
+    "indexes": {
+      "expected": 672,
+      "actual": 672
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 166,
+      "actual": 166
+    },
+    "triggers": {
+      "expected": 49,
+      "actual": 49
+    },
+    "functions": {
+      "expected": 131,
+      "actual": 132
+    },
+    "relations": {
+      "expected": 173,
+      "actual": 173
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 711,
+      "actual": 711
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 1,
+  "changes": [
+    {
+      "category": "functions",
+      "id": "public.wealth_health_inputs.",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ae14a86dad9b91540e7118a4e6b38b3907b202672de0d5f968606bad9f784f34"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

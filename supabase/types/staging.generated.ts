@@ -11090,6 +11090,7 @@ export type Database = {
         Args: { p_confirmed: boolean; p_entry_id: string; p_version: number }
         Returns: boolean
       }
+      wealth_health_inputs: { Args: never; Returns: Json }
       wealth_net_worth: { Args: never; Returns: Json }
       wealth_summary: { Args: { p_month: string }; Returns: Json }
     }

@@ -33,6 +33,7 @@ export default async function WealthPage() {
   const write = await getPersonalProductAccess('wealth', 'wealth.write')
   return <><Link className={styles.textButton} href="/apps">← App Hub</Link><p className={styles.eyebrow}>Orçaly Wealth · Contexto pessoal</p><h1>Seu dinheiro.<br />Suas possibilidades.</h1><p className={styles.lead}>Informações que você registrou, separadas dos dados empresariais. Moeda: BRL. Período do fluxo de caixa: {today.slice(0, 7)}.</p>
     <Link className={styles.textButton} href="/apps/wealth/lancamentos">Consultar histórico e exportar lançamentos →</Link>
+    <Link className={styles.textButton} href="/apps/wealth/saude">Saúde financeira e indicadores explicados →</Link>
     <Link className={styles.textButton} href="/apps/wealth/patrimonio">Patrimônio, composição e evolução →</Link>
     <Link className={styles.textButton} href="/apps/wealth/dividas">Central de dívidas e estratégias de quitação →</Link>
     <p className={styles.notice}>Totais calculados com todos os {totals.entryCount} lançamentos ativos. A lista abaixo mostra até 15 registros recentes. Arquivados não entram nos totais.</p>

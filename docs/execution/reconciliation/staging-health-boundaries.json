@@ -1,0 +1,11 @@
+{
+  "project": "zwxulgpjucxudadjdqov",
+  "version": "20260926190000",
+  "name": "wealth_financial_health",
+  "sha256": "cb6b4a34a2387627b62f801ed94751b16c21bce67e5c91fd2e3987b48c9efdca",
+  "securityDefiner": false,
+  "stable": true,
+  "searchPath": "",
+  "anonExecute": false,
+  "authExecute": true
+}

@@ -7,6 +7,7 @@ import AxeBuilder from '@axe-core/playwright'
 import {stagingRef,stagingUrl,anonKey,serviceKey} from './helpers/staging-credentials.mjs'
 import {cleanupWealthSchedules,wealthScheduleFixtureCounts} from './helpers/cleanup-wealth-schedules.mjs'
 import {testWealthRecurrence} from './e2e-wealth-recurrence.mjs'
+import {testWealthHealth} from './e2e-wealth-health.mjs'
 import {testWealthNetWorth} from './e2e-wealth-net-worth.mjs'
 import {testWealthDebt} from './e2e-wealth-debt.mjs'
 
@@ -377,6 +378,7 @@ try{
  if(process.env.ORCALY_QA_RECURRENCE==='true')await testWealthRecurrence({page,context,other,a,b,admin,appUrl,grant,active,ok,pass,errors,output})
  if(process.env.ORCALY_QA_DEBT==='true')await testWealthDebt({page,context,other,a,b,admin,appUrl,grant,active,ok,pass,errors,output})
  if(process.env.ORCALY_QA_NET_WORTH==='true')await testWealthNetWorth({page,context,a,b,admin,appUrl,grant,active,ok,pass,errors,output})
+ if(process.env.ORCALY_QA_HEALTH==='true')await testWealthHealth({page,other,a,b,admin,appUrl,grant,active,ok,pass,output})
  assert.deepEqual(errors,[])
  pass('no-browser-errors-or-production-requests')
 }catch(error){report.push({check:'execution',status:'FAIL',message:error.message});process.exitCode=1;console.error(error.stack)}
