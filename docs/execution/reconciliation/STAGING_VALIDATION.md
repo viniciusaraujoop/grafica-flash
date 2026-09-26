@@ -1,6 +1,8 @@
 # Validação do staging — 26/09/2026
 
-Status: schema e E2E com Supabase hospedado aprovados; E2E na URL Vercel em andamento.
+Status: **STAGING CERTIFICADO para o escopo Auth/Hub/Wealth/entitlement/consent testado**, incluindo Vercel + Supabase hospedados. Isto não certifica os módulos antigos ou o master completo.
+
+Preview: https://orcaly-mkw4graiy-vinicius-araujos-projects.vercel.app — READY, `dpl_2UQGyp24Qp76u4E5PF243rJs1aQY`, commit `df87d092d617facf9d937fb8fcfb1e095837b53b`. **14 checks hospedados PASS**, zero erros e cleanup confirmado. [Relatório](vercel-staging-e2e.json). A proteção do Preview permaneceu ativa; URL temporária de acesso ficou somente em arquivo ignorado.
 
 ## Resultado verificável
 
@@ -44,6 +46,10 @@ Preparação/aplicação: `supabase migration new production_schema_baseline --w
 Validação: `compare-schema-snapshots.mjs`, `verify-staging-evidence.mjs`, types/advisors via MCP, `start-staging-qa.mjs`, agent-browser, `e2e-ecosystem-staging.mjs`, `npm run test:ecosystem`, `npm run typecheck`, lint específico, `npm run build`, `git diff --check`.
 
 Vercel: login renovado pelo proprietário; quatro variáveis adicionadas SOMENTE a Preview/branch `codex/orcaly-ecosystem` no projeto orcaly: URL/anon key de staging, service role de staging (sensitive), ORCALY_WEALTH_ENABLED=true. Configurações de produção preservadas. Deploy e certificação da URL serão registrados abaixo.
+
+Deploy realizado por push autorizado da branch ao GitHub. O build hospedado confirmou environment=preview e SHA exato. Inspeção dos bundles encontrou URL de staging e não encontrou URL Supabase de produção nem a service role. Login/Auth e persistência confirmaram o backend real. O harness hospedado passou a aguardar persistência com prazo máximo após receber a resposta da Action, porque `response.finished()` ficou aguardando o stream RSC da Vercel mesmo com revogação já persistida. A execução interrompida foi limpa pelo script restrito aos IDs/emails dos fixtures; a repetição completa passou.
+
+Verificação final de produção: catálogo antes/depois com zero diferenças (`production-unchanged.json`), 51 migrations, última `20260910150730`; metadados das variáveis Vercel de produção iguais; main em `d940debf9556e1180fa3c709da0f560d3aa96374`; deployment de produção segue `dpl_3HeTKTcSdeM2kvzYUk5Drw5yJVtf`. Ledger de staging contém apenas baseline e Wealth. Auth users, Storage objetos/buckets, Vault secrets, cron jobs e as seis tabelas novas: zero linhas depois do cleanup.
 
 ## Antes de produção
 

@@ -39,4 +39,4 @@ Permissões por coluna e revogações seguem a [documentação PostgreSQL 17](ht
 
 ## Estado da execução
 
-Baseline gerada e estratégia registrada. A aplicação e certificação serão registradas em `STAGING_VALIDATION.md`; a existência deste plano não certifica o staging.
+Baseline aplicada, comparada e certificada no staging, seguida apenas por Wealth. Veja `STAGING_VALIDATION.md` para resultados, erros corrigidos e limites da certificação, inclusive 14 checks Vercel + Supabase hospedados.

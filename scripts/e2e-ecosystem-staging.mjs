@@ -7,6 +7,9 @@ import AxeBuilder from '@axe-core/playwright'
 import {stagingRef,stagingUrl,anonKey,serviceKey} from './helpers/staging-credentials.mjs'
 
 const appUrl=process.env.ORCALY_STAGING_APP_URL||'http://127.0.0.1:4174'
+const accessFile=process.env.ORCALY_STAGING_ACCESS_FILE
+const accessUrl=accessFile?JSON.parse(await fs.readFile(accessFile,'utf8')).shareableUrl:null
+if(accessUrl&&new URL(accessUrl).origin!==new URL(appUrl).origin)throw new Error('Preview access URL origin mismatch')
 const output='.local-qa/staging-browser'
 await fs.mkdir(output,{recursive:true})
 const options={auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}
@@ -20,10 +23,12 @@ const denied=response=>assert.ok(response.error,'Expected a database denial')
 const pass=check=>{report.push({check,status:'PASS'});console.log(`PASS ${check}`)}
 const entry=(uid,title)=>({user_id:uid,kind:'income',title,category:'salary',amount_cents:12345,financial_date:'2026-09-26',idempotency_key:randomUUID()})
 const active={status:'active',starts_at:'2026-01-01T00:00:00Z',expires_at:null,permissions:['wealth.read','wealth.write']}
+async function authorizePreview(context){if(accessUrl){const result=await context.request.get(accessUrl);assert.equal(result.status(),200,'Could not enter the protected Preview')}}
 async function grant(user,patch=active){ok(await admin.from('ecosystem_product_entitlements').update(patch).eq('user_id',user.id))}
 async function login(user,next='/apps'){
  const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'})
  contexts.push(context)
+ await authorizePreview(context)
  await context.route('**://ozrasuktfthsvbqprtel.supabase.co/**',route=>{errors.push('Attempted production browser request');return route.abort()})
  const page=await context.newPage();page.setDefaultTimeout(30000)
  page.on('pageerror',e=>errors.push(e.message))
@@ -35,6 +40,18 @@ async function login(user,next='/apps'){
  return {context,page}
 }
 try{
+ browser=await chromium.launch({channel:'chrome',headless:true})
+ if(accessUrl){
+  const probe=await browser.newContext();contexts.push(probe);await authorizePreview(probe)
+  const build=await (await probe.request.get(`${appUrl}/api/internal/preview-build`)).json()
+  assert.equal(build.environment,'preview');assert.equal(build.commit,process.env.ORCALY_EXPECTED_COMMIT)
+  const html=await (await probe.request.get(`${appUrl}/login`)).text()
+  const scripts=[...html.matchAll(/<script[^>]+src="([^\"]+)"/g)].map(m=>new URL(m[1].replaceAll('&amp;','&'),appUrl).href)
+  let stagingFound=false
+  for(const url of new Set(scripts)){if(new URL(url).origin!==new URL(appUrl).origin)continue;const source=await (await probe.request.get(url)).text();if(source.includes(stagingUrl))stagingFound=true;assert.ok(!source.includes('https://ozrasuktfthsvbqprtel.supabase.co'),'Production Supabase URL in Preview client');assert.ok(!source.includes(serviceKey),'Service credential exposed in browser bundle')}
+  assert.ok(stagingFound,'No staging Supabase URL found in Preview client bundles')
+  pass('Vercel-Preview-exact-commit-staging-bundle-and-no-service-secret')
+ }
  assert.equal((ok(await admin.auth.admin.listUsers({page:1,perPage:1}))).users.length,0,'Staging must have no users before this synthetic run')
  const initialAudit=ok(await admin.from('ecosystem_audit_events').select('id').limit(1));assert.deepEqual(initialAudit,[])
  for(const label of ['owner-a','owner-b','no-entitlement']){
@@ -93,7 +110,6 @@ try{
  assert.ok(events.some(e=>e.event_type==='wealth_entries.insert'))
  assert.deepEqual(Object.keys(events[0]).sort(),['actor_id','entity_id','event_type','id','recorded_at'])
  pass('private-audit-trigger-and-identifier-only-payload')
- browser=await chromium.launch({channel:'chrome',headless:true})
  const {context,page}=await login(a)
  await page.getByRole('heading',{name:/Tudo começa com/}).waitFor()
  await page.getByRole('link',{name:'Abrir meu Wealth',exact:true}).click()
@@ -138,6 +154,7 @@ try{
  pass('browser-cross-user-isolation-and-unentitled-gate')
  // Replay the observed action without cookies; do not fabricate an action ID.
  const anonymous=await browser.newContext();contexts.push(anonymous)
+ await authorizePreview(anonymous)
  const headers=entryRequest.headers()
  const response=await anonymous.request.post(entryRequest.url(),{headers:{'content-type':headers['content-type'],'next-action':headers['next-action'],origin:appUrl},data:entryRequest.postDataBuffer(),maxRedirects:0})
  assert.ok([303,307].includes(response.status()))
@@ -157,8 +174,14 @@ try{
  await page.goto(`${appUrl}/apps/privacidade`)
  const revocationResponse=page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname==='/apps/privacidade')
  await page.getByRole('button',{name:'Revogar consentimento',exact:true}).click()
- await (await revocationResponse).finished()
- assert.ok(ok(await admin.from('ecosystem_context_consents').select('revoked_at').eq('id',consentId).single()).revoked_at)
+ await revocationResponse
+ let revoked=false
+ for(let attempt=0;attempt<30;attempt++){
+  revoked=Boolean(ok(await admin.from('ecosystem_context_consents').select('revoked_at').eq('id',consentId).single()).revoked_at)
+  if(revoked)break
+  await new Promise(resolve=>setTimeout(resolve,500))
+ }
+ assert.ok(revoked,'Revocation was not persisted within 15 seconds')
  await page.reload();assert.equal(await page.getByRole('button',{name:'Revogar consentimento',exact:true}).count(),0)
  await page.goto(appUrl);await page.waitForURL(url=>url.pathname==='/apps')
  pass('consent-Server-Action-clock-skew-microseconds-and-authenticated-home-redirect')
@@ -179,6 +202,6 @@ finally{
  const remaining=await admin.auth.admin.listUsers({page:1,perPage:1})
  const cleanup={usersRemaining:remaining.data?.users?.length??null,auditRowsRemaining:(await admin.from('ecosystem_audit_events').select('id')).data?.length??null}
  if(cleanup.usersRemaining!==0||cleanup.auditRowsRemaining!==0)process.exitCode=1
- await fs.writeFile(`${output}/report.json`,JSON.stringify({project:stagingRef,appUrl,startedAt,finishedAt:new Date().toISOString(),report,errors,cleanup,limits:['Next.js app served locally unless ORCALY_STAGING_APP_URL overrides it','Auth, JWT, refresh, PostgREST, RLS, grants and persistence use real hosted Supabase staging','No production data or credentials used; no email sent; all accounts confirmed by staging Admin API']},null,2))
+ await fs.writeFile(`${output}/report.json`,JSON.stringify({project:stagingRef,appUrl,commit:accessUrl?process.env.ORCALY_EXPECTED_COMMIT:null,startedAt,finishedAt:new Date().toISOString(),report,errors,cleanup,limits:[accessUrl?'Next.js served by protected Vercel Preview; Supabase staging hosted in sa-east-1':'Next.js application served locally; Supabase staging hosted in sa-east-1','Auth, JWT, refresh, PostgREST, RLS, grants and persistence use real hosted Supabase staging','No production data or credentials used; no email sent; all accounts confirmed by staging Admin API']},null,2))
  console.log(JSON.stringify({checks:report.length,failed:report.filter(r=>r.status!=='PASS').length,cleanup,errors},null,2))
 }
