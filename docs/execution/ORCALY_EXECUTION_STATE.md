@@ -1,6 +1,6 @@
 # Orçaly — continuação rolling V8
 
-Status: IN_PROGRESS. Documents Vault implementado e certificado localmente com Supabase staging hospedado; Preview desta unidade em preparação. Master V5/V8 incompleto; DEVELOPMENT_COMPLETE e READY_FOR_PRODUCTION não satisfeitos.
+Status: IN_PROGRESS. Documents Vault certificado em staging e Preview. Master V5/V8 incompleto; DEVELOPMENT_COMPLETE e READY_FOR_PRODUCTION não satisfeitos.
 
 Entrada: codex/orcaly-ecosystem, 6957d5009ad2543dc85be54d64fc24423ff9b21c, árvore limpa. Unidades anteriores Home/Hub/Core/Portfolio/Calendar/Bills/Goals/Funding/Life Plans preservadas. Nenhuma dependência instalada; WhatsApp congelado; preços Business e ativos aprovados preservados.
 
@@ -8,8 +8,10 @@ Staging zwxulgpjucxudadjdqov agora tem 17 migrations e 86 arquivos SQL locais. D
 
 Delta desta unidade: 49 adições; cumulativo staging vs produção: 549 adições, zero legado alterado/removido. Produção ozrasuktfthsvbqprtel somente leitura, snapshot atual sem mudanças. Advisors sem novos WARN, avisos herdados e gates Auth/MFA permanecem. Nenhum cron/extension/webhook novo; cron de staging inativo.
 
-Validação: 8 testes novos domínio/PostgreSQL; 19 E2E locais PASS, Auth/Storage/RLS reais, concorrência, origens, isolamento, revogação, upload/download e exclusão recuperável. 24 screenshots, seis larguras, dois temas, Axe, teclado/reduced-motion/overflow; inspeção visual. Cleanup API e SQL zero, inclusive storage/receipts/audit. Typecheck/lint aprovados; suíte completa e build/Preview registrados quando concluídos. QA local encerrado.
+Validação: 8 testes novos domínio/PostgreSQL; 19 E2E locais PASS, Auth/Storage/RLS reais, concorrência, origens, isolamento, revogação, upload/download e exclusão recuperável. 24 screenshots, seis larguras, dois temas, Axe, teclado/reduced-motion/overflow; inspeção visual. Cleanup API e SQL zero, inclusive storage/receipts/audit. 138 testes domínio/SQL, typecheck/lint e build/prebuild aprovados. QA local encerrado.
 
-Próximo: certificar o Preview Vault e continuar Wealth Timeline → Family → Automation → Fee Analyzer → Shield → Tax foundation → Morning/Night → Alerts → Ask Wealth → Portfolio Intelligence → Market/Radar → Open Finance → Regulatory Mode; depois UX Spec V1 e restante do master. Não refazer unidades já certificadas. Providers ausentes NOT_CONFIGURED/BLOCKED_EXTERNAL; sem integração externa fictícia.
+Próximo: continuar Wealth Timeline → Family → Automation → Fee Analyzer → Shield → Tax foundation → Morning/Night → Alerts → Ask Wealth → Portfolio Intelligence → Market/Radar → Open Finance → Regulatory Mode; depois UX Spec V1 e restante do master. Não refazer unidades já certificadas. Providers ausentes NOT_CONFIGURED/BLOCKED_EXTERNAL; sem integração externa fictícia.
 
 Proibições: produção/main intocadas; nenhum reset de staging, db push histórico, migration repair, alteração de SQL aplicado ou promoção. .env.local é produção: QA somente via start-staging-qa.mjs; nenhum dev/typegen/build concorrente. GitHub nesta branch e Preview já autorizados. Publicação em produção depende de aprovação posterior.
+
+Preview certificado: https://orcaly-pjfogxjs0-vinicius-araujos-projects.vercel.app; deployment dpl_5s41uynAZwGAQ42ttEkEsXAJWzM3 READY/Preview, runtime da9c03f68d7f39f9a96851521e1c41154a641911. 53 checks E2E hospedados PASS, encerrados 2026-09-26T22:21:09.181Z. Build/prebuild/typecheck/lint PASS (três warnings legados), 138 testes domínio/SQL PASS. Cleanup API/SQL completo, zero usuários/blobs/dados/receipts/audit, cron inativo; nenhum erro de navegador/chamada à produção detectado. Evidências ORCALY_WEALTH_DOCUMENTS_VERCEL_E2E.json, DEPLOYMENT.json e reconciliation/staging-documents-cleanup.json. Main remota permanece d940debf9556e1180fa3c709da0f560d3aa96374.

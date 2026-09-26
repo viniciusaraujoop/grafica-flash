@@ -18,7 +18,7 @@ OCR e antimalware NOT_CONFIGURED. Downloads já concluídos não podem ser recol
 - Primeira execução revelou operação legada object.get_authenticated_info no Storage real, apesar do nome atual documentado. Nova migration adicional permite apenas as variantes autenticadas de leitura/HEAD; assinatura continua negada. SQL já aplicado foi preservado.
 - Segunda correção: NextRequest.nextUrl usa host interno atrás do proxy. CSRF compara Origin com Host, como a fronteira de Server Actions; origem estrangeira e ausência de sessão negadas. Testes confirmam.
 - Todas as execuções, inclusive falhas, removeram usuários, blobs, documentos e auditoria. Cleanup SQL confirma receipts privados e cron ativo iguais a zero.
-- Preview/build/E2E hospedado: a certificar após push desta implementação; registrar deployment e SHA exatos antes de avançar.
+- Preview certificado: https://orcaly-pjfogxjs0-vinicius-araujos-projects.vercel.app; deployment dpl_5s41uynAZwGAQ42ttEkEsXAJWzM3 READY/Preview, runtime da9c03f68d7f39f9a96851521e1c41154a641911. 53 checks E2E hospedados PASS, encerrados 2026-09-26T22:21:09.181Z. Build/prebuild/typecheck/lint PASS (três warnings legados), 138 testes domínio/SQL PASS. Cleanup API/SQL completo, zero usuários/blobs/dados/receipts/audit, cron inativo; nenhum erro de navegador/chamada à produção detectado. Evidências ORCALY_WEALTH_DOCUMENTS_VERCEL_E2E.json, DEPLOYMENT.json e reconciliation/staging-documents-cleanup.json. Main remota permanece d940debf9556e1180fa3c709da0f560d3aa96374.
 
 ## Banco e comandos
 
