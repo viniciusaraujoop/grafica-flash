@@ -29,8 +29,8 @@ export default async function WealthGoalPage({params}:{params:Promise<{goalId:st
    <WealthPlanningLinks links={funding?.sources??[]} options={options}/>
   </section>
   {write.allowed&&!goal.archived_at&&<>
-   <details className={styles.details}><summary>Editar fontes de funding</summary><WealthPlanningForm key={goal.version} goal={{id,version:Number(goal.version),funding}} options={options} token={crypto.randomUUID()} today={today}/><Link href={`/apps/wealth/metas/${id}`}>Reabrir versão atual</Link></details>
-   <section className={styles.section} aria-labelledby="goal-details"><h2 id="goal-details">Editar meta</h2><p>Para registrar um aporte já realizado, atualize o total reservado declarado. Não some novamente lançamentos ou fontes vinculadas.</p><WealthGoalEditor key={goal.version} goal={goal}/></section>
+   <details className={styles.details}><summary>Editar fontes de funding</summary><WealthPlanningForm goal={{id,version:Number(goal.version),funding}} options={options} token={crypto.randomUUID()} today={today}/><Link href={`/apps/wealth/metas/${id}`}>Reabrir versão atual</Link></details>
+   <section className={styles.section} aria-labelledby="goal-details"><h2 id="goal-details">Editar meta</h2><p>Para registrar um aporte já realizado, atualize o total reservado declarado. Não some novamente lançamentos ou fontes vinculadas.</p><WealthGoalEditor goal={goal}/></section>
   </>}
   {write.allowed&&<div className={styles.legacySection}><WealthLifecycleControl id={goal.id} version={Number(goal.version)} archived={Boolean(goal.archived_at)} type="goal"/></div>}
  </div>

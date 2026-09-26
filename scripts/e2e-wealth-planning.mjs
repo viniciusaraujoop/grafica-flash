@@ -13,6 +13,7 @@ export async function testWealthPlanning({page,context,a,b,admin,appUrl,grant,ac
  await form.evaluate((node,owner)=>{const el=document.createElement('input');el.name='user_id';el.value=owner;el.type='hidden';node.appendChild(el)},b.id)
  const stale=await context.newPage();await stale.goto(goalUrl);await stale.getByText('Editar fontes de funding',{exact:true}).click()
  await form.getByRole('button',{name:'Salvar funding',exact:true}).click()
+ await form.getByRole('status').filter({hasText:'Planejamento salvo'}).waitFor()
  await page.getByText('Valor planejado da fonte: R$',{exact:false}).waitFor()
  const stored=ok(await a.db.from('wealth_goal_funding').select('*').eq('id',goal.id).single());assert.equal(stored.user_id,a.id);assert.equal(stored.sources[0].planned_cents,'100000')
  assert.equal(ok(await a.db.from('wealth_goals').select('saved_cents,version').eq('id',goal.id).single()).saved_cents,500000)

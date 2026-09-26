@@ -38,6 +38,6 @@ export default async function LifePlanPage({params}:{params:Promise<{planId:stri
    <p className={styles.notice}>O cenário {scenarios[plan.scenario].toLowerCase()} usa apenas suas premissas. Não há probabilidade atribuída, promessa de resultado ou recomendação financeira. Compare cenários criando outro plano com valores e premissas diferentes.</p>
   </section>
   <section className={styles.section}><h2>Metas, dívidas e carteiras relacionadas</h2><WealthPlanningLinks links={plan.links} options={options}/>{plan.notes&&<p>Notas: {plan.notes}</p>}</section>
-  {write.allowed&&<details className={styles.details}><summary>Editar plano de vida</summary><WealthPlanningForm key={plan.version} plan={plan} options={options} token={crypto.randomUUID()} today={today}/><Link href={`/apps/wealth/planejamento/${id}`}>Reabrir versão atual</Link></details>}
+  {write.allowed&&<details className={styles.details}><summary>Editar plano de vida</summary><WealthPlanningForm plan={plan} options={options} token={crypto.randomUUID()} today={today}/><Link href={`/apps/wealth/planejamento/${id}`}>Reabrir versão atual</Link></details>}
  </div>
 }

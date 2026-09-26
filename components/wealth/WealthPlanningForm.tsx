@@ -5,17 +5,23 @@ import {moneyInputValue} from '@/lib/wealth/core'
 import {eventTypes,planStatuses,scenarios,sourceLabels,planningCategories,type GoalFunding,type LifePlan,type PlanningLink,type PlanningOption} from '@/lib/wealth/planning'
 import styles from './calendar.module.css'
 
-export default function WealthPlanningForm({goal,plan,options,token,today}:{goal?:{id:string;version:number;funding:GoalFunding|null};plan?:LifePlan;options:PlanningOption[];token:string;today:string}){
+type PlanningFormProps={goal?:{id:string;version:number;funding:GoalFunding|null};plan?:LifePlan;options:PlanningOption[];token:string;today:string}
+export default function WealthPlanningForm(props:PlanningFormProps){
  const [state,action,pending]=useActionState(savePlanning,{ok:false,message:''})
+ return <form action={action}>
+  <PlanningFields key={props.goal?.version??props.plan?.version??props.token} {...props} pending={pending}/>
+  {state.message&&<p role="status" aria-live="polite" className={styles.status}>{state.message}</p>}
+ </form>
+}
+function PlanningFields({goal,plan,options,token,today,pending}:PlanningFormProps&{pending:boolean}){
  const initial=goal?.funding?.sources??plan?.links??[]
  const [links,setLinks]=useState<PlanningLink[]>(initial)
  const allowed=goal?['recurring','portfolio','income']:['goal','debt','portfolio']
  const filtered=options.filter(o=>allowed.includes(o.kind))
  const money=(name:string,label:string,value:number|null=0)=><label key={name}>{label}<input name={name} inputMode="decimal" defaultValue={value===null?'':moneyInputValue(value)} maxLength={16}/></label>
- return <form action={action}>
+ return <fieldset disabled={pending}>
   <input type="hidden" name="operation" value={goal?'funding':'life'}/><input type="hidden" name="idempotency_key" value={token}/>
   {(goal||plan)&&<><input type="hidden" name="id" value={goal?.id??plan?.id}/><input type="hidden" name="version" value={goal?.version??plan?.version}/></>}
-  <fieldset disabled={pending}>
    <div className={styles.fields}>
     {goal?<>
      <label>Prioridade<select name="priority" defaultValue={goal.funding?.priority??'normal'}><option value="low">Baixa</option><option value="normal">Normal</option><option value="high">Alta</option></select></label>
@@ -55,7 +61,5 @@ export default function WealthPlanningForm({goal,plan,options,token,today}:{goal
    <label className={styles.subheading}>Notas<textarea name="notes" maxLength={2000} defaultValue={goal?.funding?.notes??plan?.notes??''}/></label>
    <label className={styles.confirm}><input type="checkbox" name="confirmed" value="yes" required/>Confirmo que estes dados são de planejamento e não movimentam dinheiro.</label>
    <button type="submit" className={styles.button}>{pending?'Salvando…':goal?'Salvar funding':'Salvar plano de vida'}</button>
-  </fieldset>
-  {state.message&&<p role="status" aria-live="polite" className={styles.status}>{state.message}</p>}
- </form>
+ </fieldset>
 }

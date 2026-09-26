@@ -43,3 +43,5 @@ Receipts privados `(user_id,token)` aceitam replay somente do mesmo comando/payl
 O primeiro teste de cascade local expôs uma FK da fixture de empresas; a fixture foi removida na ordem correta, sem alterar schema real. Os dois primeiros E2E pararam em seletores exatos de labels contendo opções; seletores dos campos foram corrigidos. Ambos terminaram com cleanup zerado. Não houve erro de produção ou de segurança nesses testes.
 
 A terceira execução detectou contraste insuficiente no bloco herdado de arquivamento dentro do tema escuro. Corrigido com estilo restrito à nova página de meta; a quarta execução passou integralmente. Rótulos de categorias traduzidos antes do Preview final.
+
+Primeiro Preview (56055cb, dpl_GAi7TR63w6gsXRchVwkaH6FjzuFG) compilou, mas a regressão de lifecycle detectou perda da mensagem de sucesso ao remontar WealthGoalEditor por versão. Banco persistiu corretamente; cleanup completo. Correção mantém useActionState no formulário e remonta apenas os campos, preservando confirmação e sincronização de valores/versionamento; o mesmo padrão foi aplicado aos formulários de funding/life. Nova certificação hospedada é obrigatória.

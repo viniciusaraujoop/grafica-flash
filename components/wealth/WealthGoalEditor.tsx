@@ -8,7 +8,7 @@ export default function WealthGoalEditor({goal}:{goal:WealthGoal}) {
  const [state,action,pending] = useActionState(changeWealthLifecycle,{ok:false,message:''})
  return <form action={action}>
   <input type="hidden" name="record_id" value={goal.id}/><input type="hidden" name="record_type" value="goal"/><input type="hidden" name="operation" value="edit"/><input type="hidden" name="version" value={goal.version}/>
-  <fieldset className={styles.formGrid} disabled={pending}>
+  <fieldset key={goal.version} className={styles.formGrid} disabled={pending}>
    <label>Nome da meta<input name="title" defaultValue={goal.title} maxLength={160} required/></label>
    <label>Objetivo (R$)<input name="target" inputMode="decimal" defaultValue={moneyInputValue(goal.target_cents)} required/></label>
    <label>Já reservado (R$)<input name="saved" inputMode="decimal" defaultValue={moneyInputValue(goal.saved_cents)} required/></label>
