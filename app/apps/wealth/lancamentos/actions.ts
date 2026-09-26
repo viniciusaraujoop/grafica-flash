@@ -18,9 +18,10 @@ export async function updateWealthEntry(_state: WealthActionState, form: FormDat
     if (typeof expected !== 'string' || !/^[a-f0-9]{64}$/.test(expected)) throw new Error('Reabra o lançamento antes de editar.')
   } catch (error) { return { ok: false, message: error instanceof Error ? error.message : 'Registro inválido.' } }
   const { db, user } = read.identity
-  const result = await db.from('wealth_entries').select('id,title,kind,category,amount_cents,financial_date,currency,recurrence,idempotency_key').eq('user_id', user.id).eq('id', id).maybeSingle()
+  const result = await db.from('wealth_entries').select('id,title,kind,category,amount_cents,financial_date,currency,recurrence,idempotency_key,version,archived_at').eq('user_id', user.id).eq('id', id).maybeSingle()
   if (result.error || !result.data) return { ok: false, message: 'Lançamento indisponível para edição nesta conta.' }
   const current = result.data as WealthEntry & { idempotency_key: string }
+  if (current.archived_at) return { ok: false, message: 'Restaure o lançamento antes de editar.' }
   if (entryRevision(current) !== expected) return conflict
   let payload: Record<string, unknown>
   try {
@@ -28,7 +29,7 @@ export async function updateWealthEntry(_state: WealthActionState, form: FormDat
     payload = Object.fromEntries(entryMutableFields.map(field => [field, checked[field]]))
   } catch (error) { return { ok: false, message: error instanceof Error ? error.message : 'Confira os campos.' } }
   // Match the trusted values read above in the same UPDATE: a concurrent write cannot be overwritten silently.
-  let mutation = db.from('wealth_entries').update(payload).eq('user_id', user.id).eq('id', id)
+  let mutation = db.from('wealth_entries').update(payload).eq('user_id', user.id).eq('id', id).eq('version', current.version).is('archived_at', null)
   for (const field of entryMutableFields) mutation = mutation.eq(field, current[field])
   const saved = await mutation.select('id').maybeSingle()
   if (saved.error) return { ok: false, message: 'Não foi possível confirmar a alteração. Tente novamente.' }

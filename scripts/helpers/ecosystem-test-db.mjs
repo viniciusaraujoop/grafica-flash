@@ -25,6 +25,7 @@ export async function createTestDatabase() {
     create policy member_read on public.company_members for select to authenticated using (user_id=auth.uid());
   `)
   await db.exec(readFileSync(new URL('../../supabase/migrations/20260926014103_ecosystem_identity_wealth.sql', import.meta.url), 'utf8'))
+  await db.exec(readFileSync(new URL('../../supabase/migrations/20260926103114_wealth_lifecycle_aggregates.sql', import.meta.url), 'utf8'))
   for (const user of [ids.a, ids.b, ids.member]) await db.query('insert into auth.users values ($1)', [user])
   await db.query('insert into public.companies values ($1,$2),($3,$4)', [ids.companyA, ids.a, ids.companyB, ids.b])
   await db.query('insert into public.company_members values ($1,$2,$3)', [ids.companyA,ids.member,'ativo'])

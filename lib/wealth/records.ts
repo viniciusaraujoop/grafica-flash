@@ -3,16 +3,17 @@ import type { WealthEntry, WealthKind } from './core'
 export const entryKindLabels: Record<WealthKind, string> = { income: 'Receita', expense: 'Despesa', asset: 'Ativo', liability: 'Passivo' }
 export const recordsPageSize = 25
 export const exportRowLimit = 1000
-export type WealthFilters = { kind: WealthKind | null; month: string | null; page: number }
+export type WealthFilters = { kind: WealthKind | null; month: string | null; page: number; archive?: 'active' | 'archived' | 'all' }
 type QueryValues = Record<string, string | string[] | undefined>
 
 export function parseWealthFilters(input: QueryValues): WealthFilters {
-  const { kind, month, page } = input
-  if ([kind, month, page].some(Array.isArray)) throw new Error('Use apenas um valor por filtro.')
+  const { kind, month, page, archive } = input
+  if ([kind, month, page, archive].some(Array.isArray)) throw new Error('Use apenas um valor por filtro.')
+  if (archive && !['active','archived','all'].includes(String(archive))) throw new Error('Estado de arquivamento inválido.')
   if (kind && (typeof kind !== 'string' || !Object.hasOwn(entryKindLabels, kind))) throw new Error('Tipo de lançamento inválido.')
   if (month && (typeof month !== 'string' || !/^(19\d{2}|20\d{2}|21\d{2}|2200)-(0[1-9]|1[0-2])$/.test(month))) throw new Error('Escolha um mês entre janeiro de 1900 e dezembro de 2200.')
   if (page && (typeof page !== 'string' || !/^[1-9]\d{0,3}$/.test(page))) throw new Error('Página inválida.')
-  return { kind: (kind || null) as WealthKind | null, month: (month || null) as string | null, page: page ? Number(page) : 1 }
+  return { kind: (kind || null) as WealthKind | null, month: (month || null) as string | null, page: page ? Number(page) : 1, ...(archive ? { archive: archive as WealthFilters['archive'] } : {}) }
 }
 
 export function monthBounds(month: string) {
@@ -25,6 +26,7 @@ export function recordsQuery(filters: WealthFilters, page = filters.page) {
   const params = new URLSearchParams()
   if (filters.kind) params.set('kind', filters.kind)
   if (filters.month) params.set('month', filters.month)
+  if (filters.archive && filters.archive !== 'active') params.set('archive', filters.archive)
   if (page > 1) params.set('page', String(page))
   return params.toString()
 }
@@ -43,12 +45,12 @@ export function csvCell(value: string) {
 
 export function entriesCsv(entries: readonly WealthEntry[]) {
   assertExportSize(entries.length)
-  const lines = [['id', 'nome', 'tipo', 'categoria', 'data', 'valor_brl', 'valor_centavos', 'moeda', 'recorrencia'].map(csvCell).join(';')]
+  const lines = [['id', 'nome', 'tipo', 'categoria', 'data', 'valor_brl', 'valor_centavos', 'moeda', 'recorrencia', 'arquivado_em'].map(csvCell).join(';')]
   for (const entry of entries) {
     if (!Number.isSafeInteger(entry.amount_cents) || entry.amount_cents < 1 || entry.amount_cents > 100_000_000_000_000) throw new Error('Valor monetário inválido para exportação.')
     const cents = BigInt(entry.amount_cents)
     const amount = `${cents / BigInt(100)},${String(cents % BigInt(100)).padStart(2, '0')}`
-    lines.push([entry.id, entry.title, entryKindLabels[entry.kind], entry.category, entry.financial_date, amount, String(entry.amount_cents), entry.currency, entry.recurrence].map(csvCell).join(';'))
+    lines.push([entry.id, entry.title, entryKindLabels[entry.kind], entry.category, entry.financial_date, amount, String(entry.amount_cents), entry.currency, entry.recurrence, entry.archived_at ?? ''].map(csvCell).join(';'))
   }
   return '\uFEFF' + lines.join('\r\n') + '\r\n'
 }

@@ -32,5 +32,7 @@ export async function saveWealthRecord(_state: WealthActionState, form: FormData
     return { ok: false, message: 'Não foi possível salvar. Seus dados não foram confirmados; tente novamente.' }
   }
   revalidatePath('/apps/wealth')
+  revalidatePath('/apps/wealth/lancamentos')
+  revalidatePath('/apps/wealth/metas')
   return { ok: true, message: 'Registro salvo no seu espaço pessoal.' }
 }

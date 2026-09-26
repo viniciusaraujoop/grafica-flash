@@ -42,8 +42,9 @@ export function uuid(value: unknown): string {
   return value
 }
 
-export type WealthEntry = { id: string; title: string; kind: WealthKind; category: string; amount_cents: number; financial_date: string; currency: 'BRL'; recurrence: 'none' | 'monthly' | 'yearly' }
-export type WealthGoal = { id: string; title: string; target_cents: number; saved_cents: number; monthly_contribution_cents: number; target_date: string }
+export type WealthLifecycle = { version?: number; archived_at?: string | null; updated_at?: string }
+export type WealthEntry = WealthLifecycle & { id: string; title: string; kind: WealthKind; category: string; amount_cents: number; financial_date: string; currency: 'BRL'; recurrence: 'none' | 'monthly' | 'yearly' }
+export type WealthGoal = WealthLifecycle & { id: string; title: string; target_cents: number; saved_cents: number; monthly_contribution_cents: number; target_date: string; status?: 'active' | 'paused' | 'completed' }
 
 export function validateEntry(input: Record<string, unknown>) {
   if (!wealthKinds.some((kind) => kind === input.kind)) throw new Error('Tipo de lançamento inválido.')
@@ -90,7 +91,12 @@ export function summarizeEntries(entries: readonly WealthEntry[], month: string)
   return { income: safe(totals.income), expenses: safe(totals.expense), assets: safe(totals.asset), liabilities: safe(totals.liability), netWorth: safe(totals.asset - totals.liability), cashFlow: safe(totals.income - totals.expense) }
 }
 
-export function formatMoney(cents: number) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100) }
+export function formatMoney(cents: number | string | bigint) {
+  if (typeof cents === 'number' && !Number.isSafeInteger(cents)) throw new Error('Valor monetário sem precisão segura.')
+  if (typeof cents === 'string' && !/^-?\d{1,60}$/.test(cents)) throw new Error('Valor monetário inválido.')
+  const value = BigInt(cents), absolute = value < 0 ? -value : value
+  return `${value < 0 ? '-' : ''}R$\u00a0${(absolute / BigInt(100)).toLocaleString('pt-BR')},${String(absolute % BigInt(100)).padStart(2, '0')}`
+}
 
 export function moneyInputValue(cents: number) {
   integer(cents, 0, moneyLimit)

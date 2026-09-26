@@ -5,5 +5,5 @@ export const entryMutableFields = ['title', 'kind', 'category', 'amount_cents', 
 
 // A revision detects stale forms. Ownership/permission still comes exclusively from the session and RLS.
 export function entryRevision(entry: WealthEntry) {
-  return createHash('sha256').update(JSON.stringify([entry.id, ...entryMutableFields.map(field => entry[field])])).digest('hex')
+  return createHash('sha256').update(JSON.stringify([entry.id, entry.version, entry.archived_at, ...entryMutableFields.map(field => entry[field])])).digest('hex')
 }

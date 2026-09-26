@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams
   let filters
   try {
-    if (['kind', 'month', 'page'].some(key => params.getAll(key).length > 1)) throw new Error('Use apenas um valor por filtro.')
+    if (['kind', 'month', 'page', 'archive'].some(key => params.getAll(key).length > 1)) throw new Error('Use apenas um valor por filtro.')
     filters = parseWealthFilters(Object.fromEntries(params))
   } catch (error) { return Response.json({ error: error instanceof Error ? error.message : 'Filtro inválido.' }, { status: 400, headers }) }
   // User-session RLS is mandatory for reads; the service client below only records the audit event.

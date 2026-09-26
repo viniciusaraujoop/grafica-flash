@@ -1,0 +1,236 @@
+{
+  "label": "staging-lifecycle-delta",
+  "expectedSha256": "4c28a62b62ec50856067e7e4142c434856e121526bca7d9600fb05c916934be6",
+  "actualSha256": "51b23b12fbdfe4c065c6ca748427cb0814e46f92ee713a73ab9fcc24dbb9e053",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2581,
+      "actual": 2588
+    },
+    "indexes": {
+      "expected": 660,
+      "actual": 662
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 162,
+      "actual": 162
+    },
+    "triggers": {
+      "expected": 43,
+      "actual": 45
+    },
+    "functions": {
+      "expected": 110,
+      "actual": 112
+    },
+    "relations": {
+      "expected": 169,
+      "actual": 169
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 668,
+      "actual": 672
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 20,
+  "changes": [
+    {
+      "category": "columns",
+      "id": "public.wealth_entries.archived_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0b4761d30ce543c402a3564da31287e1a950f49bf02629dfcdb44a648dccc84c"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_entries.updated_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c1cc2873f78b937938b7dcaa219563a572ffd393bb0d920aaab5a49d77b42256"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_entries.version",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c37dfe52b61303a90f05ac2d8ef2cad2ddb006bc35e95786b7b27925333f7af1"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_goals.archived_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7b15e2d89dd6aa043dba32818b728ca72c1446ae3fe6591f1d642e57fe36f856"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_goals.updated_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "88cd2d18edf8582adf8b4e8df71e28f345f35bd1ab13de7e65786edb6a4f63b6"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_goals.version",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f0651c7966ca0f2413a793548794681fe95a743bda48e9430d631097a45359c2"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_goals.status",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ff5761474fbeb95aadccd4092e04cffb2d07102410be05fdb4324833baf6937b"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_entries_active_owner_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8c4c3f16d4ba6fad10afba83ffb1c400074fa7bc6e21d498eb7aa354e84b8a21"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_goals_active_owner_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c954508b6b30749cca146e0deffbee14bb97bb035b2421ff0ea827a35e128f4f"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_entries.wealth_lifecycle_guard",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8a6f7f0caeeba1aa1949a72b46369c7101b79d17a976f568f7223de3c3746f7e"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_goals.wealth_lifecycle_guard",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "4dd53204f87d11f230dfa4bdedda987111f312ed778e6e5c26ebbaac496aaa74"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.record_change.",
+      "kind": "changed",
+      "fields": [
+        "definition"
+      ],
+      "beforeSha256": "b47437162d21e44674946f4277c2a0fa51b25fd031ff1e59855786de6dd6f0b4",
+      "afterSha256": "303b8892999bc6b7a8bbb94345433bb86d7bb25d586797ceb2876eee40e8ab5a"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.guard_wealth_lifecycle.",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "531717db56b5317fbb0f38f243a3d2e0e49013c37c34ce4365fa3d327f021947"
+    },
+    {
+      "category": "functions",
+      "id": "public.wealth_summary.p_month date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a3caec81029bdb996da338390c66b34c748a5d350f06560b175fe0994b946aaf"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_entries.wealth_entries_version_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d4336fcfd7208d2909c0662787071fb13ecb6a8aecfd28f359837b521aae3398"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_goals.wealth_goal_completed_funded",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "eaa1c7fa745af0b628523089edd64d63d65cc433d768721217fd632515b52894"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_goals.wealth_goals_status_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "487e7d65be5a6fac83f860f166a380b514f5ba9fafefe31bd7a68c6093bedc64"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_goals.wealth_goals_version_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "415b51ea9070e8f41d4bd8b984530c8ecad41ca7a1d93d9ad8047a41da2b8f40"
+    },
+    {
+      "category": "column_order",
+      "id": "public.wealth_entries",
+      "kind": "changed",
+      "beforeSha256": "f668e7e1a16fc21c3e87437c222cdbbdd21d120ff19f06d9d4019cc11037582e",
+      "afterSha256": "24fb91e02fe2839f19ddc346e3f21c6eee84a0ddc3090d7eb7a6145a9cef01a0"
+    },
+    {
+      "category": "column_order",
+      "id": "public.wealth_goals",
+      "kind": "changed",
+      "beforeSha256": "ea266170cfd100c1174cae5be18696a333887fe681dbc1fb1efa0d9418d442ca",
+      "afterSha256": "81f05c4326bc97ed316ae5b6cd68290b6558bbdcdc70e09b3b15e939c7a653a0"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

@@ -1,5 +1,13 @@
 # Orçaly — estado de execução
 
+## Continuação vigente: lifecycle e totais integrais
+
+Master ativo: `C:\Users\arauj\Downloads\CODEX_ORCALY_MASTER_CONTINUATION_FINAL.md`, lido integralmente. Retomada de `34dcc06bf0c8a0bbf44bf4e2e596e313b112bc93`, branch autorizada, árvore inicialmente limpa. As seções históricas abaixo preservam certificados anteriores; este bloco registra a ampliação atual.
+
+Aplicada **somente ao staging** a migration `20260926103114_wealth_lifecycle_aggregates.sql`. Ledger agora tem três versões. Arquivamento/restauração de lançamentos, ciclo completo de metas com paginação, versão monotônica e agregações integrais implementados. 75 testes de domínio/PostgreSQL, TypeScript, lint de escopo e build PASS. E2E local com Supabase real: 20 checks PASS, zero fixtures restantes; revisão visual ampliada em andamento. Preview desta ampliação ainda a certificar. Evidência e delta de 20 alterações intencionais: `docs/qa/ORCALY_WEALTH_LIFECYCLE.md` e `reconciliation/staging-lifecycle-delta.json`. Nenhum objeto legado, migration histórica ou produção alterado.
+
+Próxima unidade após certificação Preview: recorrências reais, idempotentes, com retry/lock/stale recovery, pause/resume/cancel e fuso; depois seguir as demais seções do master. Não repetir Home/Hub, baseline nem auditoria histórica saudável.
+
 Checkpoint de 26/09/2026. **Staging certificado para Auth/Hub/Wealth/entitlement/consent; master completo ainda PARCIAL.** Não reiniciar Home, Hub ou Wealth Core.
 
 ## Checkout e autorizações

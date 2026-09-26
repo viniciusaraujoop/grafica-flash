@@ -1,4 +1,3 @@
-// Generated from orcaly-staging (zwxulgpjucxudadjdqov), after baseline + ecosystem/Wealth.
 export type Json =
   | string
   | number
@@ -8345,6 +8344,7 @@ export type Database = {
       wealth_entries: {
         Row: {
           amount_cents: number
+          archived_at: string | null
           category: string
           created_at: string
           currency: string
@@ -8354,10 +8354,13 @@ export type Database = {
           kind: string
           recurrence: string
           title: string
+          updated_at: string
           user_id: string
+          version: number
         }
         Insert: {
           amount_cents: number
+          archived_at?: string | null
           category: string
           created_at?: string
           currency?: string
@@ -8367,10 +8370,13 @@ export type Database = {
           kind: string
           recurrence?: string
           title: string
+          updated_at?: string
           user_id: string
+          version?: number
         }
         Update: {
           amount_cents?: number
+          archived_at?: string | null
           category?: string
           created_at?: string
           currency?: string
@@ -8380,46 +8386,60 @@ export type Database = {
           kind?: string
           recurrence?: string
           title?: string
+          updated_at?: string
           user_id?: string
+          version?: number
         }
         Relationships: []
       }
       wealth_goals: {
         Row: {
+          archived_at: string | null
           created_at: string
           currency: string
           id: string
           idempotency_key: string
           monthly_contribution_cents: number
           saved_cents: number
+          status: string
           target_cents: number
           target_date: string
           title: string
+          updated_at: string
           user_id: string
+          version: number
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string
           currency?: string
           id?: string
           idempotency_key: string
           monthly_contribution_cents?: number
           saved_cents?: number
+          status?: string
           target_cents: number
           target_date: string
           title: string
+          updated_at?: string
           user_id: string
+          version?: number
         }
         Update: {
+          archived_at?: string | null
           created_at?: string
           currency?: string
           id?: string
           idempotency_key?: string
           monthly_contribution_cents?: number
           saved_cents?: number
+          status?: string
           target_cents?: number
           target_date?: string
           title?: string
+          updated_at?: string
           user_id?: string
+          version?: number
         }
         Relationships: []
       }
@@ -10831,6 +10851,7 @@ export type Database = {
         }
         Returns: Json
       }
+      wealth_summary: { Args: { p_month: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

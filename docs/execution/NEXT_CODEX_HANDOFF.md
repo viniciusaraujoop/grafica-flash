@@ -1,5 +1,15 @@
 # Continuação exata — Orçaly
 
+## Checkpoint vigente — MASTER CONTINUATION FINAL
+
+O usuário agora manda executar integralmente `C:\Users\arauj\Downloads\CODEX_ORCALY_MASTER_CONTINUATION_FINAL.md`, lido linha a linha nesta retomada. Não encerrar após um módulo; seguir automaticamente enquanto houver contexto útil.
+
+Retomada de `34dcc06bf0c8a0bbf44bf4e2e596e313b112bc93`. Migration nova **já aplicada no staging**: `20260926103114_wealth_lifecycle_aggregates.sql`, SHA LF `a1ab880670c493a4fe8b3a3a856d16f13991404b438d1dd377779620584d8f83`. Ledger agora tem três versões. Não reaplicar nem resetar. Arquivamento/restauração, metas/status/paginação e RPC de agregados completos implementados. Types reais atualizados; 75 testes + typecheck/build/scoped lint PASS; 20 E2E local com Supabase hospedado PASS, limpeza zero. Falta certificar o novo Preview; detalhes em `docs/qa/ORCALY_WEALTH_LIFECYCLE.md`.
+
+Harness: acrescentar `$env:ORCALY_QA_LIFECYCLE='true'` aos flags RECORDS/EDIT. Limpeza foi ampliada para paginação de IDs e lotes de auditoria, cobrindo mais de mil fixtures. Não executar build/typegen em paralelo ao servidor dev: houve manifesto incompleto e arquivos de tipos truncados no Windows; reinício e build isolado corrigiram. Próxima unidade de código: seção 6.4 recorrências, usando jobs existentes onde apropriado e sem cobranças/cron externo.
+
+As seções seguintes documentam o checkpoint anterior, não o estado final da ampliação atual.
+
 **Não recomeçar. O staging já está reconciliado e certificado.** Este documento substitui os handoffs antigos que pediam criar staging, autenticar o CLI ou repetir bootstrap. O master completo permanece parcial.
 
 ## Estado e limites

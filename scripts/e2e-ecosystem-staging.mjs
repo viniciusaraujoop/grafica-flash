@@ -240,7 +240,7 @@ try{
   await stale.goto(editUrl)
   await page.getByLabel('Nome do lançamento').fill('Receita corrigida QA')
   await page.getByLabel('Valor (R$)',{exact:true}).fill('501,23')
-  await page.locator('form').evaluate((element,id)=>{const hidden=document.createElement('input');hidden.type='hidden';hidden.name='user_id';hidden.value=id;element.appendChild(hidden)},b.id)
+  await page.locator('form').filter({has:page.getByLabel('Nome do lançamento')}).evaluate((element,id)=>{const hidden=document.createElement('input');hidden.type='hidden';hidden.name='user_id';hidden.value=id;element.appendChild(hidden)},b.id)
   const editRequestPromise=page.waitForRequest(r=>r.method()==='POST'&&!!r.headers()['next-action'])
   await page.getByRole('button',{name:'Salvar alterações',exact:true}).click()
   const editRequest=await editRequestPromise
@@ -282,6 +282,94 @@ try{
   await grant(a)
   pass('entry-edit-forged-owner-cross-user-read-only-and-anonymous-denial')
  }
+ if(process.env.ORCALY_QA_LIFECYCLE==='true'){
+  await grant(a,{...active,permissions:['wealth.read','wealth.write','wealth.export']})
+  const summary=async()=>ok(await a.db.rpc('wealth_summary',{p_month:'2026-09-01'}))
+  const transition=async(archived)=>{
+   await page.locator('summary').filter({hasText:archived?'Restaurar registro':'Arquivar registro'}).click()
+   await page.getByRole('checkbox',{name:archived?/Confirmo que desejo restaurar/:/Confirmo que desejo arquivar/}).check()
+   await page.getByRole('button',{name:archived?'Confirmar restauração':'Confirmar arquivamento',exact:true}).click()
+   await page.getByRole('heading',{name:archived?'Arquivamento':'Registro arquivado',exact:true}).waitFor()
+  }
+  const entryUrl=`${appUrl}/apps/wealth/lancamentos/${persisted.id}`
+  await page.goto(entryUrl)
+  const oldTab=await context.newPage();await oldTab.goto(entryUrl)
+  const before=await summary(),current=ok(await a.db.from('wealth_entries').select('*').eq('id',persisted.id).single())
+  await transition(false)
+  const archived=ok(await a.db.from('wealth_entries').select('*').eq('id',persisted.id).single())
+  assert.ok(archived.archived_at);assert.equal(archived.version,current.version+1)
+  assert.equal(BigInt((await summary()).income),BigInt(before.income)-BigInt(current.amount_cents))
+  assert.equal(await page.getByLabel('Nome do lançamento').count(),0)
+  const archivedCsv=await context.request.get(`${appUrl}/apps/wealth/exportar?archive=archived`)
+  assert.equal(archivedCsv.status(),200);assert.ok((await archivedCsv.text()).includes(persisted.id))
+  assert.ok(!(await (await context.request.get(`${appUrl}/apps/wealth/exportar`)).text()).includes(persisted.id))
+  await page.goto(`${appUrl}/apps/wealth/lancamentos?archive=archived`)
+  assert.equal(await page.locator('tbody tr').count(),1)
+  await page.getByRole('link',{name:current.title,exact:true}).click();await transition(true)
+  assert.equal((await summary()).income,before.income)
+  await oldTab.getByLabel('Nome do lançamento').fill('ABA stale denied')
+  await oldTab.getByRole('button',{name:'Salvar alterações',exact:true}).click()
+  await oldTab.getByRole('status').filter({hasText:'mudou em outra aba'}).waitFor()
+  assert.equal(ok(await a.db.from('wealth_entries').select('title').eq('id',persisted.id).single()).title,current.title)
+  await oldTab.close()
+  pass('entry-archive-restore-totals-CSV-filters-and-ABA-stale-protection')
+  const goalUrl=`${appUrl}/apps/wealth/metas/${savedGoal.id}`
+  await page.goto(goalUrl)
+  const oldGoal=await context.newPage();await oldGoal.goto(goalUrl)
+  await page.getByLabel('Nome da meta').fill('Meta concluída QA')
+  await page.getByLabel('Objetivo (R$)',{exact:true}).fill('1000')
+  await page.getByLabel('Já reservado (R$)',{exact:true}).fill('1000')
+  await page.getByLabel('Status da meta').selectOption('completed')
+  await page.getByRole('button',{name:'Salvar meta',exact:true}).click()
+  await page.getByRole('status').filter({hasText:'Meta atualizada'}).waitFor()
+  const completed=ok(await a.db.from('wealth_goals').select('*').eq('id',savedGoal.id).single())
+  assert.equal(completed.status,'completed');assert.equal(completed.saved_cents,100000);assert.equal(completed.user_id,a.id)
+  await oldGoal.getByLabel('Nome da meta').fill('Stale goal denied')
+  await oldGoal.getByRole('button',{name:'Salvar meta',exact:true}).click()
+  await oldGoal.getByRole('status').filter({hasText:'alterado em outra aba'}).waitFor();await oldGoal.close()
+  await transition(false);assert.equal((await summary()).goalCount,'0')
+  await transition(true);assert.equal((await summary()).completedGoals,'1')
+  await other.page.goto(goalUrl);assert.equal(await other.page.getByLabel('Nome da meta').count(),0)
+  assert.deepEqual(ok(await b.db.from('wealth_goals').update({archived_at:new Date().toISOString()}).eq('id',savedGoal.id).select('id')),[])
+  await grant(a,{...active,permissions:['wealth.read']})
+  await page.locator('summary').filter({hasText:'Arquivar registro'}).click()
+  await page.getByRole('checkbox',{name:/Confirmo que desejo arquivar/}).check()
+  await page.getByRole('button',{name:'Confirmar arquivamento',exact:true}).click()
+  await page.getByRole('status').filter({hasText:'não permite esta alteração'}).waitFor()
+  assert.equal(ok(await admin.from('wealth_goals').select('archived_at').eq('id',savedGoal.id).single()).archived_at,null)
+  await grant(a,{...active,permissions:['wealth.read','wealth.write','wealth.export']})
+  pass('goal-edit-complete-archive-restore-stale-cross-user-and-read-only-boundaries')
+  const initial=await summary()
+  for(let offset=0;offset<1205;offset+=200){
+   const rows=ok(await admin.from('wealth_entries').insert(Array.from({length:Math.min(200,1205-offset)},(_,i)=>({...entry(a.id,`Integral ${offset+i}`),amount_cents:100000000000000}))).select('id'))
+   for(const row of rows)entities.add(row.id)
+  }
+  const moreGoals=ok(await admin.from('wealth_goals').insert(Array.from({length:104},(_,i)=>({user_id:a.id,title:`Meta paginada ${String(i).padStart(3,'0')}`,target_cents:10000,saved_cents:2500,monthly_contribution_cents:0,target_date:'2027-12-01',idempotency_key:crypto.randomUUID()}))).select('id'))
+  for(const row of moreGoals)entities.add(row.id)
+  const whole=await summary()
+  assert.equal(BigInt(whole.income),BigInt(initial.income)+1205n*100000000000000n);assert.equal(whole.goalCount,'105')
+  assert.equal((await context.request.get(`${appUrl}/apps/wealth/exportar?month=2026-09`)).status(),413)
+  await page.goto(`${appUrl}/apps/wealth/metas`)
+  assert.equal(await page.locator('tbody tr').count(),25)
+  const titles=await page.locator('tbody tr td:first-child').allTextContents()
+  await page.getByRole('link',{name:'Próxima página',exact:true}).click()
+  await page.getByText('Metas · página 2 de 5',{exact:true}).waitFor()
+  assert.ok((await page.locator('tbody tr td:first-child').allTextContents()).every(title=>!titles.includes(title)))
+  const axe=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();assert.deepEqual(axe.violations.map(v=>v.id),[])
+  await page.goto(`${appUrl}/apps/wealth`)
+  await page.getByText(`Totais calculados com todos os ${whole.entryCount} lançamentos ativos.`,{exact:false}).waitFor()
+  const cash=BigInt(whole.cashFlow),magnitude=cash<0n?-cash:cash
+  const expected=`${cash<0n?'-':''}R$ ${(magnitude/100n).toLocaleString('pt-BR')},${String(magnitude%100n).padStart(2,'0')}`
+  assert.ok((await page.locator('dl').innerText()).replace(/\s+/g,' ').includes(expected))
+  for(const width of [320,390,768,1440]){
+   await page.setViewportSize({width,height:900})
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),`Overview overflow at ${width}`)
+   const clipped=await page.locator('dl dd').evaluateAll(nodes=>nodes.filter(node=>node.scrollWidth>node.clientWidth+1).map(node=>({text:node.textContent,width:node.clientWidth,scroll:node.scrollWidth,wrap:getComputedStyle(node).overflowWrap})))
+   assert.deepEqual(clipped,[],`Metric clipping at ${width}: ${JSON.stringify(clipped)}`)
+  }
+  await page.setViewportSize({width:390,height:1100});await page.screenshot({path:`${output}/lifecycle-aggregate-top.png`});await page.screenshot({path:`${output}/lifecycle-aggregate.png`,fullPage:true})
+  pass('full-precision-hosted-aggregates-over-1000-entries-100-goals-pagination-and-export-cap')
+ }
  assert.deepEqual(errors,[])
  pass('no-browser-errors-or-production-requests')
 }catch(error){report.push({check:'execution',status:'FAIL',message:error.message});process.exitCode=1;console.error(error.stack)}
@@ -290,12 +378,13 @@ finally{
  // Collect fixture entity IDs before user cascades; triggers during cascades retain only IDs.
  for(const user of users){
   for(const table of ['ecosystem_product_entitlements','ecosystem_context_consents','wealth_entries','wealth_goals']){
-   const rows=await admin.from(table).select('id').eq('user_id',user.id);for(const row of rows.data??[])entities.add(row.id)
+   for(let offset=0;;offset+=500){const rows=ok(await admin.from(table).select('id').eq('user_id',user.id).order('id').range(offset,offset+499));for(const row of rows)entities.add(row.id);if(rows.length<500)break}
   }
   entities.add(user.id)
   const deleted=await admin.auth.admin.deleteUser(user.id);if(deleted.error){errors.push(`Cleanup user ${user.id}: ${deleted.error.code}`);process.exitCode=1}
  }
- if(entities.size){const cleaned=await admin.from('ecosystem_audit_events').delete().in('entity_id',[...entities]);if(cleaned.error){errors.push(`Cleanup audit: ${cleaned.error.code}`);process.exitCode=1}}
+ const entityIds=[...entities]
+ for(let offset=0;offset<entityIds.length;offset+=100){const cleaned=await admin.from('ecosystem_audit_events').delete().in('entity_id',entityIds.slice(offset,offset+100));if(cleaned.error){errors.push(`Cleanup audit: ${cleaned.error.code}`);process.exitCode=1}}
  const remaining=await admin.auth.admin.listUsers({page:1,perPage:1})
  const cleanup={usersRemaining:remaining.data?.users?.length??null,auditRowsRemaining:(await admin.from('ecosystem_audit_events').select('id')).data?.length??null}
  if(cleanup.usersRemaining!==0||cleanup.auditRowsRemaining!==0)process.exitCode=1

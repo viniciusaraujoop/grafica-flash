@@ -31,6 +31,7 @@ export default async function WealthRecordsPage({ searchParams }: { searchParams
       <form action="/apps/wealth/lancamentos" method="get" className={styles.formGrid}>
         <label>Mês financeiro<input name="month" type="month" min="1900-01" max="2200-12" defaultValue={filters.month ?? ''} /></label>
         <label>Tipo de lançamento<select name="kind" defaultValue={filters.kind ?? ''}><option value="">Todos os tipos</option>{Object.entries(entryKindLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <label>Arquivamento<select name="archive" defaultValue={filters.archive ?? 'active'}><option value="active">Ativos</option><option value="archived">Arquivados</option><option value="all">Todos</option></select></label>
         <button className={styles.primaryButton} type="submit">Aplicar filtros</button>
         <Link className={styles.textButton} href="/apps/wealth/lancamentos">Limpar filtros</Link>
       </form>

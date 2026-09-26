@@ -1,5 +1,9 @@
 # Orçaly — relatório do checkpoint
 
+## Ampliação do MASTER CONTINUATION FINAL
+
+Retomada de `34dcc06` na mesma branch. Seções 6.1–6.3 implementadas: archive/restore, metas editáveis com status e paginação, agregações integrais com centavos exatos. Uma migration aditiva aplicada apenas ao staging; ledger agora três versões, delta intencional auditado de 20 diferenças, tipos regenerados. 75 testes e build/typecheck/scoped lint PASS; 20 checks E2E locais usando Supabase real PASS. Preview desta ampliação em certificação. Evidências: `docs/qa/ORCALY_WEALTH_LIFECYCLE.md`. Produção preservada. O restante do master permanece PARCIAL e deve prosseguir automaticamente, começando por recorrências.
+
 26/09/2026. **A auditoria, a reconciliação e a certificação do staging foram concluídas. O master completo continua PARCIAL.** Depois da certificação, o trabalho avançou para histórico paginado, exportação CSV e edição de lançamentos do Wealth. Home, Hub e Wealth Core não foram refeitos.
 
 ## Resultado da missão imediata
