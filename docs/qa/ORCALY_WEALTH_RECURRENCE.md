@@ -1,7 +1,13 @@
 # Wealth — recorrências (seção 6.4)
 
-## Estado
-Implementadas e aplicadas somente em staging zwxulgpjucxudadjdqov. Preview em certificação; não declarar o master completo. Produção permanece fora do escopo de escrita.
+Preview certificado: https://orcaly-cfgjqomls-vinicius-araujos-projects.vercel.app, deployment dpl_4ztQEJZVT14wEbYzYqCq5pg1DWey, SHA de7346756d9dd053544a5767827f5f506008c2f7. 24 checks hospedados PASS; zero erros e todas as contagens de cleanup zero. Evidência: docs/qa/ORCALY_WEALTH_RECURRENCE_VERCEL_E2E.json. Tela mobile inspecionada e checkbox corrigido.
+
+
+## Atualização posterior: relógio certificado
+A lacuna de acionamento automático descrita abaixo foi encerrada pela migration 20260926164000 e dois ciclos reais. Veja ORCALY_WEALTH_CLOCK.md. Estado atual: 85 testes PASS, seis migrations, 244 adições cumulativas, cron registrado e pausado para QA. Os resultados de 82 testes/243 adições abaixo registram o checkpoint anterior ao relógio.
+
+## Estado anterior ao relógio
+Implementadas e aplicadas somente em staging zwxulgpjucxudadjdqov. Preview certificado (evidência acima); não declarar o master completo. Produção permanece fora do escopo de escrita.
 
 ## Comportamento
 Agendamentos pessoais de receitas/despesas (salário, aluguel, assinaturas, parcelas e aportes planejados), frequência diária/semanal/mensal/anual, intervalo, início/fim, quantidade opcional e timezone. Execução ao meio-dia local; âncora mensal preserva Jan31 → Fev28 → Mar31 e anos bissextos. Valores inteiros em centavos. Aportes são despesas declaradas da categoria investimento; não há transação bancária, cobrança ou ordem de investimento.

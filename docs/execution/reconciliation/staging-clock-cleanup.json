@@ -1,0 +1,34 @@
+{
+  "jobs": 0,
+  "runs": [
+    {
+      "runid": 2,
+      "status": "succeeded",
+      "end_time": "2026-09-26T15:53:00.051846+00:00",
+      "start_time": "2026-09-26T15:53:00.029655+00:00"
+    },
+    {
+      "runid": 1,
+      "status": "succeeded",
+      "end_time": "2026-09-26T15:52:00.109137+00:00",
+      "start_time": "2026-09-26T15:52:00.086597+00:00"
+    }
+  ],
+  "clock": [
+    {
+      "id": 1,
+      "name": "orcaly-staging-wealth-recurrences",
+      "user": "postgres",
+      "active": false,
+      "command": "begin; set local statement_timeout='20s'; set local lock_timeout='2s'; select ecosystem_private.run_wealth_recurrence_batch(25); commit;",
+      "schedule": "* * * * *"
+    }
+  ],
+  "users": 0,
+  "events": 0,
+  "outbox": 0,
+  "auditRows": 0,
+  "schedules": 0,
+  "migrations": 6,
+  "occurrences": 0
+}

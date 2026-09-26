@@ -1,9 +1,9 @@
 import fs from 'node:fs'
 import {createHash} from 'node:crypto'
 const target='zwxulgpjucxudadjdqov'
-const files={lifecycle:'supabase/migrations/20260926103114_wealth_lifecycle_aggregates.sql',recurrence:'supabase/migrations/20260926110128_wealth_recurring_schedules.sql',recurrenceBoundary:'supabase/migrations/20260926153138_wealth_recurrence_rpc_boundary.sql'}
+const files={lifecycle:'supabase/migrations/20260926103114_wealth_lifecycle_aggregates.sql',recurrence:'supabase/migrations/20260926110128_wealth_recurring_schedules.sql',recurrenceBoundary:'supabase/migrations/20260926153138_wealth_recurrence_rpc_boundary.sql',recurrenceClock:'supabase/migrations/20260926164000_wealth_recurrence_clock.sql'}
 const file=files[process.argv[2]]
-if(!file)throw Error('Specify an allowlisted migration: lifecycle, recurrence or recurrenceBoundary')
+if(!file)throw Error('Specify an allowlisted migration: lifecycle, recurrence, recurrenceBoundary or recurrenceClock')
 if(fs.readFileSync('supabase/.temp/project-ref','utf8').trim()!==target)throw Error('Wrong linked project')
 const sql=fs.readFileSync(file,'utf8').replaceAll('\r\n','\n')
 const [version,...parts]=file.split('/').at(-1).replace(/\.sql$/,'').split('_'),name=parts.join('_')
@@ -15,6 +15,7 @@ const guard=`do $guard$ begin
  if exists(select 1 from supabase_migrations.schema_migrations where version=${lit(version)}) then raise exception 'ALREADY_APPLIED'; end if;
  ${process.argv[2]==='recurrence'?"if not exists(select 1 from supabase_migrations.schema_migrations where version='20260926103114' and name='wealth_lifecycle_aggregates') then raise exception 'LIFECYCLE_REQUIRED'; end if;":''}
  ${process.argv[2]==='recurrenceBoundary'?"if not exists(select 1 from supabase_migrations.schema_migrations where version='20260926110128' and name='wealth_recurring_schedules') then raise exception 'RECURRENCE_REQUIRED'; end if;":''}
+ ${process.argv[2]==='recurrenceClock'?"if not exists(select 1 from supabase_migrations.schema_migrations where version='20260926153138' and name='wealth_recurrence_rpc_boundary') then raise exception 'RECURRENCE_BOUNDARY_REQUIRED'; end if;":''}
 end $guard$;`
 if(!/^begin;$/m.test(sql)||!sql.trimEnd().endsWith('commit;'))throw Error('Expected transactional migration')
 const out='.local-qa/reconciliation/apply-wealth-continuation.sql'

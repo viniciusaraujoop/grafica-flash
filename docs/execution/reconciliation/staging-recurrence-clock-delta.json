@@ -1,0 +1,84 @@
+{
+  "label": "staging-recurrence-clock-delta",
+  "expectedSha256": "28228d51132ae16c6834829ee6ea2b8f88b504cc213fc1ab9fddcd1a4a8c8c91",
+  "actualSha256": "a660f6507540a616a1cf80ae4cf61dcee1f580e4d096f9dd3eed1764fcd77c34",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2617,
+      "actual": 2617
+    },
+    "indexes": {
+      "expected": 668,
+      "actual": 668
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 164,
+      "actual": 164
+    },
+    "triggers": {
+      "expected": 46,
+      "actual": 46
+    },
+    "functions": {
+      "expected": 121,
+      "actual": 122
+    },
+    "relations": {
+      "expected": 171,
+      "actual": 171
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 695,
+      "actual": 695
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 1,
+  "changes": [
+    {
+      "category": "functions",
+      "id": "ecosystem_private.run_wealth_recurrence_batch.p_limit integer",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "2a4ed4ea756e8d08972803e6d7a4ad1d042a33b8f3d207588375444429ccca99"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

@@ -1,23 +1,13 @@
-# Orçaly — checkpoint vigente
+# Orçaly — estado vigente
 
-26/09/2026. Master completo PARCIAL. Fonte: C:\Users\arauj\Downloads\CODEX_ORCALY_MASTER_CONTINUATION_FINAL.md, todas as 40 seções lidas.
+Recorrências e relógio certificados em staging. Preview https://orcaly-cfgjqomls-vinicius-araujos-projects.vercel.app, deployment dpl_4ztQEJZVT14wEbYzYqCq5pg1DWey, SHA de7346756d9dd053544a5767827f5f506008c2f7: 24 checks hospedados PASS. O relógio foi acrescentado depois como função privada, sem alteração da UI/API pública, e passou em dois disparos pg_cron reais. 85 testes PASS. Cleanup integral zero. Seis migrations, delta cumulativo de 244 adições; um cron registrado e PAUSADO durante QA. Evidências: docs/qa/ORCALY_WEALTH_RECURRENCE_VERCEL_E2E.json e ORCALY_WEALTH_CLOCK.md.
 
-Produção `ozrasuktfthsvbqprtel` somente leitura. Staging `zwxulgpjucxudadjdqov`, CLI vinculado, cinco migrations já aplicadas. Não repetir bootstrap, db push histórico ou migration repair; não alterar SQL aplicado. Branch `codex/orcaly-ecosystem`, GitHub/Preview autorizados, nenhuma promoção/main. WhatsApp congelado.
+Produção ozrasuktfthsvbqprtel somente leitura; staging zwxulgpjucxudadjdqov é o link do CLI. Branch codex/orcaly-ecosystem. GitHub/Preview autorizados; nenhuma promoção/main. Não repetir bootstrap ou db push histórico, não editar SQL aplicado, não fazer migration repair. WhatsApp congelado.
 
-## Entregue e validado
-Home, Hub e Wealth Core preservados. Histórico/CSV/edição, lifecycle/archive/restore, metas editáveis e totais integrais já certificados. Último Preview certificado: https://orcaly-hbabdndwa-vinicius-araujos-projects.vercel.app, dpl_3TYWmENqUvwiaX5uV97kbY2f9zjN, SHA 510b38aeb7aacd15ecbc8e50b113eb1269998920: 21 checks hospedados PASS.
+Home/Hub/Wealth Core preservados; histórico/CSV/edição/lifecycle/metas/totais integrais e recorrências entregues. MASTER CONTINUATION FINAL (40 seções lidas) segue PARCIAL. Próximo: seção 6.5 Debt Center, depois Net Worth/Health/Portfolio e demais módulos. Não refazer módulos certificados.
 
-Recorrências (6.4): código, SQL e staging prontos para certificar novo Preview. 82 testes + build/typecheck/lint de escopo PASS, 16 checks focados no app local com banco hospedado PASS. Zero fixtures restantes. Criação/pausa/retomada/cancelamento, concorrência, jobs/ledger/outbox atômicos, retry/recovery, timezone, entitlement e isolamento testados. Disparo automático por relógio ainda não certificado.
+Reconciliação original: 71 locais/51 produção, 79 linhas, 3 UNKNOWN mantidos. Adendo atual: 4 novas migrations, 75 locais totais, 6 aplicadas no staging incluindo baseline. Ver reconciliation/CONTINUATION_MIGRATIONS.md. Baseline real schema-only, nenhum dado de cliente ou secret copiado.
 
-## Reconciliação
-Baseline real schema-only reproduzível; nenhum dado de cliente/secret copiado. Histórico original: 71 SQLs locais, 51 migrations de produção, 79 linhas reconciliadas, 3 UNKNOWN preservados. Adendo: três migrations novas, hashes iguais ao ledger, 74 locais totais. Staging final: 243 adições intencionais vs produção capturada, zero alteração/remoção de objeto antigo.
+Avisos legados de SQL/RLS e configuração Auth/password protection seguem pendentes; zero aviso estrutural novo nesta unidade. Types regenerados e idênticos após relógio. O master completo, MFA real, fluxos Business integrais, billing comercial, provedores, backup/rollback/release gate não estão concluídos.
 
-Leia reconciliation/CONTINUATION_MIGRATIONS.md e docs/qa/ORCALY_WEALTH_RECURRENCE.md. Advisories novos de definer corrigidos por boundary privada; avisos legados e proteção de senha vazada desabilitada continuam registrados. Não confundir certificação do escopo com release total.
-
-## Próximos passos
-Certificar o commit de recorrências no Preview exato, com RECORDS/EDIT/LIFECYCLE/RECURRENCE=true; guardar evidência sanitizada e cleanup. Fechar operação do relógio sem acionar integrações legadas/produção. Prosseguir 6.5 Debt Center, 6.6 Net Worth e demais seções do master automaticamente, sem refazer módulos saudáveis.
-
-## Limites para produção
-Nenhuma promoção autorizada. Restam módulos do master, billing/entitlements comerciais, MFA real, fluxos legados integrais, revisão dos UNKNOWN históricos, avisos legados/Auth, observabilidade operacional, backup/rollback e release gate. Main conhecida: d940debf9556e1180fa3c709da0f560d3aa96374; deployment de produção dpl_3HeTKTcSdeM2kvzYUk5Drw5yJVtf.
-
-Histórico detalhado preservado em ORCALY_EXECUTION_STATE_HISTORY_THROUGH_LIFECYCLE.md; trata de checkpoints anteriores, não do estado vigente.
+Produção conhecida: main d940debf9556e1180fa3c709da0f560d3aa96374 / dpl_3HeTKTcSdeM2kvzYUk5Drw5yJVtf. Nenhuma alteração nesta execução. Histórico anterior em ORCALY_EXECUTION_STATE_HISTORY_THROUGH_LIFECYCLE.md.
