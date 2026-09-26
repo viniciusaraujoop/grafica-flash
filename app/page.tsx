@@ -1,49 +1,52 @@
 import type { Metadata } from 'next'
-import MainSiteV2 from '@/components/marketing/MainSiteV2'
-import MainSiteMotion from '@/components/marketing/MainSiteMotion'
-import { marketingPlans } from '@/lib/marketing/main-site'
-import styles from './MainSitePremium.module.css'
-import assistantStyles from './MainSiteAssistantPremium.module.css'
+import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
+import EcosystemHome from '@/components/ecosystem/EcosystemHome'
+import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { products } from '@/lib/ecosystem/products'
 
 const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://orcaly.com.br').replace(/\/$/, '')
 
 export const metadata: Metadata = {
-  title: 'Orçaly — Site, pedidos, clientes e operação no mesmo fluxo',
+  title: 'Orçaly — Um Orçaly. Várias possibilidades.',
   description:
-    'Crie a presença digital da sua empresa, receba vendas e orçamentos e acompanhe pedidos, clientes, propostas e operação em um painel adaptado ao seu negócio.',
+    'Um ecossistema de produtos para seu negócio, sua vida financeira, seu aprendizado e suas próximas possibilidades.',
   alternates: { canonical: appUrl },
   openGraph: {
-    title: 'Orçaly — O sistema que entende como sua empresa trabalha',
+    title: 'Um Orçaly. Várias possibilidades.',
     description:
-      'Site, pedidos, clientes, propostas e operação em uma plataforma adaptada ao tipo de negócio.',
+      'Produtos especializados. Uma identidade. Você no centro.',
     url: appUrl,
     type: 'website',
     images: [{ url: '/og-orcaly.png', width: 1200, height: 630, alt: 'Orçaly' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Orçaly — Site, pedidos, clientes e operação',
-    description: 'Do primeiro contato à entrega, tudo no mesmo fluxo.',
+    title: 'Um Orçaly. Várias possibilidades.',
+    description: 'Um ecossistema para seu negócio e suas próximas possibilidades.',
     images: ['/og-orcaly.png'],
   },
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const cookieStore = await cookies()
+  if (cookieStore.getAll().some((cookie) => cookie.name.startsWith('sb-') && cookie.name.includes('-auth-token'))) {
+    const db = await createSupabaseServerClient({ readOnly: true })
+    const { data } = await db.auth.getUser()
+    if (data.user) redirect('/apps')
+  }
   const structuredData = {
     '@context': 'https://schema.org',
-    '@type': 'SoftwareApplication',
-    name: 'Orçaly',
-    applicationCategory: 'BusinessApplication',
-    operatingSystem: 'Web',
+    '@type': 'ItemList',
+    name: 'Ecossistema Orçaly',
     url: appUrl,
     description:
-      'Plataforma para empresas criarem presença digital e organizarem pedidos, clientes, propostas e operação.',
-    offers: marketingPlans.map((plan) => ({
-      '@type': 'Offer',
-      name: plan.name,
-      price: plan.price.toFixed(2),
-      priceCurrency: 'BRL',
-      url: `${appUrl}/cadastro?plano=${encodeURIComponent(plan.id)}`,
+      'Produtos especializados para seu negócio, sua vida financeira e seu aprendizado.',
+    itemListElement: products.map((product, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: product.name,
+      url: `${appUrl}${product.href}`,
     })),
   }
 
@@ -53,10 +56,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }}
       />
-      <div className={`${styles.premiumHome} ${assistantStyles.assistantPremium}`}>
-        <MainSiteMotion />
-        <MainSiteV2 />
-      </div>
+      <EcosystemHome />
     </>
   )
 }

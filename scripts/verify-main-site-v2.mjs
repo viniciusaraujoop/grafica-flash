@@ -5,7 +5,7 @@ const root = process.cwd()
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8')
 const assert = (condition, message) => { if (!condition) throw new Error(message) }
 
-const page = read('app/page.tsx')
+const page = read('app/business/page.tsx')
 const main = read('components/marketing/MainSiteV2.tsx')
 const motion = read('components/marketing/MainSiteMotion.tsx')
 const visualStyles = read('app/MainSitePremium.module.css')

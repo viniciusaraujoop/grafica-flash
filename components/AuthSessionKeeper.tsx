@@ -40,6 +40,8 @@ function isLoginPath(pathname: string) {
 function isProtectedPath(pathname: string) {
   return pathname === '/painel' ||
     pathname.startsWith('/painel/') ||
+    pathname === '/apps' ||
+    pathname.startsWith('/apps/') ||
     pathname === '/admin' ||
     pathname.startsWith('/admin/')
 }
@@ -90,9 +92,7 @@ export default function AuthSessionKeeper() {
           return
         }
 
-        if (isLoginPath(pathname)) {
-          router.replace('/painel')
-        }
+        // The login Server Action owns redirects, including MFA and the requested product.
       } finally {
         validatingRef.current = false
       }
@@ -136,9 +136,6 @@ export default function AuthSessionKeeper() {
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         setLastActivity()
-        if (isLoginPath(pathname)) {
-          router.replace('/painel')
-        }
       }
 
       if (event === 'SIGNED_OUT') {
