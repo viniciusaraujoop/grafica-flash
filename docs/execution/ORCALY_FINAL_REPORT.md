@@ -1,6 +1,6 @@
 # Relatório parcial V8 — Documents Vault
 
-Status: IN_PROGRESS. Documents Vault certificado em staging e Preview. Master V5/V8 incompleto; DEVELOPMENT_COMPLETE e READY_FOR_PRODUCTION não satisfeitos.
+Status: IN_PROGRESS. Documents Vault certificado em staging e Preview; Timeline implementada e certificada localmente, Preview em preparação. Master V5/V8 incompleto; DEVELOPMENT_COMPLETE e READY_FOR_PRODUCTION não satisfeitos.
 
 Entrada: codex/orcaly-ecosystem, 6957d5009ad2543dc85be54d64fc24423ff9b21c, árvore limpa. Unidades anteriores Home/Hub/Core/Portfolio/Calendar/Bills/Goals/Funding/Life Plans preservadas. Nenhuma dependência instalada; WhatsApp congelado; preços Business e ativos aprovados preservados.
 
@@ -10,8 +10,10 @@ Delta desta unidade: 49 adições; cumulativo staging vs produção: 549 adiçõ
 
 Validação: 8 testes novos domínio/PostgreSQL; 19 E2E locais PASS, Auth/Storage/RLS reais, concorrência, origens, isolamento, revogação, upload/download e exclusão recuperável. 24 screenshots, seis larguras, dois temas, Axe, teclado/reduced-motion/overflow; inspeção visual. Cleanup API e SQL zero, inclusive storage/receipts/audit. 138 testes domínio/SQL, typecheck/lint e build/prebuild aprovados. QA local encerrado.
 
-Próximo: continuar Wealth Timeline → Family → Automation → Fee Analyzer → Shield → Tax foundation → Morning/Night → Alerts → Ask Wealth → Portfolio Intelligence → Market/Radar → Open Finance → Regulatory Mode; depois UX Spec V1 e restante do master. Não refazer unidades já certificadas. Providers ausentes NOT_CONFIGURED/BLOCKED_EXTERNAL; sem integração externa fictícia.
+Próximo: certificar Preview Timeline → Family → Automation → Fee Analyzer → Shield → Tax foundation → Morning/Night → Alerts → Ask Wealth → Portfolio Intelligence → Market/Radar → Open Finance → Regulatory Mode; depois UX Spec V1 e restante do master. Não refazer unidades já certificadas. Providers ausentes NOT_CONFIGURED/BLOCKED_EXTERNAL; sem integração externa fictícia.
 
 Proibições: produção/main intocadas; nenhum reset de staging, db push histórico, migration repair, alteração de SQL aplicado ou promoção. .env.local é produção: QA somente via start-staging-qa.mjs; nenhum dev/typegen/build concorrente. GitHub nesta branch e Preview já autorizados. Publicação em produção depende de aprovação posterior.
 
 Preview certificado: https://orcaly-pjfogxjs0-vinicius-araujos-projects.vercel.app; deployment dpl_5s41uynAZwGAQ42ttEkEsXAJWzM3 READY/Preview, runtime da9c03f68d7f39f9a96851521e1c41154a641911. 53 checks E2E hospedados PASS, encerrados 2026-09-26T22:21:09.181Z. Build/prebuild/typecheck/lint PASS (três warnings legados), 138 testes domínio/SQL PASS. Cleanup API/SQL completo, zero usuários/blobs/dados/receipts/audit, cron inativo; nenhum erro de navegador/chamada à produção detectado. Evidências ORCALY_WEALTH_DOCUMENTS_VERCEL_E2E.json, DEPLOYMENT.json e reconciliation/staging-documents-cleanup.json. Main remota permanece d940debf9556e1180fa3c709da0f560d3aa96374.
+
+Timeline adiciona somente duas funções de leitura sobre a auditoria existente; nenhuma tabela/saldo novo. 19 migrations staging e 88 SQLs locais; versões 20260926222248 e 20260926222931 aplicadas explicitamente, hashes conferidos em staging-timeline-ledger.json. Correção forward-only do binding transaction → holding → portfolio; aplicada anterior preservada. Delta2/cumulativo551 adições; produção atual read-only sem diferenças; advisors sem novos WARN. 7 novos testes domínio/SQL e 16 E2E locais PASS, 12 screenshots e seis larguras/dois temas/Axe/teclado/reduced-motion. Cleanup zero, QA encerrado. Detalhes em docs/qa/ORCALY_WEALTH_TIMELINE.md. RPC apenas leitura; sem mutação, CAS/idempotência de escrita não se aplicam.

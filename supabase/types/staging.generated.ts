@@ -11516,6 +11516,17 @@ export type Database = {
         Returns: Json
       }
       wealth_summary: { Args: { p_month: string }; Returns: Json }
+      wealth_timeline: {
+        Args: {
+          p_as_of?: string
+          p_from: string
+          p_operation?: string
+          p_page?: number
+          p_source?: string
+          p_to: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

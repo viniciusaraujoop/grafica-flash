@@ -1,0 +1,21 @@
+# Wealth Timeline — V8
+
+Unidade seguinte ao Vault certificado. Rota /apps/wealth/timeline, leitura cronológica da auditoria já existente: lançamentos, metas, perfil, recorrências, contas, dívidas, snapshots, carteiras, posições, movimentos, funding, planos de vida e documentos. Nenhuma tabela, saldo, ledger, arquivo ou mecanismo de recorrência novo.
+
+Intervalo máximo inclusivo de 366 dias; padrão últimos 90. Filtros por origem e operação, páginas de 50, ordenação recorded_at/id decrescente, cutoff asOf mantido nas páginas/referências para não deslocar eventos por novas gravações. Datas do filtro convertidas no banco pelo fuso do perfil, incluindo viradas de dia e ano bissexto. Títulos/links são contexto atual; não representam histórico de valores nem comprovam pagamentos. Snapshots mantêm seus próprios valores imutáveis na origem; não são reconstruídos. Contextos Labs/planos de vida identificados como simulação.
+
+Cobertura explícita: eventos atribuídos ao usuário atual na auditoria existente. Rotinas sem actor e dados anteriores à auditoria não estão incluídos. Documento excluído mostra apenas Documento removido, sem título anterior ou link. Referência ausente/fora do owner vira Registro indisponível sem revelar ID da entidade ou título. A tabela bruta de auditoria continua negada a authenticated; o RPC retorna somente a projeção necessária.
+
+Segurança: wrapper público INVOKER; implementação privada DEFINER/STABLE/search_path vazio justificada pela auditoria inacessível. Exige auth.uid e wealth.read; filtra actor e verifica owner em cada contexto. Read-only permitido; write-only/revogado/anônimo/contexto de empresa negados. Resultado máximo de 50 contextos resolvidos por PK. Usa índice existente actor/recorded_at. Nenhuma mutação nova: CAS, idempotência e concorrência de escrita não se aplicam ao RPC; alterações via origens continuam com seus contratos anteriores.
+
+Banco: 20260926222248_wealth_timeline_read_model SHA LF 9725a0b45784197b5011432955171e9ec698687b7ac27a8f7bd9acc6167340b3; correção adicional 20260926222931_wealth_timeline_transaction_binding SHA LF 41693ad426fe8080f95fd2c501cfb309fc0c8e4b259436845d5bf098103564d8. A primeira referência a t.portfolio_id era incorreta: movimentos usam holding_id → holdings.portfolio_id. O teste de todas as origens reproduziu o erro; a segunda migration corrige a função privada, preservando o SQL aplicado. Nenhum dado foi alterado pelo erro de leitura.
+
+19 versões staging, 88 SQLs locais, todos os hashes local/ledger conferidos; baseline CRLF preservada. Delta final contra Vault: duas funções novas; cumulativo contra produção: 551 adições, zero legado alterado/removido. Produção atual consultada read-only sem diferenças. Types gerados remotamente; advisors sem WARN novo (Auth/legados continuam pendências de release). Evidências reconciliation/*timeline*.json.
+
+7 testes novos domínio/PostgreSQL PASS: datas, bounds, filtros, cutoff/ties/paginação, owner/contexto, ausência de valores históricos, todas as origens, ID malformado e grants/entitlements. 16 E2E locais PASS usando Auth/PostgREST reais: 65 entradas sintéticas, páginas sem sobreposição, filtros, edição na origem e deep link, read-only, revogação, cross-user, vazio/inválido, Axe e responsividade. Privacy de documentos removidos também é coberta na suíte completa com DOCUMENTS=true. Sem fixtures ou mocks externos. Cleanup completo.
+
+12 screenshots: 320/390/768/1024/1440/1920, claro/escuro. Axe em 320/1440 nos dois temas, teclado, reduced-motion, overflow e inspeção visual desktop/mobile. Leitor de tela manual continua gate global; não inferir sua certificação pelo Axe. QA local encerrado antes de typegen. Nenhuma dependência/lockfile alterada.
+
+Comandos: migration new; prepare-wealth-staging timeline/timelineBinding; db query --linked --project-ref zwxulgpjucxudadjdqov --file .local-qa/reconciliation/apply-wealth-continuation.sql; start-staging-qa; ORCALY_QA_TIMELINE=true e2e-ecosystem-staging; typecheck; scoped eslint; test:ecosystem. Nenhum db push, repair, reset ou produção modificada. Preview/build/E2E hospedado aguardam certificação do commit desta unidade.
+
+Próxima unidade após certificação: Wealth Family, com escopos explícitos, consentimento e revogação reais. Não usar One como consentimento. Vault pessoal e Timeline não compartilham dados automaticamente.
