@@ -13,7 +13,7 @@ for(const user of users){
  assert.equal(result.data.user.email,user.email)
  assert.ok(/^orcaly-qa-.*@example\.test$/.test(user.email),'Refusing to remove a non-fixture account')
  await cleanupWealthSchedules(admin,user.id,entities)
- for(const table of ['ecosystem_product_entitlements','ecosystem_context_consents','wealth_entries','wealth_goals']){
+ for(const table of ['ecosystem_product_entitlements','ecosystem_context_consents','wealth_entries','wealth_goals','wealth_net_worth_snapshots']){
   for(let offset=0;;offset+=500){const rows=await admin.from(table).select('id').eq('user_id',user.id).order('id').range(offset,offset+499);assert.equal(rows.error,null);for(const row of rows.data)entities.add(row.id);if(rows.data.length<500)break}
  }
  entities.add(user.id)

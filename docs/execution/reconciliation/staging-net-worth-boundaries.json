@@ -1,0 +1,13 @@
+{
+  "project": "zwxulgpjucxudadjdqov",
+  "version": "20260926180000",
+  "sha256": "bed98f1bb3e78d88154aab1739c9796e241691c24c20fdde7ea354f76dad0af8",
+  "rls": true,
+  "authSelect": true,
+  "authInsert": false,
+  "authUpdate": false,
+  "authDelete": false,
+  "anonCapture": false,
+  "publicDefiner": false,
+  "activeCron": 0
+}

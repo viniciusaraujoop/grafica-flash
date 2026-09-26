@@ -8393,6 +8393,8 @@ export type Database = {
           id: string
           idempotency_key: string
           kind: string
+          liquidity: string
+          position_class: string | null
           recurrence: string
           title: string
           updated_at: string
@@ -8409,6 +8411,8 @@ export type Database = {
           id?: string
           idempotency_key: string
           kind: string
+          liquidity?: string
+          position_class?: string | null
           recurrence?: string
           title: string
           updated_at?: string
@@ -8425,6 +8429,8 @@ export type Database = {
           id?: string
           idempotency_key?: string
           kind?: string
+          liquidity?: string
+          position_class?: string | null
           recurrence?: string
           title?: string
           updated_at?: string
@@ -8481,6 +8487,39 @@ export type Database = {
           updated_at?: string
           user_id?: string
           version?: number
+        }
+        Relationships: []
+      }
+      wealth_net_worth_snapshots: {
+        Row: {
+          captured_at: string
+          composition: Json
+          id: string
+          idempotency_key: string
+          local_date: string
+          source: string
+          timezone: string
+          user_id: string
+        }
+        Insert: {
+          captured_at: string
+          composition: Json
+          id?: string
+          idempotency_key: string
+          local_date: string
+          source: string
+          timezone: string
+          user_id: string
+        }
+        Update: {
+          captured_at?: string
+          composition?: Json
+          id?: string
+          idempotency_key?: string
+          local_date?: string
+          source?: string
+          timezone?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -9425,6 +9464,10 @@ export type Database = {
         Args: { p_payout_id: string; p_reason: string }
         Returns: boolean
       }
+      capture_wealth_net_worth: {
+        Args: { p_idempotency_key: string }
+        Returns: string
+      }
       change_signup_lead_sales_stage: {
         Args: {
           p_actor_admin_id: string
@@ -9730,6 +9773,15 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      classify_wealth_position: {
+        Args: {
+          p_class: string
+          p_entry_id: string
+          p_liquidity: string
+          p_version: number
+        }
+        Returns: boolean
       }
       complete_founder_activation: {
         Args: {
@@ -11038,6 +11090,7 @@ export type Database = {
         Args: { p_confirmed: boolean; p_entry_id: string; p_version: number }
         Returns: boolean
       }
+      wealth_net_worth: { Args: never; Returns: Json }
       wealth_summary: { Args: { p_month: string }; Returns: Json }
     }
     Enums: {

@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import {createHash} from 'node:crypto'
 const target='zwxulgpjucxudadjdqov'
-const files={lifecycle:'supabase/migrations/20260926103114_wealth_lifecycle_aggregates.sql',recurrence:'supabase/migrations/20260926110128_wealth_recurring_schedules.sql',recurrenceBoundary:'supabase/migrations/20260926153138_wealth_recurrence_rpc_boundary.sql',recurrenceClock:'supabase/migrations/20260926164000_wealth_recurrence_clock.sql',debt:'supabase/migrations/20260926165000_wealth_debt_center.sql',debtConflict:'supabase/migrations/20260926171000_wealth_debt_conflict_response.sql'}
+const files={netWorth:'supabase/migrations/20260926180000_wealth_net_worth.sql',lifecycle:'supabase/migrations/20260926103114_wealth_lifecycle_aggregates.sql',recurrence:'supabase/migrations/20260926110128_wealth_recurring_schedules.sql',recurrenceBoundary:'supabase/migrations/20260926153138_wealth_recurrence_rpc_boundary.sql',recurrenceClock:'supabase/migrations/20260926164000_wealth_recurrence_clock.sql',debt:'supabase/migrations/20260926165000_wealth_debt_center.sql',debtConflict:'supabase/migrations/20260926171000_wealth_debt_conflict_response.sql'}
 const file=files[process.argv[2]]
 if(!file)throw Error('Specify an allowlisted migration: lifecycle, recurrence, recurrenceBoundary, recurrenceClock, debt or debtConflict')
 if(fs.readFileSync('supabase/.temp/project-ref','utf8').trim()!==target)throw Error('Wrong linked project')
@@ -18,6 +18,7 @@ const guard=`do $guard$ begin
  ${process.argv[2]==='recurrenceClock'?"if not exists(select 1 from supabase_migrations.schema_migrations where version='20260926153138' and name='wealth_recurrence_rpc_boundary') then raise exception 'RECURRENCE_BOUNDARY_REQUIRED'; end if;":''}
  ${process.argv[2]==='debt'?"if not exists(select 1 from supabase_migrations.schema_migrations where version='20260926164000' and name='wealth_recurrence_clock') then raise exception 'RECURRENCE_CLOCK_REQUIRED'; end if;":''}
  ${process.argv[2]==='debtConflict'?"if not exists(select 1 from supabase_migrations.schema_migrations where version='20260926165000' and name='wealth_debt_center') then raise exception 'DEBT_REQUIRED'; end if;":''}
+${process.argv[2]==='netWorth'?"if not exists(select 1 from supabase_migrations.schema_migrations where version='20260926171000' and name='wealth_debt_conflict_response') then raise exception 'DEBT_CONFLICT_REQUIRED'; end if;":''}
 end $guard$;`
 if(!/^begin;$/m.test(sql)||!sql.trimEnd().endsWith('commit;'))throw Error('Expected transactional migration')
 const out='.local-qa/reconciliation/apply-wealth-continuation.sql'
