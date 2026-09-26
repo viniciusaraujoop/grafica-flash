@@ -2,8 +2,7 @@ export const GOOGLE_OAUTH_PROVIDER_KEYS = [
   'google_calendar',
   'google_drive',
   'google_sheets',
-  'gmail',
-  'google_business',
+  'google_business_profile',
 ] as const
 
 const identityScopes = ['openid', 'email'] as const
@@ -11,8 +10,7 @@ const scopeMap: Record<(typeof GOOGLE_OAUTH_PROVIDER_KEYS)[number], readonly str
   google_calendar: [...identityScopes, 'https://www.googleapis.com/auth/calendar.calendarlist.readonly', 'https://www.googleapis.com/auth/calendar.events'],
   google_drive: [...identityScopes, 'https://www.googleapis.com/auth/drive.file'],
   google_sheets: [...identityScopes, 'https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file'],
-  gmail: [...identityScopes, 'https://www.googleapis.com/auth/gmail.metadata', 'https://www.googleapis.com/auth/gmail.send'],
-  google_business: [...identityScopes, 'https://www.googleapis.com/auth/business.manage'],
+  google_business_profile: [...identityScopes, 'https://www.googleapis.com/auth/business.manage'],
 }
 
 export function isGoogleOAuthProviderKey(provider: string): provider is (typeof GOOGLE_OAUTH_PROVIDER_KEYS)[number] {

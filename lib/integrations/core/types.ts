@@ -31,6 +31,8 @@ export type IntegrationCapability =
   | 'business_profile.manage'
   | 'maps.validate_address'
   | 'maps.routes'
+  | 'maps.distance'
+  | 'maps.geocode'
   | 'fiscal.issue'
   | 'fiscal.cancel'
   | 'leads.read'
@@ -40,41 +42,54 @@ export type IntegrationCapability =
   | 'orders.export'
   | 'finance.import'
   | 'automation.trigger'
+  | 'automation.action'
+  | 'webhooks.manage'
+  | 'files.upload'
+  | 'files.folder.manage'
+  | 'marketplace.orders.read'
+  | 'erp.customers.sync'
+  | 'erp.products.sync'
+  | 'erp.orders.sync'
+  | 'erp.financial.sync'
 
 export type IntegrationProviderKey =
   | 'google_calendar'
   | 'google_drive'
   | 'google_sheets'
-  | 'gmail'
-  | 'google_business'
+  | 'google_business_profile'
   | 'google_maps'
   | 'resend'
-  | 'nfse_nacional'
+  | 'nfse'
   | 'meta_leads'
   | 'clicksign'
   | 'mercado_livre'
   | 'shopee'
-  | 'erp'
   | 'bling'
   | 'omie'
   | 'zapier'
   | 'make'
   | 'n8n'
-  | 'slack'
-  | 'microsoft_teams'
-  | 'open_finance'
 
 export type IntegrationCategory =
   | 'communication'
   | 'google'
   | 'fiscal'
-  | 'financial'
   | 'logistics'
-  | 'sales'
+  | 'marketing'
+  | 'documents'
   | 'marketplaces'
+  | 'erp'
   | 'automation'
-  | 'files'
-  | 'productivity'
+
+export type IntegrationEngineeringReadiness = 'NOT_STARTED' | 'IN_PROGRESS' | 'ENGINEERING_COMPLETE'
+export type IntegrationValidationReadiness = 'UNIT_VERIFIED' | 'SANDBOX_VERIFIED' | 'PRODUCTION_VERIFIED'
+export type IntegrationRuntimeReadiness = 'NOT_CONFIGURED' | 'ACCESS_REQUIRED' | 'OPERATIONAL' | 'DEGRADED'
+
+export type IntegrationReadiness = {
+  engineering: IntegrationEngineeringReadiness
+  validation: IntegrationValidationReadiness | null
+  runtime: IntegrationRuntimeReadiness
+}
 
 export type IntegrationConnection = {
   id: string
@@ -170,4 +185,5 @@ export type IntegrationProviderDefinition = {
   externalRequirement: string | null
   unavailableStatus: Extract<IntegrationStatus, 'NOT_CONFIGURED' | 'ACCESS_REQUIRED'>
   recommendedSegments: string[]
+  readiness: Omit<IntegrationReadiness, 'runtime'>
 }

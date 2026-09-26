@@ -12,13 +12,19 @@ const keys = integrationProviders.map((provider) => provider.key)
 assert.equal(new Set(keys).size, keys.length, 'provider registry must not contain duplicates')
 assert.ok(getIntegrationProvider('google_calendar'))
 assert.ok(getIntegrationProvider('mercado_livre'))
-assert.ok(getIntegrationProvider('open_finance'))
+assert.ok(getIntegrationProvider('google_business_profile'))
+assert.ok(getIntegrationProvider('nfse'))
+assert.equal(getIntegrationProvider('gmail'), null, 'Gmail está fora do escopo desta expansão')
+assert.equal(getIntegrationProvider('slack'), null, 'Slack está fora do escopo desta expansão')
+assert.equal(getIntegrationProvider('microsoft_teams'), null, 'Teams está fora do escopo desta expansão')
+assert.equal(getIntegrationProvider('open_finance'), null, 'Open Finance está fora do escopo desta expansão')
 assert.equal(getIntegrationProvider('whatsapp'), null, 'WhatsApp must remain outside this expansion registry')
 
 for (const provider of integrationProviders) {
   assert.ok(provider.featureFlag.startsWith('integration_'))
   assert.ok(provider.capabilities.length > 0)
   assert.ok(['NOT_CONFIGURED', 'ACCESS_REQUIRED'].includes(provider.unavailableStatus))
+  assert.ok(['NOT_STARTED', 'IN_PROGRESS', 'ENGINEERING_COMPLETE'].includes(provider.readiness.engineering))
 }
 
 const oauth = createIntegrationOAuthState({

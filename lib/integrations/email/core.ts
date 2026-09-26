@@ -31,14 +31,14 @@ export interface TransactionalEmailProvider {
   send(message: EmailMessage, credentials: Record<string, unknown>): Promise<EmailSendResult>
 }
 
-export function isEmailAddress(value: unknown): value is string {
+export function isEmailAddress(value: unknown): boolean {
   if (typeof value !== 'string') return false
   const email = value.trim()
   return email.length > 3 && email.length <= 320 && /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)
 }
 
 export function normalizeEmailAddress(value: unknown): string | null {
-  return isEmailAddress(value) ? value.trim().toLowerCase() : null
+  return typeof value === 'string' && isEmailAddress(value) ? value.trim().toLowerCase() : null
 }
 
 export function extractMailbox(value: unknown): string | null {
