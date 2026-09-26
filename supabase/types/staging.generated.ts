@@ -11014,6 +11014,10 @@ export type Database = {
         Args: { p_input: Json; p_operation: string }
         Returns: string
       }
+      manage_wealth_family: {
+        Args: { p_input: Json; p_operation: string }
+        Returns: string
+      }
       manage_wealth_planning: {
         Args: { p_input: Json; p_operation: string }
         Returns: string
@@ -11075,6 +11079,7 @@ export type Database = {
         Args: { p_job_id: string; p_worker: string }
         Returns: Json
       }
+      read_wealth_family_share: { Args: { p_id: string }; Returns: Json }
       record_founder_payment_approved: {
         Args: {
           p_company_id: string
@@ -11509,6 +11514,7 @@ export type Database = {
         }
         Returns: Json
       }
+      wealth_family_overview: { Args: { p_page?: number }; Returns: Json }
       wealth_health_inputs: { Args: never; Returns: Json }
       wealth_net_worth: { Args: never; Returns: Json }
       wealth_portfolio_view: {

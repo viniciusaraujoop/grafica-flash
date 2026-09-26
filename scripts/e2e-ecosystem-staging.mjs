@@ -1,4 +1,5 @@
 import {testWealthTimeline} from './e2e-wealth-timeline.mjs'
+import {testWealthFamily} from './e2e-wealth-family.mjs'
 import {testWealthDocuments} from './e2e-wealth-documents.mjs'
 import {testWealthPlanning} from './e2e-wealth-planning.mjs'
 import {testWealthCalendar} from './e2e-wealth-calendar.mjs'
@@ -389,12 +390,14 @@ try{
  if(process.env.ORCALY_QA_PLANNING==='true')await testWealthPlanning({page,context,a,b,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_DOCUMENTS==='true')await testWealthDocuments({page,context,other,anonymous,a,b,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_TIMELINE==='true')await testWealthTimeline({page,context,other,anonymous,a,b,admin,appUrl,grant,active,ok,pass,output})
+ if(process.env.ORCALY_QA_FAMILY==='true')await testWealthFamily({page,context,other,anonymous,a,b,no,admin,appUrl,grant,active,ok,pass,output})
  assert.deepEqual(errors,[])
  pass('no-browser-errors-or-production-requests')
 }catch(error){const safeMessage=String(error?.message??error).split('\n')[0];report.push({check:'execution',status:'FAIL',message:safeMessage});process.exitCode=1;console.error(safeMessage)}
 finally{
  await Promise.all(contexts.map(c=>c.close().catch(()=>{})));await browser?.close()
  // Collect fixture entity IDs before user cascades; triggers during cascades retain only IDs.
+ for(const user of users){for(let offset=0;;offset+=500){const events=ok(await admin.from('ecosystem_audit_events').select('id,entity_id').eq('actor_id',user.id).order('id').range(offset,offset+499));for(const e of events)entities.add(e.entity_id);if(events.length<500)break}}
  for(const user of users){
   await cleanupWealthSchedules(admin,user.id,entities)
   for(const table of ['ecosystem_product_entitlements','ecosystem_context_consents','wealth_entries','wealth_goals','wealth_net_worth_snapshots','wealth_portfolios','wealth_holdings','wealth_portfolio_transactions','wealth_goal_funding','wealth_life_plans','wealth_documents']){

@@ -1,0 +1,646 @@
+{
+  "label": "family-schema-delta",
+  "expectedSha256": "1206cbee933585564d2469ec1e9a0a57e47ad455b2cb8d3da1a3538f47655baa",
+  "actualSha256": "082f8f5ac15746bcdcd09df24ece6ecc0eb68d624d4de31f9730bcbbfc5c7d00",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2734,
+      "actual": 2763
+    },
+    "indexes": {
+      "expected": 696,
+      "actual": 706
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 176,
+      "actual": 176
+    },
+    "triggers": {
+      "expected": 57,
+      "actual": 59
+    },
+    "functions": {
+      "expected": 150,
+      "actual": 159
+    },
+    "relations": {
+      "expected": 183,
+      "actual": 186
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 794,
+      "actual": 811
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 71,
+  "changes": [
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_commands.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c8161011e73e9d9f2df133768b4be00a67bbdc0a3ba56569ba6d2fbb4d1084ba"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_commands.token",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e7b4aeca9dc14e5f887c38469b193ae51737af4b77985169d747da025526cb83"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_commands.operation",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5b7fe5186c959e407bbabaeccff0935b833589c7beadbb91d79f887f01faf270"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_commands.input_hash",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "015f9d9f8b5af4525db4f7ecd359ca66794039c2149cd6d0baaf5353d567138c"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_commands.result",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5b7b383cfaab94d177fc59368ba8e372c1f6b45595213f087764acb1fd0c7cb4"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_connections.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "11651090fd04405e63e2c08f889b2e1a1bf5642949ff950f191bb896508299f4"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_connections.owner_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "715ecd7371ff97369ef8904bfc2df2b1d8344dd0e4f27de556cb214aeba22273"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_connections.member_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c6e83dbd31589cdcc42d0985a0abb10b3d0fb06b9465c4fe8582ade3d58e9a85"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_connections.label",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "dc81f3a6d11c6fb94c2fc8fc1eadced362ad2bf6837f49a1abea8673e23fb816"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_connections.invite_hash",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b5076f92095438f9d0b24d4af69759265bef7299d04047a95de92359c3679fce"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_connections.invite_expires_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f30b3aee1709065e6a5462c7622822f3d6aedc7b5dfe8eed44f76f66b28d5a73"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_connections.state",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7fcf25b21aa137c4bdd88cf0cd8a9bb5de046b19b5a03ba88c19836aee3c1ab9"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_connections.version",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8f86c230b0499e98d7c238d8b5d10fd1fd24d7c0a8c2eeb50c9388831783c7e5"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_connections.created_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "4c71f42d9e20492bddfbbe79bd0867465aef6f4f83211bf4a86f2c4b392125c6"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_connections.accepted_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "625a1d443fbf4c57055b6960c883eac1fa768395958804324ecd1c3b41e7ee9b"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_connections.revoked_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a0e2d5c76c15a4698f7edb35c3b19db7c0ea1f3b4af3ae985a1bb304e2efefc9"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "aff1d5447fb0dc4a8e9a881b03036905a723f1b12549ad45a14023be1a8c170b"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.connection_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e776890d9a8d285a97b637b4766adf9db350dddb3ce4dbeca5959422ca9fbf34"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.owner_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7d83e46c9d3375e2478b2c61b64b6de22899c6779ee1f7a1771b7555ac5213a6"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.recipient_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9a4545a2e178dfcce9966e6c9279ed3f325a11dbf71ca9b3d8ae50b65f1594da"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.resource_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "fdf609a963e03d4a74c870d7d94c53b6f0ad4f55ccba77a7537366cd83132ee9"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.scope",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7dead17b941678f0944bcf02423efa4981fec5e0bd557ac7514290596b9f454c"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.purpose",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "25e2837763600c43e5e24073f68deb0727f6aa1ac5ea05439d9719e3fa23a0f0"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.expires_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "54b5a8b2132373bb45be63dca0f6548cbbca7a2fbd07e49e2e4f3b1b8ddc0cad"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.state",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9a43c55f102d76ef95dc25997bc7feb6e64e0fe2bb6f6ff35f053d75d678fdde"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.version",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7e6fece7ee805563379b9523af579eaff354cc2457ca3f45c7612b0754e761f4"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.created_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9002c8c75dd3138c9d50579ba411f635440658dfc581bcf355f16c3eb04ed3d1"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.accepted_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "cc227af2bc91fe02b18bd9e50261d2f0134b992195affa53849a9c69b51b0259"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_family_shares.revoked_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a5b9df0413ae33253f011f3849b49d450c2a73e0e71ae7e3aa29a3fcf3752122"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_family_active_pair",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "63702b6fd92a833104b199565ef28b1282ee6da91e834b2e0f142163c6d5a696"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_family_commands_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d417b27559db201956834abe734df34b34e135beb2d09840b44c85be8558adf0"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_family_connection_member",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "399a7bcfe048b6bc9738c5bc407123954d6807b6d3d24afe4fbd26556efbefb5"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_family_connection_owner",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c435078cf669792c584deff197cc833e6f082ed4f646adb8550ec9930a8490a3"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_family_connections_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "38be67f3a787e563fbca1119cb7e4bac24deadbd91536f0d19daa32b3a53a39d"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_family_share_connection",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1edcbeafaf3ae91c1b6f6354b2b6a9b4e6574eeef3b2007c3c1b9ac4685288d5"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_family_share_owner",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "112e39cb1fce42206b194bdded81827b182134593c729bc827d1bfc1d66ee016"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_family_share_recipient",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0269da81096aca345bd24b52770bc9b70eba9262c107a75a17941c4683a9ba61"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_family_share_resource",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "38004db74390155f37f266af945dca92959ff26d7cfd9fa74c5dcca7afd2203f"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_family_shares_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0e496d0b488d71585688ec0e00b587120a4f999270b3d7aea126eb9235432abc"
+    },
+    {
+      "category": "policies",
+      "id": "storage.objects.wealth_documents_download",
+      "kind": "changed",
+      "fields": [
+        "qual"
+      ],
+      "beforeSha256": "8113c94b59b366d9721da41f628473368e2b7932ca97852516b912a4756c65ef",
+      "afterSha256": "3575a4907b478e0852098e9b70d25311388e2fc2da075215f070de2e6dd74860"
+    },
+    {
+      "category": "triggers",
+      "id": "ecosystem_private.wealth_family_connections.family_connection_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1b7a4f3b28327fda44937385fbca811b14349f946530f847d759f224a8924469"
+    },
+    {
+      "category": "triggers",
+      "id": "ecosystem_private.wealth_family_shares.family_share_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "68c87b3888faf9202cd0eb7eb49196bcf1e08796a66c22e66deefb73979e6ead"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.allow_wealth_family_document.p_path text",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5040868cb4d1235e42787f0e042c90b34c6a0fec10fe60e50a9a0a581a5796d5"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.family_user_can_read.p_user uuid",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5d18b7695a9d4b7bd64a54751c23569bd58c3c49b2e7c58000d7f298718893c4"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.manage_wealth_family.p_operation text, p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9124d45d2ac578fc528e519fa837e9911b9b64cd455e45cbc80cea1c701bba50"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.read_wealth_family_share.p_id uuid",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "89d82b60cf2df5703b96bede055e189e7f78d00eb3cbc3f1df220c250884161f"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.wealth_family_overview.p_page integer",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "84fb36a8ab3d3b0e65bdd1189001c268fe9ad095a92c342f618858915538268d"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.wealth_family_resource.p_owner uuid, p_scope text, p_resource uuid",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "beddb4b3678b6f1cceaed2a719802503d03fc6c1e00cce94e821daaeb0365dde"
+    },
+    {
+      "category": "functions",
+      "id": "public.manage_wealth_family.p_operation text, p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5a9e71546156e0c0b6ad3b74d22bae7fde5576c6e347cf8e18460f87a2391936"
+    },
+    {
+      "category": "functions",
+      "id": "public.read_wealth_family_share.p_id uuid",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a36172020cdaa16e0074bc0e13352a8489ed291e8e689b068fb3ba53848ee66b"
+    },
+    {
+      "category": "functions",
+      "id": "public.wealth_family_overview.p_page integer",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "6e586b7b925d57839115e0bcfd0c710eed19bcdd5ba34e2d5236450920571a79"
+    },
+    {
+      "category": "relations",
+      "id": "ecosystem_private.wealth_family_commands",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8d69a08217b8b63b43133c0cb0afdfea75da776cf2b64b1a17e8c5eada436bc9"
+    },
+    {
+      "category": "relations",
+      "id": "ecosystem_private.wealth_family_connections",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "60871c3444f6994b6c414b4b3256e0127d6c828db0c767a5108011442cf264bd"
+    },
+    {
+      "category": "relations",
+      "id": "ecosystem_private.wealth_family_shares",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "4e8089da53c38c8eab087a210fd3dc232bc5d9a7dd75ebf7d44719507dfe903e"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_commands.wealth_family_commands_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "84f862e5f5ea3b5b571d9bd0453a9d741a94beaedd127e59c1c276a78eea7a14"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_commands.wealth_family_commands_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ff7a512d07a8a2b49ad49cf2374114d9a3938dafd4ad2dc9cecea9d95e30233a"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_connections.wealth_family_connections_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "594a203e05c6b2310a68574a7f8ea3e4ff0348b2c21dfa5f0e1cbca6537133aa"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_connections.wealth_family_connections_check1",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d313ecd1bc44949950430e24dda8c4a9b68ce9b029d98683f3b39491af412498"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_connections.wealth_family_connections_label_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7e635203e8400a36f45b51521263c00eca432329e92d49d9a917fd346e2a282c"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_connections.wealth_family_connections_member_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9f02452d7a63ca56b16862196f605ca34eb9825c53907412d8f2badf914abd56"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_connections.wealth_family_connections_owner_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8e1bdad6176c758784b0476a43dde0ad6b73b1e0f156418021c26f1f752065c2"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_connections.wealth_family_connections_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d4d5c4f0f8cba0d71a3c96f878083ba9d9224e13af9aab5caae3a601726734b8"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_connections.wealth_family_connections_state_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8d6f67531dd0b5e6cba49fa84a4e45a3e61f89b9d206a93d7a5d06f698af8fff"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_shares.wealth_family_shares_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "643354d7c93f1b8e1e826bb9461093776d8815dae24988b64988b1cd2beea5bd"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_shares.wealth_family_shares_connection_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "fae83a34a4282a271fe395ee7e27b9510add5e22a4e957b83642fccaad6d6d1e"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_shares.wealth_family_shares_owner_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "cbf6516ad5399146c114bc9aeb90ab53150485ab6e60a6bd19d40de56081549e"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_shares.wealth_family_shares_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "087670519ab7fe4b420246758eadecd774ec19ac76061d344c7f8b33193b1288"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_shares.wealth_family_shares_purpose_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ff8359eb5439c2831f7805d901e2ac8f63b9eb0422e6cda1f99487b67461e029"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_shares.wealth_family_shares_recipient_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1fafa40d657381f37979399f431a913538fe89ceda330f7b8827b9f6e0d48c73"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_shares.wealth_family_shares_scope_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c46d37e00ec4b83dd50e07085ce8990592ef8189d7fe68996c81cf4fd84984de"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_family_shares.wealth_family_shares_state_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c490fd2530b081737ec413d3c4cf4f6f2283292f5edf4b4bfd214890c914d5c3"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}
