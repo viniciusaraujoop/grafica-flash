@@ -5,6 +5,8 @@ import {createClient} from '@supabase/supabase-js'
 import {chromium} from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import {stagingRef,stagingUrl,anonKey,serviceKey} from './helpers/staging-credentials.mjs'
+import {cleanupWealthSchedules,wealthScheduleFixtureCounts} from './helpers/cleanup-wealth-schedules.mjs'
+import {testWealthRecurrence} from './e2e-wealth-recurrence.mjs'
 
 const appUrl=process.env.ORCALY_STAGING_APP_URL||'http://127.0.0.1:4174'
 const accessFile=process.env.ORCALY_STAGING_ACCESS_FILE
@@ -370,6 +372,7 @@ try{
   await page.setViewportSize({width:390,height:1100});await page.screenshot({path:`${output}/lifecycle-aggregate-top.png`});await page.screenshot({path:`${output}/lifecycle-aggregate.png`,fullPage:true})
   pass('full-precision-hosted-aggregates-over-1000-entries-100-goals-pagination-and-export-cap')
  }
+ if(process.env.ORCALY_QA_RECURRENCE==='true')await testWealthRecurrence({page,context,other,a,b,admin,appUrl,grant,active,ok,pass,errors,output})
  assert.deepEqual(errors,[])
  pass('no-browser-errors-or-production-requests')
 }catch(error){report.push({check:'execution',status:'FAIL',message:error.message});process.exitCode=1;console.error(error.stack)}
@@ -377,6 +380,7 @@ finally{
  await Promise.all(contexts.map(c=>c.close().catch(()=>{})));await browser?.close()
  // Collect fixture entity IDs before user cascades; triggers during cascades retain only IDs.
  for(const user of users){
+  await cleanupWealthSchedules(admin,user.id,entities)
   for(const table of ['ecosystem_product_entitlements','ecosystem_context_consents','wealth_entries','wealth_goals']){
    for(let offset=0;;offset+=500){const rows=ok(await admin.from(table).select('id').eq('user_id',user.id).order('id').range(offset,offset+499));for(const row of rows)entities.add(row.id);if(rows.length<500)break}
   }
@@ -387,6 +391,8 @@ finally{
  for(let offset=0;offset<entityIds.length;offset+=100){const cleaned=await admin.from('ecosystem_audit_events').delete().in('entity_id',entityIds.slice(offset,offset+100));if(cleaned.error){errors.push(`Cleanup audit: ${cleaned.error.code}`);process.exitCode=1}}
  const remaining=await admin.auth.admin.listUsers({page:1,perPage:1})
  const cleanup={usersRemaining:remaining.data?.users?.length??null,auditRowsRemaining:(await admin.from('ecosystem_audit_events').select('id')).data?.length??null}
+ Object.assign(cleanup,await wealthScheduleFixtureCounts(admin))
+ if(Object.values(cleanup).some(value=>value!==0))process.exitCode=1
  if(cleanup.usersRemaining!==0||cleanup.auditRowsRemaining!==0)process.exitCode=1
  await fs.writeFile(`${output}/report.json`,JSON.stringify({project:stagingRef,appUrl,commit:accessUrl?process.env.ORCALY_EXPECTED_COMMIT:null,startedAt,finishedAt:new Date().toISOString(),report,errors,cleanup,limits:[accessUrl?'Next.js served by protected Vercel Preview; Supabase staging hosted in sa-east-1':'Next.js application served locally; Supabase staging hosted in sa-east-1','Auth, JWT, refresh, PostgREST, RLS, grants and persistence use real hosted Supabase staging','No production data or credentials used; no email sent; all accounts confirmed by staging Admin API']},null,2))
  console.log(JSON.stringify({checks:report.length,failed:report.filter(r=>r.status!=='PASS').length,cleanup,errors},null,2))

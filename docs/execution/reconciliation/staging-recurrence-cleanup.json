@@ -1,0 +1,34 @@
+{
+  "users": 0,
+  "ledger": [
+    {
+      "name": "ecosystem_identity_wealth",
+      "version": "20260926014103"
+    },
+    {
+      "name": "production_schema_baseline",
+      "version": "20260926030809"
+    },
+    {
+      "name": "wealth_lifecycle_aggregates",
+      "version": "20260926103114"
+    },
+    {
+      "name": "wealth_recurring_schedules",
+      "version": "20260926110128"
+    },
+    {
+      "name": "wealth_recurrence_rpc_boundary",
+      "version": "20260926153138"
+    }
+  ],
+  "cronJobs": 0,
+  "schedules": 0,
+  "wealthJobs": 0,
+  "anonProcess": false,
+  "authProcess": false,
+  "occurrences": 0,
+  "wealthEvents": 0,
+  "wealthOutbox": 0,
+  "serviceProcess": true
+}

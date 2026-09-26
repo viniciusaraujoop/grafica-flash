@@ -1,0 +1,652 @@
+{
+  "label": "staging-recurrence-final-delta",
+  "expectedSha256": "51b23b12fbdfe4c065c6ca748427cb0814e46f92ee713a73ab9fcc24dbb9e053",
+  "actualSha256": "28228d51132ae16c6834829ee6ea2b8f88b504cc213fc1ab9fddcd1a4a8c8c91",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2588,
+      "actual": 2617
+    },
+    "indexes": {
+      "expected": 662,
+      "actual": 668
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 162,
+      "actual": 164
+    },
+    "triggers": {
+      "expected": 45,
+      "actual": 46
+    },
+    "functions": {
+      "expected": 112,
+      "actual": 121
+    },
+    "relations": {
+      "expected": 169,
+      "actual": 171
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 672,
+      "actual": 695
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 72,
+  "changes": [
+    {
+      "category": "columns",
+      "id": "public.wealth_recurrence_occurrences.schedule_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3e0f81e71668c7c40767d7d1ead715b81fa3d2edb75fd0ec88980197a39afb27"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurrence_occurrences.occurrence_index",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "981183a3da571dca0e7e3261bba7103f6865b3f6e47310a6a275cec64f4e28bf"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurrence_occurrences.financial_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ac5d5a30fcb62932d62b4fc2adbf134cf4fe0afb92653072e83f3797ece9b589"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurrence_occurrences.entry_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "41bedb143eb8f855d4e05c245f700798bd3c35bcc9a5937c568f0531a3ad8f84"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurrence_occurrences.created_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8a0582c94515b39b4faf1c094fa00b1e2c3b4ebf2bda37f7a6bdc8e3ecd80b26"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "19c0539f34b2e3792480415beac400803e9191be22df0cb7680630020a735e55"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "16dd938a3cf954a1a84c43456a9a8e8d244b7aa9a656f57d32772047bf9b5b55"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.title",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "754d63dc2d0302efb8cd0526a6944656de83cdc8bab4dca2ef43b8bad3225b45"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.kind",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "6c77de27eeb206fbc486dffe43cae940333593bb591c43ed9f7ddb812242a761"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.category",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c1176aea9a52867813f5e66eb4ae3d2e7984a516d5855f8195850a551a48ffc5"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.amount_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "745e4c42e7ae38702f432ce0739237c6bc3bf58a43fa1171bfa0207f19d30b97"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.currency",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "6ee2677250be4a32f2f359ebcffd8f904495bd92cc6afe876a48f6bd347c6190"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.frequency",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f0008802ba8037106f092985c0130a1eb7689997354fa3929374456cd2c98bef"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.interval_count",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "989de679c21d1e65543cf91f3039d7ed34d8b0634149a8e359b265f75c3798f5"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.start_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0d8bc3aff36b0004967a5f534e54f3caa6f69f7ea60e50f8ff8c305e0467f177"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.end_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "38b6586115320d6070eaaaea1e9da1c76b9561b78e1d731e8410383586418631"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.max_occurrences",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "aebfe1b9b8e6826d69be57634a76711caa1974a5003f0300f1ff65d7ce7c1032"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.timezone",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9796b3124c5bd4264d6ea3d6a0843b4ba212417bc12fc46a8659cca36ddb5f2f"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.status",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "30fc12eee5e17b7203548533991b59751fdd932a708e7c5bd17a4406f0cbebdc"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.pause_reason",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "219eedd07930e090321cf2f75ae334e38c1b053b6f915067873d1a764b62b089"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.next_index",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0d9ab6f9fc138b8027b72516c8078f8ff4242f7e996ec19ed199694cff2c3843"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.next_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b80f819eb0c4ceaefdddf53a34d052737cddf4b58e012a8d4a3b5117a950246c"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.next_run_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "462b2a5827caea15015f36a5f66c7fa79b298dab6e782b6a70e0d2ae2b733959"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.last_run_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ce7e3122a9c19e9ff2a991037ddd927107c21dd4274e2ae094e3d7443ffef73d"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.source_entry_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c111c0bc397d7e2fa57c376e73b8b07eef35995190bd07d645b39e6d236512fd"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.idempotency_key",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "4ce4711041e4472f67017b497ea45a49d44fd1b0be8ef6c8e49f6f6606f8c86a"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.version",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "702524aed7ecbbbd848d5f363b3a85361e2e019fd630dc5cce452c4d9fe00198"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.created_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1aa252414bb9895c679d9ca1d8da493fddf3ced4f959224015a7af4ec9848fa6"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_recurring_schedules.updated_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "64237c151189740a8d8bffdea0b5796a4cf570d73a1214832c31c731d2a12f1f"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_recurrence_occurrences_entry_id_key",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e6f7ddefb1359935e65cd99b1bd7ee92c18e7231eac38ca730ca4b49d3cc4e2e"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_recurrence_occurrences_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3e4d20f2593ab8cbe16d96b2de4279ef49755e40e12b5b57f89dc7e7339e0ccf"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_recurring_owner_created",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b4d3f33bca0d63e89fec1f1469f045f3c17dffd49a604e12a4c876f629f44de9"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_recurring_schedules_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "955393cec0b72d0f65d345c7b4a4d89f99377b07f3ea54333a2160b14379f056"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_recurring_schedules_user_id_idempotency_key_key",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0c7cbde8c8dfea401744f67af9d8407af37fb94c9efb8fe8acee267faf65a3f9"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_recurring_source",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "fb7eaf307f0f230538b80eacc1dcb82b42ad0fa5da166d8b76510ade8a5c697d"
+    },
+    {
+      "category": "policies",
+      "id": "public.wealth_recurrence_occurrences.wealth_occurrences_read",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "46f01add4a31bafc9c26b799a3be87502671857c07b3914d244145ba62b7b072"
+    },
+    {
+      "category": "policies",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_read",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3c11a96edca7ace02b02209ed0b49095a26ef8efa260ab3376966ac3fe0a2562"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "73bb4dc6bcb4c1d55cb311ed21742e21cc14fe435990187f6224fdfb0e285b1c"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.change_wealth_recurrence.p_id uuid, p_version bigint, p_operation text",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "4adffa3528b57beee489682c0d0c77a9902d80fb2d428c5936231872b9f57ad4"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.create_wealth_recurrence.p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3b3f67980b78eb3d52e1b22f78f3fdcf02c554665afb26369b860aad11a8cfb7"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.enqueue_wealth_recurrence.s wealth_recurring_schedules",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "05254c81265e1220c4df9c1ea909728d6b6eac9fbd372a5118642f9d14c8c8de"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.run_my_wealth_recurrences.",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0eb106e5cc028e31dfbfbe7aeb27ba821953c1aa15422e10f5287ff6d95ccb08"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.wealth_recurrence_date.anchor date, frequency text, period integer, step integer",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5b8db0931cc1e5f85ac725ad20923e77acbbb9af8e85817ea1002b8492bfbeaa"
+    },
+    {
+      "category": "functions",
+      "id": "public.change_wealth_recurrence.p_id uuid, p_version bigint, p_operation text",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f1b5fd0c418a9f7cbacd79be7267c34ac57b8337491f7f26dac03c4c23636742"
+    },
+    {
+      "category": "functions",
+      "id": "public.create_wealth_recurrence.p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a2049fa37f9407bd00b522d8ccdf1d28d7d7a861ad60b58ade1a00890fb65ad7"
+    },
+    {
+      "category": "functions",
+      "id": "public.process_wealth_recurrence.p_job_id uuid, p_worker text",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "217722379426e6ca51f9606243703e78d173bd64e2049a27126874e9c685d9b1"
+    },
+    {
+      "category": "functions",
+      "id": "public.run_my_wealth_recurrences.",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a57e6d183f87af04682d44a44a15f609672e685ad7423941225fc2adc89f6fb0"
+    },
+    {
+      "category": "relations",
+      "id": "public.wealth_recurrence_occurrences",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "adcb8c3ba384fa0d5d1680f76b426d331036b5656810aaa96241f2c742afa05c"
+    },
+    {
+      "category": "relations",
+      "id": "public.wealth_recurring_schedules",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "808f55d66789f9441feaaf93ff0632346f68c98fa08adfef59ea9545d22221e1"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurrence_occurrences.wealth_recurrence_occurrences_entry_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a2df0d7ced68bb735b06530f066b2f5b21dc5b3e96f2a8f565197374233a3149"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurrence_occurrences.wealth_recurrence_occurrences_entry_id_key",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9fd55f498149b87ba787848089ebfb50ec6ae39778c92b0390a0f58aae8552f1"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurrence_occurrences.wealth_recurrence_occurrences_occurrence_index_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "baaa6ece7daed3aff8243b2fa46003b8a2d7c0462fabf50f94cf5abef582a10a"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurrence_occurrences.wealth_recurrence_occurrences_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "179bf1d0a21b86de994feee60a25a24463b7f93455769777a8827b906c65e1ae"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurrence_occurrences.wealth_recurrence_occurrences_schedule_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0b93db78a2e43d98d5dcb487d893000390cb02d2b0480a1e4b29a3a532c65c9e"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_amount_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8f8035751d8dd621599fd4292046b100f2e6f268ec5d75757f2f46ee4d3d6f70"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_category_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "480274cffb9be4fa1ebe8ef239585347f39826ef043376ba1228ff5142f5687f"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "475fe45e18f95ad1313f917da0e18c417adb78999fa6d7f5b94e4a6826cd37d6"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_currency_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5fd71b8d2c3cd954efa532004feccd6505f75a7fdd0368e3b078187dc707021f"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_frequency_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "063b8f1ce9a214b96acabe54676f6aef1831a7272dd1c08cc2f3ef386699acad"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_interval_count_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "56e6e275c2b0197b2d5aa2069cc736cfe524a9da16ca0114313324da9138682e"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_kind_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "dceb62d8ce0b7300dd80818618547841b058315732eaebb4ae0c5ffcae9b9629"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_max_occurrences_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ce9ed035b101a13b91cf28d074e94a17053e47a3b7937dd2572c01c7d7628b66"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_next_index_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "fa41f53741dc4ceac913ccbc67a8f7101478a50be31978ec0abdc162b3b0f841"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_pause_reason_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b8d38e50604090cbe5cbb7b941d9d5ca7aec68f562fe2e191bb328d0d20d93a2"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3bb5c0bfeb77a17ced8179690aa6bc3bc12792dc2b8cc7051885c42658c02c96"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_source_entry_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "713f23144b807df84592f2620a3062ba88812da0efd13e44419956dd893fb5f1"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_start_date_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "2412eae877d48105612203f6085d0cf6de64557769751c65ebc4ffccba3371dd"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_status_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9e4848b38b605293ae4f039bf57b6e464ede3dd8780fb688d74dfb605a71a9ec"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_title_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c969edb3aa60396b1e3cb00d8711eb64dbe47e10c1f83131363dd8bd174ff3aa"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1598514e8cc4f0595dd9c690b4d48939acbf26d43595307a391759e5d240f285"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_user_id_idempotency_key_key",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "60097c228643c913d602835b78cdb13d785c5c5a0f434ca1b1b98bfad89a7cdd"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_recurring_schedules.wealth_recurring_schedules_version_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "edf81508e9c4a483fcebd5ae792fc4c203a98ec880e59df4f1197bc15f1e7f6b"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

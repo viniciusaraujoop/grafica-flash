@@ -3,6 +3,7 @@ import { integrationSyncJobHandler } from '@/lib/jobs/handlers/integration-sync'
 import { googleCalendarFullResyncJobHandler } from '@/lib/jobs/handlers/google-calendar-full-resync'
 import { googleCalendarWatchRenewJobHandler } from '@/lib/jobs/handlers/google-calendar-watch-renew'
 import { emailSendJobHandler } from '@/lib/jobs/handlers/email-send'
+import { wealthRecurrenceJobHandler } from '@/lib/jobs/handlers/wealth-recurrence'
 
 let bootstrapped = false
 
@@ -12,5 +13,6 @@ export function bootstrapJobHandlers() {
   registerJobHandler(googleCalendarFullResyncJobHandler)
   registerJobHandler(googleCalendarWatchRenewJobHandler)
   registerJobHandler(emailSendJobHandler)
+  registerJobHandler(wealthRecurrenceJobHandler)
   bootstrapped = true
 }

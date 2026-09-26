@@ -8476,6 +8476,134 @@ export type Database = {
         }
         Relationships: []
       }
+      wealth_recurrence_occurrences: {
+        Row: {
+          created_at: string
+          entry_id: string | null
+          financial_date: string
+          occurrence_index: number
+          schedule_id: string
+        }
+        Insert: {
+          created_at?: string
+          entry_id?: string | null
+          financial_date: string
+          occurrence_index: number
+          schedule_id: string
+        }
+        Update: {
+          created_at?: string
+          entry_id?: string | null
+          financial_date?: string
+          occurrence_index?: number
+          schedule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_recurrence_occurrences_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: true
+            referencedRelation: "wealth_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wealth_recurrence_occurrences_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_recurring_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wealth_recurring_schedules: {
+        Row: {
+          amount_cents: number
+          category: string
+          created_at: string
+          currency: string
+          end_date: string | null
+          frequency: string
+          id: string
+          idempotency_key: string
+          interval_count: number
+          kind: string
+          last_run_at: string | null
+          max_occurrences: number | null
+          next_date: string
+          next_index: number
+          next_run_at: string
+          pause_reason: string | null
+          source_entry_id: string | null
+          start_date: string
+          status: string
+          timezone: string
+          title: string
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          amount_cents: number
+          category: string
+          created_at?: string
+          currency?: string
+          end_date?: string | null
+          frequency: string
+          id?: string
+          idempotency_key: string
+          interval_count?: number
+          kind: string
+          last_run_at?: string | null
+          max_occurrences?: number | null
+          next_date: string
+          next_index?: number
+          next_run_at: string
+          pause_reason?: string | null
+          source_entry_id?: string | null
+          start_date: string
+          status?: string
+          timezone: string
+          title: string
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          amount_cents?: number
+          category?: string
+          created_at?: string
+          currency?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          idempotency_key?: string
+          interval_count?: number
+          kind?: string
+          last_run_at?: string | null
+          max_occurrences?: number | null
+          next_date?: string
+          next_index?: number
+          next_run_at?: string
+          pause_reason?: string | null
+          source_entry_id?: string | null
+          start_date?: string
+          status?: string
+          timezone?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_recurring_schedules_source_entry_id_fkey"
+            columns: ["source_entry_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_connections: {
         Row: {
           access_token_ciphertext: string | null
@@ -9265,6 +9393,10 @@ export type Database = {
           p_stage: string
         }
         Returns: undefined
+      }
+      change_wealth_recurrence: {
+        Args: { p_id: string; p_operation: string; p_version: number }
+        Returns: boolean
       }
       claim_background_jobs: {
         Args: { p_limit?: number; p_worker: string }
@@ -10305,6 +10437,7 @@ export type Database = {
         }
         Returns: string
       }
+      create_wealth_recurrence: { Args: { p_input: Json }; Returns: string }
       expire_due_founder_trials: { Args: never; Returns: number }
       expire_marketplace_stock_reservations: {
         Args: { p_limit?: number }
@@ -10456,6 +10589,10 @@ export type Database = {
           token_expires_at: string
           whatsapp: string
         }[]
+      }
+      process_wealth_recurrence: {
+        Args: { p_job_id: string; p_worker: string }
+        Returns: Json
       }
       record_founder_payment_approved: {
         Args: {
@@ -10806,6 +10943,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      run_my_wealth_recurrences: { Args: never; Returns: Json }
       save_affiliate_payout_account_admin: {
         Args: {
           p_affiliate_id: string

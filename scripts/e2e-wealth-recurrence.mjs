@@ -1,0 +1,86 @@
+import assert from 'node:assert/strict'
+import {randomUUID} from 'node:crypto'
+import {registerHooks} from 'node:module'
+import AxeBuilder from '@axe-core/playwright'
+
+export async function testWealthRecurrence({page,context,other,a,b,admin,appUrl,grant,active,ok,pass,errors,output}){
+ await grant(a,{...active,permissions:['wealth.read','wealth.write','wealth.export']})
+ const url=appUrl+'/apps/wealth/recorrencias'
+ await page.goto(url)
+ const create=page.locator('form').filter({has:page.getByLabel('Nome do agendamento')})
+ await create.getByLabel('Nome do agendamento').fill('Recorrência hospedada QA')
+ await create.getByLabel('Valor por ocorrência (R$)').fill('0,29')
+ await create.getByLabel('Categoria').selectOption('housing')
+ await create.getByLabel('Frequência').selectOption('daily')
+ await create.getByLabel('Primeira data').fill('2026-09-23')
+ await create.getByLabel('Número de ocorrências (opcional)').fill('2')
+ await create.getByRole('checkbox').check()
+ await create.evaluate((form,id)=>{const input=document.createElement('input');input.name='user_id';input.type='hidden';input.value=id;form.appendChild(input)},b.id)
+ await create.getByRole('button',{name:'Criar agendamento'}).click()
+ await create.getByRole('status').filter({hasText:'Agendamento salvo'}).waitFor()
+ const schedule=ok(await admin.from('wealth_recurring_schedules').select('*').eq('title','Recorrência hospedada QA').single())
+ assert.equal(schedule.user_id,a.id);assert.equal(schedule.amount_cents,29)
+ const article=page.getByRole('article',{name:schedule.title,exact:true})
+ const stale=await context.newPage();stale.on('pageerror',error=>errors.push(error.message));await stale.goto(url)
+ await article.getByRole('checkbox').check();await article.getByRole('button',{name:'Pausar',exact:true}).click()
+ await article.getByRole('status').filter({hasText:'Agendamento pausado'}).waitFor()
+ const oldArticle=stale.getByRole('article',{name:schedule.title,exact:true})
+ await oldArticle.getByRole('checkbox').check();await oldArticle.getByRole('button',{name:'Pausar',exact:true}).click()
+ await oldArticle.getByRole('status').filter({hasText:'alterado em outra aba'}).waitFor();await stale.close()
+ await article.getByRole('checkbox').check();await article.getByRole('button',{name:'Retomar',exact:true}).click()
+ await article.getByRole('status').filter({hasText:'Agendamento retomado'}).waitFor()
+ await other.page.goto(url);assert.equal(await other.page.getByRole('article',{name:schedule.title,exact:true}).count(),0)
+ assert.equal(ok(await b.db.rpc('change_wealth_recurrence',{p_id:schedule.id,p_version:3,p_operation:'cancel'})),false)
+ assert.ok((await b.db.rpc('process_wealth_recurrence',{p_job_id:randomUUID(),p_worker:'forged'})).error)
+ const foreignInput={title:'Recorrência exclusiva B',kind:'income',category:'salary',amount_cents:157,frequency:'daily',interval_count:1,start_date:'2026-09-23',max_occurrences:1,timezone:'UTC',idempotency_key:randomUUID(),confirmed:'yes'}
+ const foreign=ok(await b.db.rpc('create_wealth_recurrence',{p_input:foreignInput}))
+ assert.equal(ok(await b.db.rpc('create_wealth_recurrence',{p_input:foreignInput})),foreign)
+ pass('recurrence-creation-Server-Action-exact-cents-owner-pause-resume-stale-and-cross-user')
+ const refresh=page.locator('section').filter({has:page.getByRole('heading',{name:'Atualizar pendências',exact:true})}).locator('form')
+ await refresh.getByRole('checkbox').check()
+ await refresh.getByRole('button',{name:'Atualizar lançamentos vencidos',exact:true}).click()
+ await refresh.getByRole('status').filter({hasText:'1 lançamento(s) gerado(s)'}).waitFor()
+ const concurrent=await Promise.all([a.db.rpc('run_my_wealth_recurrences'),a.db.rpc('run_my_wealth_recurrences')])
+ assert.equal(concurrent.map(ok).reduce((sum,result)=>sum+result.generated,0),1)
+ const occurrences=ok(await a.db.from('wealth_recurrence_occurrences').select('occurrence_index,entry_id,financial_date').eq('schedule_id',schedule.id).order('occurrence_index'))
+ assert.deepEqual(occurrences.map(row=>row.financial_date),['2026-09-23','2026-09-24'])
+ const entries=ok(await a.db.from('wealth_entries').select('user_id,amount_cents').in('id',occurrences.map(row=>row.entry_id)))
+ assert.equal(entries.length,2);assert.ok(entries.every(row=>row.user_id===a.id&&row.amount_cents===29))
+ assert.equal(ok(await admin.from('wealth_recurring_schedules').select('next_index').eq('id',foreign).single()).next_index,0)
+ await page.reload();await page.getByRole('article',{name:schedule.title,exact:true}).getByText(/Agendamento encerrado/).waitFor()
+ const cancelling=ok(await a.db.rpc('create_wealth_recurrence',{p_input:{...foreignInput,title:'Cancelar QA',idempotency_key:randomUUID()}}))
+ await page.reload()
+ const cancelArticle=page.getByRole('article',{name:'Cancelar QA',exact:true})
+ await cancelArticle.getByRole('checkbox').check();await cancelArticle.getByRole('button',{name:'Cancelar agendamento',exact:true}).click()
+ await cancelArticle.getByText(/Agendamento encerrado/).waitFor()
+ assert.equal(ok(await admin.from('wealth_recurring_schedules').select('status').eq('id',cancelling).single()).status,'cancelled')
+ assert.equal(ok(await a.db.rpc('run_my_wealth_recurrences')).generated,0)
+ await create.getByLabel('Nome do agendamento').fill('Read-only recurrence denied');await create.getByLabel('Valor por ocorrência (R$)').fill('1');await create.getByRole('checkbox').check()
+ await grant(a,{...active,permissions:['wealth.read']})
+ await create.getByRole('button',{name:'Criar agendamento'}).click()
+ await create.getByRole('status').filter({hasText:'não permite alterar recorrências'}).waitFor()
+ assert.equal(ok(await admin.from('wealth_recurring_schedules').select('id').eq('title','Read-only recurrence denied')).length,0)
+ await grant(a,{...active,permissions:['wealth.read','wealth.write','wealth.export']})
+ pass('recurrence-owner-refresh-concurrent-idempotency-cancel-and-read-only-Server-Action')
+ // Exercise the actual application job handler against real hosted Postgres; no cron or external provider is invoked.
+ const hook=registerHooks({resolve(specifier,ctx,next){return next(specifier.startsWith('@/')?new URL('../'+specifier.slice(2)+'.ts',import.meta.url).href:specifier,ctx)}})
+ let handler
+ try{handler=(await import('../lib/jobs/handlers/wealth-recurrence.ts')).wealthRecurrenceJobHandler}finally{hook.deregister()}
+ const workerId='wealth-qa-'+randomUUID()
+ const claimed=ok(await admin.rpc('claim_background_jobs',{p_worker:workerId,p_limit:1}))
+ assert.equal(claimed.length,1);assert.equal(claimed[0].job_type,'wealth.recurrence');assert.equal(claimed[0].payload.recurrence_id,foreign)
+ const job=claimed[0],parsed=handler.validate(job.payload);assert.equal(parsed.ok,true)
+ assert.ok((await admin.rpc('process_wealth_recurrence',{p_job_id:job.id,p_worker:'old-worker'})).error)
+ const previousFlag=process.env.ORCALY_WEALTH_ENABLED;process.env.ORCALY_WEALTH_ENABLED='true'
+ try{
+  const results=await Promise.all([1,2].map(()=>handler.execute({db:admin,job:{id:job.id,companyId:null},workerId,deadlineMs:Date.now()+30000},parsed.value)))
+  assert.equal(results.filter(result=>result.status==='generated').length,1)
+ }finally{if(previousFlag===undefined)delete process.env.ORCALY_WEALTH_ENABLED;else process.env.ORCALY_WEALTH_ENABLED=previousFlag}
+ assert.equal(ok(await admin.rpc('settle_background_job',{p_job_id:job.id,p_worker:workerId,p_status:'completed'})),true)
+ assert.equal(ok(await b.db.from('wealth_recurrence_occurrences').select('entry_id').eq('schedule_id',foreign)).length,1)
+ await page.reload()
+ const axe=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();assert.deepEqual(axe.violations.map(v=>v.id),[])
+ for(const width of [320,390,768,1440]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),`Recurrence overflow at ${width}`)}
+ await page.setViewportSize({width:390,height:900});await page.screenshot({path:output+'/recurrence-hosted.png',fullPage:true})
+ pass('recurrence-real-worker-handler-lease-fencing-concurrent-delivery-private-ledger-and-WCAG')
+}
