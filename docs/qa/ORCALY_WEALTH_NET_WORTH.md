@@ -15,3 +15,5 @@ Schema: 27 objetos/colunas adicionados e expansão esperada de column_order de w
 Comandos: node --test scripts/test-wealth-net-worth.mjs; npm run test:ecosystem; npm run typecheck; npx eslint app/apps/wealth/patrimonio app/apps/wealth/page.tsx components/wealth/WealthNetWorthForms.tsx lib/wealth/net-worth.ts; node scripts/start-staging-qa.mjs; agent-browser open/snapshot/errors; ORCALY_QA_NET_WORTH=true node scripts/e2e-ecosystem-staging.mjs; npm run build; compare-schema-snapshots.mjs. CLI de staging sempre zwxulgpjucxudadjdqov, produção somente catálogo read-only. Cron preexistente permanece pausado.
 
 Certificação do novo Preview pendente neste commit. O master V3 completo permanece em execução; não é um relatório final de release.
+
+O primeiro Preview com massa integral encontrou scrollable-region-focusable em tabela horizontal, ausente na massa pequena local. Corrigido com região nomeada e tabIndex=0 nas três tabelas de Patrimônio. Validação hospedada será repetida no novo SHA; as 28 verificações anteriores passaram, incluindo snapshots, e cleanup terminou zero.

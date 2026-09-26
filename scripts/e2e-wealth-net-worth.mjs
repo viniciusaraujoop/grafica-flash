@@ -41,10 +41,10 @@ export async function testWealthNetWorth({page,context,a,b,admin,appUrl,grant,ac
  await grant(a,{...active,permissions:['wealth.read','wealth.write','wealth.export']});await page.reload()
  pass('net-worth-immutable-explicit-snapshot-timezone-idempotency-history-and-entitlement')
 
- const axe=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();assert.deepEqual(axe.violations.map(v=>v.id),[])
+ const axe=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();assert.deepEqual(axe.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})),[])
  for(const width of [320,390,768,1024,1440,1920]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Net worth overflow ${width}`)}
  await page.setViewportSize({width:390,height:1000});
- await page.screenshot({path:`${output}/net-worth-hosted.png`,fullPage:true})
+ await page.screenshot({path:`${output}/net-worth-hosted-top.png`});await page.screenshot({path:`${output}/net-worth-hosted.png`,fullPage:true})
  const audit=ok(await admin.from('ecosystem_audit_events').select('event_type').eq('entity_id',saved.id));assert.ok(audit.some(e=>e.event_type==='wealth_net_worth_snapshots.insert'))
  pass('net-worth-audit-WCAG-and-six-responsive-widths')
 }
