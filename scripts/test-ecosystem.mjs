@@ -4,10 +4,21 @@ import { existsSync } from 'node:fs'
 import { safeNextPath } from '../lib/auth-navigation.ts'
 import { products, getProduct, productIds, isProductId } from '../lib/ecosystem/products.ts'
 import { activeGrant, evaluateProductAccess, permitsContextTransfer } from '../lib/ecosystem/access.ts'
-import { parseMoney, parseRateBps, financialDate, simulateGoal, summarizeEntries, validateEntry, validateProfile, validateGoal } from '../lib/wealth/core.ts'
+import { parseMoney, parseRateBps, financialDate, simulateGoal, summarizeEntries, validateEntry, validateProfile, validateGoal, moneyInputValue, moneyLimit } from '../lib/wealth/core.ts'
+import { entryRevision } from '../lib/wealth/entry-edit.ts'
 import { assertExportSize, csvCell, entriesCsv, monthBounds, parseWealthFilters, recordsQuery } from '../lib/wealth/records.ts'
 
 const now = Date.parse('2026-09-26T12:00:00Z')
+test('edit money round-trips exact cents including the inclusive database maximum',()=>{
+ for(const cents of [1,29,49990,moneyLimit])assert.equal(parseMoney(moneyInputValue(cents)),cents)
+ assert.throws(()=>parseMoney('1000000000000,01'));assert.throws(()=>moneyInputValue(0.29))
+})
+test('revision changes for every editable field and for another record',()=>{
+ const original={id:'a',title:'Renda',kind:'income',category:'salary',amount_cents:29,financial_date:'2026-09-26',currency:'BRL',recurrence:'none'}
+ const revision=entryRevision(original)
+ for(const patch of [{id:'b'},{title:'Nova renda'},{kind:'expense'},{category:'other'},{amount_cents:30},{financial_date:'2026-09-25'},{currency:'USD'},{recurrence:'monthly'}])assert.notEqual(entryRevision({...original,...patch}),revision)
+ assert.equal(entryRevision(Object.fromEntries(Object.entries(original).reverse())),revision)
+})
 test('history filters reject duplicated, injected, overflow and malformed values',()=>{
  assert.deepEqual(parseWealthFilters({}),{kind:null,month:null,page:1})
  for(const input of [{kind:'__proto__'},{kind:'income,or(user_id.eq.other)'},{month:'2026-13'},{month:'2201-01'},{month:['2026-01','2026-02']},{page:'0'},{page:'1e3'},{page:'1.5'},{page:'10000'}])assert.throws(()=>parseWealthFilters(input))

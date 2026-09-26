@@ -4,7 +4,7 @@ export const wealthCategories = ['salary','housing','food','transport','educatio
 export const moneyLimit = 100_000_000_000_000
 
 export function parseMoney(value: unknown, allowZero = true): number {
-  if (typeof value !== 'string' || !/^\d{1,12}([.,]\d{1,2})?$/.test(value.trim())) throw new Error('Informe um valor monetário válido, com até duas casas decimais.')
+  if (typeof value !== 'string' || !/^\d{1,13}([.,]\d{1,2})?$/.test(value.trim())) throw new Error('Informe um valor monetário válido, com até duas casas decimais.')
   const [whole, decimals = ''] = value.trim().replace(',', '.').split('.')
   const cents = Number(whole) * 100 + Number(decimals.padEnd(2, '0'))
   if (!Number.isSafeInteger(cents) || cents > moneyLimit || cents < (allowZero ? 0 : 1)) throw new Error('Valor fora do limite permitido.')
@@ -91,6 +91,12 @@ export function summarizeEntries(entries: readonly WealthEntry[], month: string)
 }
 
 export function formatMoney(cents: number) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100) }
+
+export function moneyInputValue(cents: number) {
+  integer(cents, 0, moneyLimit)
+  const exact = BigInt(cents)
+  return `${exact / BigInt(100)},${String(exact % BigInt(100)).padStart(2, '0')}`
+}
 
 export function formatFinancialDate(value: string) {
   const [year, month, day] = financialDate(value).split('-')

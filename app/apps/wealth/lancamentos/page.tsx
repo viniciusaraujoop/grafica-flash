@@ -12,9 +12,10 @@ export default async function WealthRecordsPage({ searchParams }: { searchParams
   try { filters = parseWealthFilters(await searchParams) }
   catch (error) { return <><h1>Confira os filtros</h1><p className={styles.notice}>{error instanceof Error ? error.message : 'Filtro inválido.'}</p><Link href="/apps/wealth/lancamentos">Limpar filtros</Link></> }
   const from = (filters.page - 1) * recordsPageSize
-  const [result, exportAccess] = await Promise.all([
+  const [result, exportAccess, writeAccess] = await Promise.all([
     ownedEntriesQuery(access.identity.db, access.identity.user.id, filters).range(from, from + recordsPageSize - 1),
     getPersonalProductAccess('wealth', 'wealth.export'),
+    getPersonalProductAccess('wealth', 'wealth.write'),
   ])
   if (result.error || result.count === null) return <><h1>Seus lançamentos</h1><p className={styles.notice}>Não foi possível consultar seu histórico agora. Tente novamente.</p><Link href="/apps/wealth">Voltar ao Wealth</Link></>
   const entries = result.data as WealthEntry[]
@@ -37,7 +38,7 @@ export default async function WealthRecordsPage({ searchParams }: { searchParams
     </section>
     <section className={styles.panel} aria-labelledby="records-results">
       <h2 id="records-results">Histórico</h2>
-      {entries.length ? <div className={styles.tableWrap}><table className={styles.table}><caption>Lançamentos pessoais · página {filters.page} de {pages}</caption><thead><tr><th scope="col">Registro</th><th scope="col">Tipo</th><th scope="col">Data</th><th scope="col">Valor</th></tr></thead><tbody>{entries.map(entry => <tr key={entry.id}><td>{entry.title}</td><td>{entryKindLabels[entry.kind]}</td><td>{formatFinancialDate(entry.financial_date)}</td><td>{formatMoney(entry.amount_cents)}</td></tr>)}</tbody></table></div> : <p>Nenhum lançamento nesta página. Ajuste os filtros ou volte à primeira página.</p>}
+      {entries.length ? <div className={styles.tableWrap}><table className={styles.table}><caption>Lançamentos pessoais · página {filters.page} de {pages}</caption><thead><tr><th scope="col">Registro</th><th scope="col">Tipo</th><th scope="col">Data</th><th scope="col">Valor</th></tr></thead><tbody>{entries.map(entry => <tr key={entry.id}><td>{writeAccess.allowed ? <Link href={`/apps/wealth/lancamentos/${entry.id}`}>{entry.title}</Link> : entry.title}</td><td>{entryKindLabels[entry.kind]}</td><td>{formatFinancialDate(entry.financial_date)}</td><td>{formatMoney(entry.amount_cents)}</td></tr>)}</tbody></table></div> : <p>Nenhum lançamento nesta página. Ajuste os filtros ou volte à primeira página.</p>}
       <nav className={styles.actions} aria-label="Paginação do histórico">
         {filters.page > 1 && <Link className={styles.textButton} href={`/apps/wealth/lancamentos?${recordsQuery(filters, filters.page - 1)}`}>Página anterior</Link>}
         {filters.page < pages && <Link className={styles.textButton} href={`/apps/wealth/lancamentos?${recordsQuery(filters, filters.page + 1)}`}>Próxima página</Link>}
