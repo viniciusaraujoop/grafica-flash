@@ -21,6 +21,6 @@ Evidence timestamp: 2026-09-26 UTC. The entire ecosystem release is not certifie
 | Academy / affiliate / Flow / Growth / Market / Partners new journeys | NOT_STARTED | No new feature backend exists for those workstreams |
 | Product-specific PWA/push/offline | NOT_STARTED | Master Hub manifest/install affordance only; individual products gated |
 | Dependency audit | PASS after compatible fixes | `npm audit`: zero reported vulnerabilities; no force/major upgrade |
-| Preview / production | Pending / unchanged | Record exact deployment evidence in execution state; local test success is not hosted release approval |
+| Preview / production | Preview PASS / production unchanged | Vercel c3f367b READY; 7 read-only hosted browser checks pass. No hosted migration or production promotion. |
 
 Run local browser QA with `npm run build`, then `npm start -- --hostname 127.0.0.1 --port 4173` and `npm run e2e:ecosystem`. Chrome must be available; set `ECOSYSTEM_BROWSER_CHANNEL` for another installed Playwright-supported browser. Fixtures bind only to 127.0.0.1:54329 and the test Next server to 4174, use synthetic users and an in-memory database, and shut down after the test. No real credentials are required for those fixture flows.
