@@ -1,6 +1,6 @@
 # Orçaly Wealth — Portfolio Foundation (V4)
 
-Escopo implementado em staging, com certificação de Preview em andamento. O master completo continua pendente.
+Escopo implementado e certificado no staging e no Preview do SHA 7dad853c8724e7aeae08fc9dcf739a841eb53380. O master completo continua pendente.
 
 ## Modelo e limites
 
@@ -20,7 +20,7 @@ Rebalanceamento distribui centavos por resto determinístico, exige avaliação 
 
 113 testes de domínio/PostgreSQL (103 anteriores + 10 grupos Portfolio) passaram, incluindo valores agregados acima da precisão segura de Number, mais de mil holdings, oito casas de quantidade, arredondamento de custo, todos os eventos, isolamento, grants, revogação, CAS, idempotência, Lab, cenários e CSV. Typecheck/lint de escopo/build passaram antes do Preview; build final registrado em portfolio-build-final.log. Três warnings históricos do prebuild permanecem.
 
-18 checks locais com Supabase hospedado passaram; Auth, login e Actions reais, RLS, ownership forjado, conflito de versão, venda/custo, avaliação de extrato, alvos, cenários, Lab, revogação, audit, Axe WCAG A/AA e larguras 320/390/768/1024/1440/1920. Capturas mobile/desktop inspecionadas; evidência ORCALY_WEALTH_PORTFOLIO_LOCAL_E2E.json. Cenários adicionais de CAS concorrente/transferência serão exercitados na suíte hospedada final.
+18 checks locais com Supabase hospedado passaram; Auth, login e Actions reais, RLS, ownership forjado, conflito de versão, venda/custo, avaliação de extrato, alvos, cenários, Lab, revogação, audit, Axe WCAG A/AA e larguras 320/390/768/1024/1440/1920. Capturas mobile/desktop inspecionadas; evidência ORCALY_WEALTH_PORTFOLIO_LOCAL_E2E.json. CAS concorrente, replay exato, transferência/custo e write-only também passaram na suíte hospedada final.
 
 Falhas encontradas e corrigidas: servidor local iniciado no sandbox sem acesso de rede produzia login sem usuário; reinício do processo exclusivo de QA com rede resolveu. Configuração válida de targets tinha referência PL/pgSQL ambígua; reproduzida em teste e corrigida por migration nova, sem editar a aplicada. Axe encontrou elementos soltos dentro de dl; semântica corrigida e E2E repetido. Nenhum caso foi omitido para obter PASS. Contas sintéticas removidas após todas as tentativas.
 
@@ -37,3 +37,5 @@ Comandos: supabase migration new para cada arquivo; node --test scripts/test-wea
 Referências de implementação: [funções Supabase](https://supabase.com/docs/guides/database/functions) e [locks PostgreSQL](https://www.postgresql.org/docs/current/explicit-locking.html). Evidência real de schema e testes prevalece sobre inferências de nome.
 
 Correção adicional validada: 20260926190250_wealth_portfolio_blind_dml_guard (SHA LF d7638637a4fa85a2926f29819ed144d54d6de8f024ce9cc8069d625c16145cfc), aplicada somente ao staging após binding. Um teste mostrou que write-only escondia a holding da checagem invoker via RLS e permitia DELETE sem filtro. Predicado privado definer, restrito ao próprio auth.uid() e independente de entitlement de leitura, agora protege UPDATE/DELETE; não revela IDs de outro usuário. Teste reproduzido antes, PASS depois. APIs públicas/tipos públicos inalterados. Manter todos os arquivos aplicados imutáveis.
+
+Certificação final: https://orcaly-1aah4iwht-vinicius-araujos-projects.vercel.app, dpl_AJQYxRHfyabMHo1XGEz97iV1RBoV READY/Preview, 39 checks hospedados PASS em 2026-09-26T19:18:57.471Z. Evidência ORCALY_WEALTH_PORTFOLIO_VERCEL_E2E.json; screenshots nas seis larguras em assets/wealth-portfolio. Build Vercel final confirmou 113 testes, TypeScript e compilação; três warnings legados. Nenhum erro de navegador ou request para produção. Todos os fixtures, incluindo recibos privados, zerados e cron pausado. No PostgREST, DELETE sem filtro é rejeitado antes do guard com 21000/WHERE: teste aceita somente essa rejeição ou 42501 e exige saldo intacto. Preview/application SHA permanece 7dad853; ajuste do runner/evidências é posterior e não altera runtime.
