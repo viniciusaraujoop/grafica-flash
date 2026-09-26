@@ -1,3 +1,4 @@
+import {testWealthCalendar} from './e2e-wealth-calendar.mjs'
 import assert from 'node:assert/strict'
 import {randomUUID} from 'node:crypto'
 import fs from 'node:fs/promises'
@@ -381,6 +382,7 @@ try{
  if(process.env.ORCALY_QA_NET_WORTH==='true')await testWealthNetWorth({page,context,a,b,admin,appUrl,grant,active,ok,pass,errors,output})
  if(process.env.ORCALY_QA_PORTFOLIO==='true')await testWealthPortfolio({page,context,a,b,admin,appUrl,grant,active,ok,pass,errors,output})
  if(process.env.ORCALY_QA_HEALTH==='true')await testWealthHealth({page,other,a,b,admin,appUrl,grant,active,ok,pass,output})
+ if(process.env.ORCALY_QA_CALENDAR==='true')await testWealthCalendar({page,context,a,b,admin,appUrl,grant,active,ok,pass,output})
  assert.deepEqual(errors,[])
  pass('no-browser-errors-or-production-requests')
 }catch(error){report.push({check:'execution',status:'FAIL',message:error.message});process.exitCode=1;console.error(error.stack)}
@@ -397,8 +399,9 @@ finally{
  }
  const entityIds=[...entities]
  for(let offset=0;offset<entityIds.length;offset+=100){const cleaned=await admin.from('ecosystem_audit_events').delete().in('entity_id',entityIds.slice(offset,offset+100));if(cleaned.error){errors.push(`Cleanup audit: ${cleaned.error.code}`);process.exitCode=1}}
+ const billRows=await admin.from('wealth_bill_details').select('id',{count:'exact',head:true});if(billRows.error||billRows.count!==0)process.exitCode=1
  const remaining=await admin.auth.admin.listUsers({page:1,perPage:1})
- const cleanup={usersRemaining:remaining.data?.users?.length??null,auditRowsRemaining:(await admin.from('ecosystem_audit_events').select('id')).data?.length??null}
+ const cleanup={billDetailsRemaining:billRows.count,usersRemaining:remaining.data?.users?.length??null,auditRowsRemaining:(await admin.from('ecosystem_audit_events').select('id')).data?.length??null}
  Object.assign(cleanup,await wealthScheduleFixtureCounts(admin))
  if(process.env.ORCALY_QA_DEBT==='true')cleanup.debtTermsRemaining=(await admin.from('wealth_debt_terms').select('id',{count:'exact',head:true})).count
  if(process.env.ORCALY_QA_NET_WORTH==='true')cleanup.snapshotsRemaining=(await admin.from('wealth_net_worth_snapshots').select('id',{count:'exact',head:true})).count

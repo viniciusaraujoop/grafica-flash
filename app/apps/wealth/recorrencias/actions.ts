@@ -41,6 +41,6 @@ export async function manageWealthRecurrence(_state:WealthActionState,form:FormD
    message=operation==='pause'?'Agendamento pausado.':operation==='resume'?'Agendamento retomado, incluindo datas vencidas.':'Agendamento cancelado. Lançamentos anteriores foram preservados.'
   }
  }catch(error){return {ok:false,message:error instanceof Error?error.message:'Confira os campos.'}}
- for(const path of ['/apps/wealth','/apps/wealth/lancamentos','/apps/wealth/recorrencias'])revalidatePath(path)
+ for(const path of ['/apps/wealth','/apps/wealth/lancamentos','/apps/wealth/recorrencias','/apps/wealth/calendario'])revalidatePath(path)
  return {ok:true,message}
 }

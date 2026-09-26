@@ -1,0 +1,12 @@
+{
+  "project": "zwxulgpjucxudadjdqov",
+  "classification": "EXACT_MATCH local/staging; LOCAL_ONLY versus production",
+  "rows": [
+    {
+      "version": "20260926195246",
+      "name": "wealth_financial_calendar",
+      "sha256": "35424433eee99be38f6b87553e00350e86df738c8a2ac8c1571a60fb0a799543",
+      "total": 14
+    }
+  ]
+}

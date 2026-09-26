@@ -8341,6 +8341,51 @@ export type Database = {
           },
         ]
       }
+      wealth_bill_details: {
+        Row: {
+          bill_type: string
+          id: string
+          predecessor_id: string | null
+          provider: string
+          reviewed_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          bill_type: string
+          id: string
+          predecessor_id?: string | null
+          provider?: string
+          reviewed_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          bill_type?: string
+          id?: string
+          predecessor_id?: string | null
+          provider?: string
+          reviewed_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_bill_details_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "wealth_recurring_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wealth_bill_details_predecessor_id_fkey"
+            columns: ["predecessor_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_recurring_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wealth_debt_terms: {
         Row: {
           id: string
@@ -11227,6 +11272,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      save_wealth_bill: {
+        Args: {
+          p_id: string
+          p_predecessor?: string
+          p_provider: string
+          p_type: string
+          p_version: number
+        }
+        Returns: number
+      }
       save_wealth_debt: {
         Args: { p_entry_id?: string; p_input: Json; p_version?: number }
         Returns: string
@@ -11263,6 +11318,27 @@ export type Database = {
       settle_wealth_debt: {
         Args: { p_confirmed: boolean; p_entry_id: string; p_version: number }
         Returns: boolean
+      }
+      wealth_bills: {
+        Args: {
+          p_id?: string
+          p_month: string
+          p_page?: number
+          p_status?: string
+        }
+        Returns: Json
+      }
+      wealth_calendar: {
+        Args: {
+          p_direction?: string
+          p_from: string
+          p_page?: number
+          p_portfolio?: string
+          p_source?: string
+          p_status?: string
+          p_to: string
+        }
+        Returns: Json
       }
       wealth_health_inputs: { Args: never; Returns: Json }
       wealth_net_worth: { Args: never; Returns: Json }

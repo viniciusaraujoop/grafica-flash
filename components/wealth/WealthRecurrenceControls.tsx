@@ -3,7 +3,7 @@ import {useActionState} from 'react'
 import {manageWealthRecurrence} from '@/app/apps/wealth/recorrencias/actions'
 import type {WealthRecurrence} from '@/lib/wealth/recurrence'
 import styles from '@/components/ecosystem/ecosystem.module.css'
-export default function WealthRecurrenceControls({schedule}:{schedule?:WealthRecurrence}){
+export default function WealthRecurrenceControls({schedule}:{schedule?:Pick<WealthRecurrence,'id'|'status'|'version'>}){
  const [state,action,pending]=useActionState(manageWealthRecurrence,{ok:false,message:''})
  if(schedule&&['completed','cancelled'].includes(schedule.status))return <p>Agendamento encerrado. Os lançamentos anteriores permanecem no histórico.</p>
  return <form action={action}>

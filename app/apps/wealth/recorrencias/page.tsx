@@ -1,41 +1,47 @@
 import Link from 'next/link'
 import {randomUUID} from 'node:crypto'
 import {getPersonalProductAccess} from '@/lib/ecosystem/server'
-import {formatMoney,formatFinancialDate} from '@/lib/wealth/core'
-import {parseWealthFilters} from '@/lib/wealth/records'
-import {recurrenceFrequencies,recurrenceStatuses,type WealthRecurrence} from '@/lib/wealth/recurrence'
+import {formatMoney,formatFinancialDate,integer,financialDate,uuid} from '@/lib/wealth/core'
+import {recurrenceFrequencies,recurrenceStatuses} from '@/lib/wealth/recurrence'
+import {billTypes,readBills,single,type Search} from '@/lib/wealth/calendar'
 import WealthRecurrenceForm from '@/components/wealth/WealthRecurrenceForm'
 import WealthRecurrenceControls from '@/components/wealth/WealthRecurrenceControls'
-import styles from '@/components/ecosystem/ecosystem.module.css'
+import WealthBillForm from '@/components/wealth/WealthBillForm'
+import s from '@/components/wealth/calendar.module.css'
 
-export default async function RecurrencesPage({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}){
+export default async function RecurrencesPage({searchParams}:{searchParams:Promise<Search>}){
  const [read,write]=await Promise.all([getPersonalProductAccess('wealth','wealth.read'),getPersonalProductAccess('wealth','wealth.write')])
- if(!read.allowed||!read.identity)return <><h1>Agendamentos pessoais</h1><p>Seu acesso aos agendamentos não está liberado.</p><Link href="/apps">Voltar ao Hub</Link></>
- const input=await searchParams
- let page:number,status:string
- try{page=parseWealthFilters({page:input.page}).page;if(Array.isArray(input.status)||(input.status&&!Object.hasOwn(recurrenceStatuses,input.status)))throw Error('Filtro inválido');status=input.status||''}
+ if(!read.allowed||!read.identity)return <><h1>Contas e recorrências</h1><p>Seu acesso aos agendamentos não está liberado.</p><Link href="/apps">Voltar ao Hub</Link></>
+ const db=read.identity.db,profile=await db.from('wealth_profiles').select('timezone').eq('user_id',read.identity.user.id).maybeSingle()
+ let zone=profile.data?.timezone||'America/Sao_Paulo'
+ try{new Intl.DateTimeFormat('pt-BR',{timeZone:zone}).format(0)}catch{zone='America/Sao_Paulo'}
+ const today=new Intl.DateTimeFormat('en-CA',{timeZone:zone}).format(new Date())
+ let page:number,status:string,month:string,selected:string
+ try{const input=await searchParams;page=integer(single(input,'page','1'),1,100000);status=single(input,'status');if(status&&!Object.hasOwn(recurrenceStatuses,status))throw Error('status');month=financialDate(single(input,'month',today.slice(0,7))+'-01');selected=single(input,'schedule');if(selected)uuid(selected)}
  catch{return <><h1>Confira os filtros</h1><Link href="/apps/wealth/recorrencias">Limpar filtros</Link></>}
- let query=read.identity.db.from('wealth_recurring_schedules').select('id,title,kind,category,amount_cents,frequency,interval_count,start_date,end_date,max_occurrences,timezone,status,pause_reason,next_index,next_date,next_run_at,last_run_at,version',{count:'exact'}).eq('user_id',read.identity.user.id).order('created_at',{ascending:false}).order('id')
- if(status)query=query.eq('status',status)
- const result=await query.range((page-1)*25,page*25-1)
- if(result.error||result.count===null)return <><h1>Agendamentos pessoais</h1><p>Não foi possível consultar seus agendamentos agora.</p></>
- const schedules=result.data as WealthRecurrence[],pages=Math.max(1,Math.ceil(result.count/25))
- const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())
- const href=(value:number)=>`/apps/wealth/recorrencias?page=${value}${status?`&status=${status}`:''}`
- return <><Link className={styles.textButton} href="/apps/wealth">← Visão geral do Wealth</Link><p className={styles.eyebrow}>Planejamento pessoal</p><h1>Agendamentos pessoais</h1>
- <p className={styles.lead}>Organize salários, aluguel, assinaturas, parcelas e aportes planejados. Cada ocorrência cria um lançamento declarado, sem movimentar dinheiro ou contratar investimentos.</p>
- <div className={styles.notice}>Os registros vencem às 12h do fuso escolhido. Datas mensais usam o último dia disponível quando necessário e preservam o dia original nos meses seguintes. Pausar interrompe a geração; retomar inclui pendências. Aportes planejados são despesas declaradas, sem compra de ativos.</div>
- {write.allowed&&<section className={styles.panel}><h2>Atualizar pendências</h2><p>Consulte os registros vencidos e gere até 10 ocorrências por atualização. O histórico preserva as datas financeiras originais. A próxima data mostra o que ainda está pendente.</p><WealthRecurrenceControls/></section>}
- <section className={styles.panel}><h2>Seus agendamentos</h2><form action="/apps/wealth/recorrencias" method="get" className={styles.formGrid}><label>Status do agendamento<select name="status" defaultValue={status}><option value="">Todos os status</option>{Object.entries(recurrenceStatuses).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label><button className={styles.primaryButton}>Aplicar filtros</button></form>
- <p>{result.count} agendamento(s) · página {page} de {pages}.</p>
- {schedules.length?schedules.map(schedule=><article key={schedule.id} className={styles.panel} aria-label={schedule.title}>
- <h3>{schedule.title}</h3><p>{recurrenceStatuses[schedule.status]} · {schedule.kind==='income'?'Receita':'Despesa'} · {formatMoney(schedule.amount_cents)} · {recurrenceFrequencies[schedule.frequency]} a cada {schedule.interval_count} período(s).</p>
- <p>Início: {formatFinancialDate(schedule.start_date)}. {schedule.end_date&&`Fim: ${formatFinancialDate(schedule.end_date)}.`} {schedule.max_occurrences&&`Limite: ${schedule.max_occurrences} ocorrências.`} Geradas: {schedule.next_index}.</p>
- {['active','paused'].includes(schedule.status)&&<p>Próxima data: {formatFinancialDate(schedule.next_date)} às 12h · {schedule.timezone}.</p>}
- {schedule.pause_reason==='access_unavailable'&&<p>Geração pausada por falta de permissão. Após recuperar o acesso, confirme a retomada.</p>}
- {write.allowed&&<WealthRecurrenceControls schedule={schedule}/>}
- </article>):<p>Nenhum agendamento neste filtro. Crie o primeiro abaixo.</p>}
- <nav className={styles.actions} aria-label="Paginação de agendamentos">{page>1&&<Link href={href(page-1)}>Página anterior</Link>}{page<pages&&<Link href={href(page+1)}>Próxima página</Link>}{page>pages&&<Link href={href(1)}>Primeira página</Link>}</nav></section>
- {write.allowed&&<section className={styles.panel}><h2>Novo agendamento</h2><p>Use o número de ocorrências para parcelas. Deixe os limites vazios para continuar até cancelar. Para alterar valor ou frequência, cancele e crie outro agendamento.</p><WealthRecurrenceForm idempotencyKey={randomUUID()} today={today}/></section>}
- </>
+ const [result,previous]=await Promise.all([db.rpc('wealth_bills',{p_month:month,p_page:page,p_status:status,p_id:selected||null}),write.allowed?db.from('wealth_recurring_schedules').select('id,title').eq('user_id',read.identity.user.id).eq('status','cancelled').order('created_at',{ascending:false}).limit(100):Promise.resolve({data:[]})])
+ if(result.error)return <><h1>Contas e recorrências</h1><p>Não foi possível consultar suas contas agora.</p><Link href="/apps/wealth/recorrencias">Tentar novamente</Link></>
+ const data=readBills(result.data),pages=Math.max(1,Math.ceil(Number(data.count)/25)),t=data.totals
+ const href=(value:number)=>'/apps/wealth/recorrencias?'+new URLSearchParams({page:String(value),status,month:month.slice(0,7),schedule:selected})
+ return <div className={s.page}>
+ <nav className={s.nav} aria-label="Wealth"><Link href="/apps/wealth">Visão geral</Link><Link href="/apps/wealth/calendario">Calendário financeiro</Link><Link href="/apps/wealth/lancamentos">Lançamentos</Link></nav>
+ <header className={s.hero}><div><span className={s.kicker}>Wealth · Compromissos em perspectiva</span><h1>Contas e recorrências.</h1><p>O pequeno compromisso de cada mês também merece uma visão do ano. Revise o que continua, o que mudou e o que pode esperar.</p></div><aside><strong>{t.active} ativas · {t.paused} pausadas · {t.cancelled} canceladas</strong><br/>Agendamentos pessoais geram declarações.<br/>Nenhum pagamento é executado.</aside></header>
+ <dl className={s.stats}><div><dt>Despesas · mês selecionado</dt><dd>{formatMoney(t.monthExpense)}<small>Agenda contratada de {month.slice(0,7)}</small></dd></div><div><dt>Despesas · próximos 12 meses</dt><dd>{formatMoney(t.annualExpense)}<small>{formatFinancialDate(data.today)} a {formatFinancialDate(data.annualEnd)}</small></dd></div><div><dt>Média mensal estimada</dt><dd>{formatMoney((BigInt(t.annualExpense)+BigInt(6))/BigInt(12))}<small>Projeção anual dividida por 12, arredondada ao centavo</small></dd></div></dl>
+ <p className={s.muted}>Receitas previstas: {formatMoney(t.monthIncome)} no mês selecionado e {formatMoney(t.annualIncome)} nos próximos 12 meses. Totais incluem todas as contas ativas, independentemente dos filtros e páginas, respeitando datas finais e limites de ocorrências. São projeções dos contratos atuais, incluindo datas já registradas no período; não são despesas adicionais nem valores pagos.</p>
+ <section className={s.section} aria-label="Contas recorrentes"><div className={s.toolbar}><h2>Seus agendamentos</h2>{write.allowed&&<a className={s.button} href="#novo-agendamento">Novo agendamento</a>}</div>
+ <form action="/apps/wealth/recorrencias" className={s.filters}><label>Mês de referência<input type="month" name="month" defaultValue={month.slice(0,7)} min="1900-01" max="2199-12" required/></label><label>Status do agendamento<select name="status" defaultValue={status}><option value="">Todos os status</option>{Object.entries(recurrenceStatuses).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label><button className={s.button}>Aplicar filtros</button></form>
+ {selected&&<p><Link href="/apps/wealth/recorrencias">Mostrar todas as contas</Link></p>}
+ <p className={s.muted}>{data.count} agendamento(s) · página {page} de {pages}.</p>
+ {data.bills.length?data.bills.map(bill=><article key={bill.id} id={'bill-'+bill.id} className={s.bill} aria-label={bill.title}>
+  <div className={s.billHeader}><div><h3>{bill.title}</h3><p>{bill.bill_type?billTypes[bill.bill_type]:'Ainda não classificada'}{bill.provider?' · '+bill.provider:''}<br/>{recurrenceStatuses[bill.status]} · {bill.kind==='income'?'Receita':'Despesa'} · {recurrenceFrequencies[bill.frequency]} a cada {bill.interval_count} período(s).</p></div><strong>{formatMoney(bill.amount_cents)}<span className={s.muted}> / ocorrência</span></strong></div>
+  <p className={s.muted}>{['active','paused'].includes(bill.status)&&<>Próxima data {bill.status==='paused'?'suspensa':''}: <strong>{formatFinancialDate(bill.next_date)}</strong> às 12h · {bill.timezone}. </>}Início: {formatFinancialDate(bill.start_date)}. {bill.end_date&&'Fim: '+formatFinancialDate(bill.end_date)+'.'} {bill.max_occurrences&&'Limite: '+bill.max_occurrences+' ocorrências.'} Geradas: {bill.next_index}.<br/>Projeção anual: {formatMoney(bill.annual_amount)} · Mês selecionado: {formatMoney(bill.month_amount)}.</p>
+  <div className={s.notice}>{bill.price_change!==null&&bill.previous_amount!==null?<p>{BigInt(bill.price_change)>BigInt(0)?'Aumento declarado':'Comparação com versão anterior'}: {formatMoney(bill.previous_amount)} → {formatMoney(bill.amount_cents)} por ocorrência. Diferença: {formatMoney(bill.price_change)}. Evidência: vínculo informado com o agendamento anterior cancelado.</p>:<p>Histórico comparável insuficiente para detectar aumento. Vincule uma versão anterior da mesma conta após cancelar e criar a revisão.</p>}{BigInt(bill.duplicate_candidates)>BigInt(0)&&<p>{bill.duplicate_candidates} possível(is) duplicidade(s): mesmo fornecedor informado, tipo, valor, frequência e movimento em outra conta ativa. Revise antes de cancelar.</p>}<p>Próxima renovação: {bill.bill_type==='renewal'&&bill.status==='active'?formatFinancialDate(bill.next_date):'não identificada como renovação anual.'} {bill.reviewed_at?'Última revisão: '+formatFinancialDate(bill.reviewed_at.slice(0,10))+'.':'Revisar assinatura: ainda sem revisão registrada.'} Sem dados de uso, não é possível afirmar que uma assinatura foi esquecida.</p></div>
+  {bill.pause_reason==='access_unavailable'&&<p className={s.notice}>Geração pausada por falta de permissão. Após recuperar o acesso, confirme a retomada.</p>}
+  {write.allowed&&<><details className={s.details}><summary>Classificar e revisar conta</summary><WealthBillForm bill={bill} predecessors={previous.data||[]}/></details><details className={s.details}><summary>Controlar agendamento</summary><WealthRecurrenceControls schedule={bill}/></details></>}
+ </article>):<p className={s.empty}>Nenhum agendamento neste filtro. Organize a primeira conta abaixo ou ajuste os filtros.</p>}
+ <nav className={s.nav} aria-label="Paginação de agendamentos">{page>1&&<Link href={href(page-1)}>Página anterior</Link>}{page<pages&&<Link href={href(page+1)}>Próxima página</Link>}{page>pages&&<Link href={href(1)}>Primeira página</Link>}</nav>
+ </section>
+ {write.allowed&&<><section className={s.section}><h2>Atualizar pendências</h2><details className={s.details}><summary>Gerar lançamentos vencidos</summary><p className={s.muted}>Gere até 10 ocorrências por atualização. Cada ocorrência cria um lançamento declarado; não movimenta dinheiro.</p><WealthRecurrenceControls/></details></section><section className={s.section} id="novo-agendamento"><h2>Novo agendamento</h2><p>Organize salários, aluguel, assinaturas, parcelas e aportes planejados. Para alterar valor ou frequência, cancele e crie outro agendamento. Depois, registre o vínculo em “Classificar e revisar conta”.</p><details className={s.details}><summary>Preencher novo agendamento</summary><WealthRecurrenceForm idempotencyKey={randomUUID()} today={data.today}/></details></section></>}
+ <p className={s.muted}>Datas mensais preservam o dia original e usam o último dia disponível quando necessário. Pausar interrompe a geração; retomar inclui pendências. Aportes planejados não compram ativos.</p>
+ </div>
 }
