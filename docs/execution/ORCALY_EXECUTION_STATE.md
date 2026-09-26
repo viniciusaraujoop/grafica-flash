@@ -10,6 +10,7 @@ Checkpoint de 26/09/2026. **Staging certificado para Auth/Hub/Wealth/entitlement
 - `df87d092d617facf9d937fb8fcfb1e095837b53b`: reconciliação, baseline, correções de login/consentimento e E2E real.
 - `cbf5445`: evidência da primeira certificação hospedada e cleanup restrito de fixtures.
 - `2f85a3323ea090195b9c2b0b43eb27ed2d78ae83`: histórico paginado e exportação Wealth, enviado ao GitHub autorizado.
+- `62008d4078e99c9efb5dbecac88784ef5d144ab5`: edição de lançamentos com proteção contra sobrescrita de estado antigo, enviado à mesma branch.
 - HEAD final pode incluir documentação posterior. Consultar `git rev-parse HEAD`; distinguir HEAD documental do SHA de aplicação testado.
 - GitHub autorizado: `viniciusaraujoop/grafica-flash`, somente esta branch. Vercel autorizada: Preview. Produção não pode ser promovida/alterada.
 
@@ -41,10 +42,13 @@ Novo Preview certificado: https://orcaly-8lixqya7l-vinicius-araujos-projects.ver
 
 Produção permanece em `d940debf9556e1180fa3c709da0f560d3aa96374` / `dpl_3HeTKTcSdeM2kvzYUk5Drw5yJVtf`; catálogo antes/depois e metadados das variáveis Vercel iguais. Cleanup de staging confirmou zero usuários/linhas de fixtures, cron jobs, Vault secrets e objetos/buckets de storage.
 
+Após as ampliações, nova coleta confirmou zero diferenças no staging certificado e zero alterações de catálogo em produção: `reconciliation/staging-schema-after-app-e2e.json`, `production-unchanged-after-app-e2e.json` e `staging-final-cleanup.json`. Servidor local de QA encerrado; Preview hospedado permanece disponível. Migrations históricas continuam sem diff contra o início desta retomada.
+
 ## Continuação e limites
 
-- Entregue nesta continuação do master: histórico pessoal com 25 linhas/página, mês/tipo e CSV até 1.000 linhas, sem truncamento silencioso, exigindo wealth.read + wealth.export. Nenhuma migration adicional.
-- Pendente Wealth: edição/arquivamento, agregados integrais do overview (ainda identifica limite de 500 registros), paginação de metas (100 no overview), recorrência automatizada, ativos/dívidas avançados e contexto familiar.
+- Entregue nesta continuação do master: histórico pessoal com 25 linhas/página, mês/tipo e CSV até 1.000 linhas, sem truncamento silencioso, exigindo wealth.read + wealth.export; edição de lançamentos exige read + write, proprietário/RLS e revisão atual. Nenhuma migration adicional.
+- Edição: 69 testes domínio/PostgreSQL, build/typecheck/lint PASS; 17 checks locais com Supabase real PASS. Preview final certificado: https://orcaly-icaddekex-vinicius-araujos-projects.vercel.app, deployment `dpl_BQWTpnh3fs8yNWuXLWt7HG3QiuGH`, SHA **`62008d4078e99c9efb5dbecac88784ef5d144ab5`**, READY/Preview. **18 checks inteiramente hospedados PASS**, incluindo edição, conflito entre abas, histórico, CSV, Auth, Actions e isolamento. Zero erros; fixtures removidos. Evidência: `docs/qa/ORCALY_WEALTH_EDIT_VERCEL_E2E.json`.
+- Pendente Wealth: arquivamento de lançamentos, edição/arquivamento de metas, agregados integrais do overview (ainda identifica limite de 500 registros), paginação de metas (100 no overview), recorrência automatizada, ativos/dívidas avançados e contexto familiar.
 - Pendente plataforma: emissão comercial de entitlements, bundles/billing, grant de consentimento e consumidores, shared intelligence/Decision Receipts, notificações.
 - Growth, Flow, Academy, Market e One continuam sem os novos workflows completos. Business/Partners preservados; não houve reimplementação de Home/Hub.
 - PWA por produto e novos provedores dependem também de assets aprovados/credenciais/eligibilidade; isso não bloqueia todo o trabalho de código restante.

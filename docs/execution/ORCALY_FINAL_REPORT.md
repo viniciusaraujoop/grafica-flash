@@ -1,6 +1,6 @@
 # Orçaly — relatório do checkpoint
 
-26/09/2026. **A auditoria, a reconciliação e a certificação do staging foram concluídas. O master completo continua PARCIAL.** Depois da certificação, o trabalho avançou para histórico paginado e exportação CSV do Wealth. Home, Hub e Wealth Core não foram refeitos.
+26/09/2026. **A auditoria, a reconciliação e a certificação do staging foram concluídas. O master completo continua PARCIAL.** Depois da certificação, o trabalho avançou para histórico paginado, exportação CSV e edição de lançamentos do Wealth. Home, Hub e Wealth Core não foram refeitos.
 
 ## Resultado da missão imediata
 
@@ -62,11 +62,11 @@ Novo Preview certificado: https://orcaly-8lixqya7l-vinicius-araujos-projects.ver
 | Verificação atual | Resultado |
 | --- | --- |
 | npm run build | PASS, incluindo suítes preexistentes do prebuild |
-| npm run test:ecosystem | PASS, 67: 49 domínio/contratos e 18 PostgreSQL/RLS |
+| npm run test:ecosystem | PASS, 69: 51 domínio/contratos e 18 PostgreSQL/RLS |
 | npm run typecheck | PASS |
 | Lint dos arquivos novos/alterados | PASS |
 | npm audit | 0 vulnerabilidades |
-| E2E local com Supabase real, incluindo histórico/CSV | 14 checks PASS; fixtures removidos |
+| E2E local com Supabase real, incluindo histórico/CSV/edição | 17 checks PASS; fixtures removidos |
 | Axe e layout do novo histórico | PASS; 320/390/768 sem transbordamento, screenshots inspecionados |
 | git diff --check | PASS |
 | Lint global | Falhas preexistentes; não declarado resolvido |
@@ -75,7 +75,9 @@ Evidências antigas continuam identificadas como históricas em `docs/qa/ORCALY_
 
 ## Git, Preview e produção
 
-Aplicação nova enviada: `2f85a3323ea090195b9c2b0b43eb27ed2d78ae83`. HEAD final pode conter apenas documentação posterior. Trabalhos anteriores do usuário foram preservados em `00aa4f7`; não houve descarte, force push ou merge em main.
+Aplicação mais recente enviada: `62008d4078e99c9efb5dbecac88784ef5d144ab5`. HEAD final pode conter apenas documentação posterior. Trabalhos anteriores do usuário foram preservados em `00aa4f7`; não houve descarte, force push ou merge em main.
+
+Edição de lançamentos relê a linha com owner/RLS, detecta revisão antiga e compara atomicamente os valores no UPDATE. Preserva identidade/proprietário/chave de idempotência/criação, registra auditoria e bloqueia abas antigas, IDs forjados, perda de write e replay anônimo. Sem mudança de schema. Parser monetário corrigido para aceitar o limite inclusivo do banco e rejeitar o centavo seguinte. Preview final certificado: https://orcaly-icaddekex-vinicius-araujos-projects.vercel.app, deployment `dpl_BQWTpnh3fs8yNWuXLWt7HG3QiuGH`, SHA **`62008d4078e99c9efb5dbecac88784ef5d144ab5`**, READY/Preview. **18 checks inteiramente hospedados PASS**, incluindo edição, conflito entre abas, histórico, CSV, Auth, Actions e isolamento. Zero erros; fixtures removidos. Evidência: `docs/qa/ORCALY_WEALTH_EDIT_VERCEL_E2E.json`.
 
 Vercel CLI foi autenticado pelo proprietário. Variáveis configuradas somente no Preview da branch: URL/anon key de staging, service role sensitive de staging e flag Wealth. Proteção mantida ativa; acesso temporário/credenciais ficam em arquivos ignorados, nunca no Git.
 
@@ -85,7 +87,7 @@ Produção: main `d940debf9556e1180fa3c709da0f560d3aa96374`, deployment `dpl_3He
 
 | Escopo | Estado / próxima entrega |
 | --- | --- |
-| Wealth | Core, histórico e exportação implementados; edição/arquivamento, agregados integrais, paginação de metas, recorrência automática e análises avançadas pendentes |
+| Wealth | Core, histórico, exportação e edição de lançamentos implementados; arquivamento, edição/paginação de metas, agregados integrais, recorrência automática e análises avançadas pendentes |
 | Business / Partners | Fluxos existentes preservados; E2E completo de operação/pagamento ainda não executado |
 | ID / Hub | Auth real e fronteiras pessoais testados; MFA com fator real, briefing/notifications/billing unificado pendentes |
 | Entitlements / consentimento | Enforced no servidor/DB; emissão comercial, bundles, grant de consentimento e consumidores pendentes |

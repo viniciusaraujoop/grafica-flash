@@ -10,7 +10,7 @@ Produção `ozrasuktfthsvbqprtel` (GRAFICA FLASH, sa-east-1) SOMENTE LEITURA. St
 
 Usuário já autorizou push desta branch ao GitHub viniciusaraujoop/grafica-flash e Vercel Preview. CLI Vercel foi autenticado pelo proprietário; não pedir login novamente sem falha concreta. Nenhuma autorização adicional é necessária para continuar o staging/Preview dentro desse escopo.
 
-`3709105` preserva a instalação local do Supabase CLI. `df87d09` contém reconciliação/correções. `cbf5445` registra a certificação. Aplicação atual: **`2f85a3323ea090195b9c2b0b43eb27ed2d78ae83`**, já enviada ao GitHub. O HEAD pode incluir documentação posterior; conferir status e log antes de editar.
+`3709105` preserva a instalação local do Supabase CLI. `df87d09` contém reconciliação/correções. `cbf5445` registra a certificação. `2f85a33` adiciona histórico/CSV; `5b7b6af` consolida os documentos; aplicação atual: **`62008d4078e99c9efb5dbecac88784ef5d144ab5`**, com edição de lançamentos, já enviada ao GitHub. O HEAD pode incluir documentação posterior; conferir status e log antes de editar.
 
 ## Certificação existente
 
@@ -35,7 +35,11 @@ Home/descoberta, App Hub, fronteira pessoal/empresa, Wealth Core (perfil/orçame
 
 Nova unidade: `app/apps/wealth/lancamentos/page.tsx`, `exportar/route.ts`, `lib/wealth/records.ts` e `records-server.ts`. Histórico 25/página, filtros de mês/tipo; CSV no máximo 1.000 linhas, centavos exatos, escaping, read + export permission, sessão/RLS e auditoria obrigatória. Overview ainda declara limite de 500 entradas/100 metas. Recorrência é metadado, não execução automática.
 
-67 testes domínio/PostgreSQL, build/typecheck/scoped lint PASS. 14 checks no app local + Supabase real, Axe e 320/390/768 PASS. Evidências em `docs/qa/ORCALY_WEALTH_RECORDS*`. Lint global preexistente não está resolvido. MFA com fator real e módulos antigos inteiros não estão certificados.
+Edição entregue em `app/apps/wealth/lancamentos/actions.ts`, `[entryId]/page.tsx`, `components/wealth/WealthEntryEditor.tsx` e `lib/wealth/entry-edit.ts`. Relê a linha própria, valida revisão e faz UPDATE comparando atomicamente os valores mutáveis. Não depende de coluna version/updated_at; não fornece histórico de versões nem arquivamento. Hash detecta estado antigo, não autoriza acesso. Auditoria existente permanece privada. Parser monetário ajustado ao limite inclusivo do banco.
+
+69 testes domínio/PostgreSQL, build/typecheck/scoped lint PASS. 17 checks no app local + Supabase real, incluindo duas abas, owner forjado, read-only e replay anônimo. Axe e mobile PASS. Evidências em `docs/qa/ORCALY_WEALTH_RECORDS*` e `ORCALY_WEALTH_EDIT*`. Lint global preexistente não está resolvido. MFA com fator real e módulos antigos inteiros não estão certificados.
+
+Preview final certificado: https://orcaly-icaddekex-vinicius-araujos-projects.vercel.app, deployment `dpl_BQWTpnh3fs8yNWuXLWt7HG3QiuGH`, SHA **`62008d4078e99c9efb5dbecac88784ef5d144ab5`**, READY/Preview. **18 checks inteiramente hospedados PASS**, incluindo edição, conflito entre abas, histórico, CSV, Auth, Actions e isolamento. Zero erros; fixtures removidos. Evidência: `docs/qa/ORCALY_WEALTH_EDIT_VERCEL_E2E.json`.
 
 ## Execução dos testes sem produção
 
@@ -56,14 +60,15 @@ npm run typecheck
 npm run build
 ```
 
-App local de staging: `node scripts/start-staging-qa.mjs` inicia 127.0.0.1:4174 com env de processo. Não altera .env.local. Um servidor desta execução pode estar ativo; verificar porta/processo antes de iniciar outro. Não matar todos os Node/Chrome.
+App local de staging: `node scripts/start-staging-qa.mjs` inicia 127.0.0.1:4174 com env de processo. Não altera .env.local. O servidor de QA desta execução (PID 14204 e filhos verificados) foi encerrado depois dos testes. Verificar a porta antes de reiniciar; outros processos preexistentes foram preservados. Não matar todos os Node/Chrome.
 
 E2E hospedado:
 ```powershell
-$env:ORCALY_STAGING_APP_URL='URL_EXATA_DO_PREVIEW'
-$env:ORCALY_STAGING_ACCESS_FILE='.local-qa/reconciliation/vercel-records-access.json'
-$env:ORCALY_EXPECTED_COMMIT='SHA_EXATO_DO_PREVIEW'
+$env:ORCALY_STAGING_APP_URL='https://orcaly-icaddekex-vinicius-araujos-projects.vercel.app'
+$env:ORCALY_STAGING_ACCESS_FILE='.local-qa/reconciliation/vercel-edit-access.json'
+$env:ORCALY_EXPECTED_COMMIT='62008d4078e99c9efb5dbecac88784ef5d144ab5'
 $env:ORCALY_QA_RECORDS='true'
+$env:ORCALY_QA_EDIT='true'
 node scripts/e2e-ecosystem-staging.mjs
 ```
 
@@ -71,10 +76,12 @@ O harness verifica SHA/environment, bundles sem URL de produção/service key, c
 
 ## Próxima unidade do master
 
-1. Completar ciclo de edição/arquivamento Wealth e evitar sobrescrita concorrente. Começar por `app/apps/wealth/actions.ts`, `components/wealth/WealthForm.tsx`, `lib/wealth/core.ts`, histórico novo e migration existente. **Entries/goals ainda não têm updated_at/version/archived_at**. Projetar a concorrência e semântica de arquivamento antes de escrever SQL; qualquer migration nova deve ser aditiva e validada apenas em staging, nunca editar a migration histórica já aplicada.
+1. Completar arquivamento de lançamentos e edição/arquivamento de metas. A edição de lançamentos já funciona e detecta estado antigo: não refazê-la. Começar por `app/apps/wealth/actions.ts`, `lancamentos/actions.ts`, `components/wealth/WealthForm.tsx`, `lib/wealth/core.ts` e migration existente. **Entries/goals ainda não têm updated_at/version/archived_at**. Definir a semântica de arquivamento/concorrência antes de SQL novo; migration deve ser aditiva, testada apenas em staging e adicionada à comparação do delta, nunca editar o histórico já aplicado. O arquivamento precisará filtrar overview/histórico/CSV de forma consistente e prever restauração autorizada.
 2. Agregados integrais/paginação de metas. Não apresentar a amostra de 500 como total completo. Recorrências precisam idempotência e jobs/outbox existentes, sem criar cobranças.
 3. Emissão comercial de entitlements a partir de billing real; nunca cliente autoemitindo grant. One não deve ampliar acesso de empresa/pessoal implicitamente.
 4. Grant de consentimento com acesso independente à origem/destino, finalidade, escopo e expiração. Adicionar testes dos consumidores antes de transferir dados.
 5. Academy/afiliados, shared intelligence/Decision Receipts, Growth/Flow/Market/One e PWA: seguir docs/architecture, contratos existentes e direitos de conteúdo/provedores. Descoberta não significa produto operacional.
 
 Produção antes/depois: catálogo e variáveis Vercel iguais, main d940debf9556e1180fa3c709da0f560d3aa96374, deployment dpl_3HeTKTcSdeM2kvzYUk5Drw5yJVtf. Release de produção segue fora desta autorização. Revisar UNKNOWNs e locais extras, backups/rollback, billing e fluxos legados antes de qualquer proposta futura.
+
+Verificação final depois das ampliações: `reconciliation/staging-schema-after-app-e2e.json` e `production-unchanged-after-app-e2e.json` têm zero diferenças. `staging-final-cleanup.json` confirma apenas duas migrations, zero usuários/linhas das seis tabelas, cron jobs, Vault secrets e objetos/buckets de storage. Último E2E terminou em 2026-09-26T04:22:54Z. Uma revisão documental posterior não muda o commit de aplicação certificado acima; se o alias da branch mudar, usar a URL imutável testada.

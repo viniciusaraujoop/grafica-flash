@@ -2,6 +2,8 @@
 
 Status: **STAGING CERTIFICADO para o escopo Auth/Hub/Wealth/entitlement/consent testado**, incluindo Vercel + Supabase hospedados. Isto não certifica os módulos antigos ou o master completo.
 
+Atualização após continuação do master: histórico/CSV e edição de lançamentos também certificados no commit `62008d4078e99c9efb5dbecac88784ef5d144ab5`, [Preview final](https://orcaly-icaddekex-vinicius-araujos-projects.vercel.app), deployment `dpl_BQWTpnh3fs8yNWuXLWt7HG3QiuGH`. **18 checks hospedados PASS**, 69 testes de domínio/PostgreSQL, build/typecheck/lint de escopo/security:check PASS. Evidência em [ORCALY_WEALTH_EDIT_VERCEL_E2E.json](../../qa/ORCALY_WEALTH_EDIT_VERCEL_E2E.json). Não houve SQL adicional. [Staging depois dos testes](staging-schema-after-app-e2e.json) e [produção antes/depois](production-unchanged-after-app-e2e.json): zero diferenças. [Cleanup final](staging-final-cleanup.json): zero usuários/dados sintéticos, cron jobs, Vault secrets e objetos/buckets; ledger mantém somente baseline + Wealth. O restante deste relatório preserva a primeira certificação e seus erros/soluções.
+
 Preview: https://orcaly-mkw4graiy-vinicius-araujos-projects.vercel.app — READY, `dpl_2UQGyp24Qp76u4E5PF243rJs1aQY`, commit `df87d092d617facf9d937fb8fcfb1e095837b53b`. **14 checks hospedados PASS**, zero erros e cleanup confirmado. [Relatório](vercel-staging-e2e.json). A proteção do Preview permaneceu ativa; URL temporária de acesso ficou somente em arquivo ignorado.
 
 ## Resultado verificável

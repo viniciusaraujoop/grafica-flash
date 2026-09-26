@@ -20,6 +20,6 @@ O parser monetário agora aceita o limite inclusivo já permitido pelo banco (10
 - Axe WCAG A/AA PASS na edição; screenshot mobile inspecionado, sem transbordamento.
 - React: componente pequeno com useActionState, sem effects/sincronização manual; campos não controlados e pending bloqueiam reenvio enquanto a Action está em andamento. Revisão/owner não são derivados de dados não confiáveis para autorizar acesso.
 
-Build de produção PASS. Certificação do novo commit na Vercel ainda pendente; a execução local acima já usa o Supabase staging hospedado.
+Build de produção PASS. **Vercel + Supabase reais: 18 checks PASS**, zero erros, fixtures removidos. Preview https://orcaly-icaddekex-vinicius-araujos-projects.vercel.app, deployment `dpl_BQWTpnh3fs8yNWuXLWt7HG3QiuGH`, SHA `62008d4078e99c9efb5dbecac88784ef5d144ab5`. Evidência: `ORCALY_WEALTH_EDIT_VERCEL_E2E.json`.
 
 Fixtures removidos. Evidência local: `ORCALY_WEALTH_EDIT_LOCAL_E2E.json`. Produção continua intocada.
