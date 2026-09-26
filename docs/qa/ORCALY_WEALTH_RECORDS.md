@@ -17,4 +17,6 @@ E2E local com Supabase hospedado: 14 checks PASS. O novo check percorre duas pá
 
 Filtros submetidos pelo formulário mantêm mês/tipo e reiniciam a paginação. Layout sem transbordamento em 320, 390 e 768 pixels; screenshots desktop/mobile inspecionados. O teste inicialmente usou correspondência exata no label de um select, que também incluía os textos das opções; o locator foi corrigido e a repetição completa passou.
 
-Verificação do novo código na Vercel será anexada antes de encerrar este checkpoint. O staging continua com apenas baseline + migration Wealth original. Edição/arquivamento de registros, agregados integrais do overview, recorrências automáticas e demais módulos do master continuam pendentes.
+Vercel + Supabase reais: **15 checks PASS**, zero erros, cleanup de usuários/auditoria confirmado. Preview https://orcaly-8lixqya7l-vinicius-araujos-projects.vercel.app, deployment `dpl_H989JrfT1sLVKnbAyFwPMTXgPwiH`, SHA `2f85a3323ea090195b9c2b0b43eb27ed2d78ae83`. Evidência: `ORCALY_WEALTH_RECORDS_VERCEL_E2E.json`.
+
+O staging continua com apenas baseline + migration Wealth original. Edição/arquivamento de registros, agregados integrais do overview, recorrências automáticas e demais módulos do master continuam pendentes.
