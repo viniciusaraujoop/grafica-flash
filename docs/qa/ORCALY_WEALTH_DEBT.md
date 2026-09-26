@@ -23,7 +23,7 @@ Delta vs clock: 27 adições e uma alteração intencional do check amount_cents
 - Lint de escopo PASS; build inclui TypeScript e suites legadas. Build final após correção PASS, incluindo TypeScript, lint de escopo e as 95 verificações de domínio/PostgreSQL.
 - 16 checks locais com Supabase real PASS, cleanup inteiro zero, incluindo wealth_debt_terms. Evidência ORCALY_WEALTH_DEBT_LOCAL_E2E.json.
 - Browser: criação/edição, centavos, owner forjado, isolamento, versão antiga, read-only, quitação, reuso 1:1, três estratégias, mínimo insuficiente, audit, Axe A/AA e 320/390/768/1440. Screenshot mobile inspecionado.
-- Preview desta unidade ainda em certificação; último Preview anterior certificado é de73467 (recorrências, 24 checks).
+- Preview certificado: https://orcaly-bb34uyljo-vinicius-araujos-projects.vercel.app; deployment dpl_Fg2Cw8q2o9YyUmSrSaGewcHqFkqr; SHA de aplicação 0df50275488e326aa0b2da8cab2a96b085a66841. READY/Preview. 27 checks inteiramente hospedados PASS, zero erros/requests para produção e todas as contagens de cleanup zero. Evidência: docs/qa/ORCALY_WEALTH_DEBT_VERCEL_E2E.json. A regressão confirma HTTP 409/PT409 em até sete segundos; UI mobile hospedada inspecionada.
 
 ## Erros encontrados e resolvidos
 TypeScript do projeto não aceita literals BigInt com alvo atual; usados construtores BigInt, preservando aritmética exata sem mudar o target global. O schema original exigia valor positivo para todo lançamento: adicionado check condicional em migration nova para passivo quitado.

@@ -1,28 +1,26 @@
 # Continuação exata — Orçaly
 
-## Unidade vigente: Debt Center
+Preview certificado: https://orcaly-bb34uyljo-vinicius-araujos-projects.vercel.app; deployment dpl_Fg2Cw8q2o9YyUmSrSaGewcHqFkqr; SHA de aplicação 0df50275488e326aa0b2da8cab2a96b085a66841. READY/Preview. 27 checks inteiramente hospedados PASS, zero erros/requests para produção e todas as contagens de cleanup zero. Evidência: docs/qa/ORCALY_WEALTH_DEBT_VERCEL_E2E.json.
 
-Seção 6.5 implementada; banco aplicado somente em staging, oito migrations. Saldo reaproveita wealth_entries, termos 1:1, RLS/Actions/versionamento/auditoria, declaração de quitação e simulação snowball/avalanche/custom. 95 testes e 16 E2E focados locais com Supabase real PASS, cleanup zero. Preview novo em certificação. Detalhes: docs/qa/ORCALY_WEALTH_DEBT.md.
+Produção ozrasuktfthsvbqprtel somente leitura. Staging zwxulgpjucxudadjdqov é o link atual do CLI. Branch codex/orcaly-ecosystem; GitHub/Preview autorizados, sem promoção/main. Não db push histórico, migration repair ou alteração de SQL aplicado. WhatsApp congelado.
 
-Migrations 20260926165000 e 20260926171000 já aplicadas; não reaplicar ou editar. A segunda resolve repetição HTTP causada por SQLSTATE 40001: conflito de versão usa PT409. Schema final: 271 adições vs produção capturada, nenhum objeto antigo de produção alterado; vs clock há 27 adições e check intencional de saldo zero em passivos. Cron interno continua pausado. Próximo depois da certificação: 6.6 Net Worth.
+## Próxima ação concreta
+Próxima unidade: seção 6.6 Net Worth do MASTER CONTINUATION FINAL (C:\Users\arauj\Downloads\CODEX_ORCALY_MASTER_CONTINUATION_FINAL.md, 40 seções já lidas). Suportar classes de ativos/passivos, liquidez, concentração, alocação e evolução; depois 6.7 Financial Health e demais seções. O master completo permanece PARCIAL. Não refazer 6.1–6.5.
 
-## Checkpoint anterior: recorrências/clock
+Confira git status/log; HEAD pode incluir documentação/teste de certificação depois do SHA de aplicação acima. Leia AGENTS.md e guias Next locais antes de código. Comece por lib/wealth/core.ts, lib/wealth/summary.ts, app/apps/wealth/page.tsx e as migrations Wealth atuais. O patrimônio já é soma integral de ativos menos passivos; Debt Center usa a mesma entrada, não outro saldo. Preserve isso. Evolução futura precisa de origem/datas explícitas: auditoria atual guarda identificadores, não reconstruir valores históricos inexistentes. Defina novas classificações/snapshots como migration futura, teste antes em staging e não refaça a baseline.
 
-Recorrências e relógio certificados em staging. Preview https://orcaly-cfgjqomls-vinicius-araujos-projects.vercel.app, deployment dpl_4ztQEJZVT14wEbYzYqCq5pg1DWey, SHA de7346756d9dd053544a5767827f5f506008c2f7: 24 checks hospedados PASS. O relógio foi acrescentado depois como função privada, sem alteração da UI/API pública, e passou em dois disparos pg_cron reais. 85 testes PASS. Cleanup integral zero. Seis migrations, delta cumulativo de 244 adições; um cron registrado e PAUSADO durante QA. Evidências: docs/qa/ORCALY_WEALTH_RECURRENCE_VERCEL_E2E.json e ORCALY_WEALTH_CLOCK.md.
+## Banco e operação
+Staging: oito migrations já aplicadas na ordem explícita baseline 20260926030809, Wealth 20260926014103, lifecycle 20260926103114, recorrências 20260926110128, boundary 20260926153138, clock 20260926164000, debt 20260926165000, conflito 20260926171000. Não reaplicar/resetar. Hashes locais iguais ao ledger; ver reconciliation/CONTINUATION_MIGRATIONS.md. Inventário local atual: 77 SQLs. Matriz histórica original 71 locais/51 produção/79 linhas/3 UNKNOWN permanece histórica, sem equivalência presumida.
 
-Produção ozrasuktfthsvbqprtel somente leitura; staging zwxulgpjucxudadjdqov é o link do CLI. Branch codex/orcaly-ecosystem. GitHub/Preview autorizados; nenhuma promoção/main. Não repetir bootstrap ou db push histórico, não editar SQL aplicado, não fazer migration repair. WhatsApp congelado.
+Um cron interno de staging foi testado em dois ciclos reais e permanece PAUSADO para QA determinístico. Zero chamadas externas, pagamentos ou secrets copiados. Ver docs/qa/ORCALY_WEALTH_CLOCK.md. Servidor local de QA foi encerrado; nenhuma porta 4174 em escuta.
 
-## Próxima unidade
-Seção 6.5 do arquivo C:\Users\arauj\Downloads\CODEX_ORCALY_MASTER_CONTINUATION_FINAL.md: Debt Center (saldo, principal, juros, parcelas, vencimento, mínimo, quitação, snowball/avalanche/custom e simulação não garantida). Não refazer 6.1–6.4. Conferir git status/log e ler lib/wealth/core.ts, components/wealth e guias locais Next antes de código. Implementar/testar em staging; avançar automaticamente ao restante enquanto houver contexto útil.
+Conflito de formulário NÃO usa SQLSTATE 40001: o PostgREST hospedado repetia a chamada. A migration 20260926171000 usa PT409, comprovado por resposta HTTP 409 em até sete segundos e mensagem da Server Action. Não editar o SQL original para esconder a correção.
 
-## Banco
-Já aplicadas, nesta ordem explícita: baseline 20260926030809, Wealth 20260926014103, lifecycle 20260926103114, recurring 20260926110128, boundary 20260926153138, clock 20260926164000. Não reaplicar/resetar/editar. Hashes em reconciliation/CONTINUATION_MIGRATIONS.md. Clock pausado, preservar durante E2E; enable/pause/inspect via scripts/configure-wealth-staging-cron.mjs gera SQL guardado para CLI staging. Procedimento completo em ../qa/ORCALY_WEALTH_CLOCK.md.
+## QA e Preview
+95 testes e build final PASS; 16 checks locais focados + 27 completos no Preview PASS. Evidências em docs/qa/ORCALY_WEALTH_DEBT*. Tipos remotos gerados; RLS/grants/advisors e delta em reconciliation/staging-debt-*. O limite do simulador é explícito (50 dívidas, 600 meses, taxas mensais fixas declaradas), sem taxas variáveis/tarifas/garantia ou execução financeira.
 
-## QA/Preview
-Vercel prj_SzlsQ0ovx6JnDE8v5jJbAa5U9U4O / team_c5p2Uiz9b1SqKxOhmnmxUWZH. CLI autenticado, env Preview desta branch aponta staging. Proteção ativa. Credenciais/share link ficam ignorados em .local-qa/reconciliation; nunca imprimir.
+Vercel project prj_SzlsQ0ovx6JnDE8v5jJbAa5U9U4O / team_c5p2Uiz9b1SqKxOhmnmxUWZH. CLI autenticado. Env somente Preview da branch aponta staging. Proteção do Preview preservada. Share link em .local-qa/reconciliation/vercel-debt-access.json, ignorado e temporário; renovar somente se expirar. Nunca imprimir chaves/links de acesso.
 
-Último E2E completo: URL/SHA acima, ORCALY_STAGING_ACCESS_FILE=.local-qa/reconciliation/vercel-recurrence-access.json; flags ORCALY_QA_RECORDS/EDIT/LIFECYCLE/RECURRENCE=true. 24 PASS e todas as contagens zero. Não repetir sem mudança/risco. Types remotos atualizados, 85 testes locais PASS; build de UI/worker de73467 PASS. Mudança posterior do relógio é SQL privado + QA, sem alteração Next.
+Para repetir quando mudança justificar: node scripts/e2e-ecosystem-staging.mjs com ORCALY_STAGING_APP_URL da URL certificada, ORCALY_STAGING_ACCESS_FILE acima, ORCALY_EXPECTED_COMMIT exato e ORCALY_QA_RECORDS/EDIT/LIFECYCLE/RECURRENCE/DEBT=true. Manter cron pausado durante fixtures; scripts/configure-wealth-staging-cron.mjs gera SQL guardado para enable/pause/inspect no staging. Se interrompido, scripts/cleanup-staging-fixtures.mjs limpa somente IDs/emails de QA registrados; terms são cascade da entrada.
 
-Não rodar dev/typegen/build ao mesmo tempo: gerou manifesto incompleto no Windows, corrigido. Nenhum QA server iniciado nesta retomada. Se fixtures interrompidas, node scripts/cleanup-staging-fixtures.mjs usa somente IDs/emails registrados; pause cron antes. Não matar todos os Node/Chrome.
-
-Master completo PARCIAL; registrar limites e estado real. Histórico em NEXT_CODEX_HANDOFF_HISTORY_THROUGH_LIFECYCLE.md tem instruções antigas superadas.
+Não executar dev/typegen/build simultaneamente (corrompeu tipos/manifests gerados no Windows, já corrigido). Não matar todos os Node/Chrome. Próxima etapa deve continuar automaticamente até unidade certificada/contexto; deixar handoff preciso se contexto acabar. Histórico antigo nos arquivos HISTORY_THROUGH_LIFECYCLE é registro, não instrução vigente.

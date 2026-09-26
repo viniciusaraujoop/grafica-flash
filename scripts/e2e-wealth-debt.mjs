@@ -39,6 +39,8 @@ export async function testWealthDebt({page,context,other,a,b,admin,appUrl,grant,
  const stale=await context.newPage();stale.on('pageerror',e=>errors.push(e.message));await stale.goto(editUrl)
  await edit.getByLabel('Saldo atual (R$)').fill('90,29');await edit.getByRole('checkbox').check();await edit.getByRole('button',{name:'Salvar dívida'}).click()
  await edit.getByRole('status').filter({hasText:'Dívida salva'}).waitFor()
+ const staleRpc=await a.db.rpc('save_wealth_debt',{p_input:{...terms,title:entry.title,balance_cents:entry.amount_cents,financial_date:entry.financial_date,confirmed:'yes'},p_entry_id:entry.id,p_version:1}).abortSignal(AbortSignal.timeout(7000))
+ assert.equal(staleRpc.status,409);assert.equal(staleRpc.error?.code,'PT409')
  const old=stale.getByRole('form',{name:'Editar dívida',exact:true});assert.equal(await old.locator('input[name="version"]').inputValue(),'1');await old.getByRole('checkbox').check();assert.deepEqual(await old.locator('input').evaluateAll(inputs=>inputs.filter(i=>!i.validity.valid).map(i=>({name:i.name,value:i.value,message:i.validationMessage}))),[]);await old.getByRole('button',{name:'Salvar dívida'}).click()
  await old.getByRole('status').waitFor();assert.match(await old.getByRole('status').innerText(),/mudou em outra aba/);await stale.close()
  assert.equal(ok(await admin.from('wealth_entries').select('amount_cents').eq('id',entry.id).single()).amount_cents,9029)

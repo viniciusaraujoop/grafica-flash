@@ -1,21 +1,15 @@
 # Orçaly — relatório do checkpoint
 
-## Unidade vigente: Debt Center
+Preview certificado: https://orcaly-bb34uyljo-vinicius-araujos-projects.vercel.app; deployment dpl_Fg2Cw8q2o9YyUmSrSaGewcHqFkqr; SHA de aplicação 0df50275488e326aa0b2da8cab2a96b085a66841. READY/Preview. 27 checks inteiramente hospedados PASS, zero erros/requests para produção e todas as contagens de cleanup zero. Evidência: docs/qa/ORCALY_WEALTH_DEBT_VERCEL_E2E.json.
 
-Seção 6.5 implementada; banco aplicado somente em staging, oito migrations. Saldo reaproveita wealth_entries, termos 1:1, RLS/Actions/versionamento/auditoria, declaração de quitação e simulação snowball/avalanche/custom. 95 testes e 16 E2E focados locais com Supabase real PASS, cleanup zero. Preview novo em certificação. Detalhes: docs/qa/ORCALY_WEALTH_DEBT.md.
+Home/Hub/Core preservados. Histórico/CSV/edição, lifecycle/metas/totais, recorrências/worker/clock e Debt Center (6.1–6.5) entregues no escopo descrito nas evidências. Debt Center reaproveita o passivo, declara quitação e simula menor saldo/maior taxa/ordem pessoal com BigInt; não executa pagamentos. 95 testes domínio/PostgreSQL, TypeScript, build e lint de escopo PASS. Tipos reais gerados. Delta cumulativo vs produção capturada: 271 adições intencionais, nenhum objeto antigo alterado/removido. Vs clock: 27 adições e check intencional de saldo zero para passivos. Advisors: nenhum WARN estrutural novo; alertas legados/Auth ainda abertos.
 
-Migrations 20260926165000 e 20260926171000 já aplicadas; não reaplicar ou editar. A segunda resolve repetição HTTP causada por SQLSTATE 40001: conflito de versão usa PT409. Schema final: 271 adições vs produção capturada, nenhum objeto antigo de produção alterado; vs clock há 27 adições e check intencional de saldo zero em passivos. Cron interno continua pausado. Próximo depois da certificação: 6.6 Net Worth.
+Produção ozrasuktfthsvbqprtel somente leitura. Staging zwxulgpjucxudadjdqov é o link atual do CLI. Branch codex/orcaly-ecosystem; GitHub/Preview autorizados, sem promoção/main. Não db push histórico, migration repair ou alteração de SQL aplicado. WhatsApp congelado.
 
-## Checkpoint anterior: recorrências/clock
+Nesta continuação foram concluídos recorrências/clock e Debt Center. O cron real provou duas ocorrências sem duplicidade, revogação e exclusão da fila alheia; ficou pausado. Debt Center foi validado por Auth/RLS/Actions, centavos, concorrência, read-only, quitação, reutilização de passivo, três estratégias, orçamento insuficiente, audit, Axe A/AA e mobile.
 
-Recorrências e relógio certificados em staging. Preview https://orcaly-cfgjqomls-vinicius-araujos-projects.vercel.app, deployment dpl_4ztQEJZVT14wEbYzYqCq5pg1DWey, SHA de7346756d9dd053544a5767827f5f506008c2f7: 24 checks hospedados PASS. O relógio foi acrescentado depois como função privada, sem alteração da UI/API pública, e passou em dois disparos pg_cron reais. 85 testes PASS. Cleanup integral zero. Seis migrations, delta cumulativo de 244 adições; um cron registrado e PAUSADO durante QA. Evidências: docs/qa/ORCALY_WEALTH_RECURRENCE_VERCEL_E2E.json e ORCALY_WEALTH_CLOCK.md.
+O teste hospedado encontrou repetição indevida com 40001. Corrigido em migration nova PT409, preservando a original. Limites e erros detalhados em docs/qa/ORCALY_WEALTH_DEBT.md e ORCALY_WEALTH_CLOCK.md. Staging tem oito migrations; hashes e limites de acesso confirmados; todas as fixtures removidas. Nenhum cliente real/dado pessoal/secret copiado, pagamento/email/webhook externo executado ou alteração de produção.
 
-Produção ozrasuktfthsvbqprtel somente leitura; staging zwxulgpjucxudadjdqov é o link do CLI. Branch codex/orcaly-ecosystem. GitHub/Preview autorizados; nenhuma promoção/main. Não repetir bootstrap ou db push histórico, não editar SQL aplicado, não fazer migration repair. WhatsApp congelado.
+Próxima unidade: seção 6.6 Net Worth do MASTER CONTINUATION FINAL (C:\Users\arauj\Downloads\CODEX_ORCALY_MASTER_CONTINUATION_FINAL.md, 40 seções já lidas). Suportar classes de ativos/passivos, liquidez, concentração, alocação e evolução; depois 6.7 Financial Health e demais seções. O master completo permanece PARCIAL. Não refazer 6.1–6.5.
 
-A baseline/reconciliação continua certificada, sem replay da cadeia histórica. Matriz original: 19 EXACT_MATCH, 20 SAME_CHANGE_DIFFERENT_VERSION, 28 LOCAL_ONLY, 8 REMOTE_ONLY, 1 SUPERSEDED e 3 UNKNOWN. Quatro migrations posteriores são aditivas ao ecossistema, com hashes idênticos ao ledger de staging e ausentes em produção. Delta final não altera objetos antigos da produção capturada.
-
-Nesta unidade: criação/pausa/retomada/cancelamento de agendas; datas ancoradas/fuso; versão, idempotência, lock/lease/recovery/retry; atomicidade entre lançamento/ledger/outbox; read/write/entitlement/RLS; worker e cron Wealth exclusivo. Prova automática sem chamada manual, zero duplicidade e nenhum processamento de job alheio.
-
-Os três WARN novos de definers foram corrigidos em migration adicional com implementações privadas e wrappers invoker. Clock não cria novo WARN; avisos legados/Auth não foram declarados resolvidos. Nenhuma integração externa, pagamento ou email executado.
-
-O master completo segue PARCIAL: próximo Debt Center. Ver NEXT_CODEX_HANDOFF.md para retomada. Detalhes anteriores e erros já resolvidos em ORCALY_FINAL_REPORT_HISTORY_THROUGH_LIFECYCLE.md.
+O relatório não certifica módulos futuros, todos os fluxos legados, MFA real ou release de produção. Pendências explícitas no Execution State; nenhuma promoção realizada.
