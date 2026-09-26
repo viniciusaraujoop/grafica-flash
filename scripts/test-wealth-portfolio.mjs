@@ -6,7 +6,7 @@ import {createTestDatabase,asUser,asAdmin,ids} from './helpers/ecosystem-test-db
 import {readPortfolio,rebalance,futureScenario,quantity} from '../lib/wealth/portfolio.ts'
 import {entriesCsv} from '../lib/wealth/records.ts'
 const db=await createTestDatabase();after(()=>db.close())
-for(const f of ['20260926165000_wealth_debt_center.sql','20260926171000_wealth_debt_conflict_response.sql','20260926180000_wealth_net_worth.sql','20260926181546_wealth_portfolio_foundation.sql','20260926185024_wealth_portfolio_target_binding.sql'])await db.exec(readFileSync(`supabase/migrations/${f}`,'utf8'))
+for(const f of ['20260926165000_wealth_debt_center.sql','20260926171000_wealth_debt_conflict_response.sql','20260926180000_wealth_net_worth.sql','20260926181546_wealth_portfolio_foundation.sql','20260926185024_wealth_portfolio_target_binding.sql','20260926190250_wealth_portfolio_blind_dml_guard.sql'])await db.exec(readFileSync(`supabase/migrations/${f}`,'utf8'))
 const payload=v=>({confirmed:'yes',idempotency_key:randomUUID(),...v})
 const rpc=async(op,input)=>(await db.query('select public.manage_wealth_portfolio($1,$2) id',[op,input])).rows[0].id
 const view=async id=>readPortfolio((await db.query('select public.wealth_portfolio_view($1) v',[id])).rows[0].v)
@@ -108,4 +108,12 @@ test('unknown valuations export empty money cells, while known zero assets and s
  const row={id:'qa',title:'QA',kind:'asset',category:'investment',amount_cents:0,financial_date:'2026-09-26',currency:'BRL',recurrence:'none',valuation_status:'NOT_AVAILABLE'}
  const csv=entriesCsv([row]);assert.match(csv,/"avaliacao"/);assert.match(csv,/"2026-09-26";"";"";"BRL"/);assert.match(csv,/NOT_AVAILABLE/)
  assert.match(entriesCsv([{...row,valuation_status:'MANUAL_VALUE'},{...row,kind:'liability',valuation_status:'MANUAL_VALUE'}]),/"0,00";"0"/)
+})
+test('write-only entitlement cannot use blind DML to remove an immutable Portfolio ledger',async()=>{
+ await asAdmin(db);const before=(await db.query('select count(*) n from public.wealth_holdings where user_id=$1',[ids.b])).rows[0].n
+ await db.query("update public.ecosystem_product_entitlements set permissions=array['wealth.write'] where user_id=$1",[ids.b]);await asUser(db,ids.b)
+ assert.equal((await db.query('select ecosystem_private.is_owned_wealth_holding($1) own',[holding])).rows[0].own,false)
+ await assert.rejects(()=>db.query("update public.wealth_entries set title='blind tamper'"),e=>e.code==='42501')
+ try{await db.query('delete from public.wealth_entries')}catch(error){assert.equal(error.code,'42501')}
+ await asAdmin(db);assert.equal((await db.query('select count(*) n from public.wealth_holdings where user_id=$1',[ids.b])).rows[0].n,before)
 })

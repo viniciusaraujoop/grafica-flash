@@ -1,7 +1,7 @@
 {
   "label": "staging-portfolio-delta",
   "expectedSha256": "2be1e1f2e8d6ff17510370a8f834371679312ed8a179faf4255948dfc6512f28",
-  "actualSha256": "ec7fc41d2ad16c6c9f02d2fdaa7ff8ac4367ee9b2a503d489cccf3bd17f00323",
+  "actualSha256": "cc4d6876c217e8f9ba41da2c68bea0a8a76829e732e7f50b860fb2b88bea42fc",
   "counts": {
     "roles": {
       "expected": 14,
@@ -33,7 +33,7 @@
     },
     "functions": {
       "expected": 132,
-      "actual": 136
+      "actual": 137
     },
     "relations": {
       "expected": 173,
@@ -64,7 +64,7 @@
       "actual": 6
     }
   },
-  "changeCount": 103,
+  "changeCount": 104,
   "changes": [
     {
       "category": "columns",
@@ -556,7 +556,15 @@
       "kind": "added",
       "fields": null,
       "beforeSha256": null,
-      "afterSha256": "ac3ac2a8f30ad88fb37c8a723589f23b7369377e351ac97fd21837cbe33fadf6"
+      "afterSha256": "ccd77d9181f35e464f979f41f58758df017b37c863f10236278e748a41a9c070"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.is_owned_wealth_holding.p_id uuid",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7738c525d5fa589c04d098582a30e071ab35dea902218d9e5da5f6a999a76527"
     },
     {
       "category": "functions",
