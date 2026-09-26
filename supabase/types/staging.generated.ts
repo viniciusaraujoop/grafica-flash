@@ -8427,6 +8427,60 @@ export type Database = {
           },
         ]
       }
+      wealth_documents: {
+        Row: {
+          category: string
+          created_at: string
+          document_date: string | null
+          id: string
+          links: Json
+          mime_type: string
+          notes: string
+          object_path: string | null
+          sha256: string
+          size_bytes: number
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          document_date?: string | null
+          id: string
+          links?: Json
+          mime_type: string
+          notes?: string
+          object_path?: string | null
+          sha256: string
+          size_bytes: number
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          document_date?: string | null
+          id?: string
+          links?: Json
+          mime_type?: string
+          notes?: string
+          object_path?: string | null
+          sha256?: string
+          size_bytes?: number
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
       wealth_entries: {
         Row: {
           amount_cents: number
@@ -10955,6 +11009,10 @@ export type Database = {
           updated_at: string
           verified_at: string
         }[]
+      }
+      manage_wealth_document: {
+        Args: { p_input: Json; p_operation: string }
+        Returns: string
       }
       manage_wealth_planning: {
         Args: { p_input: Json; p_operation: string }

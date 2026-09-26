@@ -1,3 +1,4 @@
+import {testWealthDocuments} from './e2e-wealth-documents.mjs'
 import {testWealthPlanning} from './e2e-wealth-planning.mjs'
 import {testWealthCalendar} from './e2e-wealth-calendar.mjs'
 import assert from 'node:assert/strict'
@@ -385,6 +386,7 @@ try{
  if(process.env.ORCALY_QA_HEALTH==='true')await testWealthHealth({page,other,a,b,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_CALENDAR==='true')await testWealthCalendar({page,context,a,b,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_PLANNING==='true')await testWealthPlanning({page,context,a,b,admin,appUrl,grant,active,ok,pass,output})
+ if(process.env.ORCALY_QA_DOCUMENTS==='true')await testWealthDocuments({page,context,other,anonymous,a,b,admin,appUrl,grant,active,ok,pass,output})
  assert.deepEqual(errors,[])
  pass('no-browser-errors-or-production-requests')
 }catch(error){const safeMessage=String(error?.message??error).split('\n')[0];report.push({check:'execution',status:'FAIL',message:safeMessage});process.exitCode=1;console.error(safeMessage)}
@@ -393,9 +395,11 @@ finally{
  // Collect fixture entity IDs before user cascades; triggers during cascades retain only IDs.
  for(const user of users){
   await cleanupWealthSchedules(admin,user.id,entities)
-  for(const table of ['ecosystem_product_entitlements','ecosystem_context_consents','wealth_entries','wealth_goals','wealth_net_worth_snapshots','wealth_portfolios','wealth_holdings','wealth_portfolio_transactions','wealth_goal_funding','wealth_life_plans']){
+  for(const table of ['ecosystem_product_entitlements','ecosystem_context_consents','wealth_entries','wealth_goals','wealth_net_worth_snapshots','wealth_portfolios','wealth_holdings','wealth_portfolio_transactions','wealth_goal_funding','wealth_life_plans','wealth_documents']){
    for(let offset=0;;offset+=500){const rows=ok(await admin.from(table).select('id').eq('user_id',user.id).order('id').range(offset,offset+499));for(const row of rows)entities.add(row.id);if(rows.length<500)break}
   }
+  const docs=ok(await admin.from('wealth_documents').select('object_path').eq('user_id',user.id));if(docs.length)ok(await admin.storage.from('wealth-documents').remove(docs.map(d=>d.object_path)))
+  await user.db.auth.signOut()
   entities.add(user.id)
   const deleted=await admin.auth.admin.deleteUser(user.id);if(deleted.error){errors.push(`Cleanup user ${user.id}: ${deleted.error.code}`);process.exitCode=1}
  }
@@ -409,6 +413,7 @@ finally{
  if(process.env.ORCALY_QA_NET_WORTH==='true')cleanup.snapshotsRemaining=(await admin.from('wealth_net_worth_snapshots').select('id',{count:'exact',head:true})).count
  if(process.env.ORCALY_QA_PORTFOLIO==='true')for(const t of ['wealth_portfolios','wealth_holdings','wealth_portfolio_transactions'])cleanup[t]=(await admin.from(t).select('id',{count:'exact',head:true})).count
  if(process.env.ORCALY_QA_PLANNING==='true')for(const t of ['wealth_goal_funding','wealth_life_plans'])cleanup[t]=(await admin.from(t).select('id',{count:'exact',head:true})).count
+ if(process.env.ORCALY_QA_DOCUMENTS==='true'){cleanup.documents=(await admin.from('wealth_documents').select('id',{count:'exact',head:true})).count;cleanup.storageFolders=ok(await admin.storage.from('wealth-documents').list()).length}
  if(Object.values(cleanup).some(value=>value!==0))process.exitCode=1
  if(cleanup.usersRemaining!==0||cleanup.auditRowsRemaining!==0)process.exitCode=1
  await fs.writeFile(`${output}/report.json`,JSON.stringify({project:stagingRef,appUrl,commit:accessUrl?process.env.ORCALY_EXPECTED_COMMIT:null,startedAt,finishedAt:new Date().toISOString(),report,errors,cleanup,limits:[accessUrl?'Next.js served by protected Vercel Preview; Supabase staging hosted in sa-east-1':'Next.js application served locally; Supabase staging hosted in sa-east-1','Auth, JWT, refresh, PostgREST, RLS, grants and persistence use real hosted Supabase staging','No production data or credentials used; no email sent; all accounts confirmed by staging Admin API']},null,2))
