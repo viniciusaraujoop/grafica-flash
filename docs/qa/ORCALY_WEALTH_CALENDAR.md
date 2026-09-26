@@ -1,6 +1,6 @@
 # Financial Calendar & Recurring Bills — V5
 
-Implementação da primeira unidade V5 a partir de d3bdb972ebe14018954b5e8a6031e40accdd3d06. Produção somente leitura; staging zwxulgpjucxudadjdqov. Certificação de Preview ainda pendente neste commit.
+Implementação da primeira unidade V5 a partir de d3bdb972ebe14018954b5e8a6031e40accdd3d06. Produção somente leitura; staging zwxulgpjucxudadjdqov. Preview certificado: https://orcaly-ef77tbh5l-vinicius-araujos-projects.vercel.app, deployment dpl_DeRBdKH4qx637GkhWMoqS5eFTUSb READY/Preview, SHA de aplicação 1b5328190bd1ad81ef9c957bdf2f4856a9f0f7d3. 43 checks hospedados PASS, finalizados 2026-09-26T20:27:57.415Z, zero erros de navegador/chamadas à produção. Evidência: docs/qa/ORCALY_WEALTH_CALENDAR_VERCEL_E2E.json. Build/testes/lint/TypeScript aprovados; três warnings legados do prebuild permanecem. Commit documental posterior não altera esse runtime/SQL.
 
 ## Contratos e semântica
 
@@ -21,9 +21,10 @@ Delta vs Portfolio: 27 adições + grant EXECUTE ao helper privado puro wealth_r
 ## Validação desta unidade
 
 - 121 testes de domínio/PostgreSQL PASS (113 anteriores + oito grupos Calendar/Bills): leap/end-month, âncora 1900, ranges, deduplicação inclusive archive, pausas/cancelamento, 1.100 contas, totais exatos/paginação, revisões/CAS/duplicatas, todas as fontes não caixa, RLS/read-only/write-only/anon/cross-user.
-- E2E local com Auth/PostgREST de staging: 17 checks PASS; regressão de recorrências/worker PASS em execução separada. Forms reais, dono forjado, stale, direitos revogados, linking/navegação, estados vazios, Axe A/AA em 320/1440 light/dark e screenshots nas seis larguras. Ajustes finais: ícone nativo no tema escuro e remoção do ruído de zero eventos serão revalidados no Preview.
+- E2E local com Auth/PostgREST de staging: 17 checks PASS; regressão de recorrências/worker PASS em execução separada. Forms reais, dono forjado, stale, direitos revogados, linking/navegação, estados vazios, Axe A/AA em 320/1440 light/dark e screenshots nas seis larguras. Ajustes finais de ícone nativo no tema escuro e dias vazios revalidados no Preview.
 - Erros corrigidos: fixture Debt usava user_id inexistente; `<small>` fora do `<dd>`; runner precisava aguardar navegação e incluir hook Calendar. CLI exige --linked junto de --project-ref. Nenhuma dessas falhas alterou produção.
-- Cleanup local zero: auth, audit, detalhes, schedules, occurrences, jobs/idempotency/outbox. Cron não ativado. Servidor QA e sessão agent-browser encerrados.
+- E2E final Preview: 43 checks PASS incluindo regressão completa e bundle do SHA exato, encerrado 2026-09-26T20:27:57.415Z. 24 screenshots light/dark nas seis larguras em assets/wealth-calendar; desktop/mobile inspecionados. Nenhum erro/chamada produção. Build integral aprovado.
+- Cleanup local zero: auth, audit, detalhes, schedules, occurrences, jobs/idempotency/outbox. Cleanup final hospedado também zero para entries/goals/debt/holdings/transactions/private receipts/snapshots e todos os demais fixtures, confirmado por API e SQL. Cron não ativado. Servidor QA e sessão agent-browser encerrados.
 
 ## Comandos principais
 
