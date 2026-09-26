@@ -1,0 +1,92 @@
+[
+  {
+    "schema": "ecosystem_private",
+    "name": "allow_wealth_family_document",
+    "security_definer": true,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": true
+  },
+  {
+    "schema": "ecosystem_private",
+    "name": "family_user_can_read",
+    "security_definer": false,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": false
+  },
+  {
+    "schema": "ecosystem_private",
+    "name": "manage_wealth_family",
+    "security_definer": true,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": true
+  },
+  {
+    "schema": "ecosystem_private",
+    "name": "read_wealth_family_share",
+    "security_definer": true,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": true
+  },
+  {
+    "schema": "ecosystem_private",
+    "name": "wealth_family_overview",
+    "security_definer": true,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": true
+  },
+  {
+    "schema": "ecosystem_private",
+    "name": "wealth_family_resource",
+    "security_definer": false,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": false
+  },
+  {
+    "schema": "public",
+    "name": "manage_wealth_family",
+    "security_definer": false,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": true
+  },
+  {
+    "schema": "public",
+    "name": "read_wealth_family_share",
+    "security_definer": false,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": true
+  },
+  {
+    "schema": "public",
+    "name": "wealth_family_overview",
+    "security_definer": false,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": true
+  }
+]

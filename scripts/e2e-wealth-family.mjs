@@ -46,6 +46,12 @@ export async function testWealthFamily({page,context,other,anonymous,a,b,no,admi
   await other.page.screenshot({path:`${output}/family-${colorScheme}-${width}.png`,fullPage:true})
  }}
  await other.page.keyboard.press('Tab');assert.ok(await other.page.evaluate(()=>document.activeElement!==document.body))
+ await page.goto(`${appUrl}/apps/wealth/familia`);await page.getByText('Convidar uma pessoa',{exact:true}).click();await page.getByText('Compartilhar um registro',{exact:true}).click();await page.getByText('Tenho um convite',{exact:true}).click()
+ for(const colorScheme of ['light','dark']){await page.emulateMedia({colorScheme,reducedMotion:'reduce'});for(const width of [320,390,768,1024,1440,1920]){
+  await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Family forms overflow ${width} ${colorScheme}`)
+  if([320,1440].includes(width)){const axe=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();assert.deepEqual(axe.violations.map(v=>v.id),[])}
+  await page.screenshot({path:`${output}/family-forms-${colorScheme}-${width}.png`,fullPage:true})
+ }}
  pass('family-six-widths-two-themes-Axe-keyboard-reduced-motion-and-both-entitlement-gates')
  const races=await Promise.all([command(a,'revoke',input({id:docShare,version:2})),command(b,'revoke',input({id:docShare,version:2}))]);assert.equal(races.filter(r=>!r.error).length,1);assert.equal(races.find(r=>r.error).error.code,'PT409')
  assert.equal(ok(await read(b,docShare)),null);assert.ok((await b.db.storage.from('wealth-documents').download(path)).error);assert.equal((await other.context.request.get(url)).status(),404)

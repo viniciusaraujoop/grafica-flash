@@ -1,6 +1,6 @@
 # Wealth Family — V8
 
-Implementação em `/apps/wealth/familia`. Certificação local concluída; Preview/E2E hospedado pendente neste commit de implementação. Produção não alterada.
+Implementação em `/apps/wealth/familia`. Certificação local e hospedada concluída. Produção não alterada.
 
 Conexões bilaterais independentes de company_members, One e consents entre produtos. Convite manual por código aleatório256 bits, vinculado ao email confirmado e válido7 dias. Banco guarda somente hash código+email; receipts guardam fingerprint, não email/código. Nada é enviado automaticamente. Nome da conexão informado pelo criador, visível aos dois após aceite. Não constitui verificação externa de parentesco/identidade.
 
@@ -18,8 +18,10 @@ Comandos: `npx supabase migration new wealth_family_explicit_sharing`; `node --t
 
 154 testes domínio/SQL PASS (9 novos), typecheck/lint PASS,19 checks E2E locais PASS. Testes: email confirmado/destinatário errado/sem entitlement, replay/payload alterado, escopo/owner inválido, valores exatos, RLS direta, mínima projeção, expiração/arquivamento, anon/company membership, source/recipient entitlement, Storage real, Server Actions, revogação concorrente PT409 e corrida accept/disconnect com estado final negado, retirada sem entitlement, isolamento Timeline, páginas inválidas. Cleanup API e SQL usuários/sessões/Storage/docs/receipts/Family/audit/cron ativo zero.
 
-Visual:12 screenshots320/390/768/1024/1440/1920 claro/escuro, Axe320/1440 nos dois temas, teclado/foco, reduced motion e overflow; inspeção desktop/mobile. Estados vazio/inválido/pendente/ativo/revogado/entitlement. Leitor de tela humano permanece gate global, não coberto por Axe. Estilo Wealth compartilhado preservado; fundação visual global segue futura unidade V5.
+Visual:24 screenshots hospedados (conteúdo e formulários abertos), mais12 locais320/390/768/1024/1440/1920 claro/escuro, Axe320/1440 nos dois temas, teclado/foco, reduced motion e overflow; inspeção desktop/mobile. Estados vazio/inválido/pendente/ativo/revogado/entitlement. Leitor de tela humano permanece gate global, não coberto por Axe. Estilo Wealth compartilhado preservado; fundação visual global segue futura unidade V5.
 
 Erros encontrados: ambiguidade SQL token corrigida ANTES da aplicação. Primeiro E2E esperava texto de negação mas proxy redireciona anônimo ao login; teste corrigido para comportamento real, fixtures removidas e nova execução passou. Durante revisão, conteúdo da página foi suprimido também quando rollout server bloqueia read; gestão de revogação permanece. Sem alteração retroativa de migration aplicada.
 
 Advisors: sem WARN novo; herdados SECDEF público1, leaked-password1, auth_rls_initplan63, multiple_permissive54. Private RLS sem policy51 INFO (+3 intencional), unindexedFK1 INFO, unused_index variável. Remediações em reconciliation/family-advisors.json. Auth/MFA e avisos herdados seguem gates globais. Nenhuma autorização de produção inferida.
+
+Family certificada: Preview https://orcaly-234zkg555-vinicius-araujos-projects.vercel.app, deployment dpl_6SGcWWjfhbdwpKG3DvgQv1iLwSST READY/Preview, runtime40ddacb2ee9842e9ca32fc4a1ee1b4817fa8520b.62 checks hospedados PASS encerrados 2026-09-26T23:30:19.008Z;154 testes domínio/SQL, typecheck/lint/build/prebuild PASS (3 warnings legados). Cleanup API/SQL completo zero; produção/main intactas.24 screenshots hospedados Family (conteúdo + formulários abertos), seis larguras/dois temas/Axe/reduced motion/teclado. Próxima unidade: Automation Center, ainda sem implementação. Não refazer Family.
