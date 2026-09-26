@@ -11010,6 +11010,10 @@ export type Database = {
           verified_at: string
         }[]
       }
+      manage_wealth_automation: {
+        Args: { p_input: Json; p_operation: string }
+        Returns: Json
+      }
       manage_wealth_document: {
         Args: { p_input: Json; p_operation: string }
         Returns: string
@@ -11492,6 +11496,10 @@ export type Database = {
       settle_wealth_debt: {
         Args: { p_confirmed: boolean; p_entry_id: string; p_version: number }
         Returns: boolean
+      }
+      wealth_automation_overview: {
+        Args: { p_days?: number; p_page?: number; p_status?: string }
+        Returns: Json
       }
       wealth_bills: {
         Args: {

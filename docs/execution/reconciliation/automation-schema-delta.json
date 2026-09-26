@@ -1,0 +1,324 @@
+{
+  "label": "automation-schema-delta",
+  "expectedSha256": "082f8f5ac15746bcdcd09df24ece6ecc0eb68d624d4de31f9730bcbbfc5c7d00",
+  "actualSha256": "45865857d9e17443f72f2695a0d388dccd72ed2c02f784eebeed93ef44b4965d",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2763,
+      "actual": 2775
+    },
+    "indexes": {
+      "expected": 706,
+      "actual": 711
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 176,
+      "actual": 176
+    },
+    "triggers": {
+      "expected": 59,
+      "actual": 61
+    },
+    "functions": {
+      "expected": 159,
+      "actual": 163
+    },
+    "relations": {
+      "expected": 186,
+      "actual": 188
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 811,
+      "actual": 817
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 31,
+  "changes": [
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_automation_commands.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a8f212c0970e11751bfe971a6947f9b4bfdc946d86d78c19d6e948ac69946a40"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_automation_commands.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c04e005948fb9e16cdffc13b1dff50db0c2aa4ef670d908d1f7f51979d60b5ff"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_automation_commands.token",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e17fd142bb7a63205b5a8ccf62728f4b5b059df013640ffc3b4c2efa6ba40647"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_automation_commands.operation",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "bfafe3c890bc9e64a06e6ff8d22f1c4b591827bdc6aba83d5c9897b6390eee5b"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_automation_commands.input_hash",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "aca3d3bf7ecc26ee5c0ae6be8b529b7306ec6ad19641cf69deb7d7141e5b2ead"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_automation_commands.result",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0fe3fa40e4ad570e80b1bfa5165528f47a8951d624fd1d355551f655a1d15b02"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_automation_commands.recorded_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f425d355374249b62c2b691e738d0ab3c0bd32db066f0ecdb391addf102515c8"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_automation_preferences.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "cd455396b9f4589daf1033b70a346fd1e8db79aebb63d1129ea29a0156d6b513"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_automation_preferences.history_days",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9b8b74ea99d3748d36358d652941ada3c608f78400ef2345d050e7d142a819d4"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_automation_preferences.show_inactive",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "200f4b32919b1dc18eb1fb3af05d71c35ac5c795389c1bec44345210a7127eea"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_automation_preferences.version",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8ef2dc5da20d196cc907d0e2d15717446fd2696313c7456e5261f7a161fc092c"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_automation_preferences.updated_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "87b76166f090183b7aa9efadb00f7e72a67d89147ab840f8d91066136612c0ba"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_automation_commands_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "24630c77823815b0fa7019352e2a9f8eb7635f19daffec61ced9c8ac5909c0dc"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_automation_commands_user_id_token_key",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7084e91b56e2597856f9141eef902ce22d96c9b7fa2c6cffba68daee3b2607ce"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_automation_history",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "62e0f3430fdd05e079aba0b6c1584687f57310386aafa660717eb0e2de74c294"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_automation_preferences_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "4995ff01845521a0596248daadf893fa001f7ffeef8c532589a2637fc641c5f2"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_recurrence_operational_jobs",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f4396d81ce7917a5bd1dcfd44565034066c5d3491c175a02c32f6202d43cd530"
+    },
+    {
+      "category": "triggers",
+      "id": "ecosystem_private.wealth_automation_commands.automation_commands_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e9c3c11ca06ff4291481cdb2ef685f1de94cce4e6662d2883c30eb18faac71e7"
+    },
+    {
+      "category": "triggers",
+      "id": "ecosystem_private.wealth_automation_preferences.automation_preferences_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "31f2f1a18e5f86ef09119cd48c4f86bacaede91e1143e1713d47607ef9a6df67"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.manage_wealth_automation.p_operation text, p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "23f1b805f313e1ed1bce1a09d219a66d24532ccaf53ad2061bb750578defc682"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.wealth_automation_overview.p_page integer, p_days integer, p_status text",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "787fafbcda4211a61c86830bbe61dc7587a04e20a0e6d9d838b1356f3c57c11a"
+    },
+    {
+      "category": "functions",
+      "id": "public.manage_wealth_automation.p_operation text, p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a1f3f9e652325a26f50c75b742669360f79e85eaf5cf957582adbdc81d950f8e"
+    },
+    {
+      "category": "functions",
+      "id": "public.wealth_automation_overview.p_page integer, p_days integer, p_status text",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7c9075cf64187b006abbb90e448b275fbbd26e184568d1aa98f35057009908f7"
+    },
+    {
+      "category": "relations",
+      "id": "ecosystem_private.wealth_automation_commands",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "cb8e3afd09be2a0ec1f67b316e625a261de5e2a464207215b1a68c0caeed8f06"
+    },
+    {
+      "category": "relations",
+      "id": "ecosystem_private.wealth_automation_preferences",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b0719b0c6801a03223b9548d02671839c93ded25f9bb2bff188112f5dd5952c5"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_automation_commands.wealth_automation_commands_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7dd4157096e83316ba8edf32c1ad2c08c7f89217315abc722272ee9e7d1d5f51"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_automation_commands.wealth_automation_commands_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "2bfb69614c022f5743c8c308dbc15516696f740d73cac25658a9a4d254b36034"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_automation_commands.wealth_automation_commands_user_id_token_key",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f8c047a1a994dea935a7a30f7a06be302dd327e4af723ecf590f0341eb76546a"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_automation_preferences.wealth_automation_preferences_history_days_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5e885573d057a9e67646a06a553718a644f2b6684519e2a2654aa6d6b4983a07"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_automation_preferences.wealth_automation_preferences_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1aa3af945dd414b32c916b5798033f5f99f02a8ff93f140d07e8927d9764d353"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_automation_preferences.wealth_automation_preferences_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ef84ee7a88ffac5a1834e3f66fcb60eb6b142aa428da724a19b1d21c618bfb9f"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

@@ -1,5 +1,6 @@
 import {testWealthTimeline} from './e2e-wealth-timeline.mjs'
 import {testWealthFamily} from './e2e-wealth-family.mjs'
+import {testWealthAutomation} from './e2e-wealth-automation.mjs'
 import {testWealthDocuments} from './e2e-wealth-documents.mjs'
 import {testWealthPlanning} from './e2e-wealth-planning.mjs'
 import {testWealthCalendar} from './e2e-wealth-calendar.mjs'
@@ -391,6 +392,7 @@ try{
  if(process.env.ORCALY_QA_DOCUMENTS==='true')await testWealthDocuments({page,context,other,anonymous,a,b,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_TIMELINE==='true')await testWealthTimeline({page,context,other,anonymous,a,b,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_FAMILY==='true')await testWealthFamily({page,context,other,anonymous,a,b,no,admin,appUrl,grant,active,ok,pass,output})
+ if(process.env.ORCALY_QA_AUTOMATION==='true')await testWealthAutomation({page,context,other,anonymous,a,b,no,admin,appUrl,grant,active,ok,pass,output})
  assert.deepEqual(errors,[])
  pass('no-browser-errors-or-production-requests')
 }catch(error){const safeMessage=String(error?.message??error).split('\n')[0];report.push({check:'execution',status:'FAIL',message:safeMessage});process.exitCode=1;console.error(safeMessage)}

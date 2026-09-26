@@ -1,0 +1,42 @@
+[
+  {
+    "schema": "ecosystem_private",
+    "name": "manage_wealth_automation",
+    "security_definer": true,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": true
+  },
+  {
+    "schema": "ecosystem_private",
+    "name": "wealth_automation_overview",
+    "security_definer": true,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": true
+  },
+  {
+    "schema": "public",
+    "name": "manage_wealth_automation",
+    "security_definer": false,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": true
+  },
+  {
+    "schema": "public",
+    "name": "wealth_automation_overview",
+    "security_definer": false,
+    "config": [
+      "search_path=\"\""
+    ],
+    "anon": false,
+    "authenticated": true
+  }
+]
