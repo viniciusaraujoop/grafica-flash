@@ -3,7 +3,7 @@ import {randomUUID} from 'node:crypto'
 import AxeBuilder from '@axe-core/playwright'
 export async function testWealthPlanning({page,context,a,b,admin,appUrl,grant,active,ok,pass,output}){
  await grant(a,{...active,permissions:['wealth.read','wealth.write','wealth.export']})
- const goal=ok(await a.db.from('wealth_goals').insert({user_id:a.id,title:'Casa no horizonte QA',target_cents:2500000,saved_cents:500000,monthly_contribution_cents:100000,target_date:'2028-12-31',idempotency_key:randomUUID()}).select().single())
+ const goal=ok(await a.db.from('wealth_goals').insert({id:'00000000-0000-4000-8000-000000000001',user_id:a.id,title:'Casa no horizonte QA',target_cents:2500000,saved_cents:500000,monthly_contribution_cents:100000,target_date:'2028-12-31',idempotency_key:randomUUID()}).select().single())
  const goalUrl=`${appUrl}/apps/wealth/metas/${goal.id}`
  await page.goto(goalUrl);await page.getByRole('heading',{name:'Casa no horizonte QA'}).waitFor();await page.getByLabel('E se eu reservar outro valor por mês? (R$)').fill('2000,00');await page.getByRole('status').filter({hasText:'Simulação alternativa'}).waitFor()
  assert.equal(ok(await a.db.from('wealth_goals').select('monthly_contribution_cents').eq('id',goal.id).single()).monthly_contribution_cents,100000)

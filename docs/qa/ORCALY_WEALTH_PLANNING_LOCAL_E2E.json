@@ -2,8 +2,8 @@
   "project": "zwxulgpjucxudadjdqov",
   "appUrl": "http://127.0.0.1:4174",
   "commit": null,
-  "startedAt": "2026-09-26T21:10:22.747Z",
-  "finishedAt": "2026-09-26T21:11:12.344Z",
+  "startedAt": "2026-09-26T21:22:26.593Z",
+  "finishedAt": "2026-09-26T21:23:52.557Z",
   "report": [
     {
       "check": "hosted-Auth-password-login-and-verified-JWT-issuer",
@@ -51,6 +51,18 @@
     },
     {
       "check": "consent-Server-Action-clock-skew-microseconds-and-authenticated-home-redirect",
+      "status": "PASS"
+    },
+    {
+      "check": "entry-archive-restore-totals-CSV-filters-and-ABA-stale-protection",
+      "status": "PASS"
+    },
+    {
+      "check": "goal-edit-complete-archive-restore-stale-cross-user-and-read-only-boundaries",
+      "status": "PASS"
+    },
+    {
+      "check": "full-precision-hosted-aggregates-over-1000-entries-100-goals-pagination-and-export-cap",
       "status": "PASS"
     },
     {

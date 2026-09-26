@@ -387,7 +387,7 @@ try{
  if(process.env.ORCALY_QA_PLANNING==='true')await testWealthPlanning({page,context,a,b,admin,appUrl,grant,active,ok,pass,output})
  assert.deepEqual(errors,[])
  pass('no-browser-errors-or-production-requests')
-}catch(error){report.push({check:'execution',status:'FAIL',message:error.message});process.exitCode=1;console.error(error.stack)}
+}catch(error){const safeMessage=String(error?.message??error).split('\n')[0];report.push({check:'execution',status:'FAIL',message:safeMessage});process.exitCode=1;console.error(safeMessage)}
 finally{
  await Promise.all(contexts.map(c=>c.close().catch(()=>{})));await browser?.close()
  // Collect fixture entity IDs before user cascades; triggers during cascades retain only IDs.
