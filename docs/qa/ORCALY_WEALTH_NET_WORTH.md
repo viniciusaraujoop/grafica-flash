@@ -14,6 +14,9 @@ Schema: 27 objetos/colunas adicionados e expansão esperada de column_order de w
 
 Comandos: node --test scripts/test-wealth-net-worth.mjs; npm run test:ecosystem; npm run typecheck; npx eslint app/apps/wealth/patrimonio app/apps/wealth/page.tsx components/wealth/WealthNetWorthForms.tsx lib/wealth/net-worth.ts; node scripts/start-staging-qa.mjs; agent-browser open/snapshot/errors; ORCALY_QA_NET_WORTH=true node scripts/e2e-ecosystem-staging.mjs; npm run build; compare-schema-snapshots.mjs. CLI de staging sempre zwxulgpjucxudadjdqov, produção somente catálogo read-only. Cron preexistente permanece pausado.
 
-Certificação do novo Preview pendente neste commit. O master V3 completo permanece em execução; não é um relatório final de release.
+Certificação hospedada concluída no Preview abaixo. O master V3 completo permanece em execução; não é um relatório final de release.
 
 O primeiro Preview com massa integral encontrou scrollable-region-focusable em tabela horizontal, ausente na massa pequena local. Corrigido com região nomeada e tabIndex=0 nas três tabelas de Patrimônio. Validação hospedada será repetida no novo SHA; as 28 verificações anteriores passaram, incluindo snapshots, e cleanup terminou zero.
+
+Preview certificado: https://orcaly-rh4b0iz24-vinicius-araujos-projects.vercel.app; deployment dpl_8RkJ1jNeu2qjoR3F6W3GqERv2t23; SHA de aplicação 84581c93e258367ee8ec4b919b1b5b4322cdbce7. READY/Preview. 30 checks hospedados PASS, zero erros de navegador/requests para produção e cleanup inteiro zero. Evidência docs/qa/ORCALY_WEALTH_NET_WORTH_VERCEL_E2E.json.
+Screenshot hospedado mobile inspecionado. O master V3 permanece em execução, próxima unidade Financial Health.
