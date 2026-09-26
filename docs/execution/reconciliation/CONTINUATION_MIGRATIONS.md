@@ -17,3 +17,7 @@ Não copiar dados reais, auth.users, secrets ou configurações operacionais. Ne
 ## Adendo posterior: clock
 
 20260926164000_wealth_recurrence_clock: LOCAL_ONLY vs produção; mesma versão/nome e SQL idêntico no ledger de staging, SHA LF 00e77914174a348135e420619bee4177b0fb33eedeee619b544bbef88a5f2e65. Uma função privada nova presente no catálogo; nenhuma assinatura pública alterada. Quatro migrations posteriores no total, 75 SQLs locais e seis versões no staging. Delta final 244 adições vs produção; arquivo staging-clock-vs-production.json. Cron é configuração operacional separada: um job interno exclusivo do staging, testado e pausado.
+
+## Adendo Debt Center
+
+20260926165000_wealth_debt_center (SHA LF 6cccbc9078b294f5400fe3f97358dc5bdfc732ad70db890161ab109b3efd7ea2) e 20260926171000_wealth_debt_conflict_response (93c361e50ddee175c690faf330f09461e0999aede501d3ad5c765a98f724e263): LOCAL_ONLY vs produção; versões/nomes iguais e conteúdo exato no ledger de staging. Termos/RLS/índice/FK/auditoria, guard de espécie, save/settle wrappers/implementações presentes no catálogo. A segunda substitui intencionalmente o corpo da função save para erro PT409; não cria outro schema ou saldo. A primeira altera somente o check do amount_cents no Wealth novo (zero para liability). Estado: 77 locais, oito migrations no staging, delta 271 adições intencionais vs produção. Evidência completa em staging-debt-final-delta.json e staging-debt-final-vs-production.json. Nenhuma migration histórica editada; UNKNOWNs preservados.

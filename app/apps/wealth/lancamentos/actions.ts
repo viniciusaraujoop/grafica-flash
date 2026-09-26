@@ -36,6 +36,8 @@ export async function updateWealthEntry(_state: WealthActionState, form: FormDat
   if (!saved.data) return conflict
   revalidatePath('/apps/wealth')
   revalidatePath('/apps/wealth/lancamentos')
+  revalidatePath('/apps/wealth/dividas')
+  revalidatePath(`/apps/wealth/dividas/${id}`)
   revalidatePath(`/apps/wealth/lancamentos/${id}`)
   return { ok: true, message: 'Lançamento atualizado no seu espaço pessoal.' }
 }

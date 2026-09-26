@@ -31,6 +31,8 @@ export async function changeWealthLifecycle(_state: WealthActionState, form: For
   if (result.error) return {ok:false,message:'Não foi possível confirmar a alteração. Reabra o registro e tente novamente.'}
   if (!result.data) return {ok:false,message:'Registro indisponível ou alterado em outra aba. Reabra a versão atual.'}
   revalidatePath('/apps/wealth');revalidatePath('/apps/wealth/lancamentos');revalidatePath('/apps/wealth/metas')
+  revalidatePath('/apps/wealth/dividas')
+  if(type==='entry')revalidatePath(`/apps/wealth/dividas/${id}`)
   revalidatePath(`/apps/wealth/${type === 'entry' ? 'lancamentos' : 'metas'}/${id}`)
   return {ok:true,message:operation === 'archive' ? 'Registro arquivado. Os totais ativos foram atualizados.' : operation === 'restore' ? 'Registro restaurado nos totais ativos.' : 'Meta atualizada.'}
 }

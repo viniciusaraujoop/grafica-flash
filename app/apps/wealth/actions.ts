@@ -33,6 +33,7 @@ export async function saveWealthRecord(_state: WealthActionState, form: FormData
   }
   revalidatePath('/apps/wealth')
   revalidatePath('/apps/wealth/lancamentos')
+  revalidatePath('/apps/wealth/dividas')
   revalidatePath('/apps/wealth/metas')
   return { ok: true, message: 'Registro salvo no seu espaço pessoal.' }
 }

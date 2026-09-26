@@ -8341,6 +8341,47 @@ export type Database = {
           },
         ]
       }
+      wealth_debt_terms: {
+        Row: {
+          id: string
+          installment_count: number | null
+          minimum_cents: number
+          monthly_rate_bps: number
+          next_due_date: string | null
+          principal_cents: number
+          priority: number
+          remaining_installments: number | null
+        }
+        Insert: {
+          id: string
+          installment_count?: number | null
+          minimum_cents: number
+          monthly_rate_bps: number
+          next_due_date?: string | null
+          principal_cents: number
+          priority?: number
+          remaining_installments?: number | null
+        }
+        Update: {
+          id?: string
+          installment_count?: number | null
+          minimum_cents?: number
+          monthly_rate_bps?: number
+          next_due_date?: string | null
+          principal_cents?: number
+          priority?: number
+          remaining_installments?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_debt_terms_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "wealth_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wealth_entries: {
         Row: {
           amount_cents: number
@@ -10960,6 +11001,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      save_wealth_debt: {
+        Args: { p_entry_id?: string; p_input: Json; p_version?: number }
+        Returns: string
+      }
       set_affiliate_payout_account_verification_admin: {
         Args: {
           p_affiliate_id: string
@@ -10988,6 +11033,10 @@ export type Database = {
           p_reason?: string
         }
         Returns: Json
+      }
+      settle_wealth_debt: {
+        Args: { p_confirmed: boolean; p_entry_id: string; p_version: number }
+        Returns: boolean
       }
       wealth_summary: { Args: { p_month: string }; Returns: Json }
     }

@@ -50,7 +50,7 @@ export function validateEntry(input: Record<string, unknown>) {
   if (!wealthKinds.some((kind) => kind === input.kind)) throw new Error('Tipo de lançamento inválido.')
   if (!wealthCategories.some((category) => category === input.category)) throw new Error('Categoria inválida.')
   if (!['none','monthly','yearly'].includes(String(input.recurrence))) throw new Error('Recorrência inválida.')
-  return { title: title(input.title), kind: input.kind as WealthKind, category: String(input.category), amount_cents: parseMoney(input.amount, false), financial_date: financialDate(input.financial_date), recurrence: String(input.recurrence), currency: 'BRL' as const, idempotency_key: uuid(input.idempotency_key) }
+  return { title: title(input.title), kind: input.kind as WealthKind, category: String(input.category), amount_cents: parseMoney(input.amount, input.kind === 'liability'), financial_date: financialDate(input.financial_date), recurrence: String(input.recurrence), currency: 'BRL' as const, idempotency_key: uuid(input.idempotency_key) }
 }
 
 export function validateGoal(input: Record<string, unknown>) {

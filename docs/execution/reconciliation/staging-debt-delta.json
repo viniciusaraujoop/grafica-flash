@@ -1,0 +1,302 @@
+{
+  "label": "staging-debt-delta",
+  "expectedSha256": "a660f6507540a616a1cf80ae4cf61dcee1f580e4d096f9dd3eed1764fcd77c34",
+  "actualSha256": "3906ce1aeab3ab59a5046315d1a88e6f9c61c770fdbc3ef9be1104121448d4cc",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2617,
+      "actual": 2625
+    },
+    "indexes": {
+      "expected": 668,
+      "actual": 669
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 164,
+      "actual": 165
+    },
+    "triggers": {
+      "expected": 46,
+      "actual": 48
+    },
+    "functions": {
+      "expected": 122,
+      "actual": 127
+    },
+    "relations": {
+      "expected": 171,
+      "actual": 172
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 695,
+      "actual": 704
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 28,
+  "changes": [
+    {
+      "category": "columns",
+      "id": "public.wealth_debt_terms.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a49cc823e329adc195deb5116f48fc1709a27725ed9ff195cfe2daf0650e0051"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_debt_terms.principal_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "61125bb9cf2992d46016b5dc27bcd8eea977ef8f9013705c0efc6e9b0153618f"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_debt_terms.monthly_rate_bps",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "07782c4f6fa520e99148f9adbd843fa9c95106bf31236d82c05db8bd7c94ca86"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_debt_terms.minimum_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9a021f40f5f576d534b79b82a3909c0a695b8e8acd377cfeee2c320b53fbb917"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_debt_terms.installment_count",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0684dc0f8d9e18c335c1db2b28b7a1379533cbd65e1a5134d50205afae5fceba"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_debt_terms.remaining_installments",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c73fa0c815d58a1df54f6d07faf5fd5500cf1d9b4c268f35ece2ab966e1ff9de"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_debt_terms.next_due_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "90b587fd2ad86b3cdfb4cb404570100c5f04e2d8bc6230d8d0df7373a212b259"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_debt_terms.priority",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e72be366ca7de87d1c9ab2c6aabb46d208e04feb0aee118628455df471ca1b54"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_debt_terms_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "fb5fcb5fad54adaf13ec58f4eb954714a4fc8d90d6afde1af5aaf1d3e3963311"
+    },
+    {
+      "category": "policies",
+      "id": "public.wealth_debt_terms.wealth_debt_owner_read",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "cbd195ac35f2e487aa007b800bcbc5a3e114576f20c7b2a22f28e530a71f6d02"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_debt_terms.wealth_debt_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b6760306a5a573656644ae9ce03111ba58d48dc1373b6f23fdf2ae03fe5b6efc"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_entries.wealth_debt_kind_guard",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "bf3e03ea56bbc097fdd2d317400fd675370a82a76e4e794e976fae0cc8a5c5e1"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.guard_wealth_debt_kind.",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3dbd70e3d71bf9ae4aa996745c52f5bfef9437ab12d0ddd32a07e1aec05ba501"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.save_wealth_debt.p_input jsonb, p_entry_id uuid, p_version bigint",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1af5a14d02065f9842230913f35dc9c275e178a37449add98003dccf3db0f492"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.settle_wealth_debt.p_entry_id uuid, p_version bigint, p_confirmed boolean",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8134b47922b8cd0b44747687a2a4bf37f1b3531f9c057f12eb1bfaf3c595da91"
+    },
+    {
+      "category": "functions",
+      "id": "public.save_wealth_debt.p_input jsonb, p_entry_id uuid, p_version bigint",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c1ecc42728bc64bcbbe5c569a51b662524f6b2f95152a685bccf8d40ba257520"
+    },
+    {
+      "category": "functions",
+      "id": "public.settle_wealth_debt.p_entry_id uuid, p_version bigint, p_confirmed boolean",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f2c8131de7ddd9d12cd3dc31d6217922d902e2b2947f303875de50a702e27ee5"
+    },
+    {
+      "category": "relations",
+      "id": "public.wealth_debt_terms",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "01e0f1d48298e5216175a27ff349b3dc3a9c250c5f303049358d6fbcbafbf91c"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_entries.wealth_entries_amount_cents_check",
+      "kind": "changed",
+      "fields": [
+        "definition"
+      ],
+      "beforeSha256": "1bdb39bac0cb781449838c3b088afd9495c354c65a3444f6760312e521e4c770",
+      "afterSha256": "ecc4db67ddb2f939f840615e8bcc4a979567d1a73f13c24f608a94cf93192e84"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_debt_terms.wealth_debt_installments",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a5adda799e00068df80ca894cdd0d764913fb5f29dbba149c4b813b03e30e259"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_debt_terms.wealth_debt_terms_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "739b88239d45edaead5580537ffcb2a630dde3a70d15e2f87dc95a4a2e63a88e"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_debt_terms.wealth_debt_terms_installment_count_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e33cb230b2778db5c8a359b360f08137056ede7415a6b01deafc2274e4eca0b9"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_debt_terms.wealth_debt_terms_minimum_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8c6cb2121ddd45b873691a82e6269ed660c5c95ad99fef8b3b97d3cb07cc37f2"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_debt_terms.wealth_debt_terms_monthly_rate_bps_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "96e2df262cff8fce84219cea47d5f9fa280a1a14c624b7c49f10f1376a379bcb"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_debt_terms.wealth_debt_terms_next_due_date_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "69e780ae7a3ae5c92be573e4bce0a82825790c270173dba4f8d7c97fee6e6dfe"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_debt_terms.wealth_debt_terms_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "07aaa8013cfccd7566ee3a6ee3b456e42525cfe1155dc34b90d2c74c7a6aa365"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_debt_terms.wealth_debt_terms_principal_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0a9e8fea1f39b0bfe2ba84bfd137cd5c90f6aa2110e1a6e08ce54fc012e76f3d"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_debt_terms.wealth_debt_terms_priority_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "429751d4b1c6a0edfbfe1cc24ae8a273f3d28fd4d391563e5ea40b639f852689"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

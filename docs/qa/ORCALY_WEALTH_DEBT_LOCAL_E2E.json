@@ -1,0 +1,89 @@
+{
+  "project": "zwxulgpjucxudadjdqov",
+  "appUrl": "http://127.0.0.1:4174",
+  "commit": null,
+  "startedAt": "2026-09-26T16:16:35.657Z",
+  "finishedAt": "2026-09-26T16:17:15.527Z",
+  "report": [
+    {
+      "check": "hosted-Auth-password-login-and-verified-JWT-issuer",
+      "status": "PASS"
+    },
+    {
+      "check": "hosted-Auth-token-refresh",
+      "status": "PASS"
+    },
+    {
+      "check": "anonymous-denial-and-no-client-entitlement-escalation",
+      "status": "PASS"
+    },
+    {
+      "check": "cross-user-select-insert-update-delete-and-owner-transfer-isolation",
+      "status": "PASS"
+    },
+    {
+      "check": "missing-revoked-expired-future-and-read-only-entitlements",
+      "status": "PASS"
+    },
+    {
+      "check": "consent-owner-isolation-column-grants-and-irreversible-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "private-audit-trigger-and-identifier-only-payload",
+      "status": "PASS"
+    },
+    {
+      "check": "real-login-Server-Action-App-Hub-Wealth-and-WCAG",
+      "status": "PASS"
+    },
+    {
+      "check": "Server-Actions-profile-entry-goal-persistence-cents-and-forged-owner-rejected",
+      "status": "PASS"
+    },
+    {
+      "check": "browser-cross-user-isolation-and-unentitled-gate",
+      "status": "PASS"
+    },
+    {
+      "check": "unauthenticated-action-replay-and-stale-form-after-entitlement-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "consent-Server-Action-clock-skew-microseconds-and-authenticated-home-redirect",
+      "status": "PASS"
+    },
+    {
+      "check": "debt-creation-Server-Action-exact-cents-linked-liability-and-cross-user-isolation",
+      "status": "PASS"
+    },
+    {
+      "check": "debt-simulator-three-strategies-insufficient-budget-edit-stale-read-only-and-declared-payoff",
+      "status": "PASS"
+    },
+    {
+      "check": "debt-existing-liability-reuse-private-audit-and-responsive-WCAG",
+      "status": "PASS"
+    },
+    {
+      "check": "no-browser-errors-or-production-requests",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "cleanup": {
+    "usersRemaining": 0,
+    "auditRowsRemaining": 0,
+    "schedulesRemaining": 0,
+    "occurrencesRemaining": 0,
+    "jobsRemaining": 0,
+    "idempotencyRemaining": 0,
+    "outboxRemaining": 0,
+    "debtTermsRemaining": 0
+  },
+  "limits": [
+    "Next.js application served locally; Supabase staging hosted in sa-east-1",
+    "Auth, JWT, refresh, PostgREST, RLS, grants and persistence use real hosted Supabase staging",
+    "No production data or credentials used; no email sent; all accounts confirmed by staging Admin API"
+  ]
+}
