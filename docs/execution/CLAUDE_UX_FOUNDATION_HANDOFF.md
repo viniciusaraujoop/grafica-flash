@@ -6,7 +6,7 @@ STATUS: READY_FOR_REVIEW (frente paralela isolada). Não mergeado, não promovid
 | --- | --- |
 | BRANCH | `claude/orcaly-ux-foundation` |
 | BASE SHA | `9a2c66dbb2e6bf00c484b1791103b2bccd15becd` (HEAD de `codex/orcaly-ecosystem` em 2026-09-27; trabalho iniciado em `9d8c0a7`, rebaseado sem conflito — upstream só alterou workflow/E2E do briefing) |
-| HEAD | ver `git log -1` da branch (commit único desta entrega) |
+| HEAD | código: `add99438d032da82a1c32ae82524843158073e94`; este handoff atualizado no commit seguinte (só docs) |
 | MIGRATIONS | NONE |
 | DATABASE CHANGES | NONE (Supabase usado só para leitura de metadados na sessão; nenhuma query de dados) |
 | DEPENDENCIES | NONE (`package.json`/`package-lock.json` intactos) |
@@ -54,9 +54,10 @@ Defeitos encontrados **pelo próprio QA** e corrigidos antes da entrega: overflo
 ## TYPECHECK / LINT / BUILD
 | Gate | Estado | Motivo |
 | --- | --- | --- |
-| `npm run typecheck` completo | **NOT RUN nesta sessão** | registro npm bloqueado pela política de rede da sessão (HTTP 403 em `registry.npmjs.org`); `node_modules` não pôde ser instalado |
-| ESLint escopado | **NOT RUN** | idem (eslint indisponível). Código escrito para as regras React Compiler do projeto (sem setState síncrono em effect, sem mutação em render) |
-| `next build` | **NOT RUN localmente** | idem. O push da branch dispara build de Preview na Vercel — **esse é o primeiro gate real de typecheck+build**; conferir antes de integrar |
+| `next build` + TypeScript (projeto inteiro, tipos reais React 19/Next 16) | **PASS** — Vercel Preview `dpl_GodkBfBjVYSr7jjaSn72D2mpRHB6` READY para o SHA exato `add9943` (target preview). `next.config.ts` não tem `ignoreBuildErrors`, logo erro de tipo falharia o build | build local impossível: registro npm bloqueado nesta sessão (HTTP 403) |
+| `prebuild` (`npm test` + ESLint da lista fixa) | PASS implícito no mesmo build, **mas não cobre os arquivos novos** (lista fixa em `package.json`) | — |
+| ESLint dos arquivos novos | **NOT RUN** | eslint indisponível localmente e fora da lista do `prebuild`. Código escrito para as regras React Compiler do projeto (sem setState síncrono em effect, sem mutação em render). Rodar `npx eslint lib/orcaly-next components/orcaly-next` na integração |
+| Build logs | não lidos | conector Vercel sem escopo para eventos de build (403) |
 | Axe | NOT RUN | pacote indisponível; substituído por lint estático no harness. Integração deve rodar a matriz hospedada padrão (com Axe) |
 
 ## Decisões arquiteturais
@@ -71,6 +72,8 @@ Defeitos encontrados **pelo próprio QA** e corrigidos antes da entrega: overflo
 - **D9 — Sem rota nova.** Protótipos renderizados fora do Next para evidência; nada publicado.
 
 ## Conflitos potenciais
+- Branch `gpt/orcaly-quality-hardening` (terceiro agente, trabalho de lint global) ativa em paralelo: se alterar `eslint.config.mjs`/regras, o lint dos arquivos novos deve ser rodado depois dela.
+- Upstream certificou Morning/Night (`a3572e0`) após a base desta branch; sem sobreposição de arquivos.
 - Nenhum com a branch principal hoje (apenas arquivos novos; diff upstream sem sobreposição).
 - Futuros: etapa 3 (trocar `lib/ecosystem/products.ts`), etapa 2 (`globals.css`), etapa 4 (`app/apps/wealth/layout.tsx`) — exigem coordenação.
 - `components/orcaly-next/**` é `.tsx` e entra no `tsc` do build (tsconfig inclui `**/*.tsx`) — se o build da Vercel acusar erro de tipo, a causa estará isolada nesses arquivos.
