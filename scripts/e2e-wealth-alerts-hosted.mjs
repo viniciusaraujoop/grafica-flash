@@ -153,7 +153,7 @@ try{
  pass('alerts-protected-preview-exact-SHA-authenticated-UI-factual-deep-links-and-zero-production-calls')
 
  const prefs=page.getByText('Preferências e noise control',{exact:true});await prefs.click()
- const prefForm=page.locator('form').filter({has:page.getByText('Prioridade mínima',{exact:true})})
+ const prefForm=page.locator('form').filter({has:page.getByLabel('Prioridade mínima')})
  await prefForm.getByLabel('Prioridade mínima').selectOption('urgent')
  await prefForm.getByLabel('Cooldown de entrega').selectOption('48')
  await prefForm.getByRole('button',{name:'Salvar preferências'}).click()
