@@ -114,6 +114,8 @@ try{
  }
  await setAccess('read');assert.ok(ok(await alerts(a)).alerts.length);assert.ok((await command(a,'dismiss',{alert_key:recurrenceKey})).error)
  await setAccess('full')
+ const restoredPreferences=ok(await alerts(a,'all')).preferences
+ ok(await command(a,'configure',{version:restoredPreferences.version,enabled:true,minimum_priority:'info',cooldown_hours:24,muted_sources:[]}))
  pass('alerts-entitlement-read-write-rechecked-on-every-boundary')
 
  browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,headless:true})
