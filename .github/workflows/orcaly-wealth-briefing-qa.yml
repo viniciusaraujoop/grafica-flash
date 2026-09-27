@@ -99,40 +99,56 @@ jobs:
 
       - name: Wait for exact protected Preview commit
         shell: bash
-        env:
-          QA_TOKEN: ${{ steps.qa_oidc.outputs.token }}
         run: |
           set -euo pipefail
           observed=""
           status=""
-          response="$(curl --silent --show-error --fail-with-body             -X POST "$QA_CONTROL_URL"             -H "Authorization: Bearer $QA_TOKEN"             -H 'Content-Type: application/json'             --data "{\"action\":\"preview_access\",\"sourceCommit\":\"$GITHUB_SHA\"}")"
-          access="$(printf '%s' "$response" | jq -r '.share // empty')"
-          test -n "$access"
-          PREVIEW_URL="$(ACCESS="$access" node -e "
-            const u=new URL(process.env.ACCESS||'');
-            const exact=/^orcaly-[a-z0-9]+-vinicius-araujos-projects\\.vercel\\.app$/.test(u.hostname);
-            const branch=u.hostname==='orcaly-git-codex-orcaly-ecosystem-vinicius-araujos-projects.vercel.app';
-            if(u.protocol!=='https:'||(!exact&&!branch)) process.exit(2);
-            process.stdout.write(u.origin);
-          ")"
-          VERCEL_PREVIEW_SHARE="$(ACCESS="$access" node -e "
-            const u=new URL(process.env.ACCESS||'');
-            const value=u.searchParams.get('_vercel_share')||'';
-            if(!value) process.exit(2);
-            process.stdout.write(value);
-          ")"
-          echo "::add-mask::$access"
-          echo "::add-mask::$VERCEL_PREVIEW_SHARE"
+          QA_TOKEN=""
+          body_file="$RUNNER_TEMP/briefing-preview-body"
+          header_file="$RUNNER_TEMP/briefing-preview-headers"
           cookie_jar="$RUNNER_TEMP/briefing-preview.cookies"
+
+          mint_qa_token() {
+            local token_json
+            token_json="$(curl --silent --show-error --fail-with-body               -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN"               "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${QA_OIDC_AUDIENCE}")"
+            QA_TOKEN="$(printf '%s' "$token_json" | jq -r '.value')"
+            test -n "$QA_TOKEN"
+            echo "::add-mask::$QA_TOKEN"
+          }
+
+          resolve_access() {
+            local response access
+            response="$(curl --silent --show-error --fail-with-body               -X POST "$QA_CONTROL_URL"               -H "Authorization: Bearer $QA_TOKEN"               -H 'Content-Type: application/json'               --data "{\"action\":\"preview_access\",\"sourceCommit\":\"$GITHUB_SHA\"}")"
+            access="$(printf '%s' "$response" | jq -r '.share // empty')"
+            test -n "$access"
+            PREVIEW_URL="$(ACCESS="$access" node -e "
+              const u=new URL(process.env.ACCESS||'');
+              if(u.protocol!=='https:'||!/^orcaly-[a-z0-9]+-vinicius-araujos-projects\\.vercel\\.app$/.test(u.hostname)||u.hostname.includes('-git-')) process.exit(2);
+              process.stdout.write(u.origin);
+            ")"
+            VERCEL_PREVIEW_SHARE="$(ACCESS="$access" node -e "
+              const u=new URL(process.env.ACCESS||'');
+              const value=u.searchParams.get('_vercel_share')||'';
+              if(!value) process.exit(2);
+              process.stdout.write(value);
+            ")"
+            echo "::add-mask::$access"
+            echo "::add-mask::$VERCEL_PREVIEW_SHARE"
+          }
+
           : > "$cookie_jar"
+          mint_qa_token
           for attempt in $(seq 1 90); do
-            body_file="$RUNNER_TEMP/briefing-preview-body"
-            header_file="$RUNNER_TEMP/briefing-preview-headers"
-            : > "$body_file"; : > "$header_file"
-            status="$(curl --location --silent --show-error               --connect-timeout 10 --max-time 20               --cookie "$cookie_jar" --cookie-jar "$cookie_jar"               --dump-header "$header_file" --output "$body_file" --write-out '%{http_code}'               "$PREVIEW_URL/api/internal/preview-build?_vercel_share=$VERCEL_PREVIEW_SHARE" || true)"
+            if [ "$attempt" -gt 1 ] && [ $(( (attempt - 1) % 20 )) -eq 0 ]; then
+              mint_qa_token
+            fi
+            resolve_access
+            : > "$body_file"
+            : > "$header_file"
+            status="$(curl --location --silent --show-error               --connect-timeout 10               --max-time 20               --cookie "$cookie_jar"               --cookie-jar "$cookie_jar"               --dump-header "$header_file"               --output "$body_file"               --write-out '%{http_code}'               "$PREVIEW_URL/api/internal/preview-build?_vercel_share=$VERCEL_PREVIEW_SHARE" || true)"
             content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/ {sub(/\r$/, ""); value=$0} END{sub(/^[^:]+:[[:space:]]*/, "", value); print value}' "$header_file")"
             observed="$(node -e "const fs=require('fs');try{const v=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(v.commit||'')}catch{}" "$body_file")"
-            printf 'preview attempt=%s status=%s content_type=%s commit=%s\n' "$attempt" "${status:-none}" "${content_type:-unknown}" "${observed:-none}"
+            printf 'preview attempt=%s status=%s content_type=%s commit=%s\n'               "$attempt" "${status:-none}" "${content_type:-unknown}" "${observed:-none}"
             if [ "$status" = "200" ] && [[ "$content_type" == application/json* ]] && [ "$observed" = "$GITHUB_SHA" ]; then
               {
                 echo "PREVIEW_URL=$PREVIEW_URL"
