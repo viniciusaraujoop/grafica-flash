@@ -21,7 +21,7 @@ const goals=[{id:'g',title:'Casa',target_cents:'600000',saved_cents:'120000',mon
 const context={date:'2026-09-27',timezone:'America/Sao_Paulo',month:'2026-09-01',year_from:'2026-01-01',summary,netWorth,health,goals,alerts,tax,fees,unavailable:[]}
 
 test('request contract allows only non-regulated modes and rejects client-supplied context or SQL',()=>{
- assert.deepEqual(parseAskRequest({question:'Como estou?',mode:'analysis'}),{question:'Como estou?',mode:'analysis'})
+ assert.deepEqual(parseAskRequest({question:'Como estou?',mode:'analysis'}),{question:'Como estou?',mode:'analysis',provider_consent:false});assert.equal(parseAskRequest({question:'Como estou?',mode:'analysis',provider_consent:true}).provider_consent,true);assert.throws(()=>parseAskRequest({question:'x',mode:'analysis',provider_consent:'yes'}))
  for(const mode of ['regulated_advice','execution','free',''])assert.throws(()=>parseAskRequest({question:'x',mode}))
  for(const payload of [{question:'x',mode:'analysis',sql:'select *'},{question:'x',mode:'analysis',tools:['db']},{question:'x',mode:'analysis',include_cross_product:true}])assert.throws(()=>parseAskRequest(payload))
  assert.throws(()=>parseAskRequest({question:'x'.repeat(2001),mode:'analysis'}))
