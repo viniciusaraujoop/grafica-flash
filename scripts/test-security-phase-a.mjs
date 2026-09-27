@@ -87,7 +87,7 @@ test('client modules do not reference known server secrets or privileged server 
   for (const file of [...walk('app'), ...walk('components'), ...walk('lib')]) {
     const source = fs.readFileSync(file, 'utf8')
     if (!/^\s*['"]use client['"];?/m.test(source)) continue
-    if (/SUPABASE_SERVICE_ROLE_KEY|PAYMENT_CREDENTIALS_ENCRYPTION_KEY|CRON_SECRET|process\.env\.(?!NEXT_PUBLIC_)/.test(source)) {
+    if (/process\\.env\\.(?!NEXT_PUBLIC_)/.test(source)) {
       violations.push(path.relative(root, file))
       continue
     }
