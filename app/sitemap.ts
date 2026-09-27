@@ -1,3 +1,4 @@
+// quality-hardening-ci-trigger
 import type { MetadataRoute } from 'next'
 import { marketingSolutions } from '@/lib/marketing/main-site'
 import { products } from '@/lib/ecosystem/products'
