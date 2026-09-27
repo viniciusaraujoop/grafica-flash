@@ -1,8 +1,8 @@
-# Handoff V8 — Morning / Night certificado → Alerts
+# Handoff V8 — Alerts certificado → Ask Wealth
 
-STATUS: CONTINUATION_ACTIVE. Tax Center e Morning / Night **CERTIFICADOS** em staging + Preview protegido. Próxima unidade real: **Alerts**. Não refazer módulos Wealth já certificados.
+STATUS: CONTINUATION_ACTIVE. Tax Center, Morning / Night e Alerts **CERTIFICADOS** em staging + Preview protegido. Próxima unidade real: **Ask Wealth**. Não refazer módulos Wealth já certificados.
 
-Branch: `codex/orcaly-ecosystem`. Runtime Morning/Night certificado: `9a2c66dbb2e6bf00c484b1791103b2bccd15becd`. Commits posteriores ao runtime podem ser apenas documentação/evidência; sempre confirme o HEAD real. Main preservada: `d940debf9556e1180fa3c709da0f560d3aa96374`.
+Branch: `codex/orcaly-ecosystem`. Runtime Alerts certificado: `7401e20576ca4b686c03871ff0211474001ce620`. Commits posteriores podem ser apenas documentação/evidência; sempre confirme o HEAD real. Main preservada: `d940debf9556e1180fa3c709da0f560d3aa96374`.
 
 ## Morning / Night certificado
 
@@ -33,22 +33,39 @@ Permanece certificado no runtime `d47ac1869dcfc22b93e122508153caf665d09cdf`, hos
 
 Main Site `global-lint-baseline` permanece vermelho separadamente com 257 erros/148 warnings herdados. Advisors globais herdados, Auth/MFA global, acessibilidade humana, performance/observability e integrações externas continuam gates futuros. Platform Quality Gate e Rolling V8 estão verdes no runtime Morning/Night.
 
-## Próxima unidade: Alerts
+## Alerts certificado
 
-Implementar alertas owner-scoped com:
-- prioridade;
-- source;
-- reason;
-- deep link;
-- cooldown;
-- dismiss;
-- snooze;
-- preferences;
-- audit;
-- noise control.
+- Migrations: `20260927162000_wealth_document_expiry` e `20260927170000_wealth_alert_center`.
+- Staging: 27 migrations.
+- Runtime: `7401e20576ca4b686c03871ff0211474001ce620`.
+- Deployment imutável: `dpl_DXssFBge1nK46tnpPaA8LGgMUNHA` READY.
+- Preview exato: `https://orcaly-g2h28o1hr-vinicius-araujos-projects.vercel.app`.
+- Hosted run `36332287975`, job `108656413987`: SUCCESS.
+- Domain/PostgreSQL: 6/6 PASS.
+- Rolling V8 `36332287973`: PASS.
+- Platform Quality Gate `36332291135`: PASS.
+- Artifact `10935669993`, 4,030,782 bytes, digest `sha256:3b59dda31b730f2ffdb819f932f93a11e60c54f9a0ec39280b306b267546778d`.
+- 320/390/768/1024/1440/1920, light/dark, Axe, teclado/foco, reduced motion e no-overflow: PASS.
+- owner/cross-user/entitlement, dismiss/snooze/restore/preferences/noise control e zero production calls: PASS.
+- Cleanup final: QA users/sessions, Storage, entries e estados privados Alerts = 0.
+- Produção segue read-only e sem migrations/RPCs Alerts.
 
-Fontes factuais: overdue, recurrence, debt, goal pacing, Vault expiry, Shield, portfolio coverage, tax gaps e automation needs_attention.
+Main Site run `36332291200` continua vermelho por findings branch-wide herdados: protected login/auth diff contra baseline antigo e global lint 257 errors/148 warnings. O delta Alerts não toca login/checkout; domain/payment/focused lint/build do mesmo run passaram.
 
-Reusar infraestrutura existente quando compatível; não inventar provider/evento e não criar segundo saldo. Certificar domain/PG, RLS/owner/cross-user/entitlement, UI + hosted E2E, responsive/a11y, cleanup, advisors e production read-only antes de Ask Wealth.
+## Próxima unidade: Ask Wealth
 
-Evidências Morning/Night: `docs/qa/ORCALY_WEALTH_BRIEFING.md` e JSONs BUILD/DEPLOYMENT/VERCEL_E2E.
+Construir IA contextual Wealth reutilizando os read models existentes, owner-scoped e entitlement-aware. Requisitos mínimos:
+- nenhuma query SQL livre produzida pelo modelo;
+- contexto montado por contratos/read models explicitamente allowlisted;
+- fontes internas rastreáveis e período declarado;
+- incerteza/ausência de dado explícita;
+- sem cross-user/cross-product leakage;
+- sem provider/cotação inventada;
+- sem aconselhamento regulado fingindo autorização;
+- sem execução financeira ou side effect;
+- modos permitidos inicialmente: education, analysis, simulation e planning;
+- `regulated_advice` e `execution` desativados.
+
+Certificar domain/PG, owner/RLS/cross-user/entitlement, consent boundaries, UI + hosted E2E, responsive/a11y, zero produção, cleanup e evidências antes de Portfolio Intelligence.
+
+Evidências Alerts: `docs/qa/ORCALY_WEALTH_ALERTS.md` e JSONs BUILD/DEPLOYMENT/VERCEL_E2E.
