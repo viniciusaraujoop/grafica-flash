@@ -14,7 +14,7 @@ export const askModes={
 } as const
 export type AskMode=keyof typeof askModes
 export type AskIntent='overview'|'net_worth'|'debt'|'goals'|'portfolio'|'tax'|'fees'|'alerts'|'market'
-export type AskProviderStatus='NOT_CONFIGURED'|'OPENAI_CONFIGURED'|'DEGRADED'
+export type AskProviderStatus='NOT_CONFIGURED'|'AVAILABLE_NOT_USED'|'OPENAI_USED'|'DEGRADED'
 export type AskSourceId='summary'|'net_worth'|'health'|'goals'|'alerts'|'tax'|'fees'
 export type AskSource={id:AskSourceId;label:string;href:string;period:string;status:'AVAILABLE'|'UNAVAILABLE';coverage:string}
 export type AskGoal={id:string;title:string;target_cents:string;saved_cents:string;monthly_contribution_cents:string;target_date:string;status:string}
@@ -24,7 +24,7 @@ export type AskContext={
  goals:AskGoal[];alerts:WealthAlertsOverview|null;tax:TaxCenter|null;fees:FeeAnalysis|null;
  unavailable:AskSourceId[];
 }
-export type AskRequest={question:string;mode:AskMode}
+export type AskRequest={question:string;mode:AskMode;provider_consent:boolean}
 export type AskAction={label:string;href:string}
 export type AskResult={
  ok:true;mode:AskMode;intent:AskIntent;answer:string;provider_status:AskProviderStatus;
@@ -54,7 +54,8 @@ export function parseAskRequest(value:unknown):AskRequest{
  if(!question||question.length>2000)throw Error('Digite uma pergunta com até 2.000 caracteres.')
  if(!Object.hasOwn(askModes,mode))throw Error('Modo do Ask Wealth inválido.')
  if(Object.hasOwn(body,'include_cross_product')||Object.hasOwn(body,'tools')||Object.hasOwn(body,'sql'))throw Error('Ask Wealth não aceita contexto, ferramentas ou SQL enviados pelo cliente.')
- return {question,mode:mode as AskMode}
+ if(Object.hasOwn(body,'provider_consent')&&typeof body.provider_consent!=='boolean')throw Error('Consentimento do provider inválido.')
+ return {question,mode:mode as AskMode,provider_consent:body.provider_consent===true}
 }
 
 export function classifyAsk(question:string):AskIntent{
@@ -204,9 +205,9 @@ export function compactAskContext(context:AskContext,intent:AskIntent){
  const ids=intentSources[intent]
  const out:Record<string,unknown>={date:context.date,timezone:context.timezone}
  if(ids.includes('summary')&&context.summary)out.summary={month:context.summary.month,income:context.summary.income,expenses:context.summary.expenses,cashFlow:context.summary.cashFlow,assets:context.summary.assets,liabilities:context.summary.liabilities,netWorth:context.summary.netWorth,goalCount:context.summary.goalCount,goalTarget:context.summary.goalTarget,goalSaved:context.summary.goalSaved,months:context.summary.months}
- if(ids.includes('net_worth')&&context.netWorth)out.net_worth={assets:context.netWorth.assets,liabilities:context.netWorth.liabilities,netWorth:context.netWorth.netWorth,unknownValuations:context.netWorth.unknownValuations??'0',classes:context.netWorth.classes,liquidity:context.netWorth.liquidity,largest:context.netWorth.largest.slice(0,10)}
+ if(ids.includes('net_worth')&&context.netWorth)out.net_worth={assets:context.netWorth.assets,liabilities:context.netWorth.liabilities,netWorth:context.netWorth.netWorth,unknownValuations:context.netWorth.unknownValuations??'0',classes:context.netWorth.classes,liquidity:context.netWorth.liquidity,largest:context.netWorth.largest.slice(0,10).map(x=>({title:x.title,kind:x.kind,amount:x.amount,class:x.class,liquidity:x.liquidity}))}
  if(ids.includes('health'))out.health=context.health.map(x=>({id:x.id,value:x.value,source:x.source,period:x.period,interpretation:x.interpretation,limitation:x.limitation}))
- if(ids.includes('goals'))out.goals=context.goals.slice(0,20)
+ if(ids.includes('goals'))out.goals=context.goals.slice(0,20).map(g=>({title:g.title,target_cents:g.target_cents,saved_cents:g.saved_cents,monthly_contribution_cents:g.monthly_contribution_cents,target_date:g.target_date,status:g.status}))
  if(ids.includes('alerts')&&context.alerts)out.alerts={summary:context.alerts.summary,alerts:context.alerts.alerts.slice(0,10).map(a=>({priority:a.priority,source:a.source,title:a.title,reason:a.reason,event_date:a.event_date,deep_link:a.deep_link}))}
  if(ids.includes('tax')&&context.tax)out.tax={from:context.tax.from,to:context.tax.to,taxes:context.tax.taxes,income:context.tax.income,sell_proceeds:context.tax.sell_proceeds,basis_removed:context.tax.basis_removed,realized_gain:context.tax.realized_gain,incomplete_sell_count:context.tax.incomplete_sell_count,tax_provider_status:context.tax.tax_provider_status,tax_rules_status:context.tax.tax_rules_status,jurisdiction_status:context.tax.jurisdiction_status}
  if(ids.includes('fees')&&context.fees)out.fees={from:context.fees.from,to:context.fees.to,fees:context.fees.fees,taxes:context.fees.taxes,external_status:context.fees.external_status,previous:context.fees.previous}
