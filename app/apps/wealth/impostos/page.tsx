@@ -24,7 +24,7 @@ export default async function TaxCenterPage({searchParams}:{searchParams:Promise
  if(rpc.error?.code==='42501')return <><h1>Tax Center indisponível</h1><p>A carteira não está disponível para esta conta.</p><Link href="/apps/wealth/impostos">Consultar suas carteiras</Link></>
  if(rpc.error||documents.error)throw Error('Não foi possível consultar o Tax Center.')
  const v=readTaxCenter(rpc.data)
- const total=BigInt(v.record_count)>BigInt(v.portfolio_count)?BigInt(v.record_count):BigInt(v.portfolio_count),pages=(total+24n)/25n
+ const total=BigInt(v.record_count)>BigInt(v.portfolio_count)?BigInt(v.record_count):BigInt(v.portfolio_count),pages=(total+BigInt(24))/BigInt(25)
  const href=(n=1,id=portfolio)=>`?${new URLSearchParams({from,to,page:String(n),...(id?{portfolio:id}:{})})}`
  return <div className={s.page}>
   <nav className={s.nav} aria-label="Tax Center Wealth"><Link href="/apps/wealth">Visão geral</Link><Link href="/apps/wealth/impostos" aria-current="page">Tax Center</Link><Link href="/apps/wealth/tarifas">Fee Analyzer</Link><Link href="/apps/wealth/documentos">Documentos</Link></nav>
