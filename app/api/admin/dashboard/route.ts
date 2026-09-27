@@ -206,7 +206,7 @@ export async function GET(request: NextRequest) {
     const activeCompanies = companies.filter((c) => c.ativo !== false && c.assinatura_status === 'ativa').length
     const pendingCompanies = companies.filter((c) => c.assinatura_status === 'pendente').length
     const expiredCompanies = companies.filter((c) => c.assinatura_expira_em && new Date(c.assinatura_expira_em).getTime() < now).length
-    const leadsOpen = leadsRaw.filter((lead) => ['lead', 'checkout_criado'].includes(lead.status)).length
+    const leadsOpen = leadsRaw.filter((lead) => ['lead', 'checkout_criado'].includes(String(lead.status || ''))).length
     const leadsPaid = leadsRaw.filter((lead) => lead.status === 'pago').length
 
     const financeTotals = financeRaw.reduce((acc, tx) => {

@@ -12,54 +12,129 @@ import {
 } from "react";
 import { supabase } from "@/lib/supabase";
 
-type Json = {
-  [key: string]: unknown
-  id?: string
-  affiliate_id?: string | null
-  name?: string | null
+type AffiliateContact = {
+  nome?: string | null
+  empresa_nome?: string | null
+  nome_responsavel?: string | null
   email?: string | null
   whatsapp?: string | null
-  status?: string | null
+}
+
+type PayoutAccount = {
+  holder_name?: string | null
+  pix_key_type?: string | null
+  pix_key_masked?: string | null
+  bank_name?: string | null
+  is_verified?: boolean
+  verified_at?: string | null
+}
+
+type AffiliateProfile = {
+  id: string
+  name: string
+  email: string
+  whatsapp?: string | null
+  code: string
+  status: string
+  commission_rate?: number | string | null
+  document_last4?: string | null
+  debt_balance?: number | string | null
+  payoutAccount?: PayoutAccount | null
+}
+
+type ReferralRow = {
+  id: string
+  affiliate_id: string
+  referral_code?: string | null
+  customer_name_masked?: string | null
+  customer_email_masked?: string | null
+  status: string
   review_status?: string | null
   review_note?: string | null
   reviewed_by?: string | null
-  referral_code?: string | null
-  code?: string | null
+  registered_at?: string | null
+  commission_expected?: number | string | null
+  first_payment_amount?: number | string | null
   plan?: string | null
-  document_last4?: string | null
-  pix_key_masked?: string | null
-  pix_key_type?: string | null
-  holder_name?: string | null
-  customer_name_masked?: string | null
-  customer_email_masked?: string | null
-  external_reference?: string | null
+  trial_ends_at?: string | null
+  lead?: AffiliateContact | null
+  company?: AffiliateContact | null
+}
+
+type CommissionRow = {
+  id: string
+  affiliate_id: string
+  commission_amount?: number | string | null
+  eligible_amount?: number | string | null
+  commission_rate?: number | string | null
+  status: string
+  plan?: string | null
   provider_payment_id?: string | null
+  hold_until?: string | null
+}
+
+type PayoutRow = {
+  id: string
+  affiliate_id: string
+  amount?: number | string | null
+  status: string
+  holder_name?: string | null
+  pix_key_type?: string | null
+  pix_key_masked?: string | null
+  requested_at?: string | null
+  external_reference?: string | null
   provider_transfer_id?: string | null
   failure_reason?: string | null
-  registered_at?: string | null
-  requested_at?: string | null
-  hold_until?: string | null
-  trial_ends_at?: string | null
-  position?: number | null
-  score?: number | null
-  conversions?: number | null
-  count?: number | null
-  amount?: number | null
-  value?: number | null
-  eligible_amount?: number | null
-  commission_amount?: number | null
-  commission_expected?: number | null
-  commission_rate?: number | null
-  first_payment_amount?: number | null
-  debt_balance?: number | null
-  visible?: boolean
-  label?: string | null
-  detail?: string | null
-  action?: string | null
-  lead?: Json | null
-  company?: Json | null
-  payoutAccount?: Json | null
-};
+}
+
+type RankingRow = {
+  id: string
+  position: number
+  name: string
+  conversions: number
+  score: number
+}
+
+type AffiliateSummary = {
+  affiliates?: number
+  activeAffiliates?: number
+  referrals?: number
+  qualified?: number
+  commissionsHold?: number | null
+  commissionsAvailable?: number | null
+  commissionsPaid?: number | null
+  payoutsPending?: number | null
+}
+
+type AdminAffiliatesPayload = {
+  admin?: { role?: string | null }
+  capabilities?: Record<string, boolean | undefined>
+  summary?: AffiliateSummary
+  profiles?: AffiliateProfile[]
+  referrals?: ReferralRow[]
+  commissions?: CommissionRow[]
+  payouts?: PayoutRow[]
+  ranking?: { top?: RankingRow[] }
+  error?: string
+}
+
+type AdminActionPayload = {
+  error?: string
+  holderName?: string | null
+  pixKeyType?: string | null
+  pixKey?: string | null
+  bankName?: string | null
+  [key: string]: unknown
+}
+
+type RevealedPix = {
+  affiliateName?: string | null
+  holderName?: string | null
+  pixKeyType?: string | null
+  pixKey?: string | null
+  bankName?: string | null
+}
+
 type Tab =
   | "overview"
   | "partners"
@@ -190,7 +265,7 @@ function Badge({
 export default function AdminIndicacoesPage() {
   const router = useRouter();
   const [data, setData] =
-    useState<Json | null>(null);
+    useState<AdminAffiliatesPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -199,7 +274,7 @@ export default function AdminIndicacoesPage() {
     useState<Tab>("overview");
   const [search, setSearch] = useState("");
   const [reviewTarget, setReviewTarget] =
-    useState<Json | null>(null);
+    useState<ReferralRow | null>(null);
   const [reviewDecision, setReviewDecision] =
     useState<"approved" | "rejected" | "flagged">(
       "approved",
@@ -207,7 +282,7 @@ export default function AdminIndicacoesPage() {
   const [reviewNote, setReviewNote] =
     useState("");
   const [revealedPix, setRevealedPix] =
-    useState<Json | null>(null);
+    useState<RevealedPix | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -230,7 +305,7 @@ export default function AdminIndicacoesPage() {
       },
     );
 
-    const payload = await response
+    const payload: AdminAffiliatesPayload = await response
       .json()
       .catch(() => ({}));
 
@@ -291,7 +366,7 @@ export default function AdminIndicacoesPage() {
       },
     );
 
-    const payload = await response
+    const payload: AdminActionPayload = await response
       .json()
       .catch(() => ({}));
 
@@ -344,7 +419,7 @@ export default function AdminIndicacoesPage() {
     }
   }
 
-  async function revealPix(profile: Json) {
+  async function revealPix(profile: AffiliateProfile) {
     const result = await action(
       "reveal_pix",
       {
@@ -387,11 +462,11 @@ export default function AdminIndicacoesPage() {
     [data],
   );
 
-  const partnerMap = useMemo<Map<string, Json>>(
+  const partnerMap = useMemo<Map<string, AffiliateProfile>>(
     () =>
-      new Map<string, Json>(
+      new Map<string, AffiliateProfile>(
         profiles.map(
-          (profile: Json): [string, Json] => [
+          (profile): [string, AffiliateProfile] => [
             String(profile.id),
             profile,
           ],
@@ -404,7 +479,7 @@ export default function AdminIndicacoesPage() {
     const query = search.trim().toLowerCase();
     if (!query) return profiles;
 
-    return profiles.filter((profile: Json) =>
+    return profiles.filter((profile) =>
       [
         profile.name,
         profile.email,
@@ -422,7 +497,7 @@ export default function AdminIndicacoesPage() {
     const query = search.trim().toLowerCase();
     if (!query) return referrals;
 
-    return referrals.filter((row: Json) =>
+    return referrals.filter((row) =>
       [
         row.referral_code,
         row.customer_name_masked,
@@ -443,7 +518,7 @@ export default function AdminIndicacoesPage() {
   const pendingReviews = useMemo(
     () =>
       referrals.filter(
-        (row: Json) =>
+        (row) =>
           ["pending", "flagged"].includes(
             String(row.review_status || "pending"),
           ),
@@ -454,7 +529,7 @@ export default function AdminIndicacoesPage() {
   const pendingPix = useMemo(
     () =>
       profiles.filter(
-        (profile: Json) =>
+        (profile) =>
           profile.payoutAccount &&
           !profile.payoutAccount.is_verified,
       ),
@@ -463,7 +538,7 @@ export default function AdminIndicacoesPage() {
 
   const pendingPayouts = useMemo(
     () =>
-      payouts.filter((row: Json) =>
+      payouts.filter((row) =>
         ["requested", "approved", "processing"].includes(
           String(row.status),
         ),
@@ -773,7 +848,7 @@ export default function AdminIndicacoesPage() {
                 <div className="mt-3 grid gap-2">
                   {pendingReviews
                     .slice(0, 6)
-                    .map((row: Json) => {
+                    .map((row) => {
                       const partner =
                         partnerMap.get(
                           String(row.affiliate_id),
@@ -842,7 +917,7 @@ export default function AdminIndicacoesPage() {
               <div className="mt-5 grid gap-2">
                 {(ranking.top || [])
                   .slice(0, 7)
-                  .map((row: Json) => (
+                  .map((row) => (
                     <div
                       key={row.id}
                       className="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-[#f8faff] p-4"
@@ -884,7 +959,7 @@ export default function AdminIndicacoesPage() {
 
         {tab === "partners" ? (
           <section className="mt-5 grid gap-3">
-            {filteredProfiles.map((profile: Json) => {
+            {filteredProfiles.map((profile) => {
               const account =
                 profile.payoutAccount || null;
               const phone = phoneLink(profile.whatsapp);
@@ -1123,7 +1198,7 @@ export default function AdminIndicacoesPage() {
 
         {tab === "referrals" ? (
           <section className="mt-5 grid gap-3">
-            {filteredReferrals.map((row: Json) => {
+            {filteredReferrals.map((row) => {
               const partner =
                 partnerMap.get(
                   String(row.affiliate_id),
@@ -1289,7 +1364,7 @@ export default function AdminIndicacoesPage() {
 
         {tab === "commissions" ? (
           <section className="mt-5 grid gap-3">
-            {commissions.map((row: Json) => {
+            {commissions.map((row) => {
               const partner =
                 partnerMap.get(
                   String(row.affiliate_id),
@@ -1386,7 +1461,7 @@ export default function AdminIndicacoesPage() {
 
         {tab === "payouts" ? (
           <section className="mt-5 grid gap-3">
-            {payouts.map((row: Json) => {
+            {payouts.map((row) => {
               const partner =
                 partnerMap.get(
                   String(row.affiliate_id),
@@ -1573,7 +1648,7 @@ export default function AdminIndicacoesPage() {
 
             <div className="mt-6 grid gap-3">
               {(ranking.top || []).map(
-                (row: Json) => {
+                (row) => {
                   const profile =
                     partnerMap.get(String(row.id)) ||
                     {};

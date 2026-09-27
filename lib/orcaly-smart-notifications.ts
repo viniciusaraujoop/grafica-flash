@@ -353,7 +353,7 @@ export async function scanCompanySmartNotifications(
         entity_id: String(task.id),
         tipo: 'task',
         titulo: 'Tarefa vence hoje',
-        mensagem: task.titulo || 'Uma tarefa precisa de atenção hoje.',
+        mensagem: typeof task.titulo === 'string' && task.titulo ? task.titulo : 'Uma tarefa precisa de atenção hoje.',
         link_url: '/painel/tarefas',
         payload: { task_id: task.id },
       })

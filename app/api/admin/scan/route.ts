@@ -504,7 +504,7 @@ export async function POST(request: NextRequest) {
     orders.forEach((order) => {
       const label = order.nome || order.produto || order.id
 
-      if (!companyIds.has(order.company_id)) {
+      if (!companyIds.has(String(order.company_id || ''))) {
         issues.push(issue({
           code: `order:${order.id}:invalid-company`,
           title: 'Pedido sem empresa válida',
@@ -572,7 +572,7 @@ export async function POST(request: NextRequest) {
         }))
       }
 
-      if (!['Entregue', 'Pronto'].includes(order.status) && daysAgo(order.created_at) > 15) {
+      if (!['Entregue', 'Pronto'].includes(String(order.status || '')) && daysAgo(order.created_at) > 15) {
         issues.push(issue({
           code: `order:${order.id}:stale`,
           title: 'Pedido parado há muitos dias',
@@ -599,7 +599,7 @@ export async function POST(request: NextRequest) {
     products.forEach((product) => {
       const label = product.nome || product.id
 
-      if (!companyIds.has(product.company_id)) {
+      if (!companyIds.has(String(product.company_id || ''))) {
         issues.push(issue({
           code: `product:${product.id}:invalid-company`,
           title: 'Produto sem empresa válida',
@@ -697,7 +697,7 @@ export async function POST(request: NextRequest) {
         }))
       }
 
-      if (['lead', 'checkout_criado'].includes(lead.status) && daysAgo(lead.created_at) > 3) {
+      if (['lead', 'checkout_criado'].includes(String(lead.status || '')) && daysAgo(lead.created_at) > 3) {
         issues.push(issue({
           code: `lead:${lead.id}:stale`,
           title: 'Lead parado',

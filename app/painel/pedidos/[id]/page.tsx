@@ -164,6 +164,8 @@ export default function PedidoDetalheProPage() {
   }
 
   async function save() {
+    if (!order) return
+
     setSaving(true)
     setError('')
     setMessage('')

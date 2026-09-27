@@ -298,7 +298,7 @@ export default function OwnerControlCenter() {
             "requested",
             "approved",
             "processing",
-          ].includes(row.status),
+          ].includes(String(row.status || '')),
       ),
     [affiliates],
   );

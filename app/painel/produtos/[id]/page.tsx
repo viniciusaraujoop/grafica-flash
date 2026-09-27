@@ -111,6 +111,8 @@ export default function ProdutoDetalhePage() {
   }
 
   async function save() {
+    if (!product) return
+
     setSaving(true)
     setError('')
     setMessage('')
@@ -158,6 +160,7 @@ export default function ProdutoDetalhePage() {
 
   async function generateAi(event: FormEvent) {
     event.preventDefault()
+    if (!product) return
     setError('')
     setAiAnswer('')
 

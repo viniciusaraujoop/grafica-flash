@@ -240,8 +240,8 @@ export default function ClientesPage() {
 
       const map = new Map<string, Cliente>()
 
-      function ensureCliente(nome: string, telefone: string, origem = 'Pedido') {
-        const phone = limparTelefone(telefone)
+      function ensureCliente(nome?: string | null, telefone?: string | null, origem = 'Pedido') {
+        const phone = limparTelefone(telefone || '')
         if (!phone) return null
 
         if (!map.has(phone)) {
@@ -295,7 +295,7 @@ export default function ClientesPage() {
       })
 
       const lista = Array.from(map.values()).map((cliente) => {
-        const pedidosOrdenados = [...cliente.pedidos].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        const pedidosOrdenados = [...cliente.pedidos].sort((a, b) => new Date(String(b.created_at || '')).getTime() - new Date(String(a.created_at || '')).getTime())
         const total = cliente.pedidos.reduce((acc, pedido) => acc + valorPedido(pedido), 0)
 
         const completo = {

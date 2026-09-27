@@ -5,7 +5,15 @@ import Link from 'next/link'
 import { getAccessTokenClient } from '@/lib/current-company-client'
 import type { SmartNotificationResult, SmartNotificationSettings } from '@/lib/orcaly-smart-notifications'
 
-const booleanFields = [
+type BooleanSettingKey = {
+  [K in keyof SmartNotificationSettings]: SmartNotificationSettings[K] extends boolean ? K : never
+}[keyof SmartNotificationSettings]
+
+type NumberSettingKey = {
+  [K in keyof SmartNotificationSettings]: SmartNotificationSettings[K] extends number ? K : never
+}[keyof SmartNotificationSettings]
+
+const booleanFields: Array<[BooleanSettingKey, string]> = [
   ['new_order_enabled', 'Novo pedido recebido'],
   ['order_stuck_enabled', 'Pedido parado há X dias'],
   ['task_due_today_enabled', 'Tarefa vence hoje'],
@@ -17,7 +25,7 @@ const booleanFields = [
   ['subscription_expiring_enabled', 'Assinatura perto de vencer'],
 ]
 
-const numberFields = [
+const numberFields: Array<[NumberSettingKey, string]> = [
   ['order_stuck_days', 'Pedido parado depois de quantos dias?'],
   ['lead_idle_days', 'Lead sem contato depois de quantos dias?'],
   ['proposal_idle_days', 'Proposta sem resposta depois de quantos dias?'],

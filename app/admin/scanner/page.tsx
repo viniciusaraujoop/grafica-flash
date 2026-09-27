@@ -306,7 +306,7 @@ export default function AdminScannerPage() {
                 <div className="rounded-2xl bg-[#f5f8ff] p-4">
                   <p className="text-sm font-black text-[#05245c]">Passo a passo</p>
                   <ol className="mt-3 grid gap-2">
-                    {(selected.fix_steps || []).length > 0 ? selected.fix_steps.map((step: string, index: number) => (
+                    {(selected.fix_steps || []).length > 0 ? (selected.fix_steps || []).map((step, index) => (
                       <li key={index} className="rounded-xl bg-white p-3 text-sm font-bold text-slate-700">
                         {index + 1}. {step}
                       </li>
@@ -322,7 +322,7 @@ export default function AdminScannerPage() {
                   <div className="rounded-2xl bg-slate-950 p-4 text-white">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-black">SQL sugerido</p>
-                      <button onClick={() => copiar(selected.fix_sql)} className="rounded-xl bg-white px-3 py-2 text-xs font-black text-slate-950">Copiar</button>
+                      <button onClick={() => copiar(selected.fix_sql || '')} className="rounded-xl bg-white px-3 py-2 text-xs font-black text-slate-950">Copiar</button>
                     </div>
                     <pre className="mt-3 max-h-56 overflow-auto whitespace-pre-wrap text-xs font-bold leading-5 text-white/80">{selected.fix_sql}</pre>
                   </div>
