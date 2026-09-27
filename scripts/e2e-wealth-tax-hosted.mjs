@@ -140,8 +140,11 @@ try{
  await otherPage.getByRole('button',{name:'Entrar no painel',exact:true}).click()
  await otherPage.getByText('A carteira não está disponível para esta conta.',{exact:true}).waitFor()
  assert.equal(await otherPage.getByText('Hosted tax',{exact:false}).count(),0)
- const anon=await context.request.get(url,{maxRedirects:0})
+ const anonymousContext=await makeContext()
+ const anon=await anonymousContext.request.get(url,{maxRedirects:0})
  assert.ok([303,307].includes(anon.status()))
+ assert.ok(String(anon.headers().location||'').includes('/login'))
+ await anonymousContext.close()
  await otherContext.close()
  pass('tax-cross-user-UI-and-anonymous-redirect')
 

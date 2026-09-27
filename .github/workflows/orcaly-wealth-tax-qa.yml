@@ -114,6 +114,10 @@ jobs:
             : > "$body_file"
             : > "$header_file"
             status="$(curl --silent --show-error               --connect-timeout 10               --max-time 20               -H "x-vercel-trusted-oidc-idp-token: $VERCEL_TOKEN"               --dump-header "$header_file"               --output "$body_file"               --write-out '%{http_code}'               "$PREVIEW_URL/api/internal/preview-build" || true)"
+            if [ "$status" = "301" ] || [ "$status" = "302" ] || [ "$status" = "307" ] || [ "$status" = "308" ]; then
+              echo "PREVIEW_TRUSTED_SOURCE_REQUIRED: Vercel redirected the GitHub OIDC request to authentication (status=$status)." >&2
+              exit 1
+            fi
             observed="$(node -e "const fs=require('fs');try{const v=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(v.commit||'')}catch{}" "$body_file")"
             error_code="$(awk 'BEGIN{IGNORECASE=1} /^x-vercel-error:/ {sub(/\r$/, ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$header_file")"
             printf 'preview attempt=%s status=%s commit=%s protection=%s\n'               "$attempt" "${status:-none}" "${observed:-none}" "${error_code:-none}"
