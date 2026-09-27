@@ -1,54 +1,54 @@
-# Handoff V8 — Tax Center certificado → Morning / Night
+# Handoff V8 — Morning / Night certificado → Alerts
 
-STATUS: CONTINUATION_ACTIVE. Tax Center **CERTIFICADO** em staging + Preview protegido. Próxima unidade real: **Morning / Night**. Não refazer Tax, Shield, Fee ou módulos Wealth já certificados.
+STATUS: CONTINUATION_ACTIVE. Tax Center e Morning / Night **CERTIFICADOS** em staging + Preview protegido. Próxima unidade real: **Alerts**. Não refazer módulos Wealth já certificados.
 
-Branch: `codex/orcaly-ecosystem`. Runtime Tax certificado: `d47ac1869dcfc22b93e122508153caf665d09cdf`. Commits posteriores ao runtime são documentação/evidência de certificação; confirme o HEAD da branch ao iniciar outra sessão. Main preservada: `d940debf9556e1180fa3c709da0f560d3aa96374`.
+Branch: `codex/orcaly-ecosystem`. Runtime Morning/Night certificado: `9a2c66dbb2e6bf00c484b1791103b2bccd15becd`. Commits posteriores ao runtime podem ser apenas documentação/evidência; sempre confirme o HEAD real. Main preservada: `d940debf9556e1180fa3c709da0f560d3aa96374`.
 
-## Runtime / Preview certificado
+## Morning / Night certificado
 
-- Deployment: `dpl_BscyaUKzc7ZrE3PZxwQSUjnBMQmv`
-- Preview exato: `https://orcaly-htbz9mjp2-vinicius-araujos-projects.vercel.app`
-- Vercel: READY, Preview, commit exato `d47ac1869dcfc22b93e122508153caf665d09cdf`
-- Hosted Tax run `36319880597`: PASS
-- Hosted matrix: 7/7 PASS, 0 page errors
-- Artifact `10932416353`: 13 arquivos, 12 screenshots, ZIP SHA-256 `fa24f01a1718c0f4f6dcc77707bbd1ea30dbc269c4c94e47862a2058bcda9e1d`
-- Rolling V8 run `36319880582`: PASS
-- Platform Quality Gate run `36319883451`: PASS
+- Migration: `20260927132000_wealth_morning_night_briefing`.
+- Staging: 25 migrations.
+- RPC: `public.wealth_daily_briefing(text,date)`, STABLE + SECURITY INVOKER, authenticated only.
+- Preview imutável: `dpl_4JpN5CxFx9qT4nMgy3kTANxEKLek`.
+- URL exata: `https://orcaly-j3apodya6-vinicius-araujos-projects.vercel.app`.
+- Hosted run `36325027162`: 7/7 PASS, 0 page errors.
+- Artifact `10934075693`: 12 screenshots, 4.064.524 bytes, digest `b99fc44c83dba12a0e7a587ae5375638ac4d2d4df0578081ac866d9f4c51407c`.
+- Domain/PostgreSQL: 5/5 PASS.
+- Rolling V8 `36325027679`: PASS.
+- Platform Quality Gate `36325030319`: PASS.
+- 320/390/768/1024/1440/1920, light/dark, Axe, teclado/foco, reduced motion e no-overflow: PASS.
+- auth real, RLS/owner/cross-user, entitlement e anonymous redirect: PASS.
+- 0 requests observados à produção.
+- Cleanup staging final: QA users/sessions, Storage e fontes Wealth verificadas = 0.
 
-QA protegido: usa share temporário do **deployment exato** armazenado no Vault de staging, relê durante convergência e só avança quando `/api/internal/preview-build` responde `environment=preview` + SHA exato. Deployment Protection não foi desligada; alias de branch não certifica SHA.
+O QA protegido usa share temporário do deployment **imutável** guardado no Vault de staging. O workflow re-resolve o acesso enquanto espera e só aceita `/api/internal/preview-build` com SHA exato. Deployment Protection permanece ativa.
 
-## Tax Center certificado
+Produção Supabase `ozrasuktfthsvbqprtel` segue READ ONLY e não contém migration/função Morning/Night. Nenhuma promoção Vercel ocorreu.
 
-Arquivos: `app/apps/wealth/impostos/*`, `lib/wealth/tax.ts`, `scripts/test-wealth-tax.mjs`, `scripts/e2e-wealth-tax-hosted.mjs`, migration `20260927013000_wealth_tax_center_foundation.sql`.
+## Tax Center
 
-RPC `public.wealth_tax_center(date,date,integer,uuid)`: STABLE, SECURITY INVOKER, authenticated EXECUTE, anon sem EXECUTE. Índice `wealth_portfolio_tax_dates` presente. Lab separado. Sem segundo caixa. Sem imposto oficial, DARF, alíquota, filing, jurisdição ou provider inventado. Flags: provider/rules/filing NOT_CONFIGURED; jurisdiction UNSPECIFIED.
-
-Domain/PG: 7 PASS. Hosted: auth real staging, valores exatos, owner/RLS/cross-user, entitlements, Lab, invalid window, archived holding, anonymous redirect, bloqueio de requests à produção, 6 larguras, 2 temas, Axe, teclado/foco, reduced motion e sem overflow.
-
-Cleanup final staging: auth.users=0, auth.sessions=0, storage.objects=0; fontes Wealth=0; receipts privados=0; audit=0; jobs=0; outbox=0; idempotency=0; cron ativo=0.
-
-## Banco / reconciliação
-
-Staging: 24 migrations. Produção: READ ONLY, 51 migrations, sem migration/função/índice Tax.
-
-Arquivo Tax é o mesmo blob desde `e7122f0e969794a73d2819cd92fb7c6365874f42`; SHA LF `ee0ab55c216dfcd5e1ca6527b486263987bd853b5528f5b75e89da0c54a40870`. O campo textual `schema_migrations.statements[1]` registrou os delimitadores `$$` como `$`, produzindo SHA `d54637e2e61904423d0cfad229789ca4db6d841904173e89c6bb15098093392e`. Não reparar nem editar migration aplicada; futura alteração real usa migration nova.
-
-Advisors: 1 WARN security herdado em `get_my_platform_admin_access()`; performance 63 initplan + 54 multiple-permissive; FK sem índice INFO.
+Permanece certificado no runtime `d47ac1869dcfc22b93e122508153caf665d09cdf`, hosted run `36319880597`, artifact `10932416353`. Não reabrir.
 
 ## Blockers globais separados
 
-Main Site `global-lint-baseline` continua vermelho separadamente (257 erros/148 warnings). Tax scoped lint: 0 erros, 1 warning de arquivo E2E ignorado pela configuração ESLint global. Platform Quality Gate e Rolling V8 estão verdes.
+Main Site `global-lint-baseline` permanece vermelho separadamente com 257 erros/148 warnings herdados. Advisors globais herdados, Auth/MFA global, acessibilidade humana, performance/observability e integrações externas continuam gates futuros. Platform Quality Gate e Rolling V8 estão verdes no runtime Morning/Night.
 
-Produção/main não foram alteradas nem promovidas. WhatsApp congelado. Não declarar DEVELOPMENT_COMPLETE/READY_FOR_PRODUCTION.
+## Próxima unidade: Alerts
 
-## Próxima unidade: Morning / Night
+Implementar alertas owner-scoped com:
+- prioridade;
+- source;
+- reason;
+- deep link;
+- cooldown;
+- dismiss;
+- snooze;
+- preferences;
+- audit;
+- noise control.
 
-Implementar briefings Wealth explicáveis com `Observe → Understand → Act`, somente com dados reais.
+Fontes factuais: overdue, recurrence, debt, goal pacing, Vault expiry, Shield, portfolio coverage, tax gaps e automation needs_attention.
 
-Morning: situação do dia, contas próximas, recorrências, metas, dívida, alertas factuais, documentos/vencimentos, Shield, Portfolio e próximos compromissos quando houver dados.
+Reusar infraestrutura existente quando compatível; não inventar provider/evento e não criar segundo saldo. Certificar domain/PG, RLS/owner/cross-user/entitlement, UI + hosted E2E, responsive/a11y, cleanup, advisors e production read-only antes de Ask Wealth.
 
-Night: mudanças do dia, registros, pendências, progresso, anomalias factuais, amanhã e ações explicáveis.
-
-Não inventar fatos/provider. Depois certificar domain/PG, RLS/owner/entitlement, UI/hosted E2E, cleanup e evidence antes de Alerts.
-
-Evidência Tax: `docs/qa/ORCALY_WEALTH_TAX.md` e JSONs BUILD/DEPLOYMENT/VERCEL_E2E.
+Evidências Morning/Night: `docs/qa/ORCALY_WEALTH_BRIEFING.md` e JSONs BUILD/DEPLOYMENT/VERCEL_E2E.
