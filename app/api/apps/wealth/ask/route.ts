@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto'
 import {NextRequest,NextResponse} from 'next/server'
 import {getPersonalProductAccess} from '@/lib/ecosystem/server'
 import {enforceRateLimit} from '@/lib/security/rate-limit'
@@ -9,7 +10,7 @@ import {readAlertsOverview} from '@/lib/wealth/alerts'
 import {readTaxCenter} from '@/lib/wealth/tax'
 import {readFeeAnalysis} from '@/lib/wealth/fees'
 import {
- askContextId,askSources,classifyAsk,compactAskContext,localAskAnswer,parseAskRequest,
+ askSources,classifyAsk,compactAskContext,localAskAnswer,parseAskRequest,
  providerInput,providerInstructions,providerOutputText,validateAskGoals,
  type AskContext,type AskProviderStatus,type AskSourceId
 } from '@/lib/wealth/ask'
@@ -115,7 +116,7 @@ export async function POST(request:NextRequest){
    execution:'OFF',
    cross_product_context:'DISABLED',
    market_provider_status:'NOT_CONFIGURED',
-   context_id:askContextId(context,intent),
+   context_id:createHash('sha256').update(JSON.stringify(compactAskContext(context,intent))).digest('hex').slice(0,24),
    period:{from,to:date,timezone},
    sources,
    hypotheses:local.hypotheses,
