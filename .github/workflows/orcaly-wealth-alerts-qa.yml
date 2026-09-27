@@ -5,10 +5,11 @@ on:
     branches:
       - codex/orcaly-ecosystem
     paths:
-      - 'app/apps/wealth/alertas/**'\n      - 'components/wealth/WealthAlertForms.tsx'
-      - 'app/apps/wealth/page.tsx'
+      - 'app/apps/wealth/alertas/**'
+      - 'components/wealth/WealthAlertForms.tsx'
       - 'lib/wealth/alerts.ts'
-      - 'supabase/migrations/20260927162000_wealth_document_expiry.sql'\n      - 'supabase/migrations/20260927170000_wealth_alert_center.sql'
+      - 'supabase/migrations/20260927162000_wealth_document_expiry.sql'
+      - 'supabase/migrations/20260927170000_wealth_alert_center.sql'
       - 'scripts/test-wealth-alerts.mjs'
       - 'scripts/e2e-wealth-alerts-hosted.mjs'
       - '.github/workflows/orcaly-wealth-alerts-qa.yml'
