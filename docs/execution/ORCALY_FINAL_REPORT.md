@@ -1,17 +1,34 @@
-# Relatório desta continuação V8
+# Relatório V8 — Tax Center certificado
 
-STATUS: CHECKPOINT_CONTINUATION_REQUIRED. Fee Analyzer e Wealth Shield implementados e certificados em staging e Preview. O master inteiro permanece incompleto; Tax Center foundation é a próxima unidade. Nenhuma autorização de produção foi usada ou inferida.
+STATUS: Tax Center CERTIFICADO em staging e Preview. Próxima unidade: Morning / Night. O Master completo permanece em andamento.
 
-Fee Analyzer organiza tarifas/impostos declarados do Portfolio, com valores exatos, histórico arquivado, comparação de períodos, cobertura explícita, paginação e RLS. Não infere pagamentos ou custos externos. Shield, no foco confirmado pelo usuário, organiza seguros declarados, vigências, documentos privados e referências a bens/contas. CAS, idempotência, isolamento e controle de acesso foram exercitados no banco, Server Actions e UI. Arquivar/cancelamento informado não altera contratos nem fontes financeiras. Seguradoras/provedores ausentes NOT_CONFIGURED.
+Runtime certificado: `d47ac1869dcfc22b93e122508153caf665d09cdf`.
+Deployment Preview: `dpl_BscyaUKzc7ZrE3PZxwQSUjnBMQmv`.
+URL: `https://orcaly-htbz9mjp2-vinicius-araujos-projects.vercel.app`.
 
-Evidência final: runtime d0c3383098264fc0ae1e4db708eb52c2c3d81d94; Preview https://orcaly-2n45x21q2-vinicius-araujos-projects.vercel.app, dpl_4LajAfKaf6pbERKStFPUGbcYLnxR READY.176 testes domínio/SQL PASS, prebuild/build/typecheck/lint sem erros (3 warnings herdados).29 checks hosted finais PASS, incluindo Vault/Fee e Shield, encerrados2026-09-27T01:04:11.587Z com exit0. Fee local17/hosted24 inicial, Shield local18. UI em320/390/768/1024/1440/1920, claro/escuro, Axe, teclado/foco, reduced motion e screenshots. Leitor de tela humano ainda precisa de validação global.
+Tax organiza fatos fiscais declarados do Portfolio/Vault. Não calcula imposto devido, DARF, alíquota, filing ou jurisdição e não cria segundo caixa.
 
-Staging23 migrations, todas com hashes conferidos. Duas migrations novas explícitas, nenhuma aplicada editada.55+2 adições nesta execução,709 cumulativas contra produção; nenhum objeto legado modificado/removido. Schema final idêntico ao pós-migration, types/advisors atualizados. Baseline raw CRLF e3 UNKNOWN históricos preservados.0 usuários/sessões/arquivos/Wealth público e privado/receipts/audit/queue/outbox/idempotência ao final; cron pausado. Nenhum servidor QA local ativo.
+Certificação:
+- 7 testes Tax domain/PostgreSQL PASS;
+- 7 checks hosted PASS;
+- exact Preview SHA confirmado;
+- staging auth real;
+- RLS, owner, cross-user e entitlements exercitados;
+- Lab e invalid window exercitados;
+- 320/390/768/1024/1440/1920;
+- light/dark, Axe, teclado/foco, reduced motion e sem overflow;
+- 12 screenshots;
+- artifact GitHub Actions `10932416353`, digest `fa24f01a1718c0f4f6dcc77707bbd1ea30dbc269c4c94e47862a2058bcda9e1d`;
+- Rolling V8 PASS;
+- Platform Quality Gate PASS;
+- build e TypeScript PASS.
 
-Erros encontrados e corrigidos: sintaxe de alias SQL Fee e fixture de datas de entitlement antes de aplicação; esperas de navegação/paginação dos testes Fee; coluna errada na asserção de audit Shield; teste fechando details já aberto; coletor QA não enumerava a nova tabela Shield antes do cascade, deixando52 eventos sintéticos actor null. Esses eventos foram comprovados por26 pares insert/delete e removidos por IDs específicos com guard de staging vazio. Coletor corrigido, relatório inicial preservado e suíte inteira repetida com cleanup zero. Nenhuma correction migration foi necessária: SQL aplicado já havia passado nos testes.
+Cleanup final: auth users/sessions, Storage, fontes Wealth, receipts, audit, jobs, outbox, idempotency e cron ativo ficaram em zero.
 
-Produção Supabase ozrasuktfthsvbqprtel somente auditada read-only, schema sem diferenças. main d940debf9556e1180fa3c709da0f560d3aa96374/deployment produção dpl_3HeTKTcSdeM2kvzYUk5Drw5yJVtf/aliases preservados. Sem merge/promoção/reset/db push histórico/repair/renumeração. Zero requisições de produção observadas nos fluxos E2E. WhatsApp congelado.
+Staging: 24 migrations, incluindo `20260927013000_wealth_tax_center_foundation`. Produção foi consultada somente leitura e não contém migration, função ou índice Tax.
 
-Antes de produção: concluir demais unidades V5/V8 e seus gates, UX/registry/identidade/billing/One/consent/IA/produtos, Auth/MFA/advisors herdados, integrações reais, performance/observabilidade/acessibilidade e QA final. União de múltiplas concessões comerciais continua no escopo futuro de Billing. Não registrar DEVELOPMENT_COMPLETE/READY_FOR_PRODUCTION prematuramente.
+Reconciliação: o arquivo Tax permanece o mesmo blob desde a correção pré-aplicação `e7122f0`. O texto armazenado em `schema_migrations.statements[1]` difere em dois caracteres nos delimitadores PL/pgSQL; o ledger não foi reparado e a migration aplicada não foi editada.
 
-Detalhes verificáveis: docs/qa/ORCALY_WEALTH_FEES.md; docs/qa/ORCALY_WEALTH_SHIELD.md; relatórios E2E/build/deployment; reconciliation/CONTINUATION_MIGRATIONS.md e staging-fees/shield-*; próximo passo operacional em NEXT_CODEX_HANDOFF.md.
+O Main Site global-lint-baseline permanece um gate global separado. Advisors herdados, Auth/MFA, acessibilidade humana, performance/observability, integrações e demais produtos continuam abertos.
+
+Evidências: `docs/qa/ORCALY_WEALTH_TAX.md`, `ORCALY_WEALTH_TAX_VERCEL_E2E.json`, `ORCALY_WEALTH_TAX_BUILD.json`, `ORCALY_WEALTH_TAX_DEPLOYMENT.json`.
