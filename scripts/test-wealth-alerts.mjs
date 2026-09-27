@@ -34,8 +34,9 @@ test('all eight factual sources appear without cross-user data or inferred provi
  const version=(await db.query('select version from public.wealth_entries where id=$1',[holding])).rows[0].version
  await portfolio('transaction',{holding_id:holding,version,type:'sell',quantity:'1',amount_cents:'100',financial_date:today,reference:'Tax evidence gap'})
  await asAdmin(db);job=(await db.query("update public.background_jobs set status='needs_attention',attempts=5,max_attempts=5 where payload->>'recurrence_id'=$1 returning id",[recurrence])).rows[0].id;await asUser(db,ids.a)
- const v=await read();assert.equal(v.count,'8');assert.equal(v.summary.active,'8');assert.equal(v.summary.urgent,'2')
+ const v=await read();assert.equal(v.count,'8');assert.equal(v.summary.active,'8');assert.equal(v.summary.urgent,'1')
  assert.deepEqual(new Set(v.alerts.map(a=>a.source)),new Set(['recurrence','debt','goal','vault','shield','portfolio','tax','automation']))
+ assert.equal(v.alerts.find(a=>a.source==='automation').priority,'urgent');assert.equal(v.alerts.find(a=>a.source==='recurrence').priority,'attention')
  assert.ok(v.alerts.every(a=>a.deep_link.startsWith('/apps/wealth/')&&a.notification_eligible))
  assert.equal(v.source_coverage.vault,'ACTIVE')
  await asUser(db,ids.b);const b=await read();assert.equal(b.count,'0');assert.ok(!JSON.stringify(b).includes('Expiring document'));await asUser(db,ids.a)
