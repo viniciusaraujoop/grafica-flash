@@ -266,3 +266,41 @@ Immediately before integration:
 5. update this document if Agent 1/2/3 heads changed materially;
 6. freeze final candidate SHA;
 7. run the integration sequence in INTEGRATION_SEQUENCE.md.
+
+
+## Final live head refresh
+
+Last read before Agent 4 handoff:
+
+| Agent | Final observed head | Latest observed activity |
+| --- | --- | --- |
+| Agent 1 | `b8df40d1b0f2991c1f594ea59d6d4d9e19302e78` | `test(wealth): add hosted Alerts matrix` |
+| Agent 2 | `0db9b5ba45c8ad54f97bb3b8a174bbc1dea14b5f` | handoff update recording Preview build/typecheck PASS |
+| Agent 3 | `b0d4909457635801e7973128671cf6df0ea7ef57` | continued legacy/order/admin type hardening |
+| Agent 4 | `71735885dc7e39feff276e195a6832ece344a8f2` before this refresh | audit docs only |
+
+### Important change since the earlier map
+
+Agent 3 is no longer cleanly describable as an untouched sibling of the original `9a2c...` base. Its history now contains an **intermediate Agent 1 lineage** and has diverged from the latest Agent 1 head.
+
+GitHub comparison at the final observation:
+- latest Agent 1 → Agent 3: **diverged**;
+- Agent 3 side: 17 commits ahead of the merge base;
+- Agent 3 side: 5 commits behind latest Agent 1.
+
+The Agent 3 branch also shows Wealth/Alerts/package/migration files when compared all the way back to `9a2c...`, while its delta relative to the latest Agent 1 lineage is concentrated in legacy/admin/Business hardening.
+
+Interpretation:
+- this is primarily **history overlap**, not evidence that Agent 3 intentionally owns Wealth;
+- integration must use Git ancestry/merge-base awareness;
+- do not cherry-pick the full Agent 3 history blindly on top of latest Agent 1;
+- review the effective Agent 3-only diff against latest Agent 1 and keep Wealth/migrations/package under Agent 1 ownership.
+
+Agent 2's latest head was still reporting a pending Vercel status at the final read because a documentation-only handoff commit triggered a new deployment, while that handoff records the prior Preview build/typecheck as PASS. Final integration must require an exact-head green build or deliberately pin the already-certified code commit.
+
+### Final collision assessment
+
+- Agent 1 ↔ Agent 3: **MEDIUM/HIGH integration risk due branch-history divergence**, even though the effective Agent 3-only file delta is mainly Business/admin.
+- Agent 1 ↔ Agent 2: LOW current file-level risk.
+- Agent 2 ↔ Agent 3: LOW current file-level risk, but final global type/lint applies to both.
+- Agent 4 ↔ all: LOW file-level risk; docs-only.
