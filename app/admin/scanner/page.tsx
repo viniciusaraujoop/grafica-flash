@@ -4,6 +4,30 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
+type ScanBug = {
+  id: string
+  status: string
+  severity: string
+  title: string
+  description: string
+  area: string
+  affected_table?: string | null
+  entity_type?: string | null
+  affected_field?: string | null
+  occurrences?: number | null
+  entity_label?: string | null
+  entity_id?: string | null
+  code?: string | null
+  suggested_action?: string | null
+  fix_steps?: string[] | null
+  fix_sql?: string | null
+}
+
+type ScanRun = {
+  started_at?: string | null
+  total_issues?: number | null
+}
+
 function dataBR(value: string | null | undefined) {
   if (!value) return 'Sem data'
   return new Date(value).toLocaleString('pt-BR')
@@ -25,15 +49,15 @@ function badgeStatus(status: string) {
 
 export default function AdminScannerPage() {
   const [token, setToken] = useState('')
-  const [bugs, setBugs] = useState<any[]>([])
-  const [runs, setRuns] = useState<any[]>([])
+  const [bugs, setBugs] = useState<ScanBug[]>([])
+  const [runs, setRuns] = useState<ScanRun[]>([])
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(false)
   const [erro, setErro] = useState('')
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState('aberto')
   const [severity, setSeverity] = useState('todos')
-  const [selected, setSelected] = useState<any | null>(null)
+  const [selected, setSelected] = useState<ScanBug | null>(null)
 
   async function carregar() {
     setErro('')

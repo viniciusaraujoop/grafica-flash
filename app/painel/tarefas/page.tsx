@@ -4,6 +4,15 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { getAccessTokenClient } from '@/lib/current-company-client'
 
+type Task = {
+  id: string
+  status: string
+  titulo: string
+  descricao?: string | null
+  prioridade: string
+  due_at?: string | null
+}
+
 function formatDate(value?: string | null) {
   if (!value) return 'Sem prazo'
   const date = new Date(value)
@@ -13,7 +22,7 @@ function formatDate(value?: string | null) {
 
 export default function TarefasPage() {
   const [token, setToken] = useState('')
-  const [tasks, setTasks] = useState<any[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -114,6 +123,12 @@ export default function TarefasPage() {
     await load()
   }
 
+  const columns = [
+    { status: 'pendente', title: 'Pendentes', list: grouped.pendente },
+    { status: 'em_andamento', title: 'Em andamento', list: grouped.em_andamento },
+    { status: 'concluida', title: 'Concluídas', list: grouped.concluida },
+  ]
+
   if (loading) {
     return <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff]"><div className="rounded-[2rem] bg-white p-8 font-black shadow-xl">Carregando tarefas...</div></main>
   }
@@ -153,18 +168,14 @@ export default function TarefasPage() {
           </form>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            {[
-              ['pendente', 'Pendentes', grouped.pendente],
-              ['em_andamento', 'Em andamento', grouped.em_andamento],
-              ['concluida', 'Concluídas', grouped.concluida],
-            ].map(([status, title, list]) => (
-              <section key={status as string} className="rounded-[2rem] border border-blue-100 bg-white/80 p-5 shadow-xl shadow-blue-950/5">
+            {columns.map(({ status, title, list }) => (
+              <section key={status} className="rounded-[2rem] border border-blue-100 bg-white/80 p-5 shadow-xl shadow-blue-950/5">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-xl font-black">{title as string}</h2>
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{(list as any[]).length}</span>
+                  <h2 className="text-xl font-black">{title}</h2>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">{list.length}</span>
                 </div>
                 <div className="grid gap-3">
-                  {(list as any[]).map((task) => (
+                  {list.map((task) => (
                     <article key={task.id} className="rounded-[1.4rem] border border-slate-100 bg-white p-4">
                       <p className="font-black">{task.titulo}</p>
                       {task.descricao && <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{task.descricao}</p>}
@@ -179,7 +190,7 @@ export default function TarefasPage() {
                       </select>
                     </article>
                   ))}
-                  {(list as any[]).length === 0 && <div className="rounded-[1.4rem] border border-dashed border-slate-200 bg-white p-5 text-center text-sm font-bold text-slate-400">Nada aqui.</div>}
+                  {list.length === 0 && <div className="rounded-[1.4rem] border border-dashed border-slate-200 bg-white p-5 text-center text-sm font-bold text-slate-400">Nada aqui.</div>}
                 </div>
               </section>
             ))}
