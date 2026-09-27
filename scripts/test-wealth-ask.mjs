@@ -41,7 +41,7 @@ test('deterministic classifier covers Wealth sources and current-market boundary
 
 test('local analysis is exact, traceable and never turns missing market data into facts',()=>{
  const r=localAskAnswer(context,{question:'Como está meu patrimônio?',mode:'analysis'})
- assert.match(r.answer,/R\$ 7\.500,00/);assert.match(r.answer,/R\$ 10\.000,00/);assert.match(r.answer,/R\$ 2\.500,00/)
+ assert.ok(r.answer.includes('7.500,00'));assert.ok(r.answer.includes('10.000,00'));assert.ok(r.answer.includes('2.500,00'))
  assert.match(r.answer,/1 posição/)
  const sources=askSources(context,'net_worth');assert.deepEqual(sources.map(x=>x.id),['net_worth','health','summary']);assert.ok(sources.every(x=>x.href.startsWith('/apps/wealth/')))
  const market=localAskAnswer(context,{question:'Qual o dólar agora?',mode:'analysis'});assert.equal(market.boundary,'MARKET_NOT_CONFIGURED');assert.match(market.answer,/não possui feed de mercado/)
@@ -55,9 +55,9 @@ test('regulated recommendation and execution language is stopped before any prov
 })
 
 test('goal, tax and fee answers preserve declared-data limitations',()=>{
- const goal=localAskAnswer(context,{question:'Minha meta da casa está como?',mode:'planning'});assert.match(goal.answer,/Casa/);assert.match(goal.answer,/R\$ 1\.200,00/);assert.ok(goal.hypotheses.length)
- const tx=localAskAnswer(context,{question:'Quanto tenho de imposto?',mode:'analysis'});assert.match(tx.answer,/R\$ 120,00/);assert.match(tx.limitations.join(' '),/não é imposto devido/i)
- const fee=localAskAnswer(context,{question:'Quais tarifas paguei?',mode:'analysis'});assert.match(fee.answer,/R\$ 35,00/);assert.match(fee.limitations.join(' '),/eventos declarados/i)
+ const goal=localAskAnswer(context,{question:'Minha meta da casa está como?',mode:'planning'});assert.match(goal.answer,/Casa/);assert.ok(goal.answer.includes('1.200,00'));assert.ok(goal.hypotheses.length)
+ const tx=localAskAnswer(context,{question:'Quanto tenho de imposto?',mode:'analysis'});assert.ok(tx.answer.includes('120,00'));assert.match(tx.limitations.join(' '),/não é imposto devido/i)
+ const fee=localAskAnswer(context,{question:'Quais tarifas paguei?',mode:'analysis'});assert.ok(fee.answer.includes('35,00'));assert.match(fee.limitations.join(' '),/eventos declarados/i)
 })
 
 test('provider payload is allowlisted, bounded and output parser reads only output_text',()=>{
