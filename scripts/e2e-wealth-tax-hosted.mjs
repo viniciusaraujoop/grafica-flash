@@ -97,11 +97,13 @@ try{
  const build=await buildResponse.json()
  assert.equal(build.environment,'preview');assert.equal(build.commit,expectedCommit)
  const login=async(user,next)=>{
-  await page.goto(`${appUrl}/login?next=${encodeURIComponent(next)}`)
+  const target=new URL(next,appUrl)
+  const relativeTarget=`${target.pathname}${target.search}`
+  await page.goto(`${appUrl}/login?next=${encodeURIComponent(relativeTarget)}`)
   await page.locator('input[name=email]').fill(user.email)
   await page.locator('input[name=password]').fill(user.password)
   await page.getByRole('button',{name:'Entrar no painel',exact:true}).click()
-  await page.waitForURL(url=>url.pathname===new URL(next,appUrl).pathname,{timeout:45000})
+  await page.waitForURL(url=>url.pathname===target.pathname,{timeout:45000})
  }
  const url=`${appUrl}/apps/wealth/impostos?from=2026-09-01&to=2026-09-30&portfolio=${portfolio}`
  await login(a,url)
@@ -148,7 +150,8 @@ try{
  const otherContext=await makeContext()
  await authorizePreview(otherContext)
  const otherPage=await otherContext.newPage()
- await otherPage.goto(`${appUrl}/login?next=${encodeURIComponent(url)}`)
+ const otherTarget=new URL(url,appUrl)
+ await otherPage.goto(`${appUrl}/login?next=${encodeURIComponent(`${otherTarget.pathname}${otherTarget.search}`)}`)
  await otherPage.locator('input[name=email]').fill(b.email);await otherPage.locator('input[name=password]').fill(b.password)
  await otherPage.getByRole('button',{name:'Entrar no painel',exact:true}).click()
  await otherPage.getByText('A carteira não está disponível para esta conta.',{exact:true}).waitFor()
