@@ -74,11 +74,12 @@ export async function POST(request:NextRequest){
   const apiKey=process.env.OPENAI_API_KEY?.trim()
   const model=process.env.ORCALY_WEALTH_AI_MODEL?.trim()
   const configured=process.env.ORCALY_WEALTH_AI_ENABLED==='true'&&Boolean(apiKey)&&Boolean(model)
-  let providerStatus:AskProviderStatus=configured?'OPENAI_CONFIGURED':'NOT_CONFIGURED'
+  let providerStatus:AskProviderStatus=configured?'AVAILABLE_NOT_USED':'NOT_CONFIGURED'
+  let providerUsed=false
   let answer=local.answer,warning:string|undefined
   const policyBoundary=local.boundary!==null
 
-  if(configured&&!policyBoundary){
+  if(configured&&ask.provider_consent&&!policyBoundary){
    const response=await fetch('https://api.openai.com/v1/responses',{
     method:'POST',
     headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
@@ -94,7 +95,7 @@ export async function POST(request:NextRequest){
    if(response){
     const payload:unknown=await response.json().catch(()=>null)
     const generated=response.ok?providerOutputText(payload):''
-    if(generated)answer=generated
+    if(generated){answer=generated;providerStatus='OPENAI_USED';providerUsed=true}
     else{
      providerStatus='DEGRADED'
      warning=providerError(payload)||'Provider configurado, mas a resposta externa não pôde ser usada. A análise local foi preservada.'
@@ -112,6 +113,8 @@ export async function POST(request:NextRequest){
    intent,
    answer,
    provider_status:providerStatus,
+   provider_used:providerUsed,
+   provider_consent:ask.provider_consent?'GRANTED_THIS_REQUEST':'NOT_GRANTED',
    regulated_advice:'OFF',
    execution:'OFF',
    cross_product_context:'DISABLED',
