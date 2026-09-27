@@ -1,0 +1,2823 @@
+{
+  "generatedAt": "2026-09-27T18:48:10.282Z",
+  "tool": "playwright+esbuild isolated harness (axe-core unavailable: axe checks NOT_RUN; static a11y lint only)",
+  "axe": "NOT_RUN",
+  "checks": [
+    {
+      "name": "home@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "home@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "home@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "home@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "home@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "home@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "home@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "home@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "home@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "empty@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "empty@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "empty@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "empty@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "empty@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "empty@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "empty@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "empty@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "library@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "library@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "library@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "library@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "library@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "library@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "library@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "library@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "library-empty@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "library-empty@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "library-empty@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "library-empty@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "library-empty@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "library-empty@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "library-empty@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "library-empty@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library-empty@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "search@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "search@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "search@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "search@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "search@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "search@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "search@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "search@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "search@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "noresults@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "noresults@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "noresults@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "noresults@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "noresults@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "noresults@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "noresults@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "noresults@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "noresults@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "track-experimentos-fundamentos@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "track-experimentos-fundamentos@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "track-experimentos-fundamentos@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "track-experimentos-fundamentos@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "track-experimentos-fundamentos@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "track-experimentos-fundamentos@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "track-experimentos-fundamentos@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "track-experimentos-fundamentos@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "track-seguranca-digital@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "track-seguranca-digital@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "track-seguranca-digital@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "track-seguranca-digital@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "track-seguranca-digital@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "track-seguranca-digital@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "track-seguranca-digital@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "track-seguranca-digital@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-seguranca-digital@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-reserva-emergencia--financas-pessoais@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "read-checklist-seguranca@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "read-checklist-seguranca@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-checklist-seguranca@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "read-checklist-seguranca@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "read-checklist-seguranca@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "read-checklist-seguranca@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-checklist-seguranca@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "read-checklist-seguranca@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-checklist-seguranca@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "read-metricas-basicas@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "read-metricas-basicas@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-metricas-basicas@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "read-metricas-basicas@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "read-metricas-basicas@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "read-metricas-basicas@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-metricas-basicas@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "read-metricas-basicas@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-metricas-basicas@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "read-rotina-operacional@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "read-rotina-operacional@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-rotina-operacional@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "read-rotina-operacional@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "read-rotina-operacional@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "read-rotina-operacional@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-rotina-operacional@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "read-rotina-operacional@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-rotina-operacional@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "read-manual-indicadores@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "read-manual-indicadores@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-manual-indicadores@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "read-manual-indicadores@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "read-manual-indicadores@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "read-manual-indicadores@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-manual-indicadores@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "read-manual-indicadores@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-manual-indicadores@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "read-apostila-sem-origem@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "read-apostila-sem-origem@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-apostila-sem-origem@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "read-apostila-sem-origem@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "read-apostila-sem-origem@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "read-apostila-sem-origem@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-apostila-sem-origem@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "read-apostila-sem-origem@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-apostila-sem-origem@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "read-guia-externo-golpes@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "read-guia-externo-golpes@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-guia-externo-golpes@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "read-guia-externo-golpes@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "read-guia-externo-golpes@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "read-guia-externo-golpes@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-guia-externo-golpes@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "read-guia-externo-golpes@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-guia-externo-golpes@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "notes@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "notes@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "notes@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "notes@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "notes@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "notes@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "notes@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "notes@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "notes-empty@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "notes-empty@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "notes-empty@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "notes-empty@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "notes-empty@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "notes-empty@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "notes-empty@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "notes-empty@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes-empty@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "bookmarks@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "bookmarks@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "bookmarks@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "bookmarks@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "bookmarks@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "bookmarks@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "bookmarks@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "bookmarks@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "bookmarks-empty@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "bookmarks-empty@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@390 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "bookmarks-empty@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "bookmarks-empty@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "bookmarks-empty@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "bookmarks-empty@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@1440 axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "bookmarks-empty@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "bookmarks-empty@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "bookmarks-empty@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home shows DEMO / SAMPLE DATA banner",
+      "pass": true
+    },
+    {
+      "name": "home sections in required order",
+      "pass": true,
+      "note": "Continuar|Trilhas em andamento|Biblioteca|Notas recentes|Descobrir"
+    },
+    {
+      "name": "home has no vanity metrics",
+      "pass": true
+    },
+    {
+      "name": "continue list: rule-based order with visible rule ids",
+      "pass": true,
+      "note": "CONTINUE_IN_PROGRESS,CONTINUE_IN_PROGRESS,RESUME_BOOKMARK"
+    },
+    {
+      "name": "continue: first is most recent in-progress (boa hipótese)",
+      "pass": true
+    },
+    {
+      "name": "continue: almost-finished rule surfaced with id",
+      "pass": true
+    },
+    {
+      "name": "continue: unknown lesson progress is not a percentage",
+      "pass": true
+    },
+    {
+      "name": "home: every demo note labelled \"Exemplo\"",
+      "pass": true,
+      "note": "3/3"
+    },
+    {
+      "name": "home: REVIEW_NOTE suggestion shows rule",
+      "pass": true
+    },
+    {
+      "name": "empty home: empty states, no demo banner",
+      "pass": true
+    },
+    {
+      "name": "library lists every non-draft item (13)",
+      "pass": true,
+      "note": "13"
+    },
+    {
+      "name": "library shows all availability states as text",
+      "pass": true,
+      "note": "AVAILABLE,BLOCKED_LICENSE,COMING_SOON,EXTERNAL_ONLY,UNAVAILABLE"
+    },
+    {
+      "name": "filter: blocked by license → 2 items",
+      "pass": true,
+      "note": "2"
+    },
+    {
+      "name": "library: blocked item with old completion is not labelled \"Concluído\"",
+      "pass": true
+    },
+    {
+      "name": "filters combine with AND → no results state",
+      "pass": true
+    },
+    {
+      "name": "reset restores full list",
+      "pass": true
+    },
+    {
+      "name": "sort by duration puts unknown durations last (never as zero)",
+      "pass": true,
+      "note": "ÁUDIO / Em breve"
+    },
+    {
+      "name": "search is accent-insensitive (orcamento → Orçamento)",
+      "pass": true
+    },
+    {
+      "name": "search announces result count",
+      "pass": true
+    },
+    {
+      "name": "library interactions do not write browser storage",
+      "pass": true
+    },
+    {
+      "name": "search \"SENHA\": case-insensitive, most relevant first",
+      "pass": true,
+      "note": "Disponível"
+    },
+    {
+      "name": "search results include a track",
+      "pass": true
+    },
+    {
+      "name": "no results: explicit empty state with recovery action",
+      "pass": true
+    },
+    {
+      "name": "no results: recovery restores library",
+      "pass": true
+    },
+    {
+      "name": "track: blocked required item does not count",
+      "pass": true
+    },
+    {
+      "name": "track: blocked item explained in text",
+      "pass": true
+    },
+    {
+      "name": "track: not complete while a required item is blocked",
+      "pass": true
+    },
+    {
+      "name": "track: locked item has no link and names its prerequisite",
+      "pass": true
+    },
+    {
+      "name": "track: items in declared order",
+      "pass": true,
+      "note": "O que é uma boa hi | Controle e variant | Métricas básicas e | Manual de indicado"
+    },
+    {
+      "name": "track: next unit highlighted",
+      "pass": true
+    },
+    {
+      "name": "track (not enrolled): honest not-configured enrollment",
+      "pass": true
+    },
+    {
+      "name": "reader: serif only inside reader content",
+      "pass": true,
+      "note": "Georgia, \"Iowan Old  / Arial, Helvetica, sa"
+    },
+    {
+      "name": "reader: opening does not complete (status stays \"Em andamento\")",
+      "pass": true
+    },
+    {
+      "name": "reader: disabled completion looks disabled",
+      "pass": true
+    },
+    {
+      "name": "reader: completion disabled reason is stated",
+      "pass": true
+    },
+    {
+      "name": "reader: source and license visible",
+      "pass": true
+    },
+    {
+      "name": "reader: back to track link",
+      "pass": true
+    },
+    {
+      "name": "reader: existing section bookmark shows pressed",
+      "pass": true
+    },
+    {
+      "name": "reader: font size clamps at 24px and A+ disables",
+      "pass": true,
+      "note": "24px"
+    },
+    {
+      "name": "reader: font size clamps at 14px and A− disables",
+      "pass": true,
+      "note": "14px"
+    },
+    {
+      "name": "reader: line-height 2,0 applied",
+      "pass": true,
+      "note": "2.00"
+    },
+    {
+      "name": "reader: narrow column ≈ 58ch",
+      "pass": true,
+      "note": "34.6"
+    },
+    {
+      "name": "reader: reading theme dark scoped to reader",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "reader: controls are inline (never cover content)",
+      "pass": true
+    },
+    {
+      "name": "reader: registering reading updates measured progress",
+      "pass": true
+    },
+    {
+      "name": "reader: still not completed after reaching 100% (explicit action required)",
+      "pass": true
+    },
+    {
+      "name": "reader: explicit completion records evidence",
+      "pass": true
+    },
+    {
+      "name": "notes: \"Anotar nesta seção\" focuses the editor",
+      "pass": true,
+      "note": "TEXTAREA"
+    },
+    {
+      "name": "notes: editor preselects the section",
+      "pass": true
+    },
+    {
+      "name": "notes: empty note rejected with announced error",
+      "pass": true
+    },
+    {
+      "name": "notes: HTML stays literal text (no element, no script run)",
+      "pass": true
+    },
+    {
+      "name": "notes: note text never enters the URL",
+      "pass": true
+    },
+    {
+      "name": "notes: own note shows \"Privada\", demo note \"Exemplo\" and is read-only",
+      "pass": true
+    },
+    {
+      "name": "notes: edit saves (CAS version from edit start)",
+      "pass": true
+    },
+    {
+      "name": "bookmark: content favourited (aria-pressed)",
+      "pass": true
+    },
+    {
+      "name": "bookmark: removing keeps progress and notes",
+      "pass": true
+    },
+    {
+      "name": "reader: no browser storage writes",
+      "pass": true
+    },
+    {
+      "name": "reader@390: notes stacked below the article",
+      "pass": true,
+      "note": "{\"aTop\":405.328125,\"aBottom\":2131.515625,\"aRight\":358,\"sTop\":3157.421875,\"sLeft\":16,\"sticky\":\"static\"}"
+    },
+    {
+      "name": "reader@390: comfortable measure (≤ 40em)",
+      "pass": true,
+      "note": "18.1em"
+    },
+    {
+      "name": "reader@1440: notes as side panel (sticky)",
+      "pass": true,
+      "note": "{\"aTop\":278.171875,\"aBottom\":1588.78125,\"aRight\":820.546875,\"sTop\":185.390625,\"sLeft\":1028,\"sticky\":\"sticky\"}"
+    },
+    {
+      "name": "reader@1440: comfortable measure (≤ 40em)",
+      "pass": true,
+      "note": "31.8em"
+    },
+    {
+      "name": "lesson: manual lesson progress reads \"Não se aplica\", never 0%",
+      "pass": true
+    },
+    {
+      "name": "lesson: position in track shown",
+      "pass": true
+    },
+    {
+      "name": "lesson: manual completion available",
+      "pass": true
+    },
+    {
+      "name": "lesson: resume link to saved section",
+      "pass": true
+    },
+    {
+      "name": "document: resume position saved by page",
+      "pass": true
+    },
+    {
+      "name": "read-metricas-basicas: media placeholder AVAILABLE_METADATA_ONLY",
+      "pass": true
+    },
+    {
+      "name": "read-metricas-basicas: no player, no autoplay, no external embed",
+      "pass": true
+    },
+    {
+      "name": "read-metricas-basicas: completion disabled (playback not measured)",
+      "pass": true
+    },
+    {
+      "name": "video: transcript/caption status stated",
+      "pass": true
+    },
+    {
+      "name": "read-rotina-operacional: media placeholder NOT_CONFIGURED",
+      "pass": true
+    },
+    {
+      "name": "read-rotina-operacional: no player, no autoplay, no external embed",
+      "pass": true
+    },
+    {
+      "name": "read-rotina-operacional: completion disabled (playback not measured)",
+      "pass": true
+    },
+    {
+      "name": "audio: unknown author and duration stated, not invented",
+      "pass": true
+    },
+    {
+      "name": "read-manual-indicadores: no reading progress shown for unreadable content",
+      "pass": true
+    },
+    {
+      "name": "read-manual-indicadores: blocked by license, no body rendered",
+      "pass": true
+    },
+    {
+      "name": "read-manual-indicadores: license LICENSED shown as not permitting full content",
+      "pass": true
+    },
+    {
+      "name": "read-manual-indicadores: stale completion shown as not counting (never \"Concluído em\")",
+      "pass": true,
+      "note": "Concluir\n\nConclusão manual: você marca quando terminar.\n\nExiste um registro de c"
+    },
+    {
+      "name": "read-apostila-sem-origem: no reading progress shown for unreadable content",
+      "pass": true
+    },
+    {
+      "name": "read-apostila-sem-origem: blocked by license, no body rendered",
+      "pass": true
+    },
+    {
+      "name": "read-apostila-sem-origem: license UNKNOWN shown as not permitting full content",
+      "pass": true
+    },
+    {
+      "name": "read-apostila-sem-origem: cannot be completed",
+      "pass": true
+    },
+    {
+      "name": "external: safe outbound link (https, noopener noreferrer, new tab announced)",
+      "pass": true,
+      "note": "https://example.org/guia-demo noopener noreferrer"
+    },
+    {
+      "name": "external: content not reproduced",
+      "pass": true
+    },
+    {
+      "name": "notes page: all demo notes, anchored by id only",
+      "pass": true,
+      "note": "nota-nota-exemplo-1,nota-nota-exemplo-3,nota-nota-exemplo-2"
+    },
+    {
+      "name": "notes page: links carry no note text",
+      "pass": true,
+      "note": "/apps/academy/ler/boa-hipotese#criterio /apps/academy/ler/orcamento-mensal#revisao /apps/academy/ler/senhas-duas-etapas"
+    },
+    {
+      "name": "bookmarks: remove updates list and reassures about progress/notes",
+      "pass": true
+    },
+    {
+      "name": "home: first Tab reaches visible skip link",
+      "pass": true,
+      "note": "{\"text\":\"Pular para o conteúdo\",\"top\":8}"
+    },
+    {
+      "name": "home: skip link moves focus to main",
+      "pass": true
+    },
+    {
+      "name": "home: focused element shows focus ring",
+      "pass": true,
+      "note": "rgb(255, 255, 255) 0px 0px 0px 3px, rgb("
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos: first Tab reaches visible skip link",
+      "pass": true,
+      "note": "{\"text\":\"Pular para o conteúdo\",\"top\":8}"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos: skip link moves focus to main",
+      "pass": true
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos: focused element shows focus ring",
+      "pass": true,
+      "note": "rgb(255, 255, 255) 0px 0px 0px 3px, rgb("
+    },
+    {
+      "name": "library@390: every card reachable by keyboard",
+      "pass": true,
+      "note": "13/13"
+    },
+    {
+      "name": "reduced motion collapses progress transitions",
+      "pass": true,
+      "note": "1e-05s"
+    },
+    {
+      "name": "reflow: 320px with 24px reader text has no horizontal scroll",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "home OS dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "home OS dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "47,45,40"
+    },
+    {
+      "name": "home dark static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home dark axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "home forced dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "home forced dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "47,45,40"
+    },
+    {
+      "name": "library OS dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "library OS dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "47,45,40"
+    },
+    {
+      "name": "library dark static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "library dark axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "library forced dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "library forced dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "47,45,40"
+    },
+    {
+      "name": "track-experimentos-fundamentos OS dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "track-experimentos-fundamentos OS dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "0,0,0"
+    },
+    {
+      "name": "track-experimentos-fundamentos dark static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "track-experimentos-fundamentos dark axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "track-experimentos-fundamentos forced dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "track-experimentos-fundamentos forced dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "0,0,0"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos OS dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos OS dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "0,0,0"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos dark static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos dark axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos forced dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "read-boa-hipotese--experimentos-fundamentos forced dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "0,0,0"
+    },
+    {
+      "name": "notes OS dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "notes OS dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "47,45,40"
+    },
+    {
+      "name": "notes dark static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "notes dark axe WCAG 2.2 AA",
+      "pass": null,
+      "status": "NOT_RUN",
+      "note": "axe-core not installable here (registry blocked)"
+    },
+    {
+      "name": "notes forced dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "notes forced dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "47,45,40"
+    }
+  ],
+  "summary": {
+    "total": 566,
+    "passed": 521,
+    "failed": 0,
+    "notRun": 45
+  }
+}
