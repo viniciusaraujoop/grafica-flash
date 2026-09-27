@@ -1,3 +1,4 @@
+import {testWealthShield} from './e2e-wealth-shield.mjs'
 import {testWealthFees} from './e2e-wealth-fees.mjs'
 import {testWealthTimeline} from './e2e-wealth-timeline.mjs'
 import {testWealthFamily} from './e2e-wealth-family.mjs'
@@ -393,11 +394,12 @@ try{
  if(process.env.ORCALY_QA_DOCUMENTS==='true')await testWealthDocuments({page,context,other,anonymous,a,b,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_TIMELINE==='true')await testWealthTimeline({page,context,other,anonymous,a,b,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_FAMILY==='true')await testWealthFamily({page,context,other,anonymous,a,b,no,admin,appUrl,grant,active,ok,pass,output})
+ if(process.env.ORCALY_QA_SHIELD==='true')await testWealthShield({page,context,other,anonymous,a,b,no,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_FEES==='true')await testWealthFees({page,other,anonymous,a,b,no,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_AUTOMATION==='true')await testWealthAutomation({page,context,other,anonymous,a,b,no,admin,appUrl,grant,active,ok,pass,output})
  assert.deepEqual(errors,[])
  pass('no-browser-errors-or-production-requests')
-}catch(error){const safeMessage=String(error?.message??error).split('\n')[0];report.push({check:'execution',status:'FAIL',message:safeMessage});process.exitCode=1;console.error(safeMessage)}
+}catch(error){const location=String(error?.stack??'').match(/scripts[\\/]e2e-[a-z0-9-]+\.mjs:\d+:\d+/)?.[0];const safeMessage=String(error?.message??error).split('\n')[0]+(location?` (${location})`:'');report.push({check:'execution',status:'FAIL',message:safeMessage});process.exitCode=1;console.error(safeMessage)}
 finally{
  await Promise.all(contexts.map(c=>c.close().catch(()=>{})));await browser?.close()
  // Collect fixture entity IDs before user cascades; triggers during cascades retain only IDs.
@@ -423,6 +425,7 @@ finally{
  if(process.env.ORCALY_QA_PORTFOLIO==='true')for(const t of ['wealth_portfolios','wealth_holdings','wealth_portfolio_transactions'])cleanup[t]=(await admin.from(t).select('id',{count:'exact',head:true})).count
  if(process.env.ORCALY_QA_PLANNING==='true')for(const t of ['wealth_goal_funding','wealth_life_plans'])cleanup[t]=(await admin.from(t).select('id',{count:'exact',head:true})).count
  if(process.env.ORCALY_QA_DOCUMENTS==='true'){cleanup.documents=(await admin.from('wealth_documents').select('id',{count:'exact',head:true})).count;cleanup.storageFolders=ok(await admin.storage.from('wealth-documents').list()).length}
+ if(process.env.ORCALY_QA_SHIELD==='true')cleanup.protectionPolicies=(await admin.from('wealth_protection_policies').select('id',{count:'exact',head:true})).count
  if(Object.values(cleanup).some(value=>value!==0))process.exitCode=1
  if(cleanup.usersRemaining!==0||cleanup.auditRowsRemaining!==0)process.exitCode=1
  await fs.writeFile(`${output}/report.json`,JSON.stringify({project:stagingRef,appUrl,commit:accessUrl?process.env.ORCALY_EXPECTED_COMMIT:null,startedAt,finishedAt:new Date().toISOString(),report,errors,cleanup,limits:[accessUrl?'Next.js served by protected Vercel Preview; Supabase staging hosted in sa-east-1':'Next.js application served locally; Supabase staging hosted in sa-east-1','Auth, JWT, refresh, PostgREST, RLS, grants and persistence use real hosted Supabase staging','No production data or credentials used; no email sent; all accounts confirmed by staging Admin API']},null,2))

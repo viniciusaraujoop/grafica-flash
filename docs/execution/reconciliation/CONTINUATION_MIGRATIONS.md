@@ -65,3 +65,7 @@ Applied only to staging: 20260926205052_wealth_goal_funding_life_plans.sql. SHA 
 ## V8 — Fee Analyzer
 
 20260927001122_wealth_fee_analyzer: EXACT_MATCH local/staging, LOCAL_ONLY vs produção. SHA LF5a0630265cdbebdadf7f36e961a32a2990eabfb8c84a7b4fb893fdacd2a8164f.22 versões staging/91 SQLs locais, todas22 versões verificadas por conteúdo. Baseline original raw CRLF imutável. Função public.wealth_fee_analysis INVOKER/STABLE e índice wealth_portfolio_cost_dates novos; nenhum objeto anterior modificado/removido.2 adições na unidade,654 cumulativas vs produção inalterada. Não há novas tabelas/policies/SECDEF/cron/extensions; fontes mantêm RLS, grants e owner. Evidências staging-fees-ledger/boundaries/delta/vs-production e production-fees-readonly-check. Três UNKNOWN históricos mantidos.
+
+## V8 — Shield
+
+20260927003416_wealth_shield_declared_policies: EXACT_MATCH local/staging por versão/nome/SQL; LOCAL_ONLY vs produção. SHA LF c4f249842c87c39dfdb6b81b5e3c6a1f897ca20c7247b16c6de8eebef55bd85f.23 migrations staging/92 SQLs locais,23 hashes verificados. Tabela pública de declarações/RLS/grants/audit/índice/constraints, receipts privados/RLS/ACL, gestão pública INVOKER→privada DEFINER e consulta INVOKER/STABLE presentes no catálogo.55 adições;709 cumulativas vs produção; nenhuma alteração/remoção de objeto legado. Produção atual read-only idêntica. Baseline raw CRLF/UNKNOWN/histórico imutáveis. Sem repair/replay/cron/extension/webhook. Evidências staging-shield-ledger/boundaries/delta/vs-production e production-shield-readonly-check.

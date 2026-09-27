@@ -8932,6 +8932,78 @@ export type Database = {
         }
         Relationships: []
       }
+      wealth_protection_policies: {
+        Row: {
+          archived_at: string | null
+          asset_id: string | null
+          category: string
+          coverage_cents: number | null
+          created_at: string
+          deductible_cents: number | null
+          document_id: string | null
+          ends_on: string | null
+          id: string
+          insurer: string
+          notes: string
+          premium_cents: number | null
+          premium_period: string
+          reference: string
+          schedule_id: string | null
+          starts_on: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          archived_at?: string | null
+          asset_id?: string | null
+          category: string
+          coverage_cents?: number | null
+          created_at?: string
+          deductible_cents?: number | null
+          document_id?: string | null
+          ends_on?: string | null
+          id?: string
+          insurer?: string
+          notes?: string
+          premium_cents?: number | null
+          premium_period: string
+          reference?: string
+          schedule_id?: string | null
+          starts_on?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          archived_at?: string | null
+          asset_id?: string | null
+          category?: string
+          coverage_cents?: number | null
+          created_at?: string
+          deductible_cents?: number | null
+          document_id?: string | null
+          ends_on?: string | null
+          id?: string
+          insurer?: string
+          notes?: string
+          premium_cents?: number | null
+          premium_period?: string
+          reference?: string
+          schedule_id?: string | null
+          starts_on?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
       wealth_recurrence_occurrences: {
         Row: {
           created_at: string
@@ -11030,6 +11102,10 @@ export type Database = {
         Args: { p_input: Json; p_operation: string }
         Returns: string
       }
+      manage_wealth_protection: {
+        Args: { p_input: Json; p_operation: string }
+        Returns: string
+      }
       mark_affiliate_payout_paid_admin: {
         Args: {
           p_payout_id: string
@@ -11536,6 +11612,15 @@ export type Database = {
       wealth_net_worth: { Args: never; Returns: Json }
       wealth_portfolio_view: {
         Args: { p_id: string; p_page?: number }
+        Returns: Json
+      }
+      wealth_shield_overview: {
+        Args: {
+          p_date: string
+          p_filter?: string
+          p_id?: string
+          p_page?: number
+        }
         Returns: Json
       }
       wealth_summary: { Args: { p_month: string }; Returns: Json }

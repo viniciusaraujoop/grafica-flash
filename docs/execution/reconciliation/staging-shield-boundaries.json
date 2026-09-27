@@ -1,0 +1,35 @@
+[
+  {
+    "proname": "wealth_shield_overview",
+    "nspname": "public",
+    "prosecdef": false,
+    "provolatile": "s",
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "proname": "manage_wealth_protection",
+    "nspname": "public",
+    "prosecdef": false,
+    "provolatile": "v",
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  },
+  {
+    "proname": "manage_wealth_protection",
+    "nspname": "ecosystem_private",
+    "prosecdef": true,
+    "provolatile": "v",
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  }
+]

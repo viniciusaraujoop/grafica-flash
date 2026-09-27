@@ -39,6 +39,7 @@ export default async function WealthPage() {
     <Link className={styles.textButton} href="/apps/wealth/documentos">Cofre de documentos pessoais →</Link>
     <Link className={styles.textButton} href="/apps/wealth/timeline">Timeline das suas atividades →</Link>
     <Link className={styles.textButton} href="/apps/wealth/familia">Family: conexões e compartilhamentos →</Link>
+    <Link className={styles.textButton} href="/apps/wealth/shield">Shield: proteção patrimonial e seguros declarados →</Link>
     <Link className={styles.textButton} href="/apps/wealth/tarifas">Fee Analyzer: tarifas e impostos declarados →</Link>
     <Link className={styles.textButton} href="/apps/wealth/automacoes">Automation Center: rotinas sob seu controle →</Link>
     <p className={styles.notice}>Totais calculados com todos os {totals.entryCount} lançamentos ativos. A lista abaixo mostra até 15 registros recentes. Arquivados não entram nos totais.</p>
