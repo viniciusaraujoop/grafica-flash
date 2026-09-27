@@ -88,7 +88,7 @@ export async function PATCH(request: NextRequest) {
 
     const companyId = result.access!.company.id
     const body = await request.json()
-    const update: Record<string, any> = {}
+    const update: Record<string, unknown> = {}
 
     for (const field of allowedFields) {
       if (body[field] === undefined) continue

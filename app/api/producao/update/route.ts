@@ -17,7 +17,7 @@ export async function PATCH(request: NextRequest) {
 
     if (!isUuid(id)) return NextResponse.json({ error: 'Ordem inválida.' }, { status: 400 })
 
-    const update: Record<string, any> = {
+    const update: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     }
 

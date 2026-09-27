@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       .eq('order_id', original.id)
 
     if (Array.isArray(originalItems) && originalItems.length > 0) {
-      const clonedItems = originalItems.map((item: any) => ({
+      const clonedItems = originalItems.map((item: Record<string, unknown>) => ({
         company_id: access.company.id,
         order_id: newOrder.id,
         product_id: item.product_id || null,
