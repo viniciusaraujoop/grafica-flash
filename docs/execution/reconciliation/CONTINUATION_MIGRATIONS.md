@@ -57,3 +57,11 @@ Applied only to staging: 20260926205052_wealth_goal_funding_life_plans.sql. SHA 
 ## V8 — Wealth Timeline
 
 20260926222248_wealth_timeline_read_model (SHA LF 9725a0b45784197b5011432955171e9ec698687b7ac27a8f7bd9acc6167340b3) e 20260926222931_wealth_timeline_transaction_binding (41693ad426fe8080f95fd2c501cfb309fc0c8e4b259436845d5bf098103564d8): EXACT_MATCH local/staging, LOCAL_ONLY vs produção. A segunda SUPERSEDE a implementação privada para seguir FK movimento→holding→portfolio; wrapper e grants preservados. Duas funções novas no delta final, nenhuma tabela/dado modificado. 19 versões staging, 88 arquivos SQL, todos hashes verificados. Cumulativo551 adições contra produção atual sem diferenças; zero legado alterado/removido. Não houve repair/renumeração/replay. Evidências staging-timeline-ledger/delta/vs-production/boundaries e production-timeline-readonly-check. UNKNOWNs históricos preservados.
+
+## V8 — Family e Automation (certificações anteriores)
+
+20260926225948_wealth_family_explicit_sharing SHA LFe6ae1b4797c9322cbb37886d820b4f43ed566cf0d95183ff2efe87f6c612c032;20260926233156_wealth_automation_center SHA LF55dc933372cc9e7f762a5f10a53e629c81117d2229890ce85cdda4873aba4e84. EXACT_MATCH local/staging por ledger/conteúdo, LOCAL_ONLY vs produção. Family acrescentou70 objetos e alterou intencionalmente a policy do Vault novo; Automation31 adições.21 versões então,652 adições cumulativas e nenhum legado alterado/removido. Detalhes nos relatórios staging-family/automation e QA correspondentes. Hashes reconfirmados junto ao ledger22 de Fee.
+
+## V8 — Fee Analyzer
+
+20260927001122_wealth_fee_analyzer: EXACT_MATCH local/staging, LOCAL_ONLY vs produção. SHA LF5a0630265cdbebdadf7f36e961a32a2990eabfb8c84a7b4fb893fdacd2a8164f.22 versões staging/91 SQLs locais, todas22 versões verificadas por conteúdo. Baseline original raw CRLF imutável. Função public.wealth_fee_analysis INVOKER/STABLE e índice wealth_portfolio_cost_dates novos; nenhum objeto anterior modificado/removido.2 adições na unidade,654 cumulativas vs produção inalterada. Não há novas tabelas/policies/SECDEF/cron/extensions; fontes mantêm RLS, grants e owner. Evidências staging-fees-ledger/boundaries/delta/vs-production e production-fees-readonly-check. Três UNKNOWN históricos mantidos.

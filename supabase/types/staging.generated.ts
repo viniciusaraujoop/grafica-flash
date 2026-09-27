@@ -11523,6 +11523,15 @@ export type Database = {
         Returns: Json
       }
       wealth_family_overview: { Args: { p_page?: number }; Returns: Json }
+      wealth_fee_analysis: {
+        Args: {
+          p_from: string
+          p_page?: number
+          p_portfolio?: string
+          p_to: string
+        }
+        Returns: Json
+      }
       wealth_health_inputs: { Args: never; Returns: Json }
       wealth_net_worth: { Args: never; Returns: Json }
       wealth_portfolio_view: {

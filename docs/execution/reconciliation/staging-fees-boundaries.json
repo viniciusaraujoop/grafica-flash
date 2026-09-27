@@ -1,0 +1,12 @@
+[
+  {
+    "proname": "wealth_fee_analysis",
+    "prosecdef": false,
+    "provolatile": "s",
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "anon_execute": false,
+    "authenticated_execute": true
+  }
+]
