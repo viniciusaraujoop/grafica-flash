@@ -310,7 +310,7 @@ export default function ProdutoDetalhePage() {
               <label className="mt-5 grid gap-2">
                 <span className="text-sm font-black">Adicionais / addons</span>
                 <textarea value={addonsText} onChange={(event) => setAddonsText(event.target.value)} rows={7} className="resize-none rounded-2xl border border-blue-100 bg-white px-4 py-4 font-mono text-sm font-bold outline-none" />
-                <span className="text-xs font-bold text-slate-500">Exemplo: [{"{"}"nome":"Cheddar","preco":3{"}"}]</span>
+                <span className="text-xs font-bold text-slate-500">Exemplo: [{"{"}&quot;nome&quot;:&quot;Cheddar&quot;,&quot;preco&quot;:3{"}"}]</span>
               </label>
 
               <label className="mt-5 grid gap-2">
