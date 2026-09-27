@@ -13,7 +13,7 @@ import {
 } from "react";
 import { supabase } from "@/lib/supabase";
 
-type Json = {
+type TeamMember = {
   [key: string]: unknown
   id?: string
   email?: string | null
@@ -23,10 +23,13 @@ type Json = {
   is_active?: boolean
   last_login_at?: string | null
   permissions?: Record<string, boolean>
-  key?: string
-  label?: string
-  description?: string
-};
+}
+
+type PermissionCatalogItem = {
+  key: string
+  label: string
+  description: string
+}
 
 const initialForm = {
   nome: "",
@@ -56,12 +59,12 @@ function dateTime(value: unknown) {
 
 export default function AdminEquipePage() {
   const router = useRouter();
-  const [team, setTeam] = useState<Json[]>([]);
-  const [catalog, setCatalog] = useState<Json[]>([]);
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [catalog, setCatalog] = useState<PermissionCatalogItem[]>([]);
   const [form, setForm] = useState(initialForm);
-  const [editing, setEditing] = useState<Json | null>(null);
+  const [editing, setEditing] = useState<TeamMember | null>(null);
   const [resetMember, setResetMember] =
-    useState<Json | null>(null);
+    useState<TeamMember | null>(null);
   const [resetPassword, setResetPassword] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
