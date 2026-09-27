@@ -53,6 +53,15 @@ jobs:
       - name: Tax domain and PostgreSQL tests
         run: node --test scripts/test-wealth-tax.mjs
 
+      - name: Tax scoped lint
+        run: >-
+          npx eslint
+          app/apps/wealth/impostos/page.tsx
+          app/apps/wealth/impostos/loading.tsx
+          app/apps/wealth/impostos/error.tsx
+          lib/wealth/tax.ts
+          scripts/e2e-wealth-tax-hosted.mjs
+
       - name: Mint QA OIDC token for fixture creation
         uses: actions/github-script@v7
         id: qa_oidc
