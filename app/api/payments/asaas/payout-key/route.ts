@@ -92,7 +92,7 @@ async function validatePixKey(
 
 export async function GET(request: NextRequest) {
   try {
-    const context = await requireUserCompany(request);
+    const context = await requireUserCompany(request, "finance");
     const companyId = String(context.company.id);
 
     const { data } = await context.supabase
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const context = await requireUserCompany(request);
+    const context = await requireUserCompany(request, "finance");
     const companyId = String(context.company.id);
     const body = await request.json();
     const type = normalizeType(body.type);
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const context = await requireUserCompany(request);
+    const context = await requireUserCompany(request, "finance");
     const mfa = await requireMfaStepUpForRequest(request, "pix.update");
     if (!mfa.allowed) {
       return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status });
@@ -215,7 +215,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const context = await requireUserCompany(request);
+    const context = await requireUserCompany(request, "finance");
     const mfa = await requireMfaStepUpForRequest(request, "pix.update");
     if (!mfa.allowed) {
       return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status });

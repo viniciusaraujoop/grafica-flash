@@ -2,10 +2,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAutomaticPayoutForTransaction } from "@/lib/payments/payout-service";
 import { requireUserCompany } from "@/lib/payments/server-context";
+import { requireMfaStepUpForRequest } from "@/lib/security/mfa";
 
 export async function POST(request: NextRequest) {
   try {
-    const context = await requireUserCompany(request);
+    const context = await requireUserCompany(request, "finance");
+    const mfa = await requireMfaStepUpForRequest(request, "finance.write");
+    if (!mfa.allowed) return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status });
     const body = await request.json();
     const payoutId = String(body.payoutId || "").trim();
 

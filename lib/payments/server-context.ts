@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { NextRequest } from "next/server";
 import { decryptPaymentCredential } from "@/lib/payments/credential-encryption";
 import { resolveCompanyPaymentProvider } from "@/lib/payments/provider-factory";
+import { getCompanyAccess } from "@/lib/company-access";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -33,70 +34,39 @@ function bearer(request: NextRequest) {
     .trim();
 }
 
-export async function requireUserCompany(request: NextRequest) {
+export type CompanyPaymentCapability = "finance" | "subscription" | "config";
+
+export async function requireUserCompany(
+  request: NextRequest,
+  capability?: CompanyPaymentCapability,
+) {
   const supabase = getSupabaseAdmin();
   const token = bearer(request);
-
-  if (!token) {
-    throw Object.assign(new Error("Sessão não enviada."), { status: 401 });
-  }
-
-  const { data: authData, error: authError } =
-    await supabase.auth.getUser(token);
+  if (!token) throw Object.assign(new Error("Sessão não enviada."), { status: 401 });
+  const { data: authData, error: authError } = await supabase.auth.getUser(token);
   const user = authData.user;
+  if (authError || !user) throw Object.assign(new Error("Sessão inválida."), { status: 401 });
 
-  if (authError || !user) {
-    throw Object.assign(new Error("Sessão inválida."), { status: 401 });
+  const access = await getCompanyAccess(supabase, user.id, user.email);
+  if (!access.company?.id) {
+    throw Object.assign(new Error("Empresa não encontrada para esta sessão."), { status: 403 });
   }
 
-  const { data: owned } = await supabase
-    .from("companies")
-    .select("*")
-    .or(`owner_id.eq.${user.id},tester_id.eq.${user.id}`)
-    .limit(1)
-    .maybeSingle();
-
-  if (owned?.id) {
-    return {
-      supabase,
-      user,
-      company: owned as JsonRecord,
-      role: "owner",
-    };
-  }
-
-  const { data: member } = await supabase
-    .from("company_members")
-    .select("company_id,cargo,status")
-    .eq("user_id", user.id)
-    .eq("status", "ativo")
-    .limit(1)
-    .maybeSingle();
-
-  if (!member?.company_id) {
-    throw Object.assign(
-      new Error("Empresa não encontrada para esta sessão."),
-      { status: 403 },
-    );
-  }
-
-  const { data: company } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("id", member.company_id)
-    .maybeSingle();
-
-  if (!company?.id) {
-    throw Object.assign(new Error("Empresa não encontrada."), {
-      status: 404,
-    });
-  }
+  const allowed = !capability ||
+    (capability === "finance" && access.canFinance) ||
+    (capability === "subscription" && access.canSubscription) ||
+    (capability === "config" && access.canConfig);
+  if (!allowed) throw Object.assign(new Error("Sem permissão para esta operação."), { status: 403 });
 
   return {
     supabase,
     user,
-    company: company as JsonRecord,
-    role: String(member.cargo || "member"),
+    company: access.company as JsonRecord,
+    role: access.role,
+    access,
+    canFinance: access.canFinance,
+    canSubscription: access.canSubscription,
+    canConfig: access.canConfig,
   };
 }
 

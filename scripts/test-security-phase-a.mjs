@@ -174,3 +174,19 @@ test('Mercado Pago webhooks reject oversized bodies before JSON processing', () 
     assert.match(read(file), /rejectOversizedRequest\(request, 1_000_000\)/)
   }
 })
+
+
+test('financial server context enforces capability, not authentication alone', () => {
+  const source = read('lib/payments/server-context.ts')
+  assert.match(source, /getCompanyAccess/)
+  assert.match(source, /capability === "finance" && access\.canFinance/)
+  assert.match(source, /capability === "subscription" && access\.canSubscription/)
+  for (const file of [
+    'app/api/payments/asaas/payout-key/route.ts',
+    'app/api/payments/asaas/payouts/retry/route.ts',
+    'app/api/payments/asaas/payouts/route.ts',
+    'app/api/payments/asaas/transactions/route.ts',
+    'app/api/payments/asaas/account/status/route.ts',
+  ]) assert.match(read(file), /requireUserCompany\(request, "finance"\)/)
+  assert.match(read('lib/payments/subscription-asaas.ts'), /requireUserCompany\(request, "subscription"\)/)
+})

@@ -85,7 +85,7 @@ export async function handleAsaasSubscriptionCheckout(request: NextRequest) {
     throw Object.assign(new Error("As assinaturas pelo novo sistema ainda nao foram habilitadas."), { status: 409 });
   }
 
-  const context = await requireUserCompany(request);
+  const context = await requireUserCompany(request, "subscription");
   const body = (await request.json()) as JsonRecord;
   const customer = customerData(body, context);
   const plan = getPlanConfig(body.planKey || body.plan || context.company.assinatura_plano);
@@ -217,7 +217,7 @@ export async function handleAsaasSubscriptionCheckout(request: NextRequest) {
 }
 
 export async function handleAsaasSubscriptionCancel(request: NextRequest) {
-  const context = await requireUserCompany(request);
+  const context = await requireUserCompany(request, "subscription");
   const companyId = text(context.company.id);
   const { data: record } = await context.supabase
     .from("plan_payments")

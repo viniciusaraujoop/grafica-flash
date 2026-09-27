@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
-    const context = await requireUserCompany(request);
+    const context = await requireUserCompany(request, "finance");
     const companyId = String(context.company.id);
     const account = await getCompanyProviderAccount(companyId);
     const provider = new AsaasProvider(account.apiKey);

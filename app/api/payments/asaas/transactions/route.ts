@@ -4,7 +4,7 @@ import { requireUserCompany } from "@/lib/payments/server-context";
 
 export async function GET(request: NextRequest) {
   try {
-    const context = await requireUserCompany(request);
+    const context = await requireUserCompany(request, "finance");
     const companyId = String(context.company.id);
     const limit = Math.min(
       100,
