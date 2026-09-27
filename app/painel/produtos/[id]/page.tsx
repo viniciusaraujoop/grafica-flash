@@ -23,7 +23,32 @@ function jsonString(value: unknown, fallback: unknown) {
   }
 }
 
-function parseJson(value: string, fallback: any) {
+type ProductRecord = {
+  [key: string]: unknown
+  business_type?: string | null
+  image_urls?: string[] | null
+  addons?: unknown
+  adicionais?: unknown
+  variations?: unknown
+  variacoes?: unknown
+  extras?: unknown
+  available?: boolean | null
+  nome?: string | null
+  categoria?: string | null
+  tipo?: string | null
+  preco_sob_consulta?: boolean | null
+  preco?: number | string | null
+  unidade_preco?: string | null
+  estoque?: number | string | null
+  sku?: string | null
+  preco_promocional?: number | string | null
+  video_url?: string | null
+  descricao_curta?: string | null
+  descricao?: string | null
+  descricao_detalhada?: string | null
+}
+
+function parseJson(value: string, fallback: unknown): unknown {
   try {
     const parsed = JSON.parse(value || '')
     return parsed
@@ -36,7 +61,7 @@ export default function ProdutoDetalhePage() {
   const params = useParams()
   const id = String(params?.id || '')
   const [token, setToken] = useState('')
-  const [product, setProduct] = useState<any>(null)
+  const [product, setProduct] = useState<ProductRecord | null>(null)
   const [imageLines, setImageLines] = useState('')
   const [addonsText, setAddonsText] = useState('[]')
   const [variationsText, setVariationsText] = useState('[]')
@@ -81,8 +106,8 @@ export default function ProdutoDetalhePage() {
     if (id) load()
   }, [id])
 
-  function update(field: string, value: any) {
-    setProduct((current: any) => ({ ...(current || {}), [field]: value }))
+  function update(field: string, value: unknown) {
+    setProduct((current) => ({ ...(current || {}), [field]: value }))
   }
 
   async function save() {
