@@ -41,6 +41,7 @@ export default async function WealthPage() {
     <Link className={styles.textButton} href="/apps/wealth/familia">Family: conexões e compartilhamentos →</Link>
     <Link className={styles.textButton} href="/apps/wealth/shield">Shield: proteção patrimonial e seguros declarados →</Link>
     <Link className={styles.textButton} href="/apps/wealth/tarifas">Fee Analyzer: tarifas e impostos declarados →</Link>
+    <Link className={styles.textButton} href="/apps/wealth/impostos">Tax Center: fatos fiscais e documentos declarados →</Link>
     <Link className={styles.textButton} href="/apps/wealth/automacoes">Automation Center: rotinas sob seu controle →</Link>
     <p className={styles.notice}>Totais calculados com todos os {totals.entryCount} lançamentos ativos. A lista abaixo mostra até 15 registros recentes. Arquivados não entram nos totais.</p>
     {totals.unknownValuations&&totals.unknownValuations!=='0'&&<p className={styles.notice}>Patrimônio parcial: {totals.unknownValuations} posições sem avaliação. Valores desconhecidos ficam fora dos totais.</p>}<dl className={styles.metricGrid}><div className={styles.metric}><dt>Patrimônio líquido registrado</dt><dd>{formatMoney(totals.netWorth)}</dd></div><div className={styles.metric}><dt>Fluxo de caixa do mês</dt><dd>{formatMoney(totals.cashFlow)}</dd></div><div className={styles.metric}><dt>Ativos / passivos registrados</dt><dd>{formatMoney(totals.assets)}<small> / {formatMoney(totals.liabilities)}</small></dd></div></dl>
