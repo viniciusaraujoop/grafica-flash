@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
+import { rejectOversizedRequest } from '@/lib/orcaly-security'
 import { getSupabaseAdmin } from '@/lib/company-access'
 import { getMarketplaceWebhookSecret } from '@/lib/payments/marketplace/config'
 import {
@@ -38,6 +39,8 @@ function parseExternalReference(value: unknown) {
 }
 
 export async function POST(request: NextRequest) {
+  const sizeError = rejectOversizedRequest(request, 1_000_000)
+  if (sizeError) return sizeError
   const supabaseAdmin = getSupabaseAdmin()
   const url = new URL(request.url)
   const body = await request.json().catch(() => ({}))

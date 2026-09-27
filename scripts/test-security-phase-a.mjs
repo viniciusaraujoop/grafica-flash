@@ -154,3 +154,23 @@ test('Asaas webhook uses constant-time secret comparison and body bounds', () =>
   assert.match(source, /timingSafeEqual/)
   assert.match(source, /rawText\.length > 1_000_000/)
 })
+
+
+test('public checkout rate limit cannot be exhausted globally by store slug', () => {
+  for (const file of ['app/api/checkout/[slug]/card/route.ts', 'app/api/checkout/[slug]/pix/route.ts']) {
+    const source = read(file)
+    assert.match(source, /getClientIp\(request\)/)
+    assert.match(source, /identity: `\$\{getClientIp\(request\)\}:\$\{slug\}`/)
+  }
+})
+
+test('Mercado Pago webhooks reject oversized bodies before JSON processing', () => {
+  for (const file of [
+    'app/api/assinatura/checkout/webhook/route.ts',
+    'app/api/marketplace/payments/webhook/mercado-pago/route.ts',
+    'app/api/mercado-pago/webhook-leads/route.ts',
+    'app/api/mercado-pago/webhook/route.ts',
+  ]) {
+    assert.match(read(file), /rejectOversizedRequest\(request, 1_000_000\)/)
+  }
+})

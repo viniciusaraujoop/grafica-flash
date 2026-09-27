@@ -1,5 +1,6 @@
 // ORCALY_AFFILIATE_INTEGRATION_V1
 import { NextRequest, NextResponse } from "next/server";
+import { rejectOversizedRequest } from "@/lib/orcaly-security";
 import { mapMercadoPagoStatus } from "@/lib/mercado-pago";
 import {
   applyApprovedSubscriptionPayment,
@@ -449,6 +450,8 @@ async function processPayment(
 
 export async function POST(request: NextRequest) {
   try {
+    const sizeError = rejectOversizedRequest(request, 1_000_000);
+    if (sizeError) return sizeError;
     const url = new URL(request.url);
     const body = record(
       await request.json().catch(() => ({})),

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rejectOversizedRequest } from '@/lib/orcaly-security'
 import { processSubscriptionCheckoutWebhook } from '@/lib/subscription-checkout-payment'
 import { verifyMercadoPagoWebhookSignature } from '@/lib/mercado-pago'
 import { getSubscriptionWebhookSecret } from '@/lib/payments/subscription/mercado-pago'
@@ -27,6 +28,8 @@ function paymentIdFrom(
 
 export async function POST(request: NextRequest) {
   try {
+    const sizeError = rejectOversizedRequest(request, 1_000_000)
+    if (sizeError) return sizeError
     const secret = getSubscriptionWebhookSecret()
 
     if (!secret) {

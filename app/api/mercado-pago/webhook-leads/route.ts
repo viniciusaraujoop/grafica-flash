@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rejectOversizedRequest } from "@/lib/orcaly-security";
 import { createClient } from "@supabase/supabase-js";
 import {
   getSignupAccessToken,
@@ -122,6 +123,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const sizeError = rejectOversizedRequest(request, 1_000_000);
+  if (sizeError) return sizeError;
   let paymentId = getPaymentIdFromUrl(request);
 
   if (!paymentId) {

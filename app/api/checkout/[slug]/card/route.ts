@@ -3,7 +3,7 @@ import {
   NextResponse,
 } from "next/server";
 import { enforceRateLimit } from "@/lib/security/rate-limit";
-import { rejectOversizedRequest, requireSameOrigin } from "@/lib/orcaly-security";
+import { getClientIp, rejectOversizedRequest, requireSameOrigin } from "@/lib/orcaly-security";
 import {
   createCheckoutPayment,
 } from "@/lib/payments/checkout-service";
@@ -29,7 +29,7 @@ export async function POST(
       scope: "public-checkout-card",
       limit: 12,
       windowSeconds: 600,
-      identity: slug,
+      identity: `${getClientIp(request)}:${slug}`,
     });
     if (blocked) return blocked;
     const body = await request
