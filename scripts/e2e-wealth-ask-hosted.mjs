@@ -110,7 +110,7 @@ try{
  const net=await api('Como está meu patrimônio?')
  assert.equal(net.status,200);assert.equal(net.body.ok,true);assert.equal(net.body.intent,'net_worth')
  assert.equal(net.body.regulated_advice,'OFF');assert.equal(net.body.execution,'OFF');assert.equal(net.body.cross_product_context,'DISABLED')
- assert.equal(net.body.market_provider_status,'NOT_CONFIGURED');assert.ok(['NOT_CONFIGURED','OPENAI_CONFIGURED','DEGRADED'].includes(net.body.provider_status))
+ assert.equal(net.body.market_provider_status,'NOT_CONFIGURED');assert.ok(['NOT_CONFIGURED','AVAILABLE_NOT_USED','OPENAI_USED','DEGRADED'].includes(net.body.provider_status));assert.equal(net.body.provider_used,false);assert.equal(net.body.provider_consent,'NOT_GRANTED')
  assert.ok(net.body.sources.every(source=>source.href.startsWith('/apps/wealth/')))
  assert.ok(!JSON.stringify(net.body).includes('Foreign Ask Goal QA'));assert.ok(!JSON.stringify(net.body).includes('9876543'))
  const aContextId=net.body.context_id
