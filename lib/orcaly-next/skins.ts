@@ -151,8 +151,9 @@ export function skinStyle(key: SkinKey): Record<string, string> {
   const gap = skin.density === 'compact' ? '12px' : skin.density === 'comfortable' ? '16px' : '24px'
   return {
     '--ox-accent': skin.accent,
-    '--ox-accent-text': skin.accentText ?? skin.accent,
-    '--ox-accent-surface': skin.surface,
+    // Raw skin inputs; foundation.module.css derives --ox-accent-text/-surface per theme (inline vars must not override dark mode).
+    '--ox-skin-accent-text': skin.accentText ?? skin.accent,
+    '--ox-skin-accent-surface': skin.surface,
     '--ox-radius-card': radius,
     '--ox-density-gap': gap,
     '--ox-motion-duration': `${skin.motion.durationMs}ms`,

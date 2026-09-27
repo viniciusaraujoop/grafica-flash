@@ -1,0 +1,1286 @@
+{
+  "generatedAt": "2026-09-27T16:31:33.463Z",
+  "tool": "playwright+esbuild isolated harness (axe unavailable: static a11y lint)",
+  "checks": [
+    {
+      "name": "home@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "home@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "home@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "home@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "home@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "home@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "home@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "board@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "board@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "board@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "board@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "board@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "board@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "detail-demo-landing-cta@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "detail-demo-landing-cta@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "detail-demo-landing-cta@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "detail-demo-landing-cta@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "detail-demo-landing-cta@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "detail-demo-landing-cta@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "detail-demo-free-shipping@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "detail-demo-free-shipping@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "detail-demo-free-shipping@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "detail-demo-free-shipping@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "detail-demo-free-shipping@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "detail-demo-free-shipping@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-free-shipping@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "detail-demo-referral@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "detail-demo-referral@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "detail-demo-referral@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "detail-demo-referral@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "detail-demo-referral@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "detail-demo-referral@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-referral@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "detail-demo-coupon@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "detail-demo-coupon@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "detail-demo-coupon@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "detail-demo-coupon@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "detail-demo-coupon@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "detail-demo-coupon@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-coupon@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "learnings@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "learnings@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "learnings@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "learnings@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "learnings@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "learnings@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "learnings@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "sources@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "sources@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "sources@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "sources@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "sources@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "sources@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "sources@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "setup@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "setup@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "setup@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "setup@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "setup@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "setup@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "empty@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "empty@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "empty@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "empty@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "empty@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "empty@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "empty@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home shows DEMO / SAMPLE DATA banner",
+      "pass": true
+    },
+    {
+      "name": "no winner/loser language anywhere on home",
+      "pass": true
+    },
+    {
+      "name": "home has the five sections in order",
+      "pass": true,
+      "note": "Em andamento|Precisam de atenção|Resultados recentes|Aprendizados|Próximos testes"
+    },
+    {
+      "name": "every suggestion exposes its rule id",
+      "pass": true,
+      "note": "R11_COMPLETED_NO_DECISION,R07_PAUSED_LONG,R02_NO_CRITERIA,R03_NO_WINDOW,R01_NO_HYPOTHESIS,R05_NO_ARMS,R13_MET_BEFORE_END,R10_NOT_MET_NEXT_TEST,R08_SMALL_SAMPLE,R12_READY_TO_START,R04_NO_BASELINE"
+    },
+    {
+      "name": "no vanity totals on home",
+      "pass": true
+    },
+    {
+      "name": "empty workspace renders empty states and no demo banner",
+      "pass": true
+    },
+    {
+      "name": "sources: only MANUAL and NOT_CONFIGURED",
+      "pass": true,
+      "note": "MANUAL,NOT_CONFIGURED"
+    },
+    {
+      "name": "sources: NOT_CONFIGURED state visible",
+      "pass": true
+    },
+    {
+      "name": "detail: chart has textual table alternative",
+      "pass": true
+    },
+    {
+      "name": "detail: comparison bars render with visible width",
+      "pass": true,
+      "note": "552,526"
+    },
+    {
+      "name": "detail: provenance line uses small text, not value style",
+      "pass": true,
+      "note": "12"
+    },
+    {
+      "name": "detail: Decision Receipt rendered with allowed conclusion",
+      "pass": true
+    },
+    {
+      "name": "detail: unknown metrics say \"Não disponível\"",
+      "pass": true,
+      "note": "0 unknown"
+    },
+    {
+      "name": "detail shows \"Hipótese\"",
+      "pass": true
+    },
+    {
+      "name": "detail shows \"Resultado\"",
+      "pass": true
+    },
+    {
+      "name": "detail shows \"Controle e variantes\"",
+      "pass": true
+    },
+    {
+      "name": "detail shows \"Observações registradas\"",
+      "pass": true
+    },
+    {
+      "name": "detail shows \"Métricas por braço\"",
+      "pass": true
+    },
+    {
+      "name": "detail shows \"Decisões\"",
+      "pass": true
+    },
+    {
+      "name": "detail invalidated: INCONCLUSIVE with reason, no actions",
+      "pass": true
+    },
+    {
+      "name": "board@390 every card reachable by keyboard",
+      "pass": true,
+      "note": "7/7"
+    },
+    {
+      "name": "board@390 focused card shows focus ring",
+      "pass": true,
+      "note": "rgb(255, 255, 255) 0px 0px 0px 3px, rgb("
+    },
+    {
+      "name": "board@390 layout grouped list",
+      "pass": true,
+      "note": "1"
+    },
+    {
+      "name": "board@390 column order",
+      "pass": true,
+      "note": "DRAFT,READY,RUNNING,PAUSED,COMPLETED"
+    },
+    {
+      "name": "board@1440 every card reachable by keyboard",
+      "pass": true,
+      "note": "7/7"
+    },
+    {
+      "name": "board@1440 focused card shows focus ring",
+      "pass": true,
+      "note": "rgb(255, 255, 255) 0px 0px 0px 3px, rgb("
+    },
+    {
+      "name": "board@1440 layout 5 columns",
+      "pass": true,
+      "note": "5"
+    },
+    {
+      "name": "board@1440 column order",
+      "pass": true,
+      "note": "DRAFT,READY,RUNNING,PAUSED,COMPLETED"
+    },
+    {
+      "name": "setup@390 empty submit focuses first invalid field",
+      "pass": true,
+      "note": "focus=title invalid=7"
+    },
+    {
+      "name": "setup@390 error announced",
+      "pass": true
+    },
+    {
+      "name": "setup@390 checklist complete after filling",
+      "pass": true,
+      "note": "0 missing"
+    },
+    {
+      "name": "setup@390 submit shows honest NOT_CONFIGURED persistence",
+      "pass": true
+    },
+    {
+      "name": "setup@390 decrease direction relabels threshold",
+      "pass": true
+    },
+    {
+      "name": "setup@1440 empty submit focuses first invalid field",
+      "pass": true,
+      "note": "focus=title invalid=7"
+    },
+    {
+      "name": "setup@1440 error announced",
+      "pass": true
+    },
+    {
+      "name": "setup@1440 checklist complete after filling",
+      "pass": true,
+      "note": "0 missing"
+    },
+    {
+      "name": "setup@1440 submit shows honest NOT_CONFIGURED persistence",
+      "pass": true
+    },
+    {
+      "name": "setup@1440 decrease direction relabels threshold",
+      "pass": true
+    },
+    {
+      "name": "reduced motion collapses bar transitions",
+      "pass": true,
+      "note": "1e-05s"
+    },
+    {
+      "name": "home OS dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "home OS dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "53,40,43"
+    },
+    {
+      "name": "home dark static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "home forced dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "home forced dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "53,40,43"
+    },
+    {
+      "name": "detail-demo-landing-cta OS dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "detail-demo-landing-cta OS dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "53,40,43"
+    },
+    {
+      "name": "detail-demo-landing-cta dark static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "detail-demo-landing-cta forced dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "detail-demo-landing-cta forced dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "53,40,43"
+    },
+    {
+      "name": "board OS dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "board OS dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "53,40,43"
+    },
+    {
+      "name": "board dark static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "board forced dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "board forced dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "53,40,43"
+    },
+    {
+      "name": "setup OS dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "setup OS dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "53,40,43"
+    },
+    {
+      "name": "setup dark static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "setup forced dark",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "setup forced dark: accent surfaces follow dark theme",
+      "pass": true,
+      "note": "53,40,43"
+    }
+  ],
+  "summary": {
+    "total": 259,
+    "passed": 259,
+    "failed": 0
+  }
+}

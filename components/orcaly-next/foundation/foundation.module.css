@@ -28,7 +28,7 @@
   /* focus */
   --ox-focus-ring: 0 0 0 3px var(--ox-surface), 0 0 0 6px #0c67ce;
   /* skin-provided (defaults = neutral master) */
-  --ox-accent: #1247ce; --ox-accent-text: #1247ce; --ox-accent-surface: #edf3ff;
+  --ox-accent: #1247ce; --ox-accent-text: var(--ox-skin-accent-text, #1247ce); --ox-accent-surface: var(--ox-skin-accent-surface, #edf3ff);
   --ox-radius-card: 14px; --ox-density-gap: 16px;
   --ox-motion-duration: 200ms; --ox-motion-easing: cubic-bezier(.2, 0, 0, 1);
   --ox-display-weight: 600; --ox-display-tracking: -0.03em;
