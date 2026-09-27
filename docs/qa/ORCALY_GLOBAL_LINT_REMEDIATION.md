@@ -2,9 +2,9 @@
 
 ## Scope
 
-Branch: `gpt/orcaly-quality-hardening`  
-Base branch: `codex/orcaly-ecosystem`  
-Base SHA: `9a2c66dbb2e6bf00c484b1791103b2bccd15becd`  
+Branch: `gpt/orcaly-quality-hardening`
+Base branch: `codex/orcaly-ecosystem`
+Base SHA: `9a2c66dbb2e6bf00c484b1791103b2bccd15becd`
 Baseline source: GitHub Actions `global-lint-baseline` job `108636042611` on 2026-09-27.
 
 This work is behavior-preserving quality hardening only. No production, database, migrations, Supabase, CI, package/dependency, Wealth, Orçaly Next/UX Foundation, auth core, billing core, entitlement core, or WhatsApp changes are permitted.
@@ -61,7 +61,7 @@ Primary groups:
 
 Recent changes from `231dc82a1ff778e2564d720717bf0fc0b1855251` to the base SHA affect Wealth, CI, package metadata, staging scripts, and a Supabase migration. Those files are not touched.
 
-The requested Claude branch `claude/orcaly-ux-foundation` is not currently published in the GitHub repository, so a remote file-level diff is unavailable. The user-provided Claude ownership boundaries are therefore treated as hard exclusions.
+At the initial baseline, a remote file-level diff for the Claude work was unavailable. The user-provided Claude ownership boundaries were therefore treated as hard exclusions throughout this remediation, and no Claude-owned path was modified by the hardening work.
 
 ## Fix order
 
@@ -87,3 +87,76 @@ Final evidence target:
 - no database changes
 - no dependencies
 - no behavior changes
+
+## Final certified snapshot
+
+Certification date: 2026-09-27
+
+Code HEAD before this documentation-only update: `b9532d16078e26084c13a58a40a330d0bf0e0b8d`
+
+Latest certified global lint source: GitHub Actions `global-lint-baseline` job `108653802042`.
+
+```
+181 problems
+88 errors
+93 warnings
+```
+
+Reduction from the original baseline:
+
+- 405 -> 181 total findings: **224 removed** (55.3%).
+- 257 -> 88 errors: **169 removed** (65.8%).
+- 148 -> 93 warnings: **55 removed** (37.2%).
+
+### Remaining findings by rule
+
+| Rule | Remaining | Final classification | Reason for stopping |
+| --- | ---: | --- | --- |
+| `react-hooks/set-state-in-effect` | 52 errors | BEHAVIOR_RISK / OUT_OF_SCOPE by file | Requires lifecycle/state-flow changes; several occurrences are also in historical backup paths. |
+| `@next/next/no-img-element` | 42 warnings | BEHAVIOR_RISK / OUT_OF_SCOPE by file | Bulk conversion can change loading, dimensions, external image handling, or visual behavior. |
+| `@typescript-eslint/no-explicit-any` | 28 errors | OUT_OF_SCOPE | 25 are in frozen WhatsApp paths; 3 are in `app/api/company/team/route.ts`, adjacent to auth/team core. |
+| `react-hooks/exhaustive-deps` | 23 warnings | BEHAVIOR_RISK / OUT_OF_SCOPE by file | Dependency changes can alter effect timing and closure semantics. |
+| `@next/next/no-location-assign-relative-destination` | 19 warnings | BEHAVIOR_RISK / OUT_OF_SCOPE by file | Router conversion may alter navigation/history semantics; some occurrences are in frozen/core or backup paths. |
+| `@typescript-eslint/no-unused-vars` | 9 warnings | OUT_OF_SCOPE | All remaining occurrences are in `.orcaly-cupons-backup-20260728193111/**`. |
+| `react-hooks/purity` | 3 errors | BEHAVIOR_RISK | Moving time/random reads changes render-time semantics. |
+| `react-hooks/preserve-manual-memoization` | 2 errors | BEHAVIOR_RISK | Subscription component memoization is behavior-sensitive and core-adjacent. |
+| `@typescript-eslint/no-require-imports` | 2 errors | OUT_OF_SCOPE | Historical correction package under `pacote-correcoes-qa-criticos-altos-orcaly-*/**`. |
+| `@next/next/no-html-link-for-pages` | 1 error | BEHAVIOR_RISK | Google Calendar OAuth/navigation flow is intentionally not rewritten without integration-level validation. |
+
+All remaining global-lint findings are therefore classified as `BEHAVIOR_RISK` or `OUT_OF_SCOPE`. No ESLint rule was weakened and no broad `eslint-disable` was introduced.
+
+## Final regression evidence
+
+On code HEAD `b9532d16078e26084c13a58a40a330d0bf0e0b8d`:
+
+- QA job `108653802216`: PASS.
+  - domain invariant tests: PASS
+  - focused lint: PASS
+  - TypeScript + production build: PASS
+  - dependency audit baseline: PASS
+- QA job `108653801898`: PASS.
+  - partner invariant tests: PASS
+  - focused lint: PASS
+  - TypeScript + production build: PASS
+  - dependency audit: PASS
+- QA job `108653801933`:
+  - domain/regression invariants: PASS
+  - payment boundary regression: PASS
+  - focused lint: PASS
+  - TypeScript + production build: PASS
+  - protected payment diff check: PASS
+  - only failure: `git diff --check`, caused by trailing whitespace in this remediation document. This documentation-only update removes that whitespace.
+
+The production build includes Next.js TypeScript validation. The earlier TypeScript regression introduced while replacing legacy `any` contracts was fully resolved before lint remediation resumed.
+
+## Scope integrity
+
+- No production action was performed.
+- No database or Supabase mutation was performed by the hardening work.
+- No migration was authored or edited by the hardening work.
+- No dependency or ESLint rule change was made.
+- No WhatsApp path was modified.
+- No Wealth or Claude-owned path was modified by the hardening work.
+- No auth, billing, or entitlement core behavior was changed.
+- Upstream synchronization already present on the branch was preserved; hardening edits stayed outside the excluded ownership areas.
+
