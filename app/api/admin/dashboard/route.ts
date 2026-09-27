@@ -1,19 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { can, fail, getCurrentAdmin, supabaseAdmin } from '@/lib/admin-auth'
 
-function dateOnly(value: any) {
+type CompanyRow = {
+  id: string
+  owner_id?: string | null
+  tester_id?: string | null
+  nome?: string | null
+  email?: string | null
+  slug?: string | null
+  whatsapp?: string | null
+  ativo?: boolean | null
+  assinatura_status?: string | null
+  assinatura_expira_em?: string | null
+  [key: string]: unknown
+}
+
+type MemberRow = {
+  company_id: string
+  email?: string | null
+  user_id?: string | null
+  cargo?: string | null
+  status?: string | null
+  [key: string]: unknown
+}
+
+type OrderRow = {
+  company_id: string
+  valor_total?: number | string | null
+  preco_estimado?: number | string | null
+  [key: string]: unknown
+}
+
+type ProposalRow = { company_id: string; [key: string]: unknown }
+type LeadRow = { status?: string | null; [key: string]: unknown }
+type FinanceRow = {
+  company_id: string
+  tipo?: string | null
+  status?: string | null
+  valor?: number | string | null
+  [key: string]: unknown
+}
+type AdminUserRow = { email?: string | null; ativo?: boolean | null; [key: string]: unknown }
+type BugRow = { status?: string | null; severity?: string | null; [key: string]: unknown }
+type ScanRow = Record<string, unknown>
+type UserMetadata = { nome?: unknown; empresa?: unknown; [key: string]: unknown }
+type AuthUserRow = {
+  id: string
+  email?: string
+  phone?: string
+  created_at?: string
+  last_sign_in_at?: string
+  confirmed_at?: string
+  banned_until?: string | null
+  app_metadata?: Record<string, unknown>
+  user_metadata?: UserMetadata
+}
+
+function dateOnly(value: string | null | undefined) {
   if (!value) return null
   try { return new Date(value).toISOString() } catch { return null }
 }
 
-function daysUntil(value: any) {
+function daysUntil(value: string | null | undefined) {
   if (!value) return null
   const target = new Date(value).getTime()
   if (!Number.isFinite(target)) return null
   return Math.ceil((target - Date.now()) / (1000 * 60 * 60 * 24))
 }
 
-function companyHealth(company: any) {
+function companyHealth(company: CompanyRow) {
   const days = daysUntil(company.assinatura_expira_em)
   if (company.ativo === false) return 'bloqueada'
   if (company.assinatura_status === 'ativa' && (days === null || days >= 5)) return 'saudável'
@@ -58,32 +113,35 @@ export async function GET(request: NextRequest) {
       supabaseAdmin.from('admin_scan_runs').select('*').order('started_at', { ascending: false }).limit(20),
     ])
 
-    function dataOf(result: any, fallback: any = []) {
+    function dataOf<T>(
+      result: PromiseSettledResult<{ data: T[] | null; error: unknown }>,
+      fallback: T[] = [],
+    ): T[] {
       if (result.status !== 'fulfilled') return fallback
       if (result.value?.error) return fallback
       return result.value?.data ?? fallback
     }
 
-    const usersRaw = usersRes.status === 'fulfilled' ? (usersRes.value?.data?.users || []) : []
-    const companiesRaw = dataOf(companiesRes)
-    const membersRaw = dataOf(membersRes)
-    const ordersRaw = dataOf(ordersRes)
-    const proposalsRaw = dataOf(proposalsRes)
-    const leadsRaw = dataOf(leadsRes)
-    const financeRaw = dataOf(financeRes)
-    const logsRaw = dataOf(logsRes)
-    const adminUsersRaw = dataOf(adminUsersRes)
-    const bugsRaw = dataOf(bugRes)
-    const scansRaw = dataOf(scanRes)
+    const usersRaw = usersRes.status === 'fulfilled' ? (usersRes.value?.data?.users || []) as AuthUserRow[] : []
+    const companiesRaw = dataOf<CompanyRow>(companiesRes)
+    const membersRaw = dataOf<MemberRow>(membersRes)
+    const ordersRaw = dataOf<OrderRow>(ordersRes)
+    const proposalsRaw = dataOf<ProposalRow>(proposalsRes)
+    const leadsRaw = dataOf<LeadRow>(leadsRes)
+    const financeRaw = dataOf<FinanceRow>(financeRes)
+    const logsRaw = dataOf<Record<string, unknown>>(logsRes)
+    const adminUsersRaw = dataOf<AdminUserRow>(adminUsersRes)
+    const bugsRaw = dataOf<BugRow>(bugRes)
+    const scansRaw = dataOf<ScanRow>(scanRes)
 
-    const companies = companiesRaw.map((company: any) => {
-      const companyOrders = ordersRaw.filter((order: any) => order.company_id === company.id)
-      const companyProposals = proposalsRaw.filter((proposal: any) => proposal.company_id === company.id)
-      const companyFinance = financeRaw.filter((tx: any) => tx.company_id === company.id)
-      const companyMembers = membersRaw.filter((member: any) => member.company_id === company.id)
-      const revenue = companyOrders.reduce((acc: number, order: any) => acc + Number(order.valor_total || order.preco_estimado || 0), 0)
-      const entradas = companyFinance.filter((tx: any) => tx.tipo === 'entrada' && tx.status !== 'cancelado').reduce((acc: number, tx: any) => acc + Number(tx.valor || 0), 0)
-      const saidas = companyFinance.filter((tx: any) => tx.tipo === 'saida' && tx.status !== 'cancelado').reduce((acc: number, tx: any) => acc + Number(tx.valor || 0), 0)
+    const companies = companiesRaw.map((company) => {
+      const companyOrders = ordersRaw.filter((order) => order.company_id === company.id)
+      const companyProposals = proposalsRaw.filter((proposal) => proposal.company_id === company.id)
+      const companyFinance = financeRaw.filter((tx) => tx.company_id === company.id)
+      const companyMembers = membersRaw.filter((member) => member.company_id === company.id)
+      const revenue = companyOrders.reduce((acc, order) => acc + Number(order.valor_total || order.preco_estimado || 0), 0)
+      const entradas = companyFinance.filter((tx: any) => tx.tipo === 'entrada' && tx.status !== 'cancelado').reduce((acc, tx) => acc + Number(tx.valor || 0), 0)
+      const saidas = companyFinance.filter((tx: any) => tx.tipo === 'saida' && tx.status !== 'cancelado').reduce((acc, tx) => acc + Number(tx.valor || 0), 0)
 
       return {
         ...company,
@@ -101,12 +159,12 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const users = usersRaw.map((user: any) => {
-      const ownedCompanies = companies.filter((company: any) => company.owner_id === user.id || company.tester_id === user.id)
-      const memberRecords = membersRaw.filter((member: any) => member.email?.toLowerCase() === user.email?.toLowerCase() || member.user_id === user.id)
+    const users = usersRaw.map((user) => {
+      const ownedCompanies = companies.filter((company) => company.owner_id === user.id || company.tester_id === user.id)
+      const memberRecords = membersRaw.filter((member) => member.email?.toLowerCase() === user.email?.toLowerCase() || member.user_id === user.id)
       const memberCompanies = memberRecords
-        .map((member: any) => {
-          const c = companies.find((company: any) => company.id === member.company_id)
+        .map((member) => {
+          const c = companies.find((company) => company.id === member.company_id)
           return c ? { id: c.id, nome: c.nome, slug: c.slug, cargo: member.cargo, status: member.status } : null
         })
         .filter(Boolean)
@@ -121,14 +179,14 @@ export async function GET(request: NextRequest) {
         banned_until: user.banned_until || null,
         app_metadata: user.app_metadata || {},
         user_metadata: user.user_metadata || {},
-        owned_companies: ownedCompanies.map((c: any) => ({ id: c.id, nome: c.nome, slug: c.slug, assinatura_status: c.assinatura_status, ativo: c.ativo })),
+        owned_companies: ownedCompanies.map((c) => ({ id: c.id, nome: c.nome, slug: c.slug, assinatura_status: c.assinatura_status, ativo: c.ativo })),
         member_companies: memberCompanies,
-        is_admin: adminUsersRaw.some((a: any) => a.email?.toLowerCase() === user.email?.toLowerCase() && a.ativo),
+        is_admin: adminUsersRaw.some((a) => a.email?.toLowerCase() === user.email?.toLowerCase() && a.ativo),
       }
     })
 
     const filteredCompanies = q
-      ? companies.filter((c: any) =>
+      ? companies.filter((c) =>
           String(c.nome || '').toLowerCase().includes(q) ||
           String(c.email || '').toLowerCase().includes(q) ||
           String(c.slug || '').toLowerCase().includes(q) ||
@@ -137,7 +195,7 @@ export async function GET(request: NextRequest) {
       : companies
 
     const filteredUsers = q
-      ? users.filter((u: any) =>
+      ? users.filter((u) =>
           String(u.email || '').toLowerCase().includes(q) ||
           String(u.user_metadata?.nome || '').toLowerCase().includes(q) ||
           String(u.user_metadata?.empresa || '').toLowerCase().includes(q)
@@ -145,20 +203,20 @@ export async function GET(request: NextRequest) {
       : users
 
     const now = Date.now()
-    const activeCompanies = companies.filter((c: any) => c.ativo !== false && c.assinatura_status === 'ativa').length
-    const pendingCompanies = companies.filter((c: any) => c.assinatura_status === 'pendente').length
-    const expiredCompanies = companies.filter((c: any) => c.assinatura_expira_em && new Date(c.assinatura_expira_em).getTime() < now).length
-    const leadsOpen = leadsRaw.filter((lead: any) => ['lead', 'checkout_criado'].includes(lead.status)).length
-    const leadsPaid = leadsRaw.filter((lead: any) => lead.status === 'pago').length
+    const activeCompanies = companies.filter((c) => c.ativo !== false && c.assinatura_status === 'ativa').length
+    const pendingCompanies = companies.filter((c) => c.assinatura_status === 'pendente').length
+    const expiredCompanies = companies.filter((c) => c.assinatura_expira_em && new Date(c.assinatura_expira_em).getTime() < now).length
+    const leadsOpen = leadsRaw.filter((lead) => ['lead', 'checkout_criado'].includes(lead.status)).length
+    const leadsPaid = leadsRaw.filter((lead) => lead.status === 'pago').length
 
-    const financeTotals = financeRaw.reduce((acc: any, tx: any) => {
+    const financeTotals = financeRaw.reduce((acc, tx) => {
       if (tx.status === 'cancelado') return acc
       if (tx.tipo === 'entrada') acc.entradas += Number(tx.valor || 0)
       if (tx.tipo === 'saida') acc.saidas += Number(tx.valor || 0)
       return acc
     }, { entradas: 0, saidas: 0 })
 
-    const bugOpen = bugsRaw.filter((bug: any) => bug.status === 'aberto' || bug.status === 'em_analise')
+    const bugOpen = bugsRaw.filter((bug) => bug.status === 'aberto' || bug.status === 'em_analise')
     const bugCritical = bugOpen.filter((bug: any) => bug.severity === 'critica' || bug.severity === 'alta')
 
     return NextResponse.json({
