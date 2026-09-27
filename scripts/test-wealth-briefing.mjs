@@ -10,6 +10,9 @@ const db=await createTestDatabase();after(()=>db.close())
 
 await db.exec(`
  alter table public.wealth_entries add column valuation_status text not null default 'MANUAL_VALUE';
+ alter table public.wealth_entries drop constraint wealth_entries_amount_cents_check;
+ alter table public.wealth_entries add constraint wealth_entries_amount_cents_check
+  check(amount_cents between 0 and 100000000000000 and (amount_cents>0 or kind in ('asset','liability')));
  create table public.wealth_recurring_schedules(
   id uuid primary key,user_id uuid not null references auth.users(id),title text not null,kind text not null,
   amount_cents bigint not null,currency text not null default 'BRL',status text not null default 'active',
