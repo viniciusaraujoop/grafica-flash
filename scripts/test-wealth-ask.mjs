@@ -64,7 +64,7 @@ test('provider payload is allowlisted, bounded and output parser reads only outp
  const compact=compactAskContext(context,'debt')
  assert.ok(compact.net_worth);assert.ok(compact.health);assert.ok(!Object.hasOwn(compact,'tax'));assert.ok(!Object.hasOwn(compact,'fees'));assert.ok(!Object.hasOwn(compact,'goals'))
  const input=providerInput(context,{question:'Como estão minhas dívidas?',mode:'analysis'},'debt')
- assert.ok(!input.includes('Foreign User'));assert.ok(input.length<20000)
+ assert.ok(!input.includes('Foreign User'));assert.ok(!input.includes('"id":"g"'));assert.ok(!input.includes('"id":"a"'));assert.ok(input.length<20000)
  const instructions=providerInstructions('analysis');assert.match(instructions,/regulated_advice e execution estão OFF/);assert.match(instructions,/SOMENTE o contexto JSON/)
  assert.equal(providerOutputText({output:[{content:[{type:'output_text',text:'Resposta segura'}]}]}),'Resposta segura')
  assert.equal(providerOutputText({output:[{content:[{type:'tool_call',text:'não'}]}]}),'')
