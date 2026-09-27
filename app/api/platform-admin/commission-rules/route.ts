@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePlatformAdmin } from '@/lib/platform-admin'
+import { requireMfaStepUpForRequest } from '@/lib/security/mfa'
 
 function numberFrom(value: unknown, fallback = 0) {
   const parsed = Number(value)
@@ -10,6 +11,8 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await requirePlatformAdmin(request)
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
+    const mfa = await requireMfaStepUpForRequest(request, 'finance.write')
+    if (!mfa.allowed) return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status })
 
     const body = await request.json()
     const companyId = body.company_id ? String(body.company_id) : null
@@ -42,6 +45,8 @@ export async function PATCH(request: NextRequest) {
   try {
     const auth = await requirePlatformAdmin(request)
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
+    const mfa = await requireMfaStepUpForRequest(request, 'finance.write')
+    if (!mfa.allowed) return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status })
 
     const body = await request.json()
     const id = String(body.id || '')

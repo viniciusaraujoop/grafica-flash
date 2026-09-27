@@ -1,5 +1,6 @@
 // ORCALY_OWNER_SUPPORT_CONTROL_V1
 import { NextRequest, NextResponse } from 'next/server'
+import { requireMfaStepUpForRequest } from '@/lib/security/mfa'
 import {
   PLATFORM_PERMISSION_CATALOG,
   auditPlatformAction,
@@ -105,6 +106,9 @@ export async function POST(request: NextRequest) {
       { status: session.status },
     )
   }
+
+  const mfa = await requireMfaStepUpForRequest(request, 'team.elevated.manage')
+  if (!mfa.allowed) return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status })
 
   try {
     const body = await request

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireMfaStepUpForRequest } from "@/lib/security/mfa";
 // ORCALY_MP_AUTO_DISABLE_V1
 import {
   getCompanyAccess,
@@ -42,6 +43,11 @@ export async function POST(request: NextRequest) {
         },
         { status: 403 },
       );
+    }
+
+    const mfa = await requireMfaStepUpForRequest(request, "integrations.credentials.manage");
+    if (!mfa.allowed) {
+      return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status });
     }
 
     const { error } = await supabaseAdmin

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolvePlatformFeatureFlag } from '@/lib/admin/feature-flags'
 import { auditPlatformAction, requirePlatformAdmin } from '@/lib/platform-admin'
+import { requireMfaStepUpForRequest } from '@/lib/security/mfa'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -8,6 +9,8 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   const session = await requirePlatformAdmin(request, 'support.impersonate_readonly')
   if (!session.ok) return NextResponse.json({ error: session.error }, { status: session.status })
+  const mfa = await requireMfaStepUpForRequest(request, 'platform.impersonation.write')
+  if (!mfa.allowed) return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status })
 
   const flag = await resolvePlatformFeatureFlag(session.supabaseAdmin, 'support.mode')
   if (!flag.schemaReady) {

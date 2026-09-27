@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireMfaStepUpForRequest } from '@/lib/security/mfa'
 import {
   PLATFORM_PERMISSION_CATALOG,
   auditPlatformAction,
@@ -72,6 +73,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await requirePlatformAdmin(request, 'admins.manage')
   if (!session.ok) return NextResponse.json({ error: session.error }, { status: session.status })
+  const mfa = await requireMfaStepUpForRequest(request, 'team.elevated.manage')
+  if (!mfa.allowed) return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status })
+
   try {
     const body = await request.json().catch(() => ({})) as Record<string,unknown>
     const action = text(body.action, 40)

@@ -190,3 +190,13 @@ test('financial server context enforces capability, not authentication alone', (
   ]) assert.match(read(file), /requireUserCompany\(request, "finance"\)/)
   assert.match(read('lib/payments/subscription-asaas.ts'), /requireUserCompany\(request, "subscription"\)/)
 })
+
+
+test('critical admin and provider credential mutations require step-up MFA', () => {
+  assert.match(read('app/api/admin/support-mode/route.ts'), /platform\.impersonation\.write/)
+  assert.match(read('app/api/admin/team/route.ts'), /team\.elevated\.manage/)
+  assert.match(read('app/api/admin/team-v2/route.ts'), /team\.elevated\.manage/)
+  assert.match(read('app/api/platform-admin/commission-rules/route.ts'), /finance\.write/)
+  assert.match(read('app/api/marketplace/payments/mercado-pago/connect/route.ts'), /integrations\.credentials\.manage/)
+  assert.match(read('app/api/marketplace/payments/mercado-pago/disconnect/route.ts'), /integrations\.credentials\.manage/)
+})

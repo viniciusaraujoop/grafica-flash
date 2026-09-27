@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireMfaStepUpForRequest } from "@/lib/security/mfa";
 import {
   getCompanyAccess,
   getRequester,
@@ -45,6 +46,11 @@ export async function POST(request: NextRequest) {
         },
         { status: 403 },
       );
+    }
+
+    const mfa = await requireMfaStepUpForRequest(request, "integrations.credentials.manage");
+    if (!mfa.allowed) {
+      return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status });
     }
 
     const oauth = generateMercadoPagoOauthFlow();
