@@ -69,3 +69,16 @@ Applied only to staging: 20260926205052_wealth_goal_funding_life_plans.sql. SHA 
 ## V8 — Shield
 
 20260927003416_wealth_shield_declared_policies: EXACT_MATCH local/staging por versão/nome/SQL; LOCAL_ONLY vs produção. SHA LF c4f249842c87c39dfdb6b81b5e3c6a1f897ca20c7247b16c6de8eebef55bd85f.23 migrations staging/92 SQLs locais,23 hashes verificados. Tabela pública de declarações/RLS/grants/audit/índice/constraints, receipts privados/RLS/ACL, gestão pública INVOKER→privada DEFINER e consulta INVOKER/STABLE presentes no catálogo.55 adições;709 cumulativas vs produção; nenhuma alteração/remoção de objeto legado. Produção atual read-only idêntica. Baseline raw CRLF/UNKNOWN/histórico imutáveis. Sem repair/replay/cron/extension/webhook. Evidências staging-shield-ledger/boundaries/delta/vs-production e production-shield-readonly-check.
+
+
+## V8 — Tax Center
+
+`20260927013000_wealth_tax_center_foundation`: LOCAL_ONLY vs produção. Staging contém 24 migrations; produção auditada somente leitura contém 51 e não possui a versão Tax, `public.wealth_tax_center` nem `wealth_portfolio_tax_dates`.
+
+Arquivo GitHub imutável desde o commit pré-aplicação `e7122f0e969794a73d2819cd92fb7c6365874f42`, blob `74b318ad4ab72edebcc774bd313b68203bf34745`, 7020 caracteres LF e SHA-256 LF `ee0ab55c216dfcd5e1ca6527b486263987bd853b5528f5b75e89da0c54a40870`.
+
+Exceção de fidelidade do ledger textual: `supabase_migrations.schema_migrations.statements[1]` possui 7018 caracteres; os dois delimitadores PL/pgSQL `$$` aparecem como `$`. SHA-256 LF do campo: `d54637e2e61904423d0cfad229789ca4db6d841904173e89c6bb15098093392e`. O arquivo correto não foi alterado depois da aplicação e o objeto compilado foi exercitado pelos testes. Não fazer repair nem editar migration aplicada para alinhar o campo textual; qualquer mudança real de schema usa migration nova.
+
+Objetos: função pública STABLE/SECURITY INVOKER com RLS/owner/entitlement e ACL restrita; índice parcial de eventos fiscais declarados. Sem tabela de imposto, segundo saldo, cron, provider, webhook, regra tributária ou jurisdição.
+
+Certificação: runtime `d47ac1869dcfc22b93e122508153caf665d09cdf`, deployment `dpl_BscyaUKzc7ZrE3PZxwQSUjnBMQmv` READY, hosted run `36319880597` 7/7 PASS, domain/PG 7/7 PASS, artifact `10932416353`, cleanup completo zero. Evidências em `docs/qa/ORCALY_WEALTH_TAX*`.
