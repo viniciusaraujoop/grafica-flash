@@ -283,3 +283,17 @@ This unit is read-only except for updating `docs/audit-readiness/**`.
 The repository has significantly stronger automated evidence than a typical pre-release SaaS, especially around the certified Wealth chain and security primitives. The unresolved risk is concentrated in integration of moving branches, schema reconciliation, Business-wide hosted evidence, global Auth/MFA, measured performance, proactive operations and recovery.
 
 No production-readiness claim should be made before those gates close.
+
+
+## Final live branch snapshot before handoff
+
+Final observed parallel heads:
+- Agent 1: `b8df40d1b0f2991c1f594ea59d6d4d9e19302e78` — hosted Alerts matrix work.
+- Agent 2: `0db9b5ba45c8ad54f97bb3b8a174bbc1dea14b5f` — handoff records Preview build/typecheck PASS; latest documentation-only head still showed Vercel pending at observation.
+- Agent 3: `b0d4909457635801e7973128671cf6df0ea7ef57` — continued quality hardening.
+- Agent 4: this audit branch, docs-only.
+
+New coordination detail:
+Agent 3's history now contains an intermediate Agent 1 lineage and is diverged from latest Agent 1. Final integration must therefore be merge-base aware and review the effective Agent 3-only delta rather than replaying the entire branch history from the original audit base.
+
+The audit base remains intentionally frozen at `9a2c66dbb2e6bf00c484b1791103b2bccd15becd`; these later heads are recorded only to prepare the integration handoff.
