@@ -7,13 +7,13 @@ import AxeBuilder from '@axe-core/playwright'
 
 const appUrl=process.env.ORCALY_E2E_BASE_URL
 const expectedCommit=process.env.ORCALY_EXPECTED_COMMIT
-const vercelToken=process.env.VERCEL_TRUSTED_OIDC_TOKEN
+const previewShare=process.env.VERCEL_PREVIEW_SHARE
 const qaToken=process.env.ORCALY_QA_OIDC_TOKEN
 const stagingUrl='https://zwxulgpjucxudadjdqov.supabase.co'
 const anonKey=process.env.ORCALY_STAGING_ANON_KEY
 const controlUrl=`${stagingUrl}/functions/v1/wealth-rolling-qa-control`
 const output='artifacts/wealth-tax'
-for(const [name,value] of Object.entries({appUrl,expectedCommit,vercelToken,qaToken,anonKey}))if(!value)throw Error(`Missing ${name}`)
+for(const [name,value] of Object.entries({appUrl,expectedCommit,previewShare,qaToken,anonKey}))if(!value)throw Error(`Missing ${name}`)
 await fs.mkdir(output,{recursive:true})
 const creds=[
  {id:process.env.QA_A_ID,email:process.env.QA_A_EMAIL,password:process.env.QA_A_PASSWORD},
@@ -78,12 +78,20 @@ try{
  pass('tax-RLS-owner-and-entitlement-boundaries')
 
  browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,headless:true})
- const makeContext=()=>browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce',extraHTTPHeaders:{'x-vercel-trusted-oidc-idp-token':vercelToken}})
+ const makeContext=()=>browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'})
+ const authorizePreview=async context=>{
+  const prime=await context.request.get(`${appUrl}/?_vercel_share=${encodeURIComponent(previewShare)}`)
+  assert.ok(prime.ok(),`Preview share bootstrap failed: ${prime.status()}`)
+ }
  const context=await makeContext()
+ await authorizePreview(context)
  const page=await context.newPage();page.setDefaultTimeout(45000)
  const errors=[];page.on('pageerror',e=>errors.push(e.message))
  await context.route('**://ozrasuktfthsvbqprtel.supabase.co/**',route=>{errors.push('production-request');return route.abort()})
- const build=await (await context.request.get(`${appUrl}/api/internal/preview-build`)).json()
+ const buildResponse=await context.request.get(`${appUrl}/api/internal/preview-build`)
+ assert.equal(buildResponse.status(),200,`Preview build endpoint failed: ${buildResponse.status()}`)
+ assert.match(buildResponse.headers()['content-type']||'',/application\/json/)
+ const build=await buildResponse.json()
  assert.equal(build.environment,'preview');assert.equal(build.commit,expectedCommit)
  const login=async(user,next)=>{
   await page.goto(`${appUrl}/login?next=${encodeURIComponent(next)}`)
@@ -134,13 +142,16 @@ try{
  assert.match(await page.locator('[data-tax-total]').innerText(),/0,29/)
  pass('tax-six-widths-two-themes-Axe-keyboard-reduced-motion-filter')
 
- const otherContext=await makeContext(),otherPage=await otherContext.newPage()
+ const otherContext=await makeContext()
+ await authorizePreview(otherContext)
+ const otherPage=await otherContext.newPage()
  await otherPage.goto(`${appUrl}/login?next=${encodeURIComponent(url)}`)
  await otherPage.locator('input[name=email]').fill(b.email);await otherPage.locator('input[name=password]').fill(b.password)
  await otherPage.getByRole('button',{name:'Entrar no painel',exact:true}).click()
  await otherPage.getByText('A carteira não está disponível para esta conta.',{exact:true}).waitFor()
  assert.equal(await otherPage.getByText('Hosted tax',{exact:false}).count(),0)
  const anonymousContext=await makeContext()
+ await authorizePreview(anonymousContext)
  const anon=await anonymousContext.request.get(url,{maxRedirects:0})
  assert.ok([303,307].includes(anon.status()))
  assert.ok(String(anon.headers().location||'').includes('/login'))
