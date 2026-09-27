@@ -1,0 +1,32 @@
+name: Orçaly Rolling V8 QA
+
+on:
+  push:
+    branches:
+      - codex/orcaly-ecosystem
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Full build gate
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-build.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-build-placeholder
+          SUPABASE_SERVICE_ROLE_KEY: ci-build-placeholder
+          NEXT_PUBLIC_APP_URL: https://ci.orcaly.invalid
+          ORCALY_WEALTH_ENABLED: "true"
+        run: npm run build
+      - name: Diff whitespace check
+        run: git diff --check d940debf9556e1180fa3c709da0f560d3aa96374...HEAD
