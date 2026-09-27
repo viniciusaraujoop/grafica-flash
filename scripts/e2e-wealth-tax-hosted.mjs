@@ -77,7 +77,7 @@ try{
  await setAccess('full')
  pass('tax-RLS-owner-and-entitlement-boundaries')
 
- browser=await chromium.launch({channel:'chromium',headless:true})
+ browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,headless:true})
  const makeContext=()=>browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce',extraHTTPHeaders:{'x-vercel-trusted-oidc-idp-token':vercelToken}})
  const context=await makeContext()
  const page=await context.newPage();page.setDefaultTimeout(45000)
