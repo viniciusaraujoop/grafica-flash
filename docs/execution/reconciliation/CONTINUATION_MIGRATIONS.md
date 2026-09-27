@@ -93,3 +93,16 @@ A unidade adiciona somente o read model `public.wealth_daily_briefing(text,date)
 A primeira tentativa pelo endpoint padrão de migration encontrou incompatibilidade do mecanismo de ledger legado e deixou apenas a função recém-criada sem versão registrada; esse objeto órfão foi removido imediatamente enquanto o staging estava vazio. A versão `20260927132000` foi então aplicada por transação controlada com predecessor Tax verificado. Nenhuma migration aplicada foi editada, renumerada ou reparada; mudanças futuras usam migration nova.
 
 Certificação: runtime `9a2c66dbb2e6bf00c484b1791103b2bccd15becd`, deployment imutável `dpl_4JpN5CxFx9qT4nMgy3kTANxEKLek` READY, hosted run `36325027162` com 7/7 PASS, domain/PG 5/5 PASS, artifact `10934075693`, 12 screenshots e cleanup completo zero. Rolling V8 `36325027679` e Platform Quality Gate `36325030319` PASS. Produção permaneceu read-only e sem objetos Morning/Night. Evidências em `docs/qa/ORCALY_WEALTH_BRIEFING*`.
+
+
+## V8 — Alerts
+
+`20260927162000_wealth_document_expiry` e `20260927170000_wealth_alert_center`: LOCAL_ONLY vs produção. Staging contém **27 migrations**; produção auditada somente leitura não possui essas versões nem `public.wealth_alerts_overview(integer,text)` / `public.manage_wealth_alerts(text,jsonb)`.
+
+A primeira migration adiciona validade explícita ao Vault; nenhuma validade é inferida da data do documento. A segunda adiciona o read model Alerts, preferências e estado privado de interação, receipts/idempotência e boundaries de audit/noise control. RPCs públicas são SECURITY INVOKER; leitura é STABLE; `authenticated` possui EXECUTE e `anon` não.
+
+Fontes factuais certificadas: recurrence, debt, goal pacing, Vault expiry, Shield, Portfolio coverage, Tax gaps e automation needs_attention. Alert descriptions continuam derivadas, sem segundo saldo/fonte financeira, provider externo, cron ou side effect financeiro.
+
+Certificação: runtime `7401e20576ca4b686c03871ff0211474001ce620`, deployment `dpl_DXssFBge1nK46tnpPaA8LGgMUNHA` READY, hosted run `36332287975` SUCCESS, domain/PG 6/6 PASS, artifact `10935669993`, cleanup zero. Rolling V8 e Platform Quality Gate PASS. Produção permanece read-only e intacta.
+
+O Main Site protected auth diff/global lint permanece finding branch-wide herdado e separado; nenhum arquivo login/checkout aparece no delta Alerts a partir de `e3cd68eb054e3f532fa6275eecb40d31ecdf2751`.
