@@ -63,7 +63,7 @@ export function classifyAsk(question:string):AskIntent{
  if(/\b(imposto|tribut|fiscal|darf|ganho realizado)\b/.test(q))return 'tax'
  if(/\b(taxa|tarifa|fee|custos?)\b/.test(q))return 'fees'
  if(/\b(alerta|pendencia|vencid|atrasad)\b/.test(q))return 'alerts'
- if(/\b(meta|objetivo|casa|carro|viagem|prazo)\b/.test(q))return 'goals'
+ if(/\b(metas?|objetivos?|casa|carro|viagem|prazo)\b/.test(q))return 'goals'
  if(/\b(divida|passivo|emprest|financi|cartao|parcel)\b/.test(q))return 'debt'
  if(/\b(carteira|portfolio|alocacao|concentracao|liquidez|ativo|investimento)\b/.test(q))return 'portfolio'
  if(/\b(patrimonio|quanto tenho|quanto devo|ativos e passivos|net worth)\b/.test(q))return 'net_worth'
