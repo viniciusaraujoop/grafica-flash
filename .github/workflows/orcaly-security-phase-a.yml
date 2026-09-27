@@ -1,0 +1,105 @@
+name: Orçaly Security Phase A Certification
+
+on:
+  push:
+    branches:
+      - gpt/orcaly-security-hardening
+    paths:
+      - .github/workflows/orcaly-security-phase-a.yml
+      - app/**
+      - components/**
+      - lib/**
+      - scripts/test-security-phase-a.mjs
+      - package.json
+      - package-lock.json
+      - proxy.ts
+      - next.config.*
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: orcaly-security-phase-a-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: phase-a-public-placeholder
+      SUPABASE_SERVICE_ROLE_KEY: phase-a-server-placeholder
+      PAYMENT_CREDENTIALS_ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+      CRON_SECRET: phase-a-cron-placeholder
+      NEXT_PUBLIC_ROOT_DOMAIN: example.test
+      NEXT_PUBLIC_SITE_URL: https://example.test
+      NEXT_PUBLIC_APP_URL: https://example.test
+      ORCALY_APP_URL: https://example.test
+
+    steps:
+      - name: Checkout Security branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Security Phase A invariants
+        run: npm run security:phase-a
+
+      - name: Scoped lint for Security delta
+        shell: bash
+        run: |
+          npx eslint \
+            app/api/admin/change-password/route.ts \
+            app/api/admin/company/[id]/route.ts \
+            app/api/admin/feature-flags/route.ts \
+            app/api/admin/support-mode/route.ts \
+            app/api/admin/team-v2/route.ts \
+            app/api/admin/team/route.ts \
+            app/api/assinatura/checkout/route.ts \
+            app/api/assinatura/checkout/webhook/route.ts \
+            app/api/checkout/[slug]/card/route.ts \
+            app/api/checkout/[slug]/pix/route.ts \
+            app/api/checkout/lead/route.ts \
+            app/api/checkout/signup/card/route.ts \
+            app/api/checkout/signup/pix/route.ts \
+            app/api/company/settings/route.ts \
+            app/api/company/team/route.ts \
+            app/api/founders/activate/route.ts \
+            app/api/leads/complete-account/route.ts \
+            app/api/marketplace/payments/mercado-pago/connect/route.ts \
+            app/api/marketplace/payments/mercado-pago/disconnect/route.ts \
+            app/api/marketplace/payments/webhook/mercado-pago/route.ts \
+            app/api/mercado-pago/webhook-leads/route.ts \
+            app/api/mercado-pago/webhook/route.ts \
+            app/api/parceiros/register/route.ts \
+            app/api/payments/asaas/account/status/route.ts \
+            app/api/payments/asaas/payout-key/route.ts \
+            app/api/payments/asaas/payouts/retry/route.ts \
+            app/api/payments/asaas/payouts/route.ts \
+            app/api/payments/asaas/transactions/route.ts \
+            app/api/platform-admin/commission-rules/route.ts \
+            app/api/site/upload/route.ts \
+            app/api/team-invites/activate/route.ts \
+            app/api/webhooks/asaas/route.ts \
+            app/login/actions.ts \
+            components/checkout/SignupCheckout.tsx \
+            lib/payments/server-context.ts \
+            lib/payments/subscription-asaas.ts \
+            lib/security/mfa-core.ts \
+            lib/security/rate-limit.ts \
+            scripts/test-security-phase-a.mjs
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
