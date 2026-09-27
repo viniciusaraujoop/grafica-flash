@@ -12,7 +12,19 @@ import {
 } from "react";
 import { supabase } from "@/lib/supabase";
 
-type Log = Record<string, any>;
+type Log = {
+  id: string;
+  source: string;
+  created_at: string;
+  admin_email?: string | null;
+  actor_email?: string | null;
+  action?: string | null;
+  target_type?: string | null;
+  target_id?: string | null;
+  target_label?: string | null;
+  payload?: unknown;
+  metadata?: unknown;
+};
 
 async function currentToken() {
   const { data } = await supabase.auth.getSession();

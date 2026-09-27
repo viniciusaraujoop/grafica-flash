@@ -10,6 +10,11 @@ import {
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+type PlatformAdminClient = Extract<
+  Awaited<ReturnType<typeof requirePlatformAdmin>>,
+  { ok: true }
+>['supabaseAdmin']
+
 function text(value: unknown) {
   return String(value || '').trim()
 }
@@ -29,7 +34,7 @@ function validPassword(value: unknown) {
 }
 
 async function findAuthUserByEmail(
-  supabaseAdmin: any,
+  supabaseAdmin: PlatformAdminClient,
   targetEmail: string,
 ) {
   for (let page = 1; page <= 20; page += 1) {
@@ -43,7 +48,7 @@ async function findAuthUserByEmail(
 
     const users = data?.users || []
     const found = users.find(
-      (user: any) =>
+      (user) =>
         String(user.email || '').toLowerCase() ===
         targetEmail,
     )
