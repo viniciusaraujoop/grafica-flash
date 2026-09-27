@@ -26,7 +26,8 @@ export type AskContext={
 }
 export type AskRequest={question:string;mode:AskMode;provider_consent:boolean}
 export type AskAction={label:string;href:string}
-export type AskResult={
+export type AskProviderTrace={provider_used:boolean;provider_consent:string}
+export type AskResult=AskProviderTrace&{
  ok:true;mode:AskMode;intent:AskIntent;answer:string;provider_status:AskProviderStatus;
  regulated_advice:'OFF';execution:'OFF';cross_product_context:'DISABLED';market_provider_status:'NOT_CONFIGURED';
  context_id:string;period:{from:string;to:string;timezone:string};
