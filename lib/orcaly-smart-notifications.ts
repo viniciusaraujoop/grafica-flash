@@ -1,6 +1,7 @@
 import { createNotification } from '@/lib/orcaly-audit'
+import type { getSupabaseAdmin } from '@/lib/company-access'
 
-type SupabaseAdmin = any
+type SupabaseAdmin = ReturnType<typeof getSupabaseAdmin>
 
 export type SmartNotificationSettings = {
   new_order_enabled: boolean
@@ -77,7 +78,7 @@ function isFinalOrder(status: unknown) {
   return value.includes('entregue') || value.includes('cancel') || value.includes('finaliz')
 }
 
-function isClosedLead(lead: any) {
+function isClosedLead(lead: Record<string, unknown>) {
   const etapa = String(lead?.etapa || '').toLowerCase()
   const status = String(lead?.status || '').toLowerCase()
 
@@ -88,7 +89,7 @@ function isClosedLead(lead: any) {
     || status.includes('fechado')
 }
 
-function isClosedProposal(proposal: any) {
+function isClosedProposal(proposal: Record<string, unknown>) {
   const status = String(proposal?.status || '').toLowerCase()
 
   return status.includes('aprov')
@@ -98,7 +99,7 @@ function isClosedProposal(proposal: any) {
     || status.includes('perd')
 }
 
-function hasProductImage(product: any) {
+function hasProductImage(product: Record<string, unknown>) {
   if (Array.isArray(product?.image_urls) && product.image_urls.filter(Boolean).length > 0) return true
   if (product?.imagem_url) return true
   if (product?.foto_url) return true
@@ -176,7 +177,7 @@ async function createOnce(
     mensagem: string
     link_url?: string
     tipo?: string
-    payload?: Record<string, any>
+    payload?: Record<string, unknown>
   }
 ) {
   try {
@@ -237,7 +238,7 @@ async function createOnce(
 
 export async function scanCompanySmartNotifications(
   supabaseAdmin: SupabaseAdmin,
-  company: any
+  company: Record<string, unknown>
 ): Promise<SmartNotificationResult> {
   const companyId = String(company?.id || '')
   const settings = await getSettings(supabaseAdmin, companyId)
