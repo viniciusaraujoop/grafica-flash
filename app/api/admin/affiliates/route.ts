@@ -21,6 +21,40 @@ import {
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+type AdminPayoutAccountRow = {
+  affiliate_id?: string | null
+  [key: string]: unknown
+}
+
+type AdminProfileRow = {
+  id: string
+  email?: string | null
+  whatsapp?: string | null
+  document_last4?: string | null
+  [key: string]: unknown
+}
+
+type AdminReferralContact = {
+  nome_responsavel?: string | null
+  email?: string | null
+  whatsapp?: string | null
+  [key: string]: unknown
+}
+
+type AdminReferralCompany = {
+  email?: string | null
+  whatsapp?: string | null
+  [key: string]: unknown
+}
+
+type AdminReferralRow = {
+  customer_name_masked?: string | null
+  customer_email_masked?: string | null
+  lead?: AdminReferralContact | null
+  company?: AdminReferralCompany | null
+  [key: string]: unknown
+}
+
 function text(value: unknown) {
   return String(value || '').trim()
 }
@@ -64,14 +98,14 @@ export async function GET(request: NextRequest) {
       throw payoutAccountsResult.error
     }
 
-    const accounts = Array.isArray(
+    const accounts: AdminPayoutAccountRow[] = Array.isArray(
       payoutAccountsResult.data,
     )
       ? payoutAccountsResult.data
       : []
 
     const accountMap = new Map(
-      accounts.map((account: any) => [
+      accounts.map((account) => [
         String(account.affiliate_id),
         account,
       ]),
@@ -100,7 +134,7 @@ export async function GET(request: NextRequest) {
 
     const safeProfiles = (
       dashboard.profiles || []
-    ).map((profile: any) => ({
+    ).map((profile: AdminProfileRow) => ({
       ...profile,
       email: canContacts
         ? profile.email
@@ -144,7 +178,7 @@ export async function GET(request: NextRequest) {
       profiles: safeProfiles,
       referrals: canReferrals
         ? (dashboard.referrals || []).map(
-            (referral: any) => ({
+            (referral: AdminReferralRow) => ({
               ...referral,
               lead: referral.lead
                 ? {

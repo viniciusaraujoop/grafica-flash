@@ -50,7 +50,6 @@ export async function enforceRateLimit(
 
     const row = Array.isArray(data) ? data[0] : data
     const allowed = row?.allowed === true
-    const remaining = Math.max(0, Number(row?.remaining || 0))
     const resetAt = row?.reset_at ? new Date(row.reset_at) : null
     const retryAfter = resetAt
       ? Math.max(1, Math.ceil((resetAt.getTime() - Date.now()) / 1000))
