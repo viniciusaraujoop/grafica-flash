@@ -1,0 +1,560 @@
+{
+  "generatedAt": "2026-09-27T14:17:07.889Z",
+  "tool": "playwright+esbuild (isolated harness, not Next runtime)",
+  "checks": [
+    {
+      "name": "hub@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "hub@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "hub@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "hub@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "hub@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "hub@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "hub@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "landing-wealth@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "landing-wealth@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "landing-wealth@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "landing-wealth@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "landing-wealth@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "landing-wealth@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-wealth@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "landing-growth@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "landing-growth@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "landing-growth@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "landing-growth@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "landing-growth@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "landing-growth@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-growth@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@320 no horizontal overflow",
+      "pass": true,
+      "note": "320/320"
+    },
+    {
+      "name": "landing-business@320 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@320 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@390 no horizontal overflow",
+      "pass": true,
+      "note": "390/390"
+    },
+    {
+      "name": "landing-business@390 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@390 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@390 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@768 no horizontal overflow",
+      "pass": true,
+      "note": "768/768"
+    },
+    {
+      "name": "landing-business@768 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@768 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@1024 no horizontal overflow",
+      "pass": true,
+      "note": "1024/1024"
+    },
+    {
+      "name": "landing-business@1024 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@1024 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@1440 no horizontal overflow",
+      "pass": true,
+      "note": "1440/1440"
+    },
+    {
+      "name": "landing-business@1440 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@1440 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@1440 static a11y lint",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@1920 no horizontal overflow",
+      "pass": true,
+      "note": "1920/1920"
+    },
+    {
+      "name": "landing-business@1920 touch targets ≥44px",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "landing-business@1920 no runtime errors",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "name": "hub shows demonstration banner",
+      "pass": true
+    },
+    {
+      "name": "status gallery renders all 8 statuses",
+      "pass": true,
+      "note": "ACTIVE,TRIAL,AVAILABLE,NOT_SUBSCRIBED,PAYMENT_PENDING,SUSPENDED,COMING_SOON,BLOCKED_EXTERNAL"
+    },
+    {
+      "name": "hub cards route subscribed→app, unsubscribed→landing",
+      "pass": true,
+      "note": "Business:ACTIVE:/painel/inicio Wealth:TRIAL:/apps/wealth Growth:COMING_SOON:/produtos/growth Flow:COMING_SOON:/produtos/flow Academy:COMING_SOON:/produtos/academy Market:COMING_SOON:/produtos/market Partners:NOT_SUBSCRIBED:/parceiros"
+    },
+    {
+      "name": "launcher@390 opens with focus on first tile",
+      "pass": true,
+      "note": "expanded=true focus=/painel/inicio tiles=7"
+    },
+    {
+      "name": "launcher@390 panel opaque once settled",
+      "pass": true,
+      "note": "1|rgb(255, 255, 255)"
+    },
+    {
+      "name": "launcher@390 grid columns",
+      "pass": true,
+      "note": "2"
+    },
+    {
+      "name": "launcher@390 arrow/home/end navigation",
+      "pass": true,
+      "note": "down=3 end=6"
+    },
+    {
+      "name": "launcher@390 Esc closes and restores focus",
+      "pass": true
+    },
+    {
+      "name": "launcher@390 outside click closes",
+      "pass": true
+    },
+    {
+      "name": "launcher@1024 opens with focus on first tile",
+      "pass": true,
+      "note": "expanded=true focus=/painel/inicio tiles=7"
+    },
+    {
+      "name": "launcher@1024 panel opaque once settled",
+      "pass": true,
+      "note": "1|rgb(255, 255, 255)"
+    },
+    {
+      "name": "launcher@1024 grid columns",
+      "pass": true,
+      "note": "3"
+    },
+    {
+      "name": "launcher@1024 arrow/home/end navigation",
+      "pass": true,
+      "note": "down=4 end=6"
+    },
+    {
+      "name": "launcher@1024 Esc closes and restores focus",
+      "pass": true
+    },
+    {
+      "name": "launcher@1024 outside click closes",
+      "pass": true
+    },
+    {
+      "name": "palette@390 Ctrl+K opens with input focused",
+      "pass": true
+    },
+    {
+      "name": "palette@390 accent-insensitive ranking + activedescendant",
+      "pass": true,
+      "note": "first=nav.wealth.calendario"
+    },
+    {
+      "name": "palette@390 dialog opaque once settled",
+      "pass": true,
+      "note": "1|rgb(255, 255, 255)"
+    },
+    {
+      "name": "palette@390 never exposes routes of non-entitled products",
+      "pass": true,
+      "note": "product.business,nav.business.pedidos"
+    },
+    {
+      "name": "palette@390 empty state + live count",
+      "pass": true
+    },
+    {
+      "name": "palette@390 Esc closes and focus returns to trigger",
+      "pass": true
+    },
+    {
+      "name": "palette@390 Enter navigates to the ranked route",
+      "pass": true,
+      "note": "http://127.0.0.1:46241/apps/wealth/calendario"
+    },
+    {
+      "name": "palette@1440 Ctrl+K opens with input focused",
+      "pass": true
+    },
+    {
+      "name": "palette@1440 accent-insensitive ranking + activedescendant",
+      "pass": true,
+      "note": "first=nav.wealth.calendario"
+    },
+    {
+      "name": "palette@1440 dialog opaque once settled",
+      "pass": true,
+      "note": "1|rgb(255, 255, 255)"
+    },
+    {
+      "name": "palette@1440 never exposes routes of non-entitled products",
+      "pass": true,
+      "note": "product.business,nav.business.pedidos"
+    },
+    {
+      "name": "palette@1440 empty state + live count",
+      "pass": true
+    },
+    {
+      "name": "palette@1440 Esc closes and focus returns to trigger",
+      "pass": true
+    },
+    {
+      "name": "palette@1440 Enter navigates to the ranked route",
+      "pass": true,
+      "note": "http://127.0.0.1:46241/apps/wealth/calendario"
+    },
+    {
+      "name": "reduced motion collapses launcher animation",
+      "pass": true,
+      "note": "1e-05s"
+    },
+    {
+      "name": "hub follows OS dark mode",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    },
+    {
+      "name": "landing-wealth follows OS dark mode",
+      "pass": true,
+      "note": "rgb(14, 22, 32)"
+    }
+  ],
+  "summary": {
+    "total": 112,
+    "passed": 112,
+    "failed": 0
+  }
+}

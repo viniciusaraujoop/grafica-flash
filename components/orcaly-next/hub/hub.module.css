@@ -1,0 +1,58 @@
+.page { min-height: 100dvh; }
+
+.topbar { position: sticky; top: 0; z-index: 40; background: color-mix(in srgb, var(--ox-bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--ox-line); }
+.topbarInner { display: flex; align-items: center; gap: var(--ox-space-3); min-height: 64px; }
+.brand { display: inline-flex; align-items: center; min-height: var(--ox-target-min); min-width: var(--ox-target-min); font-weight: 700; font-size: var(--ox-text-lg); letter-spacing: -.03em; color: var(--ox-ink); text-decoration: none; margin-right: auto; white-space: nowrap; }
+.topbarSearch { min-width: 0; flex: 0 1 320px; display: flex; justify-content: flex-end; }
+
+.main { display: grid; gap: var(--ox-space-7); padding-block: var(--ox-space-5) var(--ox-space-8); }
+.intro { display: grid; gap: var(--ox-space-3); max-width: 70ch; }
+.eyebrow { font-size: var(--ox-text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--ox-ink-muted); }
+.intro h1 { font-size: clamp(28px, 5vw, 44px); }
+.lead { color: var(--ox-ink-muted); }
+
+.section { display: grid; gap: var(--ox-space-4); }
+.sectionHead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--ox-space-2); }
+.sectionHead h2 { font-size: var(--ox-text-xl); }
+.sectionHead p { color: var(--ox-ink-muted); font-size: var(--ox-text-sm); }
+
+.appGrid { list-style: none; display: grid; gap: var(--ox-space-3); grid-template-columns: 1fr; }
+@media (min-width: 560px) { .appGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .appGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.card {
+  display: grid; gap: var(--ox-space-3); height: 100%; padding: var(--ox-space-4); border-radius: var(--ox-radius-card);
+  border: 1px solid var(--ox-line); background: var(--ox-surface); box-shadow: var(--ox-shadow-1);
+  border-top: 4px solid var(--card-accent);
+}
+.cardHead { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--ox-space-2); }
+.cardName { font-size: var(--ox-text-lg); font-weight: 700; }
+.cardName small { display: block; font-size: var(--ox-text-xs); font-weight: 400; color: var(--ox-ink-muted); }
+.cardText { font-size: var(--ox-text-sm); color: var(--ox-ink-muted); }
+.cardAction { justify-self: start; margin-top: auto; }
+
+.continueList, .pulseList, .activityList { list-style: none; display: grid; gap: var(--ox-space-2); }
+.continueItem {
+  display: flex; justify-content: space-between; align-items: center; gap: var(--ox-space-3); min-height: 56px;
+  padding: var(--ox-space-3) var(--ox-space-4); border: 1px solid var(--ox-line); border-radius: var(--ox-radius-md);
+  background: var(--ox-surface); color: var(--ox-ink); text-decoration: none;
+}
+.continueItem:hover { border-color: var(--ox-accent); }
+.muted { color: var(--ox-ink-muted); font-size: var(--ox-text-xs); }
+
+.twoCol { display: grid; gap: var(--ox-space-7); }
+@media (min-width: 1024px) { .twoCol { grid-template-columns: 3fr 2fr; gap: var(--ox-space-6); } }
+
+.pulseItem { display: grid; gap: 4px; padding: var(--ox-space-4); border-radius: var(--ox-radius-md); background: var(--ox-surface); border: 1px solid var(--ox-line); border-left: 4px solid var(--card-accent); }
+.pulseItem strong { font-size: var(--ox-text-sm); }
+.source { font-size: var(--ox-text-xs); color: var(--ox-ink-muted); }
+.activityItem { display: flex; justify-content: space-between; gap: var(--ox-space-3); padding: var(--ox-space-2) 0; border-bottom: 1px solid var(--ox-line); font-size: var(--ox-text-sm); }
+
+.oneSlot { display: grid; gap: var(--ox-space-2); padding: var(--ox-space-5); border-radius: var(--ox-radius-card); background: var(--ox-surface-muted); border: 1px dashed var(--ox-line-strong); }
+
+.gallery { list-style: none; display: grid; gap: var(--ox-space-2); grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.galleryItem { display: grid; gap: var(--ox-space-2); padding: var(--ox-space-3); border: 1px solid var(--ox-line); border-radius: var(--ox-radius-md); background: var(--ox-surface); font-size: var(--ox-text-sm); }
+
+/* Grid children default to min-width:auto; pin tracks so long content wraps instead of widening the page. */
+.main, .intro, .section, .card { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1024px) { .twoCol { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
