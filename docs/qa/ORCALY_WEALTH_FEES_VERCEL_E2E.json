@@ -1,0 +1,124 @@
+{
+  "project": "zwxulgpjucxudadjdqov",
+  "appUrl": "https://orcaly-nyst4bkr8-vinicius-araujos-projects.vercel.app",
+  "commit": "086bf5773e6cfb10d9e7a1574bf036ea6df96e8c",
+  "startedAt": "2026-09-27T00:30:28.750Z",
+  "finishedAt": "2026-09-27T00:32:25.553Z",
+  "report": [
+    {
+      "check": "Vercel-Preview-exact-commit-staging-bundle-and-no-service-secret",
+      "status": "PASS"
+    },
+    {
+      "check": "hosted-Auth-password-login-and-verified-JWT-issuer",
+      "status": "PASS"
+    },
+    {
+      "check": "hosted-Auth-token-refresh",
+      "status": "PASS"
+    },
+    {
+      "check": "anonymous-denial-and-no-client-entitlement-escalation",
+      "status": "PASS"
+    },
+    {
+      "check": "cross-user-select-insert-update-delete-and-owner-transfer-isolation",
+      "status": "PASS"
+    },
+    {
+      "check": "missing-revoked-expired-future-and-read-only-entitlements",
+      "status": "PASS"
+    },
+    {
+      "check": "consent-owner-isolation-column-grants-and-irreversible-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "private-audit-trigger-and-identifier-only-payload",
+      "status": "PASS"
+    },
+    {
+      "check": "real-login-Server-Action-App-Hub-Wealth-and-WCAG",
+      "status": "PASS"
+    },
+    {
+      "check": "Server-Actions-profile-entry-goal-persistence-cents-and-forged-owner-rejected",
+      "status": "PASS"
+    },
+    {
+      "check": "browser-cross-user-isolation-and-unentitled-gate",
+      "status": "PASS"
+    },
+    {
+      "check": "unauthenticated-action-replay-and-stale-form-after-entitlement-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "consent-Server-Action-clock-skew-microseconds-and-authenticated-home-redirect",
+      "status": "PASS"
+    },
+    {
+      "check": "portfolio-create-and-holding-Server-Actions-owner-binding-and-single-balance",
+      "status": "PASS"
+    },
+    {
+      "check": "portfolio-sale-basis-CAS-idempotency-DML-boundary-isolation-and-unknown-CSV",
+      "status": "PASS"
+    },
+    {
+      "check": "portfolio-hosted-concurrent-CAS-exact-replay-transfer-conservation-and-isolation",
+      "status": "PASS"
+    },
+    {
+      "check": "portfolio-valuation-provenance-allocation-rebalance-and-future-simulations",
+      "status": "PASS"
+    },
+    {
+      "check": "portfolio-lab-isolation-and-revoked-Server-Action-entitlements",
+      "status": "PASS"
+    },
+    {
+      "check": "portfolio-audit-WCAG-six-widths-and-screenshots",
+      "status": "PASS"
+    },
+    {
+      "check": "fees-original-Portfolio-Server-Action-exact-costs-tax-separation-archived-history-and-no-second-balance",
+      "status": "PASS"
+    },
+    {
+      "check": "fees-hosted-RLS-cross-user-scope-read-only-write-only-expired-revoked-and-anonymous-server-denial",
+      "status": "PASS"
+    },
+    {
+      "check": "fees-Lab-empty-lower-bound-invalid-period-hosted-pagination-and-full-aggregate",
+      "status": "PASS"
+    },
+    {
+      "check": "fees-six-widths-two-themes-Axe-keyboard-focus-reduced-motion-and-interactive-period-filter",
+      "status": "PASS"
+    },
+    {
+      "check": "no-browser-errors-or-production-requests",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "cleanup": {
+    "billDetailsRemaining": 0,
+    "usersRemaining": 0,
+    "auditRowsRemaining": 0,
+    "schedulesRemaining": 0,
+    "occurrencesRemaining": 0,
+    "jobsRemaining": 0,
+    "idempotencyRemaining": 0,
+    "outboxRemaining": 0,
+    "wealth_portfolios": 0,
+    "wealth_holdings": 0,
+    "wealth_portfolio_transactions": 0
+  },
+  "limits": [
+    "Next.js served by protected Vercel Preview; Supabase staging hosted in sa-east-1",
+    "Auth, JWT, refresh, PostgREST, RLS, grants and persistence use real hosted Supabase staging",
+    "No production data or credentials used; no email sent; all accounts confirmed by staging Admin API"
+  ]
+}
