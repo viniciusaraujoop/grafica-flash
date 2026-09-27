@@ -1,0 +1,36 @@
+{
+  "id": "dpl_ADNZkvNmVqhRyurUJDb3gyDjCM3R",
+  "name": "orcaly",
+  "url": "orcaly-9v303l5vr-vinicius-araujos-projects.vercel.app",
+  "type": "LAMBDAS",
+  "state": "READY",
+  "createdAt": 1790466561424,
+  "creator": {
+    "uid": "BJ9ENv5traIxo20AEfaAnflU",
+    "username": "viniciusaraujoop"
+  },
+  "project": {
+    "id": "prj_SzlsQ0ovx6JnDE8v5jJbAa5U9U4O",
+    "name": "orcaly",
+    "framework": "nextjs"
+  },
+  "meta": {
+    "githubCommitRef": "codex/orcaly-ecosystem",
+    "githubCommitSha": "36b3c639be95d3c2d890a65d8ee778cf8d68edcf",
+    "githubCommitMessage": "feat(wealth): add controlled Automation Center",
+    "githubRepo": "grafica-flash",
+    "githubOrg": "viniciusaraujoop"
+  },
+  "alias": [
+    "orcaly-git-codex-orcaly-ecosystem-vinicius-araujos-projects.vercel.app"
+  ],
+  "target": null,
+  "regions": [
+    "iad1"
+  ],
+  "buildingAt": 1790466562875,
+  "ready": 1790466709983,
+  "readyState": "READY",
+  "source": "git",
+  "aliasError": null
+}

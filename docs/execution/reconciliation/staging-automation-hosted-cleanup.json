@@ -1,0 +1,18 @@
+{
+  "observedAt": "2026-09-27T00:01:22.005Z",
+  "project": "zwxulgpjucxudadjdqov",
+  "counts": {
+    "users": 0,
+    "sessions": 0,
+    "objects": 0,
+    "automation_preferences": 0,
+    "automation_commands": 0,
+    "family_connections": 0,
+    "family_shares": 0,
+    "family_commands": 0,
+    "document_commands": 0,
+    "planning_commands": 0,
+    "audit": 0,
+    "active_cron": 0
+  }
+}
