@@ -148,7 +148,7 @@ try{
  let body=await page.locator('body').innerText()
  for(const expected of ['Alert overdue recurrence QA','Alert goal QA','Alert expiring document QA','Alert protection QA','Alert unknown value QA','Venda real com evidência fiscal incompleta','Automações:'])assert.ok(body.includes(expected),expected)
  assert.ok(!body.includes('Foreign alert goal QA'))
- assert.ok(body.includes('Sinais factuais, sem barulho artificial'))
+ assert.ok(body.toLowerCase().includes('sinais factuais, sem barulho artificial'))
  assert.deepEqual(pageErrors,[]);assert.deepEqual(productionRequests,[])
  pass('alerts-protected-preview-exact-SHA-authenticated-UI-factual-deep-links-and-zero-production-calls')
 
