@@ -205,7 +205,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       company: publicCompany(company),
-      requester_role: requesterRole,
+      requester_role: access.role,
     })
   } catch (error) {
     return NextResponse.json(
