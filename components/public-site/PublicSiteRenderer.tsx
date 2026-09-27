@@ -121,17 +121,6 @@ function normalizeTestimonials(
     }))
     .filter((item) => item.name.trim().length > 0 || item.text.trim().length > 0)
 }
-function money(value?: number | string | null) {
-  const numeric = Number(value || 0)
-
-  if (!numeric) return 'Valor sob consulta'
-
-  return numeric.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-}
-
 function phoneOnly(value?: string | null) {
   return String(value || '').replace(/\D/g, '')
 }
@@ -181,7 +170,6 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
     .filter((section) => section.enabled)
   const publicCoupons = asArray<PublicCoupon>(company.marketplace_coupons)
 
-  const activeProducts = products.filter((product) => product.available !== false && product.ativo !== false)
   const whatsapp = whatsappLink(company, `${cta} - ${company.nome || 'Empresa Orçaly'}`)
 
   const renderSection = (id: SiteSectionId) => {
