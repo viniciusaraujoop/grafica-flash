@@ -13,7 +13,20 @@ import {
 } from "react";
 import { supabase } from "@/lib/supabase";
 
-type Json = Record<string, any>;
+type Json = {
+  [key: string]: unknown
+  id?: string
+  email?: string | null
+  nome?: string | null
+  observacoes?: string | null
+  role?: string | null
+  is_active?: boolean
+  last_login_at?: string | null
+  permissions?: Record<string, boolean>
+  key?: string
+  label?: string
+  description?: string
+};
 
 const initialForm = {
   nome: "",

@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
       const companyMembers = membersRaw.filter((member) => member.company_id === company.id)
       const revenue = companyOrders.reduce((acc, order) => acc + Number(order.valor_total || order.preco_estimado || 0), 0)
       const entradas = companyFinance.filter((tx) => tx.tipo === 'entrada' && tx.status !== 'cancelado').reduce((acc, tx) => acc + Number(tx.valor || 0), 0)
-      const saidas = companyFinance.filter((tx: any) => tx.tipo === 'saida' && tx.status !== 'cancelado').reduce((acc, tx) => acc + Number(tx.valor || 0), 0)
+      const saidas = companyFinance.filter((tx) => tx.tipo === 'saida' && tx.status !== 'cancelado').reduce((acc, tx) => acc + Number(tx.valor || 0), 0)
 
       return {
         ...company,

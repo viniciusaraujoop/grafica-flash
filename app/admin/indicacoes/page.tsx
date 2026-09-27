@@ -12,7 +12,54 @@ import {
 } from "react";
 import { supabase } from "@/lib/supabase";
 
-type Json = Record<string, any>;
+type Json = {
+  [key: string]: unknown
+  id?: string
+  affiliate_id?: string | null
+  name?: string | null
+  email?: string | null
+  whatsapp?: string | null
+  status?: string | null
+  review_status?: string | null
+  review_note?: string | null
+  reviewed_by?: string | null
+  referral_code?: string | null
+  code?: string | null
+  plan?: string | null
+  document_last4?: string | null
+  pix_key_masked?: string | null
+  pix_key_type?: string | null
+  holder_name?: string | null
+  customer_name_masked?: string | null
+  customer_email_masked?: string | null
+  external_reference?: string | null
+  provider_payment_id?: string | null
+  provider_transfer_id?: string | null
+  failure_reason?: string | null
+  registered_at?: string | null
+  requested_at?: string | null
+  hold_until?: string | null
+  trial_ends_at?: string | null
+  position?: number | null
+  score?: number | null
+  conversions?: number | null
+  count?: number | null
+  amount?: number | null
+  value?: number | null
+  eligible_amount?: number | null
+  commission_amount?: number | null
+  commission_expected?: number | null
+  commission_rate?: number | null
+  first_payment_amount?: number | null
+  debt_balance?: number | null
+  visible?: boolean
+  label?: string | null
+  detail?: string | null
+  action?: string | null
+  lead?: Json | null
+  company?: Json | null
+  payoutAccount?: Json | null
+};
 type Tab =
   | "overview"
   | "partners"
