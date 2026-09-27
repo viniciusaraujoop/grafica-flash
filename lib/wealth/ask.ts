@@ -61,7 +61,7 @@ export function classifyAsk(question:string):AskIntent{
  const q=normalized(question)
  if(/\b(cotacao|preco agora|mercado hoje|selic agora|dolar agora|cambio agora|noticia|radar|ibovespa hoje)\b/.test(q))return 'market'
  if(/\b(imposto|tribut|fiscal|darf|ganho realizado)\b/.test(q))return 'tax'
- if(/\b(taxa|tarifa|fee|custos?)\b/.test(q))return 'fees'
+ if(/\b(taxas?|tarifas?|fees?|custos?)\b/.test(q))return 'fees'
  if(/\b(alerta|pendencia|vencid|atrasad)\b/.test(q))return 'alerts'
  if(/\b(metas?|objetivos?|casa|carro|viagem|prazo)\b/.test(q))return 'goals'
  if(/\b(divida|passivo|emprest|financi|cartao|parcel)\b/.test(q))return 'debt'
