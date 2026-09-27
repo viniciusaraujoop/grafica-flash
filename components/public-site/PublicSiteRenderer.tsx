@@ -1,6 +1,5 @@
 'use client'
 
-import { useMemo, useState } from 'react'
 import { getSiteTemplateByBusinessType, normalizeSectionList, type SiteSectionId } from '@/lib/site-templates'
 import PremiumCatalog from '@/components/public-site/PremiumCatalog'
 import { SegmentProcessBand } from '@/components/public-site/SegmentHeroPanel'
@@ -147,108 +146,6 @@ function whatsappLink(company: PublicSiteCompany, message: string) {
   return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`
 }
 
-function primaryProductImage(product: PublicSiteProduct) {
-  if (Array.isArray(product.image_urls) && product.image_urls[0]) return product.image_urls[0]
-  return product.imagem_url || ''
-}
-
-function ProductMediaGallery({ product }: { product: PublicSiteProduct }) {
-  const images = Array.isArray(product.image_urls)
-    ? product.image_urls.filter(Boolean).slice(0, 4)
-    : product.imagem_url
-      ? [product.imagem_url]
-      : []
-
-  if (product.video_url) {
-    return (
-      <video
-        src={product.video_url}
-        controls
-        muted
-        className="h-56 w-full rounded-[1.5rem] bg-slate-100 object-cover"
-      />
-    )
-  }
-
-  if (images[0]) {
-    return <img src={images[0]} alt={product.nome || 'Produto'} className="h-56 w-full rounded-[1.5rem] object-cover" />
-  }
-
-  return (
-    <div className="grid h-56 place-items-center rounded-[1.5rem] bg-slate-100 text-sm font-black text-slate-400">
-      Sem foto
-    </div>
-  )
-}
-
-function ProductCard({
-  product,
-  company,
-  catalogAction,
-  businessType,
-}: {
-  product: PublicSiteProduct
-  company: PublicSiteCompany
-  catalogAction: string
-  businessType: string
-}) {
-  const available = product.available !== false && product.ativo !== false
-  const variations = asArray<{ nome?: string; name?: string }>(product.variations)
-  const addons = asArray<{ nome?: string; name?: string; preco?: number | string }>(product.addons)
-  const message = `${catalogAction}: ${product.nome || 'Produto'} - ${company.nome || 'Empresa Orçaly'}`
-
-  return (
-    <article id={`produto-${product.id}`} className="group overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-xl shadow-blue-950/6 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-950/12">
-      <ProductMediaGallery product={product} />
-
-      <div className="p-3">
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#05245c]">
-            {product.categoria || 'Destaque'}
-          </span>
-          {!available ? (
-            <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-700">Indisponível</span>
-          ) : null}
-          {product.destaque ? (
-            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">Destaque</span>
-          ) : null}
-        </div>
-
-        <h3 className="mt-4 text-2xl font-black tracking-[-0.04em] text-[#071b3a]">{product.nome || 'Produto'}</h3>
-        <p className="mt-2 line-clamp-3 text-sm font-bold leading-6 text-slate-500">
-          {product.descricao_curta || product.descricao || 'Confira os detalhes pelo WhatsApp.'}
-        </p>
-
-        {businessType === 'food' && (addons.length || variations.length) ? (
-          <div className="mt-4 space-y-2">
-            {variations.length ? (
-              <p className="text-xs font-black text-slate-500">Variações: {variations.slice(0, 3).map((item) => item.name || item.name).filter(Boolean).join(', ')}</p>
-            ) : null}
-            {addons.length ? (
-              <p className="text-xs font-black text-slate-500">Adicionais: {addons.slice(0, 3).map((item) => item.name || item.name).filter(Boolean).join(', ')}</p>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div className="mt-5 flex items-center justify-between gap-3">
-          <p className="text-2xl font-black text-[#05245c]">
-            {product.preco_sob_consulta ? 'Sob consulta' : money(product.preco)}
-          </p>
-
-          <a
-            href={whatsappLink(company, message)}
-            target="_blank"
-            rel="noreferrer"
-            className={`rounded-2xl px-4 py-3 text-sm font-black text-white ${available ? 'bg-[#05245c]' : 'pointer-events-none bg-slate-300'}`}
-          >
-            {businessType === 'food' ? 'Adicionar ao pedido' : catalogAction}
-          </a>
-        </div>
-      </div>
-    </article>
-  )
-}
-
 function SectionShell({ id, children }: { id?: string; children: React.ReactNode }) {
   return <section id={id} className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">{children}</section>
 }
@@ -265,8 +162,6 @@ function TitleBlock({ eyebrow, title, text }: { eyebrow: string; title: string; 
 
 export default function PublicSiteRenderer({ company, products }: RendererProps) {
   const template = getSiteTemplateByBusinessType(company.business_type || company.site_template)
-  const [showMobile, setShowMobile] = useState(false)
-
   const primary = company.site_primary_color || template.suggestedColors.primary
   const accent = company.site_accent_color || template.suggestedColors.accent
   const businessType = template.businessType
@@ -287,7 +182,6 @@ export default function PublicSiteRenderer({ company, products }: RendererProps)
   const publicCoupons = asArray<PublicCoupon>(company.marketplace_coupons)
 
   const activeProducts = products.filter((product) => product.available !== false && product.ativo !== false)
-  const categories = Array.from(new Set(activeProducts.map((product) => product.categoria).filter(Boolean) as string[]))
   const whatsapp = whatsappLink(company, `${cta} - ${company.nome || 'Empresa Orçaly'}`)
 
   const renderSection = (id: SiteSectionId) => {

@@ -254,12 +254,6 @@ function getCategory(product: FoodProduct) {
   return product.categoria?.trim() || 'Cardápio'
 }
 
-function calculateItem(product: FoodProduct, quantity: number, variation: FoodOption | null, addons: FoodOption[]) {
-  const base = getProductPriceNumber(product)
-  const unit = base + Number(variation?.price || 0) + addons.reduce((acc, addon) => acc + Number(addon.price || 0), 0)
-  return Number((Math.max(1, quantity) * unit).toFixed(2))
-}
-
 function normalizeTime(value?: string | null) {
   return String(value || '').slice(0, 5)
 }
@@ -544,9 +538,9 @@ export default function FoodMarketplaceCatalog({
   const [cartOpen, setCartOpen] = useState(false)
   const [cartReady, setCartReady] = useState(false)
   const [checkout, setCheckout] = useState<CheckoutState>(emptyCheckout)
-  const [submitting, setSubmitting] = useState(false)
+  const [submitting] = useState(false)
   const [error, setError] = useState('')
-  const [result, setResult] = useState<SubmitResult | null>(null)
+  const [, setResult] = useState<SubmitResult | null>(null)
   const [coupon, setCoupon] = useState<CouponState>(emptyCoupon)
   const cartIdRef = useRef(0)
 
@@ -582,7 +576,6 @@ export default function FoodMarketplaceCatalog({
     return Math.min(cartSubtotal, Math.max(0, Number(cappedDiscount.toFixed(2))))
   }, [cartSubtotal, coupon.appliedCode, coupon.maxDiscount, coupon.type, coupon.value])
   const couponDeliveryDiscount = coupon.appliedCode && coupon.type === 'free_delivery' ? deliveryFeeBase : 0
-  const deliveryFee = Math.max(0, Number((deliveryFeeBase - couponDeliveryDiscount).toFixed(2)))
   const totalDiscount = Number((couponProductDiscount + couponDeliveryDiscount).toFixed(2))
   const total = Number(Math.max(0, cartSubtotal + deliveryFeeBase - totalDiscount).toFixed(2))
   const minimumOrder = selectedZone ? numberFrom(selectedZone.minimum_order) : 0
