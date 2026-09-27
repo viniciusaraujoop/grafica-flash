@@ -1,0 +1,45 @@
+{
+  "module": "wealth-alerts",
+  "status": "CERTIFIED",
+  "runtime_sha": "7401e20576ca4b686c03871ff0211474001ce620",
+  "hosted_run": 36332287975,
+  "hosted_job": 108656413987,
+  "deployment_id": "dpl_DXssFBge1nK46tnpPaA8LGgMUNHA",
+  "preview_url": "https://orcaly-g2h28o1hr-vinicius-araujos-projects.vercel.app",
+  "exact_preview_sha": true,
+  "checks": [
+    "staging-auth-real-password-jwt-issuer",
+    "factual-sources-owner-isolation-no-inferred-facts",
+    "dismiss-snooze-restore-preferences-noise-control",
+    "entitlement-read-write-rechecked",
+    "protected-preview-exact-sha-ui-deep-links-zero-production-calls",
+    "preferences-server-action",
+    "snooze-restore-server-actions",
+    "six-widths-two-themes-axe-keyboard-focus-reduced-motion-no-overflow",
+    "cross-user-ui-anonymous-redirect"
+  ],
+  "widths": [
+    320,
+    390,
+    768,
+    1024,
+    1440,
+    1920
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "axe": "PASS",
+  "keyboard": "PASS",
+  "focus": "PASS",
+  "reduced_motion": "PASS",
+  "overflow": "PASS",
+  "page_errors": [],
+  "production_requests": [],
+  "artifact": {
+    "id": 10935669993,
+    "size_bytes": 4030782,
+    "digest": "sha256:3b59dda31b730f2ffdb819f932f93a11e60c54f9a0ec39280b306b267546778d"
+  }
+}
