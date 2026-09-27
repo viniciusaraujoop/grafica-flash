@@ -458,3 +458,23 @@ Never combine evidence from:
 - and a third branch
 
 and call the result “certified.” That is how release folklore is born.
+
+
+## Final branch-history note
+
+At the last live read before handoff:
+- Agent 1: `b8df40d1b0f2991c1f594ea59d6d4d9e19302e78`
+- Agent 2: `0db9b5ba45c8ad54f97bb3b8a174bbc1dea14b5f`
+- Agent 3: `b0d4909457635801e7973128671cf6df0ea7ef57`
+
+Agent 3 has absorbed an intermediate Agent 1 lineage and is now **diverged** from latest Agent 1 rather than being a pristine sibling branch. Therefore Phase 3 must be ancestry-aware:
+
+1. freeze latest accepted Agent 1;
+2. compute the Agent 1 ↔ Agent 3 merge base;
+3. inspect the **effective Agent 3-only diff** against latest Agent 1;
+4. integrate only after confirming Wealth/migrations/package remain owned by Agent 1;
+5. do not blindly replay Agent 3's full commit range from the original `9a2c...` base.
+
+This does not change the recommended high-level order. It changes the mechanics of the Agent 3 integration and raises the manual review requirement.
+
+Agent 2's latest documentation-only head had a pending Vercel status at the final read, although its handoff records a prior Preview build/typecheck PASS. Gate B remains exact-head-based: either wait for that head to become green or intentionally integrate the already-certified code commit.
