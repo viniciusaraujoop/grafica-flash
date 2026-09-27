@@ -159,4 +159,3 @@ The production build includes Next.js TypeScript validation. The earlier TypeScr
 - No Wealth or Claude-owned path was modified by the hardening work.
 - No auth, billing, or entitlement core behavior was changed.
 - Upstream synchronization already present on the branch was preserved; hardening edits stayed outside the excluded ownership areas.
-
