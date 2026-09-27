@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSubdomainSuggestions, validateSubdomainSlug } from '@/lib/slug'
+import { enforceRateLimit } from '@/lib/security/rate-limit'
+import { getClientIp } from '@/lib/orcaly-security'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -35,6 +37,14 @@ export async function GET(request: NextRequest) {
         suggestions,
       })
     }
+
+    const blocked = await enforceRateLimit(request, {
+      scope: 'public-subdomain-check',
+      limit: 30,
+      windowSeconds: 60,
+      identity: `${getClientIp(request)}:${validation.slug}`,
+    })
+    if (blocked) return blocked
 
     const supabaseAdmin = client()
 

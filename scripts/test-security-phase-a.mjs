@@ -209,3 +209,29 @@ test('critical platform configuration requires MFA without gating reads', () => 
   assert.equal((flags.match(/platform\.config\.manage/g) || []).length, 2)
   assert.match(company, /platform\.config\.manage/)
 })
+
+
+test('public proposal bearer-token actions are bounded and rate limited', () => {
+  const source = read('app/api/propostas/[token]/route.ts')
+  assert.match(source, /scope: 'public-proposal-action'/)
+  assert.match(source, /readJsonBody<Record<string, unknown>>\(request, 2 \* 1024 \* 1024\)/)
+  assert.match(source, /signatureDataUrl\.length > 1_500_000/)
+  assert.match(source, /data:image\\\/png;base64/)
+})
+
+test('public quote creation has origin, body and abuse controls', () => {
+  const source = read('app/api/public/orcamento/[slug]/route.ts')
+  assert.match(source, /requireSameOrigin\(request\)/)
+  assert.match(source, /scope: 'public-quote-create'/)
+  assert.match(source, /readJsonBody<Record<string, unknown>>\(request, 32 \* 1024\)/)
+})
+
+test('public utility and tracking endpoints have bounded abuse controls', () => {
+  const track = read('app/api/parceiros/track/route.ts')
+  assert.match(track, /scope: "affiliate-click-track"/)
+  assert.match(track, /readJsonBody<Record<string, unknown>>\(request, 8 \* 1024\)/)
+  assert.match(read('app/api/company/check-subdomain/route.ts'), /scope: 'public-subdomain-check'/)
+  const qr = read('app/api/qrcode/route.ts')
+  assert.match(qr, /scope: 'public-qrcode'/)
+  assert.match(qr, /url\.length > 2048/)
+})

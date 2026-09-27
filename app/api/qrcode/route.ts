@@ -1,14 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import QRCode from 'qrcode'
+import { enforceRateLimit } from '@/lib/security/rate-limit'
+import { getClientIp } from '@/lib/orcaly-security'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const url = searchParams.get('url')
+    const url = String(searchParams.get('url') || '').trim()
 
     if (!url) {
       return NextResponse.json({ error: 'URL não informada.' }, { status: 400 })
     }
+    if (url.length > 2048) {
+      return NextResponse.json({ error: 'URL muito longa.' }, { status: 413 })
+    }
+    const blocked = await enforceRateLimit(request, {
+      scope: 'public-qrcode',
+      limit: 30,
+      windowSeconds: 60,
+      identity: getClientIp(request),
+    })
+    if (blocked) return blocked
 
     const dataUrl = await QRCode.toDataURL(url, {
       margin: 2,

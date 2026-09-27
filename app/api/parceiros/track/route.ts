@@ -4,13 +4,23 @@ import {
   requestIp,
   trackAffiliateClick,
 } from "@/lib/affiliates/server";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
+import { readJsonBody, requestBodyErrorResponse } from "@/lib/security/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}));
+    const body = await readJsonBody<Record<string, unknown>>(request, 8 * 1024);
+    const code = String(body.code || "").trim().toUpperCase().slice(0, 32);
+    const blocked = await enforceRateLimit(request, {
+      scope: "affiliate-click-track",
+      limit: 60,
+      windowSeconds: 60,
+      identity: `${requestIp(request)}:${code || "unknown"}`,
+    });
+    if (blocked) return blocked;
 
     return NextResponse.json(
       await trackAffiliateClick({
@@ -22,7 +32,9 @@ export async function POST(request: NextRequest) {
         userAgent: request.headers.get("user-agent"),
       }),
     );
-  } catch {
+  } catch (error) {
+    const bodyError = requestBodyErrorResponse(error);
+    if (bodyError) return bodyError;
     return NextResponse.json({ tracked: false });
   }
 }

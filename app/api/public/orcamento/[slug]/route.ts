@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/company-access'
+import { enforceRateLimit } from '@/lib/security/rate-limit'
+import { readJsonBody, requestBodyErrorResponse } from '@/lib/security/request'
+import { getClientIp, requireSameOrigin } from '@/lib/orcaly-security'
 
 const slugPattern = /^[a-z0-9][a-z0-9-]{1,79}$/
 
@@ -13,11 +16,22 @@ function normalizePhone(value: unknown) {
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
+    const originError = requireSameOrigin(request)
+    if (originError) return originError
+
     const { slug: rawSlug } = await params
     const slug = decodeURIComponent(String(rawSlug || '')).trim().toLowerCase()
     if (!slugPattern.test(slug)) return NextResponse.json({ error: 'Empresa inválida.' }, { status: 400 })
 
-    const body = await request.json().catch(() => ({})) as Record<string, unknown>
+    const blocked = await enforceRateLimit(request, {
+      scope: 'public-quote-create',
+      limit: 8,
+      windowSeconds: 600,
+      identity: `${getClientIp(request)}:${slug}`,
+    })
+    if (blocked) return blocked
+
+    const body = await readJsonBody<Record<string, unknown>>(request, 32 * 1024)
     const nome = cleanText(body.nome, 120)
     const telefone = normalizePhone(body.telefone)
     const produto = cleanText(body.produto, 180)
@@ -63,6 +77,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return NextResponse.json({ ok: true, order_id: order.id }, { status: 201 })
   } catch (error) {
+    const bodyError = requestBodyErrorResponse(error)
+    if (bodyError) return bodyError
     const message = error instanceof Error ? error.message : 'Não foi possível enviar a solicitação.'
     return NextResponse.json({ error: message }, { status: 500 })
   }

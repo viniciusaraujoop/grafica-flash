@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { generatePixPayload, sanitizeTxid } from '@/lib/pix'
 import { notifyProposalAction } from '@/lib/whatsapp-notifications'
+import { enforceRateLimit } from '@/lib/security/rate-limit'
+import { readJsonBody, requestBodyErrorResponse } from '@/lib/security/request'
 
 type RouteContext = {
   params: Promise<{ token: string }>
@@ -194,6 +196,13 @@ async function createProductionOrder(supabaseAdmin: any, proposta: any, config: 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { token } = await context.params
+    const blocked = await enforceRateLimit(request, {
+      scope: 'public-proposal-read',
+      limit: 90,
+      windowSeconds: 60,
+      identity: `${getIp(request)}:${token}`,
+    })
+    if (blocked) return blocked
     const supabaseAdmin = getSupabaseAdmin()
     const bundle = await getProposalBundle(supabaseAdmin, token)
 
@@ -260,6 +269,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
       events,
     })
   } catch (error) {
+    const bodyError = requestBodyErrorResponse(error)
+    if (bodyError) return bodyError
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro desconhecido.' }, { status: 500 })
   }
 }
@@ -267,7 +278,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const { token } = await context.params
-    const body = await request.json()
+    const blocked = await enforceRateLimit(request, {
+      scope: 'public-proposal-action',
+      limit: 12,
+      windowSeconds: 600,
+      identity: `${getIp(request)}:${token}`,
+    })
+    if (blocked) return blocked
+    const body = await readJsonBody<Record<string, unknown>>(request, 2 * 1024 * 1024)
     const action = String(body.acao || '')
 
     const supabaseAdmin = getSupabaseAdmin()
@@ -290,6 +308,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const approvalNote = String(body.observacao || '').trim()
       const acceptedTerms = Boolean(body.aceitou_termos)
       const signatureDataUrl = String(body.assinatura_data_url || '').trim()
+
+      if (approvalName.length > 120) return NextResponse.json({ error: 'Nome muito longo.' }, { status: 400 })
+      if (approvalDocument.length > 40) return NextResponse.json({ error: 'Documento inválido.' }, { status: 400 })
+      if (approvalNote.length > 2000) return NextResponse.json({ error: 'Observação muito longa.' }, { status: 400 })
+      if (signatureDataUrl && (signatureDataUrl.length > 1_500_000 || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signatureDataUrl))) {
+        return NextResponse.json({ error: 'Assinatura inválida ou muito grande.' }, { status: 400 })
+      }
 
       if (!approvalName) return NextResponse.json({ error: 'Informe o nome de quem está aprovando.' }, { status: 400 })
       if (config?.require_document && !approvalDocument) return NextResponse.json({ error: 'Informe CPF/CNPJ para aprovar.' }, { status: 400 })
@@ -420,6 +445,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     if (action === 'alteracao') {
       const note = String(body.mensagem || '').trim()
+      if (note.length > 2000) return NextResponse.json({ error: 'Mensagem muito longa.' }, { status: 400 })
       if (!note) return NextResponse.json({ error: 'Escreva o que precisa ser alterado.' }, { status: 400 })
 
       const { data, error } = await supabaseAdmin
@@ -464,6 +490,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     if (action === 'recusar') {
       const reason = String(body.motivo || '').trim()
+      if (reason.length > 2000) return NextResponse.json({ error: 'Motivo muito longo.' }, { status: 400 })
       if (!reason) return NextResponse.json({ error: 'Informe o motivo da recusa.' }, { status: 400 })
 
       const { data, error } = await supabaseAdmin
