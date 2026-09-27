@@ -2,6 +2,9 @@ import { randomUUID } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { auditPlatformAction } from '@/lib/platform-admin'
 import { getSupabaseAdmin } from '@/lib/company-access'
+import { enforceRateLimit } from '@/lib/security/rate-limit'
+import { readJsonBody, requestBodyErrorResponse } from '@/lib/security/request'
+import { getClientIp, requireSameOrigin } from '@/lib/orcaly-security'
 import {
   findAuthUserByEmail,
   hashPlatformAdminInviteToken,
@@ -30,11 +33,25 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json().catch(() => ({}))
+  const originError = requireSameOrigin(request)
+  if (originError) return originError
+  let body: Record<string, unknown>
+  try {
+    body = await readJsonBody<Record<string, unknown>>(request, 12 * 1024)
+  } catch (error) {
+    return requestBodyErrorResponse(error) || errorResponse('Requisição inválida.', 400)
+  }
   const tokenHash = hashPlatformAdminInviteToken(body.token)
   const targetEmail = normalizeTeamInviteEmail(body.email)
   const password = String(body.password || '')
   if (!tokenHash) return errorResponse('Convite inválido.', 400)
+  const blocked = await enforceRateLimit(request, {
+    scope: 'platform-team-invite-activate',
+    limit: 8,
+    windowSeconds: 900,
+    identity: `${getClientIp(request)}:${tokenHash}`,
+  })
+  if (blocked) return blocked
   if (!validTeamInviteEmail(targetEmail)) return errorResponse('Confirme o e-mail que recebeu o convite.')
   if (!validTeamInvitePassword(password)) return errorResponse('A senha precisa ter de 10 a 128 caracteres, com pelo menos uma letra e um número.')
 

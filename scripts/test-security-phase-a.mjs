@@ -132,3 +132,25 @@ test('service-role key is never declared as NEXT_PUBLIC', () => {
   assert.match(source, /^SUPABASE_SERVICE_ROLE_KEY=/m)
   assert.doesNotMatch(source, /NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY/)
 })
+
+
+test('public account creation and payment routes have abuse controls', () => {
+  for (const file of [
+    'app/api/checkout/lead/route.ts',
+    'app/api/parceiros/register/route.ts',
+    'app/api/founders/activate/route.ts',
+    'app/api/team-invites/activate/route.ts',
+    'app/api/checkout/signup/card/route.ts',
+    'app/api/checkout/signup/pix/route.ts',
+  ]) {
+    const source = read(file)
+    assert.match(source, /enforceRateLimit/)
+    assert.match(source, /requireSameOrigin/)
+  }
+})
+
+test('Asaas webhook uses constant-time secret comparison and body bounds', () => {
+  const source = read('app/api/webhooks/asaas/route.ts')
+  assert.match(source, /timingSafeEqual/)
+  assert.match(source, /rawText\.length > 1_000_000/)
+})

@@ -13,6 +13,9 @@ import {
   validateSubdomainSlug,
 } from '@/lib/slug'
 import { getSupabaseAdmin } from '@/lib/company-access'
+import { enforceRateLimit } from '@/lib/security/rate-limit'
+import { readJsonBody, requestBodyErrorResponse } from '@/lib/security/request'
+import { getClientIp, requireSameOrigin } from '@/lib/orcaly-security'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -266,14 +269,15 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const originError = requireSameOrigin(request)
+  if (originError) return originError
+
   const supabaseAdmin = getSupabaseAdmin()
   let claimId = ''
   let createdUserId = ''
 
   try {
-    const body = await request
-      .json()
-      .catch(() => ({}))
+    const body = await readJsonBody<Record<string, unknown>>(request, 24 * 1024)
 
     const token = validToken(body.token)
     const email = normalizeEmail(body.email)
@@ -310,6 +314,14 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       )
     }
+
+    const blocked = await enforceRateLimit(request, {
+      scope: 'founder-activate',
+      limit: 8,
+      windowSeconds: 900,
+      identity: `${getClientIp(request)}:${hashToken(token)}`,
+    })
+    if (blocked) return blocked
 
     const invalidPassword = passwordError(password)
 
@@ -541,6 +553,9 @@ export async function POST(request: NextRequest) {
         'Conta Founder ativada. Seus 30 dias gratuitos começaram agora.',
     })
   } catch (error) {
+    const bodyError = requestBodyErrorResponse(error)
+    if (bodyError) return bodyError
+
     if (claimId) {
       if (createdUserId) {
         try {

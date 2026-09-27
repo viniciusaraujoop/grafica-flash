@@ -2,6 +2,8 @@ import {
   NextRequest,
   NextResponse,
 } from "next/server";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
+import { rejectOversizedRequest, requireSameOrigin } from "@/lib/orcaly-security";
 import {
   createCheckoutPayment,
 } from "@/lib/payments/checkout-service";
@@ -17,8 +19,19 @@ export async function POST(
   context: Context,
 ) {
   try {
+    const originError = requireSameOrigin(request);
+    if (originError) return originError;
+    const sizeError = rejectOversizedRequest(request, 64 * 1024);
+    if (sizeError) return sizeError;
     const { slug } =
       await context.params;
+    const blocked = await enforceRateLimit(request, {
+      scope: "public-checkout-pix",
+      limit: 12,
+      windowSeconds: 600,
+      identity: slug,
+    });
+    if (blocked) return blocked;
     const body = await request
       .json()
       .catch(() => ({}));

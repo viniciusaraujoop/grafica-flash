@@ -11,6 +11,9 @@ import {
   validateSubdomainSlug,
 } from "@/lib/slug";
 import { createSignupCheckoutToken } from "@/lib/signup-checkout";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
+import { readJsonBody, requestBodyErrorResponse } from "@/lib/security/request";
+import { requireSameOrigin } from "@/lib/orcaly-security";
 import {
   hashAffiliateValue,
   recordAffiliateReferral,
@@ -155,11 +158,14 @@ async function attachCampaignSource(input: {
 
 export async function POST(request: NextRequest) {
   try {
+    const originError = requireSameOrigin(request);
+    if (originError) return originError;
+
     if (!supabaseUrl || !serviceRoleKey) {
       return erro("Supabase service role não configurada.", 500);
     }
 
-    const body = await request.json();
+    const body = await readJsonBody<Record<string, unknown>>(request, 32 * 1024);
     const nome_responsavel = String(body.nome_responsavel || "").trim();
     const email = String(body.email || "").trim().toLowerCase();
     const cpf_cnpj = documentoLimpo(body.cpf_cnpj || body.documento || body.document);
@@ -175,6 +181,14 @@ export async function POST(request: NextRequest) {
     const estado = String(body.estado || "").trim().toUpperCase();
     const plano = String(body.plano || "profissional").trim().toLowerCase();
     const marketing_opt_in = Boolean(body.marketing_opt_in);
+
+    const blocked = await enforceRateLimit(request, {
+      scope: "signup-lead-create",
+      limit: 12,
+      windowSeconds: 900,
+      identity: `${requestIp(request)}:${email}`,
+    });
+    if (blocked) return blocked;
     const referral_code = String(body.referral_code || body.ref || "")
       .trim()
       .toUpperCase()
@@ -329,6 +343,9 @@ export async function POST(request: NextRequest) {
       subdomain_slug: validation.slug,
     });
   } catch (error) {
+    const bodyError = requestBodyErrorResponse(error);
+    if (bodyError) return bodyError;
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Erro ao iniciar o cadastro." },
       { status: 500 },

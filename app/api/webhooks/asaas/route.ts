@@ -1,6 +1,6 @@
 // ORCALY_AFFILIATE_INTEGRATION_V1
 // ORCALY_SUBSCRIPTION_WEBHOOK_V1
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAsaasWebhookToken } from "@/lib/payments/asaas-config";
 import { createFinancialEntryOnce } from "@/lib/payments/financial-integration";
@@ -18,6 +18,13 @@ const text = (value: unknown) => String(value || "").trim();
 const PAID = new Set(["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_RECEIVED_IN_CASH"]);
 const REFUNDED = new Set(["PAYMENT_REFUNDED", "PAYMENT_PARTIALLY_REFUNDED", "PAYMENT_CHARGEBACK_REQUESTED", "PAYMENT_CHARGEBACK_DISPUTE"]);
 
+function secureTokenMatches(received: string, expected: string) {
+  if (!received || !expected) return false;
+  const left = createHash("sha256").update(received).digest();
+  const right = createHash("sha256").update(expected).digest();
+  return timingSafeEqual(left, right);
+}
+
 function nextStatus(event: string, current: string) {
   if (REFUNDED.has(event)) return "REFUNDED";
   if (PAID.has(event)) return "PAID";
@@ -29,11 +36,14 @@ function nextStatus(event: string, current: string) {
 export async function POST(request: NextRequest) {
   try {
     const token = text(request.headers.get("asaas-access-token"));
-    if (!token || token !== requireAsaasWebhookToken()) {
+    if (!secureTokenMatches(token, requireAsaasWebhookToken())) {
       return NextResponse.json({ error: "Webhook nao autorizado." }, { status: 401 });
     }
 
+    const declared = Number(request.headers.get("content-length") || 0);
+    if (declared > 1_000_000) return NextResponse.json({ error: "Payload muito grande." }, { status: 413 });
     const rawText = await request.text();
+    if (rawText.length > 1_000_000) return NextResponse.json({ error: "Payload muito grande." }, { status: 413 });
     const payload = JSON.parse(rawText) as JsonRecord;
     const eventId = text(payload.id);
     const eventType = text(payload.event);

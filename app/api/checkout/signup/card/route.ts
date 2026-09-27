@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
+import { readJsonBody, requestBodyErrorResponse } from "@/lib/security/request";
+import { getClientIp, requireSameOrigin } from "@/lib/orcaly-security";
 import {
   createSignupCardSubscription,
 } from "@/lib/signup-checkout";
@@ -13,11 +16,21 @@ function statusFor(error: unknown) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}));
+    const originError = requireSameOrigin(request);
+    if (originError) return originError;
+    const body = await readJsonBody<Record<string, unknown>>(request, 16 * 1024);
+    const leadId = String(body.leadId || body.lead_id || "");
+    const blocked = await enforceRateLimit(request, {
+      scope: "signup-card",
+      limit: 8,
+      windowSeconds: 600,
+      identity: `${getClientIp(request)}:${leadId}`,
+    });
+    if (blocked) return blocked;
 
     return NextResponse.json(
       await createSignupCardSubscription({
-        leadId: String(body.leadId || body.lead_id || ""),
+        leadId,
         expires: body.expires,
         checkoutToken: body.token,
         cardTokenId: body.cardTokenId || body.card_token_id,
@@ -25,6 +38,9 @@ export async function POST(request: NextRequest) {
       }),
     );
   } catch (error) {
+    const bodyError = requestBodyErrorResponse(error);
+    if (bodyError) return bodyError;
+
     return NextResponse.json(
       {
         error:
