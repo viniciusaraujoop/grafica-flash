@@ -60,10 +60,10 @@ begin
    'income',g.income::text,'sell_proceeds',g.sell_proceeds::text,'basis_removed',g.basis_removed::text,'realized_gain',g.realized_gain::text,
    'incomplete_sells',g.incomplete_sells::text) order by g.name,g.id)
    from (select * from groups order by name,id limit 25 offset (p_page-1)*25) g),'[]'::jsonb),
-  'months',coalesce((select jsonb_agg(jsonb_build_object('month',m.month,'taxes',m.taxes::text,'income',m.income::text,
+  'months',coalesce((select jsonb_agg(jsonb_build_object('month',m.month_key,'taxes',m.taxes::text,'income',m.income::text,
    'sell_proceeds',m.sell_proceeds::text,'basis_removed',m.basis_removed::text,'realized_gain',m.realized_gain::text,
-   'records',m.records::text,'incomplete_sells',m.incomplete_sells::text) order by m.month)
-   from (select to_char(financial_date,'YYYY-MM') month,
+   'records',m.records::text,'incomplete_sells',m.incomplete_sells::text) order by m.month_key)
+   from (select to_char(financial_date,'YYYY-MM') as month_key,
     coalesce(sum(amount_cents) filter(where type='tax'),0) taxes,
     coalesce(sum(amount_cents) filter(where type in ('income','dividend','interest')),0) income,
     coalesce(sum(amount_cents) filter(where type='sell'),0) sell_proceeds,
