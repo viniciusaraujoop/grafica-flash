@@ -152,7 +152,7 @@ language sql stable security definer set search_path='' as $$
   from public.wealth_portfolio_transactions t
   join public.wealth_holdings h on h.id=t.holding_id and h.user_id=p_actor
   join public.wealth_portfolios p on p.id=h.portfolio_id and p.user_id=p_actor and p.kind='real'
-  where t.user_id=p_actor and t.type='sell' and (t.basis_removed_cents is null or t.realized_gain_cents is null)
+  where t.user_id=p_actor and t.type='sell' and t.financial_date between p_date-365 and p_date and (t.basis_removed_cents is null or t.realized_gain_cents is null)
 
   union all
   select
@@ -213,7 +213,7 @@ begin
   local_date:=(statement_timestamp() at time zone zone)::date;
   select * into candidate from ecosystem_private.wealth_alert_candidates(actor,local_date) c where c.alert_key=p_input->>'alert_key';
   if not found then raise exception 'alert changed or unavailable' using errcode='PT409';end if;
-  if not exists(select 1 from ecosystem_private.wealth_alert_state where user_id=actor) and (select count(*) from ecosystem_private.wealth_alert_state where user_id=actor)>=5000 then raise exception 'alert state capacity reached' using errcode='54000';end if;
+  if not exists(select 1 from ecosystem_private.wealth_alert_state where user_id=actor and alert_key=candidate.alert_key) and (select count(*) from ecosystem_private.wealth_alert_state where user_id=actor)>=5000 then raise exception 'alert state capacity reached' using errcode='54000';end if;
   if p_operation='dismiss' then
    insert into ecosystem_private.wealth_alert_state(user_id,alert_key,source,entity_id,dismissed_at,snoozed_until,updated_at)
    values(actor,candidate.alert_key,candidate.source,candidate.entity_id,clock_timestamp(),null,clock_timestamp())
