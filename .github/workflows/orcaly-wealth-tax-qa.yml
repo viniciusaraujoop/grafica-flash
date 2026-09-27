@@ -107,17 +107,35 @@ jobs:
             core.setSecret(token)
             core.setOutput('token', token)
 
-      - name: Resolve temporary protected Preview access
+      - name: Resolve exact temporary protected Preview access
         shell: bash
         env:
           QA_TOKEN: ${{ steps.preview_qa_oidc.outputs.token }}
         run: |
           set -euo pipefail
           response="$(curl --silent --show-error --fail-with-body             -X POST "$QA_CONTROL_URL"             -H "Authorization: Bearer $QA_TOKEN"             -H 'Content-Type: application/json'             --data "{\"action\":\"preview_access\",\"sourceCommit\":\"$GITHUB_SHA\"}")"
-          share="$(printf '%s' "$response" | jq -r '.share // empty')"
-          test -n "$share"
+          access="$(printf '%s' "$response" | jq -r '.share // empty')"
+          test -n "$access"
+
+          preview_url="$(ACCESS="$access" node -e "
+            const value=process.env.ACCESS||'';
+            const u=new URL(value);
+            if(u.protocol!=='https:'||!/^orcaly-[a-z0-9]+-vinicius-araujos-projects\\.vercel\\.app$/.test(u.hostname)||u.hostname.includes('-git-')) process.exit(2);
+            process.stdout.write(u.origin);
+          ")"
+          share="$(ACCESS="$access" node -e "
+            const u=new URL(process.env.ACCESS||'');
+            const value=u.searchParams.get('_vercel_share')||'';
+            if(!value) process.exit(2);
+            process.stdout.write(value);
+          ")"
+          echo "::add-mask::$access"
           echo "::add-mask::$share"
-          echo "VERCEL_PREVIEW_SHARE=$share" >> "$GITHUB_ENV"
+          {
+            echo "PREVIEW_URL=$preview_url"
+            echo "VERCEL_PREVIEW_SHARE=$share"
+          } >> "$GITHUB_ENV"
+          echo "Resolved exact protected Preview deployment URL."
 
       - name: Wait for exact protected Preview commit
         shell: bash
