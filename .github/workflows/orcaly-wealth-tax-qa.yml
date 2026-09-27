@@ -1,0 +1,148 @@
+name: Orçaly Wealth Tax Hosted QA
+
+on:
+  push:
+    branches:
+      - codex/orcaly-ecosystem
+    paths:
+      - 'app/apps/wealth/impostos/**'
+      - 'lib/wealth/tax.ts'
+      - 'supabase/migrations/20260927013000_wealth_tax_center_foundation.sql'
+      - 'scripts/test-wealth-tax.mjs'
+      - 'scripts/e2e-wealth-tax-hosted.mjs'
+      - '.github/workflows/orcaly-wealth-tax-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: orcaly-wealth-tax-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hosted-tax:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      QA_CONTROL_URL: https://zwxulgpjucxudadjdqov.supabase.co/functions/v1/wealth-rolling-qa-control
+      QA_OIDC_AUDIENCE: orcaly-wealth-rolling-qa
+      PREVIEW_URL: https://orcaly-git-codex-orcaly-ecosystem-vinicius-araujos-projects.vercel.app
+      ORCALY_STAGING_ANON_KEY: sb_publishable_tvQpmDKMlHCAcKIxLiN87w_c8J8iP3H
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_PATH"
+          echo "CHROMIUM_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+
+      - name: Mint QA OIDC token
+        uses: actions/github-script@v7
+        id: qa_oidc
+        with:
+          script: |
+            const token = await core.getIDToken(process.env.QA_OIDC_AUDIENCE)
+            core.setSecret(token)
+            core.setOutput('token', token)
+
+      - name: Mint Vercel trusted OIDC token
+        uses: actions/github-script@v7
+        id: vercel_oidc
+        with:
+          script: |
+            const token = await core.getIDToken()
+            core.setSecret(token)
+            core.setOutput('token', token)
+
+      - name: Create disposable Wealth identities
+        shell: bash
+        env:
+          QA_TOKEN: ${{ steps.qa_oidc.outputs.token }}
+        run: |
+          set -euo pipefail
+          create_user() {
+            local label="$1"
+            local mode="$2"
+            local response
+            response="$(curl --silent --show-error --fail-with-body               -X POST "$QA_CONTROL_URL"               -H "Authorization: Bearer $QA_TOKEN"               -H 'Content-Type: application/json'               --data "{\"action\":\"create\",\"mode\":\"$mode\",\"sourceCommit\":\"$GITHUB_SHA\"}")"
+            local id email password
+            id="$(printf '%s' "$response" | jq -r '.userId')"
+            email="$(printf '%s' "$response" | jq -r '.email')"
+            password="$(printf '%s' "$response" | jq -r '.password')"
+            test -n "$id"; test -n "$email"; test -n "$password"
+            echo "::add-mask::$id"; echo "::add-mask::$email"; echo "::add-mask::$password"
+            {
+              echo "QA_${label}_ID=$id"
+              echo "QA_${label}_EMAIL=$email"
+              echo "QA_${label}_PASSWORD=$password"
+            } >> "$GITHUB_ENV"
+          }
+          create_user A full
+          create_user B full
+          create_user NO none
+
+      - name: Wait for exact protected Preview commit
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ steps.vercel_oidc.outputs.token }}
+        run: |
+          set -euo pipefail
+          observed=""
+          for attempt in $(seq 1 90); do
+            body="$(curl -fsS               -H "x-vercel-trusted-oidc-idp-token: $VERCEL_TOKEN"               "$PREVIEW_URL/api/internal/preview-build" 2>/dev/null || true)"
+            observed="$(BODY="$body" node -e "try{process.stdout.write(JSON.parse(process.env.BODY||'{}').commit||'')}catch{}")"
+            if [ "$observed" = "$GITHUB_SHA" ]; then
+              echo "Preview converged to exact commit."
+              exit 0
+            fi
+            sleep 4
+          done
+          echo "Preview did not converge. expected=$GITHUB_SHA observed=${observed:-none}" >&2
+          exit 1
+
+      - name: Run hosted Tax Center matrix
+        env:
+          ORCALY_E2E_BASE_URL: ${{ env.PREVIEW_URL }}
+          ORCALY_EXPECTED_COMMIT: ${{ github.sha }}
+          VERCEL_TRUSTED_OIDC_TOKEN: ${{ steps.vercel_oidc.outputs.token }}
+          ORCALY_QA_OIDC_TOKEN: ${{ steps.qa_oidc.outputs.token }}
+        run: node scripts/e2e-wealth-tax-hosted.mjs
+
+      - name: Upload Tax QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wealth-tax-hosted-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: artifacts/wealth-tax/**
+
+      - name: Cleanup disposable Wealth identities
+        if: always()
+        shell: bash
+        env:
+          QA_TOKEN: ${{ steps.qa_oidc.outputs.token }}
+        run: |
+          set -euo pipefail
+          cleanup_user() {
+            local id="$1"
+            [ -z "$id" ] && return 0
+            curl --silent --show-error --fail-with-body               -X POST "$QA_CONTROL_URL"               -H "Authorization: Bearer $QA_TOKEN"               -H 'Content-Type: application/json'               --data "{\"action\":\"cleanup\",\"userId\":\"$id\",\"sourceCommit\":\"$GITHUB_SHA\"}" >/dev/null
+          }
+          cleanup_user "${QA_A_ID:-}"
+          cleanup_user "${QA_B_ID:-}"
+          cleanup_user "${QA_NO_ID:-}"
