@@ -110,7 +110,9 @@ jobs:
           test -n "$access"
           PREVIEW_URL="$(ACCESS="$access" node -e "
             const u=new URL(process.env.ACCESS||'');
-            if(u.protocol!=='https:'||!/^orcaly-[a-z0-9]+-vinicius-araujos-projects\\.vercel\\.app$/.test(u.hostname)||u.hostname.includes('-git-')) process.exit(2);
+            const exact=/^orcaly-[a-z0-9]+-vinicius-araujos-projects\\.vercel\\.app$/.test(u.hostname);
+            const branch=u.hostname==='orcaly-git-codex-orcaly-ecosystem-vinicius-araujos-projects.vercel.app';
+            if(u.protocol!=='https:'||(!exact&&!branch)) process.exit(2);
             process.stdout.write(u.origin);
           ")"
           VERCEL_PREVIEW_SHARE="$(ACCESS="$access" node -e "
