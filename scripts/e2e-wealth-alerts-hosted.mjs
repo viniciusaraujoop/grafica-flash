@@ -39,7 +39,7 @@ const setAccess=async(mode)=>{
  assert.equal(response.status,200,`set_access ${mode} failed`)
 }
 const report=[],pass=check=>{report.push({check,status:'PASS'});console.log(`PASS ${check}`)}
-let browser
+let browser,documentObjectPath
 
 try{
  for(const user of [a,b,no]){
@@ -77,8 +77,8 @@ try{
   id:documentId,title:'Alert expiring document QA',category:'contract',document_date:date,expires_on:plus10,notes:'Hosted Alerts QA',links:[],
   mime_type:'application/pdf',size_bytes:pdf.length,sha256:sha
  })}))
- const objectPath=`${a.id}/${documentId}/document`
- ok(await a.db.storage.from('wealth-documents').upload(objectPath,pdf,{contentType:'application/pdf',upsert:false}))
+ documentObjectPath=`${a.id}/${documentId}/document`
+ ok(await a.db.storage.from('wealth-documents').upload(documentObjectPath,pdf,{contentType:'application/pdf',upsert:false}))
  const reserved=ok(await a.db.from('wealth_documents').select('version,status').eq('id',documentId).single())
  assert.equal(reserved.status,'pending')
  ok(await a.db.rpc('manage_wealth_document',{p_operation:'finalize',p_input:input({id:documentId,version:reserved.version})}))
@@ -204,6 +204,7 @@ try{
  pass('alerts-cross-user-UI-and-anonymous-redirect')
 
  await context.close()
+ if(documentObjectPath){ok(await a.db.storage.from('wealth-documents').remove([documentObjectPath]));documentObjectPath=undefined}
  await Promise.all([a.db.auth.signOut(),b.db.auth.signOut(),no.db.auth.signOut()])
  await fs.writeFile(`${output}/report.json`,JSON.stringify({commit:expectedCommit,appUrl,date,report,pageErrors,productionRequests,finishedAt:new Date().toISOString()},null,2))
  console.log(JSON.stringify({checks:report.length,failed:report.filter(x=>x.status!=='PASS').length,pageErrors,productionRequests},null,2))
@@ -211,5 +212,6 @@ try{
  await fs.writeFile(`${output}/failure.txt`,String(error?.stack??error))
  throw error
 }finally{
+ if(documentObjectPath)await a.db.storage.from('wealth-documents').remove([documentObjectPath]).catch(()=>{})
  await browser?.close().catch(()=>{})
 }
