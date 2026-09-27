@@ -31,7 +31,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: phase-a-public-placeholder
       SUPABASE_SERVICE_ROLE_KEY: phase-a-server-placeholder
-      PAYMENT_CREDENTIALS_ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+      PAYMENT_CREDENTIALS_ENCRYPTION_KEY: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
       CRON_SECRET: phase-a-cron-placeholder
       NEXT_PUBLIC_ROOT_DOMAIN: example.test
       NEXT_PUBLIC_SITE_URL: https://example.test
