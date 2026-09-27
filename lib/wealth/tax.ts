@@ -51,8 +51,8 @@ export function readTaxCenter(value:unknown):TaxCenter{
   for(const key of ['records','taxes','income','sell_proceeds','basis_removed','incomplete_sells'] as const)if(!unsigned(row[key]))throw Error('Histórico fiscal inválido')
   if(!signed(row.realized_gain))throw Error('Resultado mensal inválido')
  }
- const sumUnsigned=(key:'taxes'|'income'|'sell_proceeds'|'basis_removed'|'records'|'incomplete_sells')=>v.months.reduce((sum,row)=>sum+BigInt(row[key]),0n)
- const sumSigned=(key:'realized_gain')=>v.months.reduce((sum,row)=>sum+BigInt(row[key]),0n)
+ const sumUnsigned=(key:'taxes'|'income'|'sell_proceeds'|'basis_removed'|'records'|'incomplete_sells')=>v.months.reduce((sum,row)=>sum+BigInt(row[key]),BigInt(0))
+ const sumSigned=(key:'realized_gain')=>v.months.reduce((sum,row)=>sum+BigInt(row[key]),BigInt(0))
  if(sumUnsigned('taxes')!==BigInt(v.taxes)||sumUnsigned('income')!==BigInt(v.income)||sumUnsigned('sell_proceeds')!==BigInt(v.sell_proceeds)||sumUnsigned('basis_removed')!==BigInt(v.basis_removed)||sumUnsigned('records')!==BigInt(v.record_count)||sumUnsigned('incomplete_sells')!==BigInt(v.incomplete_sell_count)||sumSigned('realized_gain')!==BigInt(v.realized_gain))throw Error('Histórico fiscal incompleto')
  return v
 }
