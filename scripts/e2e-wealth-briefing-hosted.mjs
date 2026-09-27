@@ -124,10 +124,7 @@ try{
  await login(a,morningUrl)
  await page.getByRole('heading',{name:'Wealth Morning',exact:true}).waitFor()
  let body=await page.locator('body').innerText()
- for(const expected of ['Observe.','Entenda.','Aja.','120.000','NOT_CONFIGURED','Briefing goal QA'].filter(Boolean)){
-  if(expected==='Briefing goal QA')continue
-  assert.ok(body.includes(expected),expected)
- }
+ for(const expected of ['Observe.','Entenda.','Aja.','1.200,00','NOT_CONFIGURED']) assert.ok(body.includes(expected),expected)
  assert.ok(body.includes('1 dívida(s) aberta')||body.includes('2 dívida(s) aberta')||body.includes('2 dívida(s)'))
  assert.deepEqual(errors,[])
  pass('briefing-protected-preview-exact-commit-authenticated-morning-render')
@@ -164,7 +161,7 @@ try{
  await otherPage.getByRole('button',{name:'Entrar no painel',exact:true}).click()
  await otherPage.getByRole('heading',{name:'Wealth Morning',exact:true}).waitFor()
  const otherBody=await otherPage.locator('body').innerText()
- assert.ok(!otherBody.includes('120.000'));assert.ok(!otherBody.includes('Briefing protection QA'))
+ assert.ok(!otherBody.includes('1.200,00'));assert.ok(!otherBody.includes('Vendas com evidência fiscal incompleta'))
  const anonymousContext=await makeContext();await authorizePreview(anonymousContext)
  const anon=await anonymousContext.request.get(morningUrl,{maxRedirects:0})
  assert.ok([303,307].includes(anon.status()));assert.ok(String(anon.headers().location||'').includes('/login'))
