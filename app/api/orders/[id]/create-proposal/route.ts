@@ -37,7 +37,7 @@ export async function POST(request: NextRequest, context: Context) {
     // Mantive algumas tentativas porque cada versão do Orçaly pode ter uma tabela proposals
     // com nomes de colunas diferentes. O truque aqui é tipar como Record<string, any>,
     // porque o TypeScript resolveu fiscalizar a vida alheia e reclamar da união de objetos.
-    const attempts: Array<Record<string, any>> = [
+    const attempts: Array<Record<string, unknown>> = [
       {
         company_id: access.company.id,
         order_id: id,
@@ -69,12 +69,12 @@ export async function POST(request: NextRequest, context: Context) {
       },
     ]
 
-    let lastError: any = null
+    let lastError: unknown = null
 
     for (const payload of attempts) {
       const { data: proposal, error } = await supabaseAdmin
         .from('proposals')
-        .insert(payload as any)
+        .insert(payload)
         .select('*')
         .single()
 

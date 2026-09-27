@@ -9,6 +9,52 @@ import { buildOrderWhatsAppLink, hasOrderWhatsAppPhone } from '@/lib/order-whats
 
 const statusFlow = ['Recebido', 'Em análise', 'Aprovado', 'Em produção', 'Pronto', 'Entregue']
 
+type OrderDetail = {
+  status?: string | null
+  payment_status?: string | null
+  paid_at?: string | null
+  total_amount?: number | string | null
+  total?: number | string | null
+  valor_total?: number | string | null
+  preco_estimado?: number | string | null
+  prioridade?: string | null
+  prazo_entrega?: string | null
+  responsavel_id?: string | null
+  responsavel_nome?: string | null
+  canal_origem?: string | null
+  endereco_entrega?: string | null
+  forma_pagamento?: string | null
+  observacoes_internas?: string | null
+  observacoes?: string | null
+  nome?: string | null
+  telefone?: string | null
+  produto?: string | null
+  quantidade?: number | string | null
+  largura?: number | string | null
+  altura?: number | string | null
+  cupom_codigo?: string | null
+  arquivo_url?: string | null
+  file_url?: string | null
+  created_at?: string | null
+  [key: string]: unknown
+}
+
+type OrderTimelineItem = {
+  id: string
+  old_status?: string | null
+  new_status?: string | null
+  note?: string | null
+  changed_by_email?: string | null
+  created_at?: string | null
+}
+
+type OrderComment = {
+  id: string
+  comentario?: string | null
+  user_email?: string | null
+  created_at?: string | null
+}
+
 const statusOptions = [
   'Recebido',
   'Pendente',
@@ -44,9 +90,9 @@ export default function PedidoDetalheProPage() {
   const params = useParams()
   const id = String(params?.id || '')
   const [token, setToken] = useState('')
-  const [order, setOrder] = useState<any>(null)
-  const [timeline, setTimeline] = useState<any[]>([])
-  const [comments, setComments] = useState<any[]>([])
+  const [order, setOrder] = useState<OrderDetail | null>(null)
+  const [timeline, setTimeline] = useState<OrderTimelineItem[]>([])
+  const [comments, setComments] = useState<OrderComment[]>([])
   const [comment, setComment] = useState('')
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(true)
@@ -113,8 +159,8 @@ export default function PedidoDetalheProPage() {
     if (id) load()
   }, [id])
 
-  function update(field: string, value: any) {
-    setOrder((current: any) => ({ ...(current || {}), [field]: value }))
+  function update(field: string, value: unknown) {
+    setOrder((current) => ({ ...(current || {}), [field]: value }))
   }
 
   async function save() {
