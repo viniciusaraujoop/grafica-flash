@@ -305,8 +305,8 @@ begin
   ),
   'source_coverage',jsonb_build_object('recurrence','ACTIVE','debt','ACTIVE','goal','ACTIVE','vault','ACTIVE','shield','ACTIVE','portfolio','ACTIVE','tax','ACTIVE','automation','ACTIVE'),
   'view',p_view,'count',(select count(*)::text from filtered),
-  'alerts',coalesce((select jsonb_agg(to_jsonb(x) order by priority_rank desc,event_date nulls last,source,alert_key) from (
-   select alert_key,priority,source,reason,entity_id,title,detail,deep_link,event_date,state,notification_eligible,cooldown_until,snoozed_until,dismissed_at
+  'alerts',coalesce((select jsonb_agg(to_jsonb(x)-'priority_rank' order by priority_rank desc,event_date nulls last,source,alert_key) from (
+   select alert_key,priority,priority_rank,source,reason,entity_id,title,detail,deep_link,event_date,state,notification_eligible,cooldown_until,snoozed_until,dismissed_at
    from filtered order by priority_rank desc,event_date nulls last,source,alert_key limit 25 offset (p_page-1)*25
   )x),'[]'::jsonb)
  ) into result;
