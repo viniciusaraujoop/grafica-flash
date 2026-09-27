@@ -43,7 +43,7 @@ test('local analysis is exact, traceable and never turns missing market data int
  const r=localAskAnswer(context,{question:'Como está meu patrimônio?',mode:'analysis'})
  assert.ok(r.answer.includes('7.500,00'));assert.ok(r.answer.includes('10.000,00'));assert.ok(r.answer.includes('2.500,00'))
  assert.match(r.answer,/1 posição/)
- const sources=askSources(context,'net_worth');assert.deepEqual(sources.map(x=>x.id),['net_worth','health','summary']);assert.ok(sources.every(x=>x.href.startsWith('/apps/wealth/')))
+ const sources=askSources(context,'net_worth');assert.deepEqual(sources.map(x=>x.id),['net_worth','health','summary']);assert.ok(sources.every(x=>x.href==='/apps/wealth'||x.href.startsWith('/apps/wealth/')))
  const market=localAskAnswer(context,{question:'Qual o dólar agora?',mode:'analysis'});assert.equal(market.boundary,'MARKET_NOT_CONFIGURED');assert.match(market.answer,/não possui feed de mercado/)
 })
 
