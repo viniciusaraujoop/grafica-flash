@@ -10,6 +10,7 @@ function Fields({document,options}:{document?:WealthDocument;options:PlanningOpt
   <label>Título do documento<input name="title" required maxLength={160} defaultValue={document?.title}/></label>
   <label>Categoria<select name="category" defaultValue={document?.category??'other'}>{Object.entries(documentCategories).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
   <label>Data do documento (opcional)<input name="document_date" type="date" min="1900-01-01" max="2200-12-31" defaultValue={document?.document_date??''}/></label>
+  <label>Válido até (opcional)<input name="expires_on" type="date" min="1900-01-01" max="2200-12-31" defaultValue={document?.expires_on??''}/></label>
  </div><label>Observações<textarea name="notes" maxLength={2000} defaultValue={document?.notes}/></label>
  <fieldset><legend>Referências pessoais (até cinco)</legend><p className={styles.muted}>Vincular não movimenta dinheiro nem compartilha o arquivo. Seleção limitada às primeiras 100 referências de cada tipo e às já vinculadas.</p>
  {Array.from({length:5},(_,i)=><label key={i}>Referência {i+1}<select name="link" defaultValue={document?.links[i]?`${document.links[i].kind}:${document.links[i].id}`:''}><option value="">Sem vínculo</option>{options.filter(o=>['goal','debt','portfolio'].includes(o.kind)).map(o=><option key={`${o.kind}:${o.id}`} value={`${o.kind}:${o.id}`}>{o.kind==='goal'?'Meta':o.kind==='debt'?'Dívida':'Carteira'} · {o.title}</option>)}</select></label>)}

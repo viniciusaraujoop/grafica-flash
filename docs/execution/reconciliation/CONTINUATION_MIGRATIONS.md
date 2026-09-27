@@ -82,3 +82,14 @@ Exceção de fidelidade do ledger textual: `supabase_migrations.schema_migration
 Objetos: função pública STABLE/SECURITY INVOKER com RLS/owner/entitlement e ACL restrita; índice parcial de eventos fiscais declarados. Sem tabela de imposto, segundo saldo, cron, provider, webhook, regra tributária ou jurisdição.
 
 Certificação: runtime `d47ac1869dcfc22b93e122508153caf665d09cdf`, deployment `dpl_BscyaUKzc7ZrE3PZxwQSUjnBMQmv` READY, hosted run `36319880597` 7/7 PASS, domain/PG 7/7 PASS, artifact `10932416353`, cleanup completo zero. Evidências em `docs/qa/ORCALY_WEALTH_TAX*`.
+
+
+## V8 — Morning / Night
+
+`20260927132000_wealth_morning_night_briefing`: LOCAL_ONLY vs produção. Staging contém **25 migrations**; produção auditada somente leitura não possui essa versão nem `public.wealth_daily_briefing(text,date)`.
+
+A unidade adiciona somente o read model `public.wealth_daily_briefing(text,date)`, `STABLE` e `SECURITY INVOKER`, com execução autenticada e anon negado. Reutiliza fontes Wealth owner-scoped existentes e não cria nova tabela financeira, segundo saldo, cron, provider, webhook ou integração externa. Banco e mercado permanecem `NOT_CONFIGURED`.
+
+A primeira tentativa pelo endpoint padrão de migration encontrou incompatibilidade do mecanismo de ledger legado e deixou apenas a função recém-criada sem versão registrada; esse objeto órfão foi removido imediatamente enquanto o staging estava vazio. A versão `20260927132000` foi então aplicada por transação controlada com predecessor Tax verificado. Nenhuma migration aplicada foi editada, renumerada ou reparada; mudanças futuras usam migration nova.
+
+Certificação: runtime `9a2c66dbb2e6bf00c484b1791103b2bccd15becd`, deployment imutável `dpl_4JpN5CxFx9qT4nMgy3kTANxEKLek` READY, hosted run `36325027162` com 7/7 PASS, domain/PG 5/5 PASS, artifact `10934075693`, 12 screenshots e cleanup completo zero. Rolling V8 `36325027679` e Platform Quality Gate `36325030319` PASS. Produção permaneceu read-only e sem objetos Morning/Night. Evidências em `docs/qa/ORCALY_WEALTH_BRIEFING*`.

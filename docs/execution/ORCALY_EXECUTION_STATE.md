@@ -1,19 +1,19 @@
-# Orçaly Execution State — Tax certificado
+# Orçaly Execution State — Morning / Night certificado
 
-STATUS: CONTINUATION_ACTIVE. Tax Center certificado. Próxima unidade: **Morning / Night**. Master V5/V8 ainda incompleto; DEVELOPMENT_COMPLETE / READY_FOR_PRODUCTION não satisfeitos.
+STATUS: CONTINUATION_ACTIVE. Tax Center e Morning / Night certificados. Próxima unidade: **Alerts**. DEVELOPMENT_COMPLETE / READY_FOR_PRODUCTION ainda não satisfeitos.
 
-Branch `codex/orcaly-ecosystem`. Runtime Tax certificado: `d47ac1869dcfc22b93e122508153caf665d09cdf`. Preview `dpl_BscyaUKzc7ZrE3PZxwQSUjnBMQmv` READY em `https://orcaly-htbz9mjp2-vinicius-araujos-projects.vercel.app`.
+Branch `codex/orcaly-ecosystem`. Runtime Morning/Night certificado: `9a2c66dbb2e6bf00c484b1791103b2bccd15becd`.
 
-Tax Hosted QA run `36319880597`: 7/7 checks PASS; SHA exato; staging auth real; ledger/no-second-cash; RLS/owner/entitlements/cross-user; Lab/invalid window; UI autenticada; anonymous redirect; 320/390/768/1024/1440/1920; light/dark; Axe; teclado/foco; reduced motion; sem overflow. Artifact `10932416353`, 12 screenshots.
+Preview certificado: `dpl_4JpN5CxFx9qT4nMgy3kTANxEKLek`, READY, `https://orcaly-j3apodya6-vinicius-araujos-projects.vercel.app`.
 
-Tax domain/PG: 7 PASS. Rolling V8 `36319880582`: PASS. Platform Quality Gate `36319883451`: PASS. Next build/TypeScript/diff PASS. Tax scoped lint: 0 erros.
+Hosted Morning/Night run `36325027162`: 7/7 PASS; SHA exato; staging auth real; owner/RLS/cross-user/entitlement; Morning + Night; anonymous redirect; 320/390/768/1024/1440/1920; light/dark; Axe; teclado/foco; reduced motion; no overflow; 0 page errors; 0 requests observados à produção. Artifact `10934075693`, 12 screenshots.
 
-Staging: 24 migrations; Tax `20260927013000_wealth_tax_center_foundation`. RPC INVOKER/STABLE e índice presentes. Cleanup pós-E2E: auth/users/sessions/Storage/Wealth/receipts/audit/jobs/outbox/idempotency = 0; cron ativo = 0.
+Domain/PG: 5 PASS. Rolling V8 `36325027679`: PASS. Platform Quality Gate `36325030319`: PASS. Scoped lint: 0 erros.
 
-Produção `ozrasuktfthsvbqprtel` permanece read-only, 51 migrations e sem objetos Tax. Main `d940debf9556e1180fa3c709da0f560d3aa96374` não foi mergeada/promoção não ocorreu.
+Staging: **25 migrations**, última `20260927132000_wealth_morning_night_briefing`. RPC Morning/Night INVOKER/STABLE e ACL restrita. Cleanup final QA/users/sessions/Storage/fontes Wealth verificadas = 0.
 
-Reconciliação Tax: arquivo correto/imutável desde `e7122f0`; o campo textual `statements[1]` perdeu um `$` em cada delimitador `$$` durante o registro manual. Sem repair e sem edição de migration aplicada.
+Produção `ozrasuktfthsvbqprtel` permanece read-only e sem migration/função Morning/Night. Main `d940debf9556e1180fa3c709da0f560d3aa96374` não foi mergeada; nenhum deploy foi promovido.
 
-Gates globais ainda abertos: Main Site `global-lint-baseline` separado (257 erros/148 warnings), advisors herdados, Auth/MFA global, leitor de tela humano, performance/observability, integrações externas e restante do Master.
+Main Site `global-lint-baseline` separado permanece 257 erros/148 warnings herdados. Advisors herdados e demais gates globais continuam abertos.
 
-Próximo: Morning / Night → Alerts → Ask Wealth → Portfolio Intelligence → Market/Radar → Open Finance → Regulatory Mode → demais fases.
+Próximo roadmap Wealth: **Alerts → Ask Wealth → Portfolio Intelligence → Market/Radar → Open Finance → Regulatory Mode**.

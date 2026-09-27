@@ -11,10 +11,10 @@ export async function documentAccess(write=false){
 export function documentMetadata(form:FormData){
  const title=String(form.get('title')??'').trim(),category=String(form.get('category')??''),notes=String(form.get('notes')??'')
  if(!title||title.length>160||!Object.hasOwn(documentCategories,category)||notes.length>2000)throw Error('Confira título, categoria e observações.')
- const date=String(form.get('document_date')??'')
+ const date=String(form.get('document_date')??''),expires=String(form.get('expires_on')??'')
  const links=form.getAll('link').filter(Boolean).map(value=>{const [kind,id]=String(value).split(':');if(!['goal','debt','portfolio'].includes(kind))throw Error('Vínculo inválido.');return {kind,id:uuid(id)}})
  if(links.length>5)throw Error('Selecione até cinco referências.')
- return {title,category,notes,document_date:date?financialDate(date):null,links}
+ return {title,category,notes,document_date:date?financialDate(date):null,expires_on:expires?financialDate(expires):null,links}
 }
 export function documentCommand(form:FormData){
  if(form.get('confirmed')!=='yes')throw Error('Confirme a ação.')

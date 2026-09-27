@@ -2,7 +2,7 @@ export const documentBucket='wealth-documents'
 export const documentMaxBytes=3*1024*1024
 export const documentCategories={statement:'Extrato',contract:'Contrato',receipt:'Comprovante',tax:'Imposto',insurance:'Seguro',other:'Outro'}
 export const documentStatuses={pending:'Envio incompleto',active:'Disponível',deleting:'Exclusão em andamento',deleted:'Removido'}
-export type WealthDocument={id:string;title:string;category:keyof typeof documentCategories;document_date:string|null;notes:string;links:{kind:'goal'|'debt'|'portfolio';id:string}[];mime_type:string;size_bytes:number;sha256:string;object_path:string;status:keyof typeof documentStatuses;version:number;created_at:string}
+export type WealthDocument={id:string;title:string;category:keyof typeof documentCategories;document_date:string|null;expires_on:string|null;notes:string;links:{kind:'goal'|'debt'|'portfolio';id:string}[];mime_type:string;size_bytes:number;sha256:string;object_path:string;status:keyof typeof documentStatuses;version:number;created_at:string}
 /** Signature checks identify supported containers; they do not certify malware safety. */
 export function documentMime(bytes:Uint8Array){
  if(!bytes.length||bytes.length>documentMaxBytes)throw Error('O arquivo deve ter entre 1 byte e 3 MiB.')

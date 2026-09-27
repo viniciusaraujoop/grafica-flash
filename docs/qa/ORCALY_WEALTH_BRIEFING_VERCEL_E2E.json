@@ -1,0 +1,60 @@
+{
+  "status": "PASS",
+  "runtime_sha": "9a2c66dbb2e6bf00c484b1791103b2bccd15becd",
+  "workflow_run_id": 36325027162,
+  "deployment_id": "dpl_4JpN5CxFx9qT4nMgy3kTANxEKLek",
+  "preview_url": "https://orcaly-j3apodya6-vinicius-araujos-projects.vercel.app",
+  "finished_at": "2026-09-27T14:15:33.402Z",
+  "checks": [
+    "briefing-staging-auth-real-password-and-JWT-issuer",
+    "briefing-deterministic-owner-facts-morning-night-exact-cents-and-provider-boundaries",
+    "briefing-entitlement-rechecked-on-every-read",
+    "briefing-protected-preview-exact-commit-authenticated-morning-render",
+    "briefing-night-day-changes-tomorrow-and-explainable-actions",
+    "briefing-six-widths-two-themes-Axe-keyboard-focus-reduced-motion-no-overflow",
+    "briefing-cross-user-UI-and-anonymous-redirect"
+  ],
+  "failed": 0,
+  "page_errors": [],
+  "widths": [
+    320,
+    390,
+    768,
+    1024,
+    1440,
+    1920
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "accessibility": {
+    "axe_widths": [
+      320,
+      1440
+    ],
+    "violations": 0,
+    "keyboard": true,
+    "focus": true,
+    "reduced_motion": true,
+    "no_overflow": true
+  },
+  "screenshots": 12,
+  "artifact": {
+    "id": 10934075693,
+    "name": "wealth-briefing-hosted-9a2c66dbb2e6bf00c484b1791103b2bccd15becd",
+    "size_bytes": 4064524,
+    "sha256": "b99fc44c83dba12a0e7a587ae5375638ac4d2d4df0578081ac866d9f4c51407c"
+  },
+  "production_requests_observed": 0,
+  "cleanup": {
+    "qa_users": 0,
+    "qa_sessions": 0,
+    "storage_objects": 0,
+    "wealth_entries": 0,
+    "wealth_goals": 0,
+    "wealth_portfolios": 0,
+    "wealth_portfolio_transactions": 0,
+    "wealth_protection_policies": 0
+  }
+}
