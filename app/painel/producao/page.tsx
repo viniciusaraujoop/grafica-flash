@@ -21,9 +21,9 @@ function statusTone(status: string) {
 }
 
 export default function ProducaoPage() {
-  const [company, setCompany] = useState<any>(null)
+  const [, setCompany] = useState<unknown>(null)
   const [orders, setOrders] = useState<any[]>([])
-  const [members, setMembers] = useState<any[]>([])
+  const [, setMembers] = useState<unknown[]>([])
   const [token, setToken] = useState('')
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState('')

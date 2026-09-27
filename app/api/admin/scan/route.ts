@@ -17,10 +17,6 @@ function daysUntil(value: any) {
   return Math.ceil((new Date(value).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
 }
 
-function safe(value: string) {
-  return String(value || '').replace(/'/g, "''")
-}
-
 function issue(args: {
   code: string
   title: string

@@ -2,7 +2,6 @@
 
 // ORCALY_OWNER_SUPPORT_CONTROL_V1
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {

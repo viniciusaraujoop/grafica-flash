@@ -28,7 +28,7 @@ const cargoDescricao: Record<string, string> = {
 
 export default function ConfiguracoesEquipeCorrigidaPage() {
   const [token, setToken] = useState('')
-  const [company, setCompany] = useState<any>(null)
+  const [, setCompany] = useState<unknown>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)

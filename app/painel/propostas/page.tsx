@@ -55,7 +55,7 @@ function statusLabel(status?: string | null) {
 }
 
 export default function PropostasPage() {
-  const [company, setCompany] = useState<any>(null)
+  const [, setCompany] = useState<unknown>(null)
   const [propostas, setPropostas] = useState<Proposal[]>([])
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState('')
