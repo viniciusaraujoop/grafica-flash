@@ -1202,7 +1202,7 @@ export default function AdminIndicacoesPage() {
               const partner =
                 partnerMap.get(
                   String(row.affiliate_id),
-                ) || {};
+                );
               const lead = row.lead || {};
               const company = row.company || {};
               const customerName =
@@ -1262,7 +1262,7 @@ export default function AdminIndicacoesPage() {
 
                       <p className="mt-2 text-sm font-bold text-slate-500">
                         Indicador:{" "}
-                        {partner.name ||
+                        {partner?.name ||
                           row.referral_code}{" "}
                         • Código {row.referral_code}
                       </p>
@@ -1368,7 +1368,7 @@ export default function AdminIndicacoesPage() {
               const partner =
                 partnerMap.get(
                   String(row.affiliate_id),
-                ) || {};
+                );
 
               return (
                 <article
@@ -1400,7 +1400,7 @@ export default function AdminIndicacoesPage() {
                         />
                       </div>
                       <p className="mt-2 text-sm font-bold text-slate-500">
-                        {partner.name ||
+                        {partner?.name ||
                           "Parceiro"}{" "}
                         • Plano {row.plan} • Base{" "}
                         {money(row.eligible_amount)} •{" "}
@@ -1465,7 +1465,7 @@ export default function AdminIndicacoesPage() {
               const partner =
                 partnerMap.get(
                   String(row.affiliate_id),
-                ) || {};
+                );
               const status = String(row.status);
 
               return (
@@ -1493,7 +1493,7 @@ export default function AdminIndicacoesPage() {
                         />
                       </div>
                       <p className="mt-2 text-sm font-bold text-slate-500">
-                        {partner.name ||
+                        {partner?.name ||
                           row.holder_name}{" "}
                         • {row.holder_name}
                       </p>
@@ -1650,8 +1650,7 @@ export default function AdminIndicacoesPage() {
               {(ranking.top || []).map(
                 (row) => {
                   const profile =
-                    partnerMap.get(String(row.id)) ||
-                    {};
+                    partnerMap.get(String(row.id));
                   return (
                     <article
                       key={row.id}
@@ -1669,11 +1668,11 @@ export default function AdminIndicacoesPage() {
                         </span>
                         <div>
                           <p className="text-lg font-black">
-                            {profile.name || row.name}
+                            {profile?.name || row.name}
                           </p>
                           <p className="mt-1 text-xs font-bold text-slate-400">
                             {row.conversions} clientes pagos • Código{" "}
-                            {profile.code || "—"}
+                            {profile?.code || "—"}
                           </p>
                         </div>
                       </div>
