@@ -150,6 +150,12 @@ const MUTANTS = [
   "file": "lib/orcaly-next/academy/library.ts",
   "from": ": Number.POSITIVE_INFINITY\n    const db",
   "to": ": 0\n    const db"
+ },
+ {
+  "name": "M24 preferências de leitura sem limite",
+  "file": "lib/orcaly-next/academy/reading.ts",
+  "from": "return Math.min(max, Math.max(min, Math.round(value)))",
+  "to": "return Math.round(value)"
  }
 ]
 

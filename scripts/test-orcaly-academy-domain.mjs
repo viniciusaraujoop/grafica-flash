@@ -17,6 +17,7 @@ const search = await import('../lib/orcaly-next/academy/search.ts')
 const cont = await import('../lib/orcaly-next/academy/continue.ts')
 const library = await import('../lib/orcaly-next/academy/library.ts')
 const demo = await import('../lib/orcaly-next/academy/demo-data.ts')
+const reading = await import('../lib/orcaly-next/academy/reading.ts')
 hook.deregister()
 
 const NOW = demo.ACADEMY_DEMO_NOW
@@ -275,4 +276,18 @@ test('library: filters, drafts hidden, unknown duration sorts last, stable order
   const firstUnknown = byDuration.findIndex((r) => r.item.duration.kind !== 'KNOWN')
   assert.ok(byDuration.slice(firstUnknown).every((r) => r.item.duration.kind !== 'KNOWN'))
   assert.deepEqual(library.filterLibrary([...demo.demoItems].reverse(), demo.demoProgress, library.DEFAULT_FILTER, NOW).map((r) => r.item.id), all.map((r) => r.item.id))
+})
+
+test('reading preferences are bounded (font 14–24px, line-height 1.4–2.0) and formatters never invent data', () => {
+  const d = reading.DEFAULT_READING_PREFS
+  assert.deepEqual(reading.clampReadingPrefs({ fontPx: 99, leadingTenths: 99, width: 'giant', theme: 'neon' }), { fontPx: 24, leadingTenths: 20, width: 'standard', theme: 'inherit' })
+  assert.deepEqual(reading.clampReadingPrefs({ fontPx: -5, leadingTenths: 0 }), { ...d, fontPx: 14, leadingTenths: 14 })
+  assert.equal(reading.clampReadingPrefs({ fontPx: 19 }).fontPx, 18) // even steps only
+  assert.deepEqual(reading.clampReadingPrefs({ fontPx: Number.NaN, leadingTenths: '17' }), d)
+  assert.deepEqual(reading.clampReadingPrefs(null), d)
+  assert.equal(reading.formatLeading(14), '1,4'); assert.equal(reading.formatLeading(20), '2,0')
+  assert.equal(reading.formatDateBR(null), 'Data não informada')
+  assert.equal(reading.formatDateBR('lixo'), 'Data não informada')
+  assert.equal(reading.formatDateBR('2026-09-27T23:30:00-03:00'), '27/09/2026') // no timezone shift
+  assert.equal(reading.formatClock(754), '12:34'); assert.equal(reading.formatClock(0), '0:00')
 })
