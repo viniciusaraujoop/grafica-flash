@@ -50,21 +50,15 @@ jobs:
           echo "CHROMIUM_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
           "$CHROME_PATH" --version
 
-      - name: Mint QA OIDC token
+      - name: Tax domain and PostgreSQL tests
+        run: node --test scripts/test-wealth-tax.mjs
+
+      - name: Mint QA OIDC token for fixture creation
         uses: actions/github-script@v7
         id: qa_oidc
         with:
           script: |
             const token = await core.getIDToken(process.env.QA_OIDC_AUDIENCE)
-            core.setSecret(token)
-            core.setOutput('token', token)
-
-      - name: Mint Vercel trusted OIDC token
-        uses: actions/github-script@v7
-        id: vercel_oidc
-        with:
-          script: |
-            const token = await core.getIDToken()
             core.setSecret(token)
             core.setOutput('token', token)
 
@@ -97,29 +91,65 @@ jobs:
 
       - name: Wait for exact protected Preview commit
         shell: bash
-        env:
-          VERCEL_TOKEN: ${{ steps.vercel_oidc.outputs.token }}
         run: |
           set -euo pipefail
           observed=""
+          status=""
+          VERCEL_TOKEN=""
+
+          mint_vercel_token() {
+            local token_json
+            token_json="$(curl --silent --show-error --fail-with-body               -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN"               "$ACTIONS_ID_TOKEN_REQUEST_URL")"
+            VERCEL_TOKEN="$(printf '%s' "$token_json" | jq -r '.value')"
+            test -n "$VERCEL_TOKEN"
+            echo "::add-mask::$VERCEL_TOKEN"
+          }
+
           for attempt in $(seq 1 90); do
-            body="$(curl -fsS               -H "x-vercel-trusted-oidc-idp-token: $VERCEL_TOKEN"               "$PREVIEW_URL/api/internal/preview-build" 2>/dev/null || true)"
-            observed="$(BODY="$body" node -e "try{process.stdout.write(JSON.parse(process.env.BODY||'{}').commit||'')}catch{}")"
+            if [ "$attempt" -eq 1 ] || [ $(( (attempt - 1) % 20 )) -eq 0 ]; then
+              mint_vercel_token
+            fi
+            body_file="$RUNNER_TEMP/tax-preview-body"
+            header_file="$RUNNER_TEMP/tax-preview-headers"
+            : > "$body_file"
+            : > "$header_file"
+            status="$(curl --silent --show-error               --connect-timeout 10               --max-time 20               -H "x-vercel-trusted-oidc-idp-token: $VERCEL_TOKEN"               --dump-header "$header_file"               --output "$body_file"               --write-out '%{http_code}'               "$PREVIEW_URL/api/internal/preview-build" || true)"
+            observed="$(node -e "const fs=require('fs');try{const v=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(v.commit||'')}catch{}" "$body_file")"
+            error_code="$(awk 'BEGIN{IGNORECASE=1} /^x-vercel-error:/ {sub(/\r$/, ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$header_file")"
+            printf 'preview attempt=%s status=%s commit=%s protection=%s\n'               "$attempt" "${status:-none}" "${observed:-none}" "${error_code:-none}"
             if [ "$observed" = "$GITHUB_SHA" ]; then
               echo "Preview converged to exact commit."
               exit 0
             fi
             sleep 4
           done
-          echo "Preview did not converge. expected=$GITHUB_SHA observed=${observed:-none}" >&2
+          echo "Preview did not converge. expected=$GITHUB_SHA observed=${observed:-none} status=${status:-none}" >&2
           exit 1
+
+      - name: Mint fresh QA OIDC token for hosted matrix
+        uses: actions/github-script@v7
+        id: matrix_qa_oidc
+        with:
+          script: |
+            const token = await core.getIDToken(process.env.QA_OIDC_AUDIENCE)
+            core.setSecret(token)
+            core.setOutput('token', token)
+
+      - name: Mint fresh Vercel trusted OIDC token for hosted matrix
+        uses: actions/github-script@v7
+        id: matrix_vercel_oidc
+        with:
+          script: |
+            const token = await core.getIDToken()
+            core.setSecret(token)
+            core.setOutput('token', token)
 
       - name: Run hosted Tax Center matrix
         env:
           ORCALY_E2E_BASE_URL: ${{ env.PREVIEW_URL }}
           ORCALY_EXPECTED_COMMIT: ${{ github.sha }}
-          VERCEL_TRUSTED_OIDC_TOKEN: ${{ steps.vercel_oidc.outputs.token }}
-          ORCALY_QA_OIDC_TOKEN: ${{ steps.qa_oidc.outputs.token }}
+          VERCEL_TRUSTED_OIDC_TOKEN: ${{ steps.matrix_vercel_oidc.outputs.token }}
+          ORCALY_QA_OIDC_TOKEN: ${{ steps.matrix_qa_oidc.outputs.token }}
         run: node scripts/e2e-wealth-tax-hosted.mjs
 
       - name: Upload Tax QA evidence
@@ -131,13 +161,16 @@ jobs:
           if-no-files-found: warn
           path: artifacts/wealth-tax/**
 
-      - name: Cleanup disposable Wealth identities
+      - name: Cleanup disposable Wealth identities with fresh OIDC
         if: always()
         shell: bash
-        env:
-          QA_TOKEN: ${{ steps.qa_oidc.outputs.token }}
         run: |
           set -euo pipefail
+          token_json="$(curl --silent --show-error --fail-with-body             -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN"             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${QA_OIDC_AUDIENCE}")"
+          QA_TOKEN="$(printf '%s' "$token_json" | jq -r '.value')"
+          test -n "$QA_TOKEN"
+          echo "::add-mask::$QA_TOKEN"
+
           cleanup_user() {
             local id="$1"
             [ -z "$id" ] && return 0
