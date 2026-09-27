@@ -118,7 +118,7 @@ export default function ConfiguracoesEquipeCorrigidaPage() {
     setSaving(false)
   }
 
-  async function alterarFuncionario(id: string, data: Record<string, any>) {
+  async function alterarFuncionario(id: string, data: Record<string, unknown>) {
     setErro('')
     setMessage('')
 

@@ -54,6 +54,8 @@ function statusLabel(status?: string | null) {
   return labels[status || ''] || status || 'Sem status'
 }
 
+type CurrentCompany = { id: string }
+
 export default function PropostasPage() {
   const [, setCompany] = useState<unknown>(null)
   const [propostas, setPropostas] = useState<Proposal[]>([])
@@ -67,7 +69,7 @@ export default function PropostasPage() {
     setErro('')
 
     try {
-      const { company: empresaData } = await getCurrentCompany<any>()
+      const { company: empresaData } = await getCurrentCompany<CurrentCompany>()
 
       setCompany(empresaData)
 

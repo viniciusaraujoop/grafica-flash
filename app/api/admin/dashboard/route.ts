@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
       const companyFinance = financeRaw.filter((tx) => tx.company_id === company.id)
       const companyMembers = membersRaw.filter((member) => member.company_id === company.id)
       const revenue = companyOrders.reduce((acc, order) => acc + Number(order.valor_total || order.preco_estimado || 0), 0)
-      const entradas = companyFinance.filter((tx: any) => tx.tipo === 'entrada' && tx.status !== 'cancelado').reduce((acc, tx) => acc + Number(tx.valor || 0), 0)
+      const entradas = companyFinance.filter((tx) => tx.tipo === 'entrada' && tx.status !== 'cancelado').reduce((acc, tx) => acc + Number(tx.valor || 0), 0)
       const saidas = companyFinance.filter((tx: any) => tx.tipo === 'saida' && tx.status !== 'cancelado').reduce((acc, tx) => acc + Number(tx.valor || 0), 0)
 
       return {
@@ -217,7 +217,7 @@ export async function GET(request: NextRequest) {
     }, { entradas: 0, saidas: 0 })
 
     const bugOpen = bugsRaw.filter((bug) => bug.status === 'aberto' || bug.status === 'em_analise')
-    const bugCritical = bugOpen.filter((bug: any) => bug.severity === 'critica' || bug.severity === 'alta')
+    const bugCritical = bugOpen.filter((bug) => bug.severity === 'critica' || bug.severity === 'alta')
 
     return NextResponse.json({
       admin,

@@ -112,7 +112,7 @@ async function safeRows(
   supabaseAdmin: SupabaseAdmin,
   result: SmartNotificationResult,
   label: string,
-  query: any
+  query: PromiseLike<{ data: Record<string, unknown>[] | null; error: { message: string } | null }>
 ) {
   try {
     const { data, error } = await query

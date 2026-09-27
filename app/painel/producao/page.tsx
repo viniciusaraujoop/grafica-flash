@@ -8,6 +8,18 @@ import { supabase } from '@/lib/supabase'
 const statuses = ['Aguardando arte', 'Aguardando pagamento', 'Em produção', 'Aguardando retirada', 'Saiu para entrega', 'Entregue']
 const priorities = ['baixa', 'normal', 'alta', 'urgente']
 
+type ProductionOrder = {
+  id: string
+  status?: string | null
+  priority?: string | null
+  title?: string | null
+  customer_name?: string | null
+  customer_whatsapp?: string | null
+  due_date?: string | null
+  internal_notes?: string | null
+  responsible_name?: string | null
+}
+
 function dataBR(value?: string | null) {
   if (!value) return 'Sem prazo'
   return new Date(value).toLocaleDateString('pt-BR')
@@ -22,7 +34,7 @@ function statusTone(status: string) {
 
 export default function ProducaoPage() {
   const [, setCompany] = useState<unknown>(null)
-  const [orders, setOrders] = useState<any[]>([])
+  const [orders, setOrders] = useState<ProductionOrder[]>([])
   const [, setMembers] = useState<unknown[]>([])
   const [token, setToken] = useState('')
   const [loading, setLoading] = useState(true)
@@ -67,7 +79,7 @@ export default function ProducaoPage() {
     carregar()
   }, [])
 
-  async function updateOrder(id: string, patch: Record<string, any>) {
+  async function updateOrder(id: string, patch: Record<string, unknown>) {
     setErro('')
 
     const response = await fetch('/api/producao/update', {
