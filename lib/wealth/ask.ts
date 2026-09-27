@@ -1,4 +1,3 @@
-import {createHash} from 'node:crypto'
 import {formatMoney,financialDate} from './core'
 import type {WealthSummary} from './summary'
 import type {NetWorth} from './net-worth'
@@ -212,10 +211,6 @@ export function compactAskContext(context:AskContext,intent:AskIntent){
  if(ids.includes('tax')&&context.tax)out.tax={from:context.tax.from,to:context.tax.to,taxes:context.tax.taxes,income:context.tax.income,sell_proceeds:context.tax.sell_proceeds,basis_removed:context.tax.basis_removed,realized_gain:context.tax.realized_gain,incomplete_sell_count:context.tax.incomplete_sell_count,tax_provider_status:context.tax.tax_provider_status,tax_rules_status:context.tax.tax_rules_status,jurisdiction_status:context.tax.jurisdiction_status}
  if(ids.includes('fees')&&context.fees)out.fees={from:context.fees.from,to:context.fees.to,fees:context.fees.fees,taxes:context.fees.taxes,external_status:context.fees.external_status,previous:context.fees.previous}
  return out
-}
-
-export function askContextId(context:AskContext,intent:AskIntent){
- return createHash('sha256').update(JSON.stringify(compactAskContext(context,intent))).digest('hex').slice(0,24)
 }
 
 export function providerInstructions(mode:AskMode){
