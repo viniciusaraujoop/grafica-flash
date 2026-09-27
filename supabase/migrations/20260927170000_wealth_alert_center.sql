@@ -175,7 +175,7 @@ revoke all on function ecosystem_private.wealth_alert_candidates(uuid,date) from
 create function ecosystem_private.manage_wealth_alerts(p_operation text,p_input jsonb) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare
- actor uuid:=auth.uid(); token uuid; fingerprint text; receipt ecosystem_private.wealth_alert_commands;
+ actor uuid:=auth.uid(); command_token uuid; fingerprint text; receipt ecosystem_private.wealth_alert_commands;
  pref ecosystem_private.wealth_alert_preferences; candidate record; result jsonb; muted text[]:='{}'; zone text; local_date date; hours integer;
  keys text[]:=array['idempotency_key','confirmed'];
 begin
@@ -184,10 +184,10 @@ begin
  if p_operation='configure' then keys:=keys||array['version','enabled','minimum_priority','cooldown_hours','muted_sources'];
  else keys:=keys||array['alert_key'];if p_operation='snooze' then keys:=keys||array['snooze_hours'];end if;end if;
  if p_input-keys<>'{}'::jsonb then raise exception 'unknown fields' using errcode='22023';end if;
- token:=(p_input->>'idempotency_key')::uuid;if token is null then raise exception 'missing token' using errcode='22023';end if;
+ command_token:=(p_input->>'idempotency_key')::uuid;if command_token is null then raise exception 'missing token' using errcode='22023';end if;
  perform pg_advisory_xact_lock(hashtextextended('wealth-alerts:'||actor::text,0));
  fingerprint:=encode(sha256(convert_to(p_input::text,'UTF8')),'hex');
- select * into receipt from ecosystem_private.wealth_alert_commands where user_id=actor and wealth_alert_commands.token=token;
+ select * into receipt from ecosystem_private.wealth_alert_commands c where c.user_id=actor and c.token=command_token;
  if found then
   if receipt.operation<>p_operation or receipt.input_hash<>fingerprint then raise exception 'command reused' using errcode='23505';end if;
   return receipt.result;
@@ -235,7 +235,7 @@ begin
  end if;
  result:=result||jsonb_build_object('command_id',gen_random_uuid());
  insert into ecosystem_private.wealth_alert_commands(id,user_id,token,operation,input_hash,result)
- values((result->>'command_id')::uuid,actor,token,p_operation,fingerprint,result);
+ values((result->>'command_id')::uuid,actor,command_token,p_operation,fingerprint,result);
  return result;
 end;$$;
 revoke all on function ecosystem_private.manage_wealth_alerts(text,jsonb) from public,anon,authenticated;
