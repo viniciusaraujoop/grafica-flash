@@ -406,7 +406,7 @@ finally{
  for(const user of users){for(let offset=0;;offset+=500){const events=ok(await admin.from('ecosystem_audit_events').select('id,entity_id').eq('actor_id',user.id).order('id').range(offset,offset+499));for(const e of events)entities.add(e.entity_id);if(events.length<500)break}}
  for(const user of users){
   await cleanupWealthSchedules(admin,user.id,entities)
-  for(const table of ['ecosystem_product_entitlements','ecosystem_context_consents','wealth_entries','wealth_goals','wealth_net_worth_snapshots','wealth_portfolios','wealth_holdings','wealth_portfolio_transactions','wealth_goal_funding','wealth_life_plans','wealth_documents']){
+  for(const table of ['ecosystem_product_entitlements','ecosystem_context_consents','wealth_entries','wealth_goals','wealth_net_worth_snapshots','wealth_portfolios','wealth_holdings','wealth_portfolio_transactions','wealth_goal_funding','wealth_life_plans','wealth_documents','wealth_protection_policies']){
    for(let offset=0;;offset+=500){const rows=ok(await admin.from(table).select('id').eq('user_id',user.id).order('id').range(offset,offset+499));for(const row of rows)entities.add(row.id);if(rows.length<500)break}
   }
   const docs=ok(await admin.from('wealth_documents').select('object_path').eq('user_id',user.id));if(docs.length)ok(await admin.storage.from('wealth-documents').remove(docs.map(d=>d.object_path)))
