@@ -1,0 +1,68 @@
+name: Orçaly Wealth Ask Hosted QA
+
+on:
+  push:
+    branches:
+      - codex/orcaly-ecosystem
+    paths:
+      - 'app/apps/wealth/ask/**'
+      - 'app/api/apps/wealth/ask/**'
+      - 'components/wealth/WealthAsk.tsx'
+      - 'lib/wealth/ask.ts'
+      - 'scripts/test-wealth-ask.mjs'
+      - 'scripts/e2e-wealth-ask-hosted.mjs'
+      - 'scripts/e2e-wealth-ask-ci.mjs'
+      - '.github/workflows/orcaly-wealth-ask-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: orcaly-wealth-ask-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hosted-ask:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      ORCALY_STAGING_ANON_KEY: sb_publishable_tvQpmDKMlHCAcKIxLiN87w_c8J8iP3H
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_PATH"
+          echo "CHROMIUM_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+
+      - name: Ask Wealth domain tests
+        run: node --test scripts/test-wealth-ask.mjs
+
+      - name: Ask Wealth scoped lint
+        run: npx eslint app/apps/wealth/ask app/api/apps/wealth/ask/route.ts components/wealth/WealthAsk.tsx lib/wealth/ask.ts scripts/e2e-wealth-ask-hosted.mjs scripts/e2e-wealth-ask-ci.mjs
+
+      - name: Run hosted Ask Wealth matrix
+        run: node scripts/e2e-wealth-ask-ci.mjs
+
+      - name: Upload Ask Wealth QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wealth-ask-hosted-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: artifacts/wealth-ask/**
