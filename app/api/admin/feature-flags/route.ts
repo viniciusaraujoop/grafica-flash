@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isMissingRelation } from '@/lib/admin/optional-schema'
 import { auditPlatformAction, requirePlatformAdmin } from '@/lib/platform-admin'
+import { requireMfaStepUpForRequest } from '@/lib/security/mfa'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -22,6 +23,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await requirePlatformAdmin(request, 'features.manage')
   if (!session.ok) return NextResponse.json({ error: session.error }, { status: session.status })
+  const mfa = await requireMfaStepUpForRequest(request, 'platform.config.manage')
+  if (!mfa.allowed) return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status })
   const body = await request.json().catch(() => ({})) as Record<string, unknown>
   const key = String(body.key || '').trim().toLowerCase()
   const scope = String(body.scope || 'global').trim().toLowerCase()
@@ -44,6 +47,8 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const session = await requirePlatformAdmin(request, 'features.manage')
   if (!session.ok) return NextResponse.json({ error: session.error }, { status: session.status })
+  const mfa = await requireMfaStepUpForRequest(request, 'platform.config.manage')
+  if (!mfa.allowed) return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status })
   const body = await request.json().catch(() => ({})) as Record<string, unknown>
   const id = String(body.id || '')
   const reason = String(body.reason || '').trim()

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auditPlatformAction, canPlatform, requirePlatformAdmin } from '@/lib/platform-admin'
+import { requireMfaStepUpForRequest } from '@/lib/security/mfa'
 
 type RouteContext = { params: Promise<{ id: string }> }
 type JsonRecord = Record<string, unknown>
@@ -23,6 +24,8 @@ function addDays(base: Date, amount: number) {
 export async function PATCH(request: NextRequest, context: RouteContext) {
   const session = await requirePlatformAdmin(request, 'companies.read')
   if (!session.ok) return NextResponse.json({ error: session.error }, { status: session.status })
+  const mfa = await requireMfaStepUpForRequest(request, 'platform.config.manage')
+  if (!mfa.allowed) return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status })
   const { id } = await context.params
   const body = (await request.json().catch(() => ({}))) as JsonRecord
   const action = String(body.action || '').trim().toLowerCase()

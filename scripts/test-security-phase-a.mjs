@@ -200,3 +200,12 @@ test('critical admin and provider credential mutations require step-up MFA', () 
   assert.match(read('app/api/marketplace/payments/mercado-pago/connect/route.ts'), /integrations\.credentials\.manage/)
   assert.match(read('app/api/marketplace/payments/mercado-pago/disconnect/route.ts'), /integrations\.credentials\.manage/)
 })
+
+
+test('critical platform configuration requires MFA without gating reads', () => {
+  const flags = read('app/api/admin/feature-flags/route.ts')
+  const company = read('app/api/admin/company/[id]/route.ts')
+  assert.match(read('lib/security/mfa-core.ts'), /platform\.config\.manage/)
+  assert.equal((flags.match(/platform\.config\.manage/g) || []).length, 2)
+  assert.match(company, /platform\.config\.manage/)
+})

@@ -9,6 +9,7 @@ export type SensitiveAction =
   | 'integrations.credentials.manage'
   | 'data.export'
   | 'platform.impersonation.write'
+  | 'platform.config.manage'
 
 export type MfaStepUpDecision = {
   allowed: boolean
@@ -25,6 +26,7 @@ const STEP_UP_ACTIONS = new Set<SensitiveAction>([
   'integrations.credentials.manage',
   'data.export',
   'platform.impersonation.write',
+  'platform.config.manage',
 ])
 
 export function requiresMfaStepUp(action: SensitiveAction) { return STEP_UP_ACTIONS.has(action) }
