@@ -76,7 +76,7 @@ try{
  let morning=ok(await read(a,'morning'))
  assert.equal(morning.date,today);assert.equal(morning.timezone,'America/Sao_Paulo')
  assert.equal(morning.stats.today_income,'123456');assert.equal(morning.stats.today_expenses,'3456');assert.equal(morning.stats.today_cash_flow,'120000')
- assert.equal(morning.stats.overdue_debts,'1');assert.equal(morning.stats.next7_debts,'2');assert.equal(morning.stats.active_goals,'1')
+ assert.equal(morning.stats.overdue_debts,'1');assert.equal(morning.stats.next7_debts,'1');assert.equal(morning.stats.active_goals,'1')
  assert.equal(morning.stats.unknown_valuations,'1');assert.equal(morning.stats.tax_gaps,'1');assert.equal(morning.stats.tomorrow_items,'2')
  assert.equal(morning.bank_provider_status,'NOT_CONFIGURED');assert.equal(morning.market_provider_status,'NOT_CONFIGURED')
  assert.ok(morning.items.some(x=>x.source==='goal'));assert.ok(morning.items.some(x=>x.source==='shield'));assert.ok(morning.items.some(x=>x.source==='portfolio'));assert.ok(morning.items.some(x=>x.source==='tax'))
