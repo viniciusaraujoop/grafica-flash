@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
 import { requireMfaStepUpForRequest } from '@/lib/security/mfa'
 import { requiresTeamMutationMfa } from '@/lib/security/privileged-actions'
 import { recordPrivilegedAudit } from '@/lib/security/privileged-audit'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-  { auth: { persistSession: false } }
-)
+const supabaseAdmin = getSupabaseAdmin()
 
 const cargoPermissions: Record<string, Record<string, boolean>> = {
   gerente: {
@@ -60,61 +56,6 @@ function cleanEmail(value: string) {
 
 function cleanCargo(value: string) {
   return ['gerente', 'atendente', 'producao'].includes(value) ? value : 'atendente'
-}
-
-async function getRequester(request: NextRequest) {
-  const token = (request.headers.get('authorization') || '').replace('Bearer ', '').trim()
-  if (!token) return null
-
-  const { data, error } = await supabaseAdmin.auth.getUser(token)
-  if (error || !data.user) return null
-
-  return data.user
-}
-
-async function getCompanyForUser(userId: string, email?: string) {
-  if (!isUuid(userId)) return { company: null, requesterRole: null }
-
-  const { data: ownCompany } = await supabaseAdmin
-    .from('companies')
-    .select('*')
-    .or(`owner_id.eq.${userId},tester_id.eq.${userId}`)
-    .maybeSingle()
-
-  if (ownCompany?.id) {
-    return { company: ownCompany, requesterRole: 'dono' }
-  }
-
-  const { data: member } = await supabaseAdmin
-    .from('company_members')
-    .select('company_id,cargo,status')
-    .eq('user_id', userId)
-    .eq('status', 'ativo')
-    .maybeSingle()
-
-  if (member?.company_id && isUuid(member.company_id)) {
-    const { data: company } = await supabaseAdmin
-      .from('companies')
-      .select('*')
-      .eq('id', member.company_id)
-      .maybeSingle()
-
-    return { company, requesterRole: member.cargo || 'funcionario' }
-  }
-
-  if (email?.toLowerCase() === 'araujovinicius249@gmail.com') {
-    const { data: firstCompany } = await supabaseAdmin
-      .from('companies')
-      .select('*')
-      .eq('slug', 'grafica-flash')
-      .maybeSingle()
-
-    if (firstCompany?.id) {
-      return { company: firstCompany, requesterRole: 'dono' }
-    }
-  }
-
-  return { company: null, requesterRole: null }
 }
 
 async function findUserByEmail(email: string) {
@@ -209,13 +150,14 @@ async function enforceElevatedTeamMfa(input: {
 
 export async function GET(request: NextRequest) {
   try {
-    const requester = await getRequester(request)
+    const requester = await getRequester(request, supabaseAdmin)
 
     if (!requester) {
       return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
     }
 
-    const { company } = await getCompanyForUser(requester.id, requester.email || '')
+    const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
+    const company = access.company
 
     if (!company?.id || !isUuid(company.id)) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
@@ -246,7 +188,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const requester = await getRequester(request)
+    const requester = await getRequester(request, supabaseAdmin)
 
     if (!requester) {
       return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
@@ -258,13 +200,14 @@ export async function POST(request: NextRequest) {
     const cargo = cleanCargo(body.cargo || 'atendente')
     const senha = String(body.senha || body.password || '').trim()
 
-    const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
+    const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
+    const company = access.company
 
     if (!company?.id || !isUuid(company.id)) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     }
 
-    if (requesterRole !== 'dono' && requester.email?.toLowerCase() !== 'araujovinicius249@gmail.com') {
+    if (!access.isOwner && !access.isAdminMaster) {
       return NextResponse.json({ error: 'Somente o dono da empresa pode cadastrar funcionários.' }, { status: 403 })
     }
 
@@ -281,7 +224,6 @@ export async function POST(request: NextRequest) {
 
     if (!nome) return NextResponse.json({ error: 'Informe o nome do funcionário.' }, { status: 400 })
     if (!email || !email.includes('@')) return NextResponse.json({ error: 'Informe um e-mail válido.' }, { status: 400 })
-    if (email === 'araujovinicius249@gmail.com') return NextResponse.json({ error: 'Este e-mail é do Admin Master e não pode ser cadastrado como funcionário.' }, { status: 400 })
     if (senha && senha.length < 6) return NextResponse.json({ error: 'A senha inicial precisa ter pelo menos 6 caracteres.' }, { status: 400 })
 
     const { data: existingByEmail, error: existingByEmailError } = await supabaseAdmin
@@ -401,7 +343,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const requester = await getRequester(request)
+    const requester = await getRequester(request, supabaseAdmin)
 
     if (!requester) {
       return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
@@ -413,13 +355,14 @@ export async function PATCH(request: NextRequest) {
     const status = ['ativo', 'bloqueado', 'removido'].includes(body.status) ? body.status : null
     const nome = body.nome ? String(body.nome).trim() : null
 
-    const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
+    const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
+    const company = access.company
 
     if (!company?.id || !isUuid(company.id)) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     }
 
-    if (requesterRole !== 'dono' && requester.email?.toLowerCase() !== 'araujovinicius249@gmail.com') {
+    if (!access.isOwner && !access.isAdminMaster) {
       return NextResponse.json({ error: 'Somente o dono da empresa pode alterar funcionários.' }, { status: 403 })
     }
 
@@ -505,7 +448,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const requester = await getRequester(request)
+    const requester = await getRequester(request, supabaseAdmin)
 
     if (!requester) {
       return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
@@ -514,13 +457,14 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const id = String(searchParams.get('id') || '').trim()
 
-    const { company, requesterRole } = await getCompanyForUser(requester.id, requester.email || '')
+    const access = await getCompanyAccess(supabaseAdmin, requester.id, requester.email)
+    const company = access.company
 
     if (!company?.id || !isUuid(company.id)) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
     }
 
-    if (requesterRole !== 'dono' && requester.email?.toLowerCase() !== 'araujovinicius249@gmail.com') {
+    if (!access.isOwner && !access.isAdminMaster) {
       return NextResponse.json({ error: 'Somente o dono da empresa pode remover funcionários.' }, { status: 403 })
     }
 

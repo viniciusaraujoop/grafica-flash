@@ -9,6 +9,7 @@ import {
   getCompanyProviderAccount,
   requireUserCompany,
 } from "@/lib/payments/server-context";
+import { requireMfaStepUpForRequest } from "@/lib/security/mfa";
 
 const ALLOWED_TYPES = new Set<PixKeyType>([
   "CPF",
@@ -153,6 +154,10 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const context = await requireUserCompany(request);
+    const mfa = await requireMfaStepUpForRequest(request, "pix.update");
+    if (!mfa.allowed) {
+      return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status });
+    }
     const companyId = String(context.company.id);
     const body = await request.json();
     const type = normalizeType(body.type);
@@ -211,6 +216,10 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const context = await requireUserCompany(request);
+    const mfa = await requireMfaStepUpForRequest(request, "pix.update");
+    if (!mfa.allowed) {
+      return NextResponse.json({ error: mfa.error, reason: mfa.reason }, { status: mfa.status });
+    }
     const companyId = String(context.company.id);
 
     const { error } = await context.supabase

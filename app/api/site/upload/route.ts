@@ -1,9 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
+import { requireSameOrigin } from '@/lib/orcaly-security'
+import { enforceRateLimit } from '@/lib/security/rate-limit'
 
 const BUCKET = 'site-assets'
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MAX_SIZE = 10 * 1024 * 1024
+
+const MAGIC: Record<string, readonly number[][]> = {
+  'image/jpeg': [[0xff, 0xd8, 0xff]],
+  'image/png': [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
+  'image/webp': [[0x52, 0x49, 0x46, 0x46]],
+  'image/gif': [
+    [0x47, 0x49, 0x46, 0x38, 0x37, 0x61],
+    [0x47, 0x49, 0x46, 0x38, 0x39, 0x61],
+  ],
+}
+
+function startsWith(bytes: Uint8Array, signature: readonly number[]) {
+  return signature.every((byte, index) => bytes[index] === byte)
+}
+
+function validMagic(bytes: Uint8Array, type: string) {
+  const signatures = MAGIC[type]
+  if (!signatures?.some((signature) => startsWith(bytes, signature))) return false
+  if (type === 'image/webp') {
+    return bytes.length >= 12 && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP'
+  }
+  return true
+}
 
 function safeName(value: string) {
   return String(value || 'imagem')
@@ -39,6 +64,9 @@ async function ensureBucket(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>) 
 
 export async function POST(request: NextRequest) {
   try {
+    const originError = requireSameOrigin(request)
+    if (originError) return originError
+
     const supabaseAdmin = getSupabaseAdmin()
     const requester = await getRequester(request, supabaseAdmin)
 
@@ -56,6 +84,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Seu perfil não pode enviar imagens do site.' }, { status: 403 })
     }
 
+    const blocked = await enforceRateLimit(request, {
+      scope: 'site-assets-upload',
+      limit: 30,
+      windowSeconds: 600,
+      identity: requester.id,
+    })
+    if (blocked) return blocked
+
     const formData = await request.formData()
     const file = formData.get('file')
     const purpose = safeName(String(formData.get('purpose') || 'site'))
@@ -72,6 +108,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Imagem muito grande. Envie arquivo de até 10MB.' }, { status: 400 })
     }
 
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    if (!validMagic(bytes, file.type)) {
+      return NextResponse.json({ error: 'O conteúdo do arquivo não corresponde ao formato informado.' }, { status: 400 })
+    }
+
     await ensureBucket(supabaseAdmin)
 
     const ext = extensionFromMime(file.type)
@@ -79,11 +120,9 @@ export async function POST(request: NextRequest) {
     const filename = safeName(file.name || `${purpose}.${ext}`)
     const path = `${access.company.id}/${purpose}-${random}-${filename}.${ext}`
 
-    const bytes = Buffer.from(await file.arrayBuffer())
-
     const { error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET)
-      .upload(path, bytes, {
+      .upload(path, Buffer.from(bytes), {
         contentType: file.type,
         upsert: false,
       })

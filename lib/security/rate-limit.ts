@@ -5,12 +5,19 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { getClientIp } from '@/lib/orcaly-security'
 
-type RateLimitOptions = {
+export type RateLimitOptions = {
   scope: string
   limit: number
   windowSeconds: number
   identity?: string
   failOpen?: boolean
+}
+
+export type RateLimitDecision = {
+  allowed: boolean
+  remaining: number | null
+  retryAfter: number | null
+  unavailable: boolean
 }
 
 function adminClient() {
@@ -32,11 +39,10 @@ function keyFor(scope: string, identity: string) {
     .digest('hex')
 }
 
-export async function enforceRateLimit(
-  request: NextRequest,
-  options: RateLimitOptions,
-) {
-  const identity = String(options.identity || getClientIp(request) || 'unknown')
+export async function consumeRateLimit(
+  options: RateLimitOptions & { identity: string },
+): Promise<RateLimitDecision> {
+  const identity = String(options.identity || 'unknown')
   const key = keyFor(options.scope, identity)
 
   try {
@@ -56,28 +62,45 @@ export async function enforceRateLimit(
       ? Math.max(1, Math.ceil((resetAt.getTime() - Date.now()) / 1000))
       : options.windowSeconds
 
-    if (!allowed) {
-      const response = NextResponse.json(
-        { error: 'Muitas tentativas. Aguarde e tente novamente.' },
-        { status: 429 },
-      )
-      response.headers.set('Retry-After', String(retryAfter))
-      response.headers.set('X-RateLimit-Remaining', '0')
-      return response
-    }
-
-    return null
+    return { allowed, remaining, retryAfter, unavailable: false }
   } catch (error) {
     console.error(
       'orcaly_rate_limit_error',
-      error instanceof Error ? error.message : error,
+      error instanceof Error ? error.message : 'unknown_error',
     )
 
-    if (options.failOpen) return null
+    return {
+      allowed: options.failOpen === true,
+      remaining: null,
+      retryAfter: null,
+      unavailable: true,
+    }
+  }
+}
 
+export async function enforceRateLimit(
+  request: NextRequest,
+  options: RateLimitOptions,
+) {
+  const identity = String(options.identity || getClientIp(request) || 'unknown')
+  const decision = await consumeRateLimit({ ...options, identity })
+
+  if (decision.unavailable && !decision.allowed) {
     return NextResponse.json(
       { error: 'Protecao temporariamente indisponivel.' },
       { status: 503 },
     )
   }
+
+  if (!decision.allowed) {
+    const response = NextResponse.json(
+      { error: 'Muitas tentativas. Aguarde e tente novamente.' },
+      { status: 429 },
+    )
+    response.headers.set('Retry-After', String(decision.retryAfter || options.windowSeconds))
+    response.headers.set('X-RateLimit-Remaining', '0')
+    return response
+  }
+
+  return null
 }

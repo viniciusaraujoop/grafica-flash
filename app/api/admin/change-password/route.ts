@@ -4,6 +4,9 @@ import {
   auditPlatformAction,
   requirePlatformAdmin,
 } from '@/lib/platform-admin'
+import { enforceRateLimit } from '@/lib/security/rate-limit'
+import { readJsonBody, requestBodyErrorResponse } from '@/lib/security/request'
+import { getClientIp, requireSameOrigin } from '@/lib/orcaly-security'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -13,6 +16,9 @@ function text(value: unknown) {
 }
 
 export async function POST(request: NextRequest) {
+  const originError = requireSameOrigin(request)
+  if (originError) return originError
+
   const session = await requirePlatformAdmin(
     request,
     'dashboard.view',
@@ -25,10 +31,16 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  const blocked = await enforceRateLimit(request, {
+    scope: 'admin-change-password',
+    limit: 5,
+    windowSeconds: 900,
+    identity: `${session.admin.user_id}:${getClientIp(request)}`,
+  })
+  if (blocked) return blocked
+
   try {
-    const body = await request
-      .json()
-      .catch(() => ({}))
+    const body = await readJsonBody<Record<string, unknown>>(request, 4 * 1024)
     const password = text(body.password)
 
     if (
@@ -84,6 +96,9 @@ export async function POST(request: NextRequest) {
       message: 'Senha alterada com segurança.',
     })
   } catch (error) {
+    const bodyError = requestBodyErrorResponse(error)
+    if (bodyError) return bodyError
+
     return NextResponse.json(
       {
         error:

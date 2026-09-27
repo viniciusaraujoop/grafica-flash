@@ -534,6 +534,8 @@ function CheckoutContent() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           lead_id: leadId,
+          expires,
+          token,
           password,
           confirm_password: confirmPassword,
         }),

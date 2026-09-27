@@ -1,11 +1,13 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { redirect, RedirectType } from 'next/navigation'
 import { getCompanyAccess, getSupabaseAdmin } from '@/lib/company-access'
 import { getMfaSecurityState } from '@/lib/security/mfa'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { safeNextPath } from '@/lib/auth-navigation'
+import { consumeRateLimit } from '@/lib/security/rate-limit'
 
 export type LoginActionResult = {
   ok: false
@@ -20,14 +22,6 @@ export type LoginFormState = {
 function friendlyAuthError(message: string) {
   const normalized = message.toLowerCase()
 
-  if (normalized.includes('invalid login credentials')) {
-    return 'E-mail ou senha incorretos. Confira os dados e tente novamente.'
-  }
-
-  if (normalized.includes('email not confirmed')) {
-    return 'Confirme seu e-mail antes de entrar.'
-  }
-
   if (
     normalized.includes('too many requests') ||
     normalized.includes('rate limit')
@@ -35,7 +29,23 @@ function friendlyAuthError(message: string) {
     return 'Muitas tentativas em pouco tempo. Aguarde um momento e tente novamente.'
   }
 
+  if (
+    normalized.includes('invalid login credentials') ||
+    normalized.includes('email not confirmed')
+  ) {
+    return 'Não foi possível entrar com essas credenciais.'
+  }
+
   return 'Não foi possível entrar agora. Tente novamente em alguns instantes.'
+}
+
+function clientNetworkSignal(requestHeaders: Headers) {
+  return (
+    requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    requestHeaders.get('x-real-ip') ||
+    requestHeaders.get('cf-connecting-ip') ||
+    'unknown'
+  )
 }
 
 export async function signInWithPasswordAction(input: {
@@ -57,6 +67,31 @@ export async function signInWithPasswordAction(input: {
   let destination = nextPath
 
   try {
+    const requestHeaders = await headers()
+    const network = clientNetworkSignal(requestHeaders)
+    const [networkLimit, accountLimit] = await Promise.all([
+      consumeRateLimit({
+        scope: 'auth-login-network',
+        limit: 30,
+        windowSeconds: 600,
+        identity: network,
+        failOpen: true,
+      }),
+      consumeRateLimit({
+        scope: 'auth-login-identifier',
+        limit: 8,
+        windowSeconds: 600,
+        identity: `${network}:${email}`,
+        failOpen: true,
+      }),
+    ])
+
+    if (!networkLimit.allowed || !accountLimit.allowed) {
+      return {
+        ok: false,
+        error: 'Muitas tentativas em pouco tempo. Aguarde um momento e tente novamente.',
+      }
+    }
     const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase.auth.signInWithPassword({
       email,

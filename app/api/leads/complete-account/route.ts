@@ -7,6 +7,10 @@ import {
 } from "@/lib/business-types";
 import { normalizeSubdomainSlug } from "@/lib/slug";
 import { bindAffiliateReferralToCompany } from "@/lib/affiliates/server";
+import { verifySignupCheckoutToken } from "@/lib/signup-checkout";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
+import { readJsonBody, requestBodyErrorResponse } from "@/lib/security/request";
+import { getClientIp, requireSameOrigin } from "@/lib/orcaly-security";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -111,13 +115,28 @@ async function insertCompany(payload: Record<string, unknown>) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const originError = requireSameOrigin(request);
+    if (originError) return originError;
+
+    const body = await readJsonBody<Record<string, unknown>>(request, 16 * 1024);
 
     const leadId = String(body.lead_id || "").trim();
     const password = String(body.password || "");
     const confirmPassword = String(body.confirm_password || "");
 
     if (!leadId) return erro("Cadastro ausente.");
+
+    if (!verifySignupCheckoutToken(leadId, body.expires, body.token)) {
+      return erro("Link de cadastro inválido ou expirado.", 401);
+    }
+
+    const blocked = await enforceRateLimit(request, {
+      scope: "signup-complete-account",
+      limit: 8,
+      windowSeconds: 600,
+      identity: `${getClientIp(request)}:${leadId}`,
+    });
+    if (blocked) return blocked;
     if (password.length < 8) {
       return erro("A senha precisa ter pelo menos 8 caracteres.");
     }
@@ -305,6 +324,9 @@ export async function POST(request: NextRequest) {
       company,
     });
   } catch (error) {
+    const bodyError = requestBodyErrorResponse(error);
+    if (bodyError) return bodyError;
+
     return NextResponse.json(
       {
         error:
