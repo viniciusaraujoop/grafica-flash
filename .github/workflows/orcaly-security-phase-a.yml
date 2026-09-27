@@ -135,6 +135,9 @@ jobs:
           NODE
           test "$ESLINT_EXIT" -eq 0 || true
 
+      - name: Security inventory snapshot
+        run: node scripts/security-phase-a-inventory.mjs
+
       - name: Typecheck
         run: npm run typecheck
 
