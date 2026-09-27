@@ -1,5 +1,6 @@
 import {testWealthShield} from './e2e-wealth-shield.mjs'
 import {testWealthFees} from './e2e-wealth-fees.mjs'
+import {testWealthTax} from './e2e-wealth-tax.mjs'
 import {testWealthTimeline} from './e2e-wealth-timeline.mjs'
 import {testWealthFamily} from './e2e-wealth-family.mjs'
 import {testWealthAutomation} from './e2e-wealth-automation.mjs'
@@ -396,6 +397,7 @@ try{
  if(process.env.ORCALY_QA_FAMILY==='true')await testWealthFamily({page,context,other,anonymous,a,b,no,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_SHIELD==='true')await testWealthShield({page,context,other,anonymous,a,b,no,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_FEES==='true')await testWealthFees({page,other,anonymous,a,b,no,admin,appUrl,grant,active,ok,pass,output})
+ if(process.env.ORCALY_QA_TAX==='true')await testWealthTax({page,other,anonymous,a,b,no,admin,appUrl,grant,active,ok,pass,output})
  if(process.env.ORCALY_QA_AUTOMATION==='true')await testWealthAutomation({page,context,other,anonymous,a,b,no,admin,appUrl,grant,active,ok,pass,output})
  assert.deepEqual(errors,[])
  pass('no-browser-errors-or-production-requests')
