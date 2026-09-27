@@ -53,6 +53,27 @@ jobs:
       - name: Tax domain and PostgreSQL tests
         run: node --test scripts/test-wealth-tax.mjs
 
+      - name: Inspect Vercel deployment protection configuration
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VERCEL_TOKEN:-}" ]; then
+            echo "VERCEL_MANAGEMENT_TOKEN_AVAILABLE=false"
+            exit 0
+          fi
+          body="$(curl --silent --show-error --fail-with-body             -H "Authorization: Bearer $VERCEL_TOKEN"             "https://api.vercel.com/v9/projects/prj_SzlsQ0ovx6JnDE8v5jJbAa5U9U4O?teamId=team_c5p2Uiz9b1SqKxOhmnmxUWZH")"
+          echo "VERCEL_MANAGEMENT_TOKEN_AVAILABLE=true"
+          printf '%s' "$body" | jq '{
+            ssoProtection: (.ssoProtection // null),
+            trustedSources: (.trustedSources // null),
+            automationBypassConfigurations: ((.protectionBypass // {}) | keys),
+            gitProviderOptions: {
+              disableRepositoryDispatchEvents: (.gitProviderOptions.disableRepositoryDispatchEvents // null)
+            }
+          }'
+
       - name: Mint QA OIDC token for fixture creation
         uses: actions/github-script@v7
         id: qa_oidc
