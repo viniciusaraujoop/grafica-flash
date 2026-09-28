@@ -1,0 +1,94 @@
+// Wave 1 manifests — pure JSON views of the code-first catalogs (for review, AI/UI discovery).
+
+import {
+  defaultRecipeRegistry,
+  deriveRecipeRisk,
+  findAction,
+  recipeCatalog,
+  recipeRegistryEntries,
+  RECIPE_RUNTIME_STATUS,
+  validateRecipe,
+} from '../automation-recipes'
+import { buildRegistrySnapshot, industryPackCatalog, validatePack, type PackRegistrySnapshot } from '../industry-packs'
+import { DETECTORS } from '../detectors/contracts/registry'
+import { DOMAIN_EVENTS, TIMELINE_ONLY_EVENTS } from '../events/contracts/registry'
+
+export function buildWave1PackRegistry(): PackRegistrySnapshot {
+  return buildRegistrySnapshot({ recipes: recipeRegistryEntries(), reportKeys: [] })
+}
+
+export function buildIndustryPackManifest() {
+  const registry = buildWave1PackRegistry()
+  return {
+    manifest: 'orcaly.industry-packs',
+    schemaVersion: 1,
+    applyStatus: 'MIGRATION_REQUIRED_BLOCKED_BY_M0',
+    packs: industryPackCatalog.map((pack) => {
+      const validation = validatePack(pack, registry)
+      const count = (kind: string) => pack.items.filter((item) => item.kind === kind).length
+      return {
+        ref: `${pack.key}@${pack.version}`,
+        status: pack.status,
+        businessType: pack.businessType,
+        name: pack.name,
+        subsegments: pack.subsegments,
+        capabilities: pack.capabilities,
+        legacyNichoIds: pack.legacy?.nichoIds ?? [],
+        itemCounts: {
+          module: count('module'),
+          status: count('status'),
+          category: count('category'),
+          dashboard: count('dashboard'),
+          report: count('report'),
+          recipe: count('recipe'),
+          integration: count('integration'),
+          permission: count('permission'),
+          template: count('template'),
+          onboarding: count('onboarding'),
+          setting: count('setting'),
+        },
+        requiredModules: pack.items.filter((item) => item.kind === 'module' && item.requirement === 'required').map((item) => item.id),
+        recipes: pack.items.filter((item) => item.kind === 'recipe').map((item) => (item.kind === 'recipe' ? item.value.recipeRef : '')),
+        integrations: pack.items.filter((item) => item.kind === 'integration').map((item) => item.id),
+        valid: validation.ok,
+      }
+    }),
+  }
+}
+
+export function buildRecipeManifest() {
+  const registry = defaultRecipeRegistry()
+  return {
+    manifest: 'orcaly.automation-recipes',
+    schemaVersion: 1,
+    runtimeStatus: RECIPE_RUNTIME_STATUS,
+    events: DOMAIN_EVENTS.map((event) => ({ eventType: event.eventType, version: event.version, status: event.status, consumerRuntime: event.consumerRuntime })),
+    timelineOnlyEvents: [...TIMELINE_ONLY_EVENTS],
+    detectors: DETECTORS.map((detector) => ({ key: detector.key, version: detector.version, status: detector.status, scheduled: detector.scheduled })),
+    actions: registry.actions.map((action) => ({
+      ref: `${action.key}@${action.majorVersion}`,
+      impact: action.impact,
+      sensitivity: [...action.sensitivity],
+      executor: action.executor,
+      publication: action.publication,
+      reconciliation: [...action.reconciliation],
+    })),
+    recipes: recipeCatalog.map((recipe) => {
+      const risk = deriveRecipeRisk(recipe, (ref) => findAction(registry, ref))
+      const trigger =
+        recipe.trigger.type === 'domain_event'
+          ? `event:${recipe.trigger.eventType}@${recipe.trigger.acceptedVersions.join('|')}`
+          : `detector:${recipe.trigger.detectorKey}@${recipe.trigger.detectorVersion}`
+      return {
+        ref: `${recipe.key}@${recipe.version}`,
+        status: recipe.status,
+        internalOnly: recipe.internalOnly,
+        trigger,
+        actions: recipe.actions.map((action) => action.action),
+        risk: risk.effectiveClass,
+        dedupe: recipe.dedupe.runKeyTemplate,
+        valid: validateRecipe(recipe, registry).ok,
+      }
+    }),
+  }
+}
