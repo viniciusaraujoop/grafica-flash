@@ -191,7 +191,7 @@ export async function getCompanyAccess(
   if (member?.company_id && isUuid(member.company_id)) {
     const { data: company, error: companyError } = await supabaseAdmin
       .from('companies')
-      .select('*')
+      .select(COMPANY_ACCESS_COLUMNS)
       .eq('id', member.company_id)
       .maybeSingle()
 
