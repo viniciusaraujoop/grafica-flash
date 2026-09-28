@@ -22,6 +22,7 @@ import {
   WEIGHTS,
   MAX_PACK_POINTS_PER_QUESTION,
 } from '../smart-setup/core'
+import { ALLOWED_DELIMITERS, AUTOMATION_POLICY, DESTINATIONS, IMPORT_ENTITIES, IMPORT_LIMITS, IMPORT_RULESET_VERSION, IMPORT_SCHEMA_VERSION } from '../import-engine/core'
 import { DOMAIN_EVENTS, TIMELINE_ONLY_EVENTS } from '../events/contracts/registry'
 
 export function buildWave1PackRegistry(): PackRegistrySnapshot {
@@ -125,5 +126,24 @@ export function buildSmartSetupManifest() {
     adaptations: [...RULESET_SUMMARY.adaptations],
     runtimeStatus: 'PURE_RECOMMENDATION_ONLY',
     applyStatus: 'NOT_AUTHORIZED',
+  }
+}
+
+/** Import CSV T3 manifest — safe metadata only (no rows, no PII, no tenant data, no raw CSV). */
+export function buildImportCsvManifest() {
+  return {
+    manifest: 'orcaly.import-csv',
+    schemaVersion: IMPORT_SCHEMA_VERSION,
+    rulesetVersion: IMPORT_RULESET_VERSION,
+    entityTypes: [...IMPORT_ENTITIES],
+    destinations: { CUSTOMERS: DESTINATIONS.CUSTOMERS.map((field) => field.id), PRODUCTS: DESTINATIONS.PRODUCTS.map((field) => field.id) },
+    limits: { ...IMPORT_LIMITS },
+    supportedDelimiters: [...ALLOWED_DELIMITERS],
+    encoding: 'UTF-8 (BOM accepted)',
+    parserStatus: 'CSV_PARSE_ADAPTER_PENDING',
+    runtimeStatus: 'PURE_DRY_RUN_ONLY',
+    applyStatus: 'NOT_AUTHORIZED',
+    automationPolicy: AUTOMATION_POLICY,
+    xlsxStatus: 'HOLD',
   }
 }
