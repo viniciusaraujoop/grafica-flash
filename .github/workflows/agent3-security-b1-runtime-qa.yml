@@ -111,7 +111,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat > agent3-google-revoke-b1.ts <<'TS'
+          cat > agent3-google-revoke-b1.mts <<'TS'
           import assert from 'node:assert/strict'
           import fs from 'node:fs'
           import { bootstrapIntegrationAdapters } from './lib/integrations/adapters.ts'
@@ -174,4 +174,4 @@ jobs:
           assert.match(route, /credential_preserved: true/)
           console.log('Google revoke B1 mock sandbox: PASS')
           TS
-          npx --yes tsx@4.20.6 agent3-google-revoke-b1.ts
+          npx --yes tsx@4.20.6 agent3-google-revoke-b1.mts
