@@ -34,7 +34,7 @@ type Item = {
   quantidade: number | null
   subtotal: number | null
   preco_unitario: number | null
-  respostas: Record<string, any> | null
+  respostas: Record<string, unknown> | null
   detalhes_calculo: string | null
 }
 

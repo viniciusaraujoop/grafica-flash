@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // ORCALY_OWNER_FINANCE_V1
 import { NextRequest, NextResponse } from 'next/server'
 import { requireOfficialPlatformOwner } from '@/lib/platform-admin'

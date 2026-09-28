@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
 
-async function safeCount(supabaseAdmin: any, table: string, companyId: string) {
+async function safeCount(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, table: string, companyId: string) {
   try {
     const { count, error } = await supabaseAdmin
       .from(table)

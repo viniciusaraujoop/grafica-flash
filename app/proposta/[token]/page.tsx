@@ -21,11 +21,25 @@ type Proposta = {
   introducao?: string | null
   valid_until?: string | null
   status: string | null
-  itens: Array<{ nome: string; quantidade?: number; valor?: number; preco_unitario?: number; respostas?: Record<string, any> }>
+  itens: Array<{ nome: string; quantidade?: number; valor?: number; preco_unitario?: number; respostas?: Record<string, unknown> }>
   approval_hash?: string | null
   approved_at?: string | null
   signature_data_url?: string | null
 }
+
+type ProposalConfig = {
+  allow_print_pdf?: boolean
+  require_drawn_signature?: boolean
+}
+
+type ProposalEvent = {
+  id: string
+  event_type: string
+  created_at: string
+  note?: string | null
+}
+
+type ResponseTab = 'aprovar' | 'alteracao' | 'recusar'
 
 type Empresa = {
   nome: string
@@ -81,11 +95,11 @@ export default function PropostaPage() {
 
   const [proposta, setProposta] = useState<Proposta | null>(null)
   const [empresa, setEmpresa] = useState<Empresa | null>(null)
-  const [config, setConfig] = useState<any>({})
-  const [events, setEvents] = useState<any[]>([])
+  const [config, setConfig] = useState<ProposalConfig>({})
+  const [events, setEvents] = useState<ProposalEvent[]>([])
   const [carregando, setCarregando] = useState(true)
   const [mensagem, setMensagem] = useState('')
-  const [aba, setAba] = useState<'aprovar' | 'alteracao' | 'recusar'>('aprovar')
+  const [aba, setAba] = useState<ResponseTab>('aprovar')
   const [enviando, setEnviando] = useState(false)
   const [form, setForm] = useState({
     nome: '',
@@ -315,7 +329,7 @@ export default function PropostaPage() {
                     ['alteracao', 'Alterar'],
                     ['recusar', 'Recusar'],
                   ].map(([id, label]) => (
-                    <button key={id} onClick={() => setAba(id as any)} className={`rounded-2xl px-3 py-3 text-xs font-black ${aba === id ? 'text-white' : 'bg-slate-100 text-slate-600'}`} style={aba === id ? { background: primary } : undefined}>{label}</button>
+                    <button key={id} onClick={() => setAba(id as ResponseTab)} className={`rounded-2xl px-3 py-3 text-xs font-black ${aba === id ? 'text-white' : 'bg-slate-100 text-slate-600'}`} style={aba === id ? { background: primary } : undefined}>{label}</button>
                   ))}
                 </div>
 

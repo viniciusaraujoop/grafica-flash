@@ -254,7 +254,7 @@ export default function SegmentMarketplaceCatalog({
   const [cartReady, setCartReady] = useState(false)
   const [checkout, setCheckout] = useState<CheckoutState>(initialCheckout)
   const [coupon, setCoupon] = useState<CouponState>(initialCoupon)
-  const [submitting, setSubmitting] = useState(false)
+  const [submitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const localIdRef = useRef(0)
@@ -286,7 +286,6 @@ export default function SegmentMarketplaceCatalog({
     : 0
   const deliveryDiscount = coupon.appliedCode && coupon.type === 'free_delivery' ? deliveryFeeBase : 0
   const totalDiscount = Number((Math.max(0, productDiscount) + Math.max(0, deliveryDiscount)).toFixed(2))
-  const deliveryFee = Number(Math.max(0, deliveryFeeBase - deliveryDiscount).toFixed(2))
   const total = Number(Math.max(0, subtotal + deliveryFeeBase - totalDiscount).toFixed(2))
   const checkoutTitle = getSegmentCheckoutTitle(normalizedType)
   const logisticsEnabled = shouldUseDelivery(normalizedType)

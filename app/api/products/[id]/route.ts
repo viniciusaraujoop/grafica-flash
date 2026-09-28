@@ -56,12 +56,12 @@ async function getAccess(request: NextRequest) {
   return { supabaseAdmin, requester, access }
 }
 
-function ensureArray(value: any) {
+function ensureArray(value: unknown) {
   return Array.isArray(value) ? value : []
 }
 
-function cleanUpdate(body: any, fallbackBusinessType: string) {
-  const update: Record<string, any> = {}
+function cleanUpdate(body: Record<string, unknown>, fallbackBusinessType: string) {
+  const update: Record<string, unknown> = {}
 
   for (const field of allowedFields) {
     if (body[field] !== undefined) update[field] = body[field]

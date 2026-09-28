@@ -59,8 +59,17 @@ function parseStoredApiKey(value: unknown): StoredApiKey | null {
 }
 
 function publicApiKey(key: StoredApiKey): PublicApiKey {
-  const { keyHash: _keyHash, ...publicKey } = key
-  return publicKey
+  return {
+    id: key.id,
+    companyId: key.companyId,
+    name: key.name,
+    keyPrefix: key.keyPrefix,
+    scopes: key.scopes,
+    lastUsedAt: key.lastUsedAt,
+    expiresAt: key.expiresAt,
+    revokedAt: key.revokedAt,
+    createdAt: key.createdAt,
+  }
 }
 
 function parseExpiry(value: unknown): string | null | undefined {

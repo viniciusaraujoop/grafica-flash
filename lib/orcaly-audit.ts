@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
+import type { getSupabaseAdmin } from '@/lib/company-access'
 
-type SupabaseAdmin = any
+type SupabaseAdmin = ReturnType<typeof getSupabaseAdmin>
 
 export async function createAuditLog(
   supabaseAdmin: SupabaseAdmin,
@@ -10,7 +11,7 @@ export async function createAuditLog(
     action: string
     entity?: string | null
     entity_id?: string | null
-    details?: Record<string, any>
+    details?: Record<string, unknown>
     request?: NextRequest
   }
 ) {
@@ -41,7 +42,7 @@ export async function createNotification(
     titulo: string
     mensagem?: string
     link_url?: string
-    payload?: Record<string, any>
+    payload?: Record<string, unknown>
   }
 ) {
   try {

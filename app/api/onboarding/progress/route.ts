@@ -21,7 +21,7 @@ export async function PATCH(request: NextRequest) {
     const completed = Boolean(body.completed)
     const dismissed = Boolean(body.dismissed)
 
-    const update: Record<string, any> = {
+    const update: Record<string, unknown> = {
       onboarding_current_step: currentStep,
       onboarding_completed: completed,
       onboarding_dismissed: dismissed,

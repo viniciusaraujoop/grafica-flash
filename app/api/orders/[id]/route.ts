@@ -7,6 +7,19 @@ type Context = {
   params: Promise<{ id: string }>
 }
 
+type OrderUpdate = {
+  [key: string]: unknown
+  status?: string
+  preco_estimado?: unknown
+  valor_total?: unknown
+  prazo_entrega?: string | null
+  responsavel_id?: string | null
+  aprovado_em?: string
+  entregue_em?: string
+  cancelado_em?: string
+  updated_at?: string
+}
+
 const allowedFields = [
   'status',
   'prioridade',
@@ -39,8 +52,8 @@ async function getAccess(request: NextRequest) {
   return { supabaseAdmin, requester, access }
 }
 
-function cleanUpdate(body: any) {
-  const update: Record<string, any> = {}
+function cleanUpdate(body: Record<string, unknown>) {
+  const update: OrderUpdate = {}
 
   for (const field of allowedFields) {
     if (body[field] !== undefined) update[field] = body[field]
@@ -108,7 +121,7 @@ export async function PATCH(request: NextRequest, context: Context) {
 
     if (error) throw error
 
-    let whatsappResult: any = null
+    let whatsappResult: Awaited<ReturnType<typeof notifyOrderStatus>> | null = null
 
     if (update.status && update.status !== previous?.status) {
       await result.supabaseAdmin

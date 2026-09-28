@@ -410,7 +410,6 @@ function useDriverOperations() {
 
 export function DeliveryDriverProvider({
   companyId,
-  deliveries,
   orders,
   paymentMethods,
   onDeliveryPatch,

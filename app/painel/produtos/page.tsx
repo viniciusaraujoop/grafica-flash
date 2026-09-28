@@ -1,6 +1,6 @@
 'use client'
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, react-hooks/purity, @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-unused-vars, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps, @next/next/no-img-element */
 
 import { FormEvent, useEffect, useMemo, useState, type ReactNode } from 'react'
 import Link from 'next/link'

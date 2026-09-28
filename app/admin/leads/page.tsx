@@ -3,7 +3,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
-type Lead = any
+type Lead = {
+  id: string
+  empresa_nome: string
+  nome_responsavel: string
+  email: string
+  whatsapp: string
+  plano: string
+  segmento?: string | null
+  modelo_negocio?: string | null
+  status: string
+  followup_due: boolean
+  whatsapp_url?: string | null
+  suggested_message: string
+  checkout_url?: string | null
+  created_at: string | null
+  next_followup_at: string | null
+}
 
 function formatarData(valor: string | null) {
   if (!valor) return 'Sem data'

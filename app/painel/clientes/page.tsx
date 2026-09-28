@@ -4,13 +4,54 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
+type CompanyRef = { id: string }
+
+type Pedido = {
+  id: string
+  nome?: string | null
+  telefone?: string | null
+  produto?: string | null
+  status?: string | null
+  created_at?: string | null
+  valor_total?: number | string | null
+  preco_estimado?: number | string | null
+  preco?: number | string | null
+}
+
+type Proposta = {
+  id: string
+  cliente_nome?: string | null
+  cliente_whatsapp?: string | null
+  status?: string | null
+  created_at?: string | null
+}
+
+type Nota = {
+  id: string
+  cliente_nome?: string | null
+  cliente_telefone?: string | null
+  tipo?: string | null
+  conteudo?: string | null
+  created_at?: string | null
+}
+
+type Followup = {
+  id: string
+  cliente_nome?: string | null
+  cliente_telefone?: string | null
+  titulo?: string | null
+  status?: string | null
+  prioridade?: string | null
+  due_at?: string | null
+}
+
 type Cliente = {
   nome: string
   telefone: string
-  pedidos: any[]
-  propostas: any[]
-  notas: any[]
-  followups: any[]
+  pedidos: Pedido[]
+  propostas: Proposta[]
+  notas: Nota[]
+  followups: Followup[]
   total: number
   ticketMedio: number
   ultimoPedido: string | null
@@ -66,7 +107,7 @@ function whatsappLink(telefone: string, mensagem: string) {
   return `https://wa.me/${final}?text=${encodeURIComponent(mensagem)}`
 }
 
-function valorPedido(pedido: any) {
+function valorPedido(pedido: Pedido) {
   return Number(pedido.valor_total || pedido.preco_estimado || pedido.preco || 0)
 }
 
@@ -96,7 +137,7 @@ function riscoCliente(cliente: Cliente) {
 }
 
 export default function ClientesPage() {
-  const [company, setCompany] = useState<any>(null)
+  const [company, setCompany] = useState<CompanyRef | null>(null)
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState('')
@@ -199,8 +240,8 @@ export default function ClientesPage() {
 
       const map = new Map<string, Cliente>()
 
-      function ensureCliente(nome: string, telefone: string, origem = 'Pedido') {
-        const phone = limparTelefone(telefone)
+      function ensureCliente(nome?: string | null, telefone?: string | null, origem = 'Pedido') {
+        const phone = limparTelefone(telefone || '')
         if (!phone) return null
 
         if (!map.has(phone)) {
@@ -225,28 +266,28 @@ export default function ClientesPage() {
         return cliente
       }
 
-      ;(ordersRes.data || []).forEach((pedido: any) => {
+      ;(ordersRes.data || []).forEach((pedido: Pedido) => {
         const cliente = ensureCliente(pedido.nome, pedido.telefone, 'Pedido')
         if (!cliente) return
 
         cliente.pedidos.push(pedido)
       })
 
-      ;(proposalsRes.data || []).forEach((proposta: any) => {
+      ;(proposalsRes.data || []).forEach((proposta: Proposta) => {
         const cliente = ensureCliente(proposta.cliente_nome, proposta.cliente_whatsapp, 'Proposta')
         if (!cliente) return
 
         cliente.propostas.push(proposta)
       })
 
-      ;(notesRes.data || []).forEach((note: any) => {
+      ;(notesRes.data || []).forEach((note: Nota) => {
         const cliente = ensureCliente(note.cliente_nome, note.cliente_telefone, 'Nota')
         if (!cliente) return
 
         cliente.notas.push(note)
       })
 
-      ;(followupsRes.data || []).forEach((task: any) => {
+      ;(followupsRes.data || []).forEach((task: Followup) => {
         const cliente = ensureCliente(task.cliente_nome, task.cliente_telefone, 'Follow-up')
         if (!cliente) return
 
@@ -254,7 +295,7 @@ export default function ClientesPage() {
       })
 
       const lista = Array.from(map.values()).map((cliente) => {
-        const pedidosOrdenados = [...cliente.pedidos].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        const pedidosOrdenados = [...cliente.pedidos].sort((a, b) => new Date(String(b.created_at || '')).getTime() - new Date(String(a.created_at || '')).getTime())
         const total = cliente.pedidos.reduce((acc, pedido) => acc + valorPedido(pedido), 0)
 
         const completo = {
@@ -646,7 +687,7 @@ export default function ClientesPage() {
                     <p className="font-black text-[#071b3a]">Follow-ups</p>
                     <div className="mt-3 grid gap-2">
                       {selecionado.followups.length === 0 && <p className="text-sm font-bold text-slate-500">Nenhum follow-up.</p>}
-                      {selecionado.followups.map((f: any) => (
+                      {selecionado.followups.map((f) => (
                         <div key={f.id} className="rounded-xl bg-[#f5f8ff] p-3">
                           <div className="flex items-start justify-between gap-3">
                             <div>
@@ -664,7 +705,7 @@ export default function ClientesPage() {
                     <p className="font-black text-[#071b3a]">Notas</p>
                     <div className="mt-3 grid gap-2">
                       {selecionado.notas.length === 0 && <p className="text-sm font-bold text-slate-500">Nenhuma nota.</p>}
-                      {selecionado.notas.map((n: any) => (
+                      {selecionado.notas.map((n) => (
                         <div key={n.id} className="rounded-xl bg-[#f5f8ff] p-3">
                           <p className="text-xs font-black uppercase text-[#05245c]">{n.tipo} • {dataBR(n.created_at)}</p>
                           <p className="mt-1 text-sm font-bold text-slate-700">{n.conteudo}</p>
@@ -676,7 +717,7 @@ export default function ClientesPage() {
                   <div className="rounded-2xl border border-slate-200 bg-white p-4">
                     <p className="font-black text-[#071b3a]">Últimos pedidos</p>
                     <div className="mt-3 grid gap-2">
-                      {selecionado.pedidos.slice(0, 5).map((p: any) => (
+                      {selecionado.pedidos.slice(0, 5).map((p) => (
                         <div key={p.id} className="rounded-xl bg-[#f5f8ff] p-3">
                           <p className="font-black">{p.produto || 'Pedido'}</p>
                           <p className="text-xs font-bold text-slate-500">{p.status} • {dataBR(p.created_at)} • {moeda(valorPedido(p))}</p>

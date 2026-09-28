@@ -3,10 +3,17 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getAccessTokenClient } from '@/lib/current-company-client'
+import type { SmartNotificationResult, SmartNotificationSettings } from '@/lib/orcaly-smart-notifications'
 
-type Settings = Record<string, any>
+type BooleanSettingKey = {
+  [K in keyof SmartNotificationSettings]: SmartNotificationSettings[K] extends boolean ? K : never
+}[keyof SmartNotificationSettings]
 
-const booleanFields = [
+type NumberSettingKey = {
+  [K in keyof SmartNotificationSettings]: SmartNotificationSettings[K] extends number ? K : never
+}[keyof SmartNotificationSettings]
+
+const booleanFields: Array<[BooleanSettingKey, string]> = [
   ['new_order_enabled', 'Novo pedido recebido'],
   ['order_stuck_enabled', 'Pedido parado há X dias'],
   ['task_due_today_enabled', 'Tarefa vence hoje'],
@@ -18,7 +25,7 @@ const booleanFields = [
   ['subscription_expiring_enabled', 'Assinatura perto de vencer'],
 ]
 
-const numberFields = [
+const numberFields: Array<[NumberSettingKey, string]> = [
   ['order_stuck_days', 'Pedido parado depois de quantos dias?'],
   ['lead_idle_days', 'Lead sem contato depois de quantos dias?'],
   ['proposal_idle_days', 'Proposta sem resposta depois de quantos dias?'],
@@ -28,8 +35,8 @@ const numberFields = [
 
 export default function NotificacoesInteligentesPage() {
   const [token, setToken] = useState('')
-  const [settings, setSettings] = useState<Settings | null>(null)
-  const [scanResult, setScanResult] = useState<any>(null)
+  const [settings, setSettings] = useState<SmartNotificationSettings | null>(null)
+  const [scanResult, setScanResult] = useState<SmartNotificationResult | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [scanning, setScanning] = useState(false)
@@ -64,8 +71,11 @@ export default function NotificacoesInteligentesPage() {
     load()
   }, [])
 
-  function update(field: string, value: any) {
-    setSettings((current) => ({ ...(current || {}), [field]: value }))
+  function update<K extends keyof SmartNotificationSettings>(
+    field: K,
+    value: SmartNotificationSettings[K],
+  ) {
+    setSettings((current) => ({ ...(current || {}), [field]: value }) as SmartNotificationSettings)
   }
 
   async function save() {
@@ -226,7 +236,7 @@ export default function NotificacoesInteligentesPage() {
             </div>
 
             <div className="mt-5 grid gap-3">
-              {(scanResult.events || []).map((event: any, index: number) => (
+              {(scanResult.events || []).map((event, index) => (
                 <article key={`${event.type}-${index}`} className="rounded-2xl border border-slate-100 bg-[#f5f8ff] p-4">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>

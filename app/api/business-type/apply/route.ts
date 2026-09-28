@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     const applyTemplate = body.apply_template === true
     const config = getBusinessTypeConfig(businessType)
 
-    const update: Record<string, any> = {
+    const update: Record<string, unknown> = {
       business_type: businessType,
       site_updated_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

@@ -13,7 +13,74 @@ import {
 } from "react";
 import { supabase } from "@/lib/supabase";
 
-type Json = Record<string, any>;
+type AdminSessionPayload = {
+  admin?: {
+    role?: string
+    area?: string | null
+    nome?: string | null
+    email?: string | null
+    mustChangePassword?: boolean
+  }
+  capabilities?: Record<string, boolean | undefined>
+  error?: string
+}
+
+type AffiliateRow = {
+  id?: string | number
+  review_status?: string | null
+  status?: string | null
+  payout_status?: string | null
+  position?: number | string | null
+  name?: string | null
+  conversions?: number | string | null
+  score?: number | string | null
+}
+
+type AffiliatePayload = {
+  referrals?: AffiliateRow[]
+  payouts?: AffiliateRow[]
+  profiles?: AffiliateRow[]
+  ranking?: { top?: AffiliateRow[] }
+  summary?: {
+    activeAffiliates?: number | null
+    affiliates?: number | null
+    referrals?: number | null
+    qualified?: number | null
+    commissionsAvailable?: number | null
+    commissionsHold?: number | null
+    commissionsPaid?: number | null
+    payoutsPending?: number | null
+  }
+  error?: string
+}
+
+type PlatformPayload = {
+  metrics?: {
+    total_companies?: number | null
+    connected_companies?: number | null
+    disconnected_companies?: number | null
+    sold_volume?: number | null
+    commission_total?: number | null
+    commissions_pending?: number | null
+  }
+  error?: string
+}
+
+type TeamRow = {
+  is_active?: boolean
+  role?: string | null
+}
+
+type AuditRow = {
+  id?: string | number
+  source?: string | null
+  action?: string | null
+  actor?: string | null
+  createdAt?: string | null
+}
+
+type TeamPayload = { team?: TeamRow[]; error?: string }
+type AuditPayload = { logs?: AuditRow[]; error?: string }
 
 function money(value: unknown) {
   if (value === null || value === undefined) {
@@ -47,7 +114,7 @@ async function currentToken() {
   return data.session?.access_token || "";
 }
 
-async function jsonFetch(
+async function jsonFetch<TPayload>(
   url: string,
   token: string,
 ) {
@@ -60,7 +127,7 @@ async function jsonFetch(
 
   const payload = await response
     .json()
-    .catch(() => ({}));
+    .catch(() => ({})) as TPayload;
 
   return {
     ok: response.ok,
@@ -110,15 +177,15 @@ function Metric({
 export default function OwnerControlCenter() {
   const router = useRouter();
   const [session, setSession] =
-    useState<Json | null>(null);
+    useState<AdminSessionPayload | null>(null);
   const [affiliates, setAffiliates] =
-    useState<Json | null>(null);
+    useState<AffiliatePayload | null>(null);
   const [platform, setPlatform] =
-    useState<Json | null>(null);
+    useState<PlatformPayload | null>(null);
   const [team, setTeam] =
-    useState<any[]>([]);
+    useState<TeamRow[]>([]);
   const [audit, setAudit] =
-    useState<any[]>([]);
+    useState<AuditRow[]>([]);
   const [loading, setLoading] =
     useState(true);
   const [error, setError] = useState("");
@@ -134,7 +201,7 @@ export default function OwnerControlCenter() {
       return;
     }
 
-    const sessionResult = await jsonFetch(
+    const sessionResult = await jsonFetch<AdminSessionPayload>(
       "/api/admin/session",
       token,
     );
@@ -161,16 +228,16 @@ export default function OwnerControlCenter() {
       teamResult,
       auditResult,
     ] = await Promise.all([
-      jsonFetch(
+      jsonFetch<AffiliatePayload>(
         "/api/admin/affiliates",
         token,
       ),
-      jsonFetch(
+      jsonFetch<PlatformPayload>(
         "/api/platform-admin/summary",
         token,
       ),
-      jsonFetch("/api/admin/team", token),
-      jsonFetch("/api/admin/audit", token),
+      jsonFetch<TeamPayload>("/api/admin/team", token),
+      jsonFetch<AuditPayload>("/api/admin/audit", token),
     ]);
 
     if (affiliatesResult.ok) {
@@ -216,7 +283,7 @@ export default function OwnerControlCenter() {
   const pendingReferrals = useMemo(
     () =>
       (affiliates?.referrals || []).filter(
-        (row: any) =>
+        (row) =>
           row.review_status === "pending" ||
           row.review_status === "flagged",
       ),
@@ -226,12 +293,12 @@ export default function OwnerControlCenter() {
   const pendingPayouts = useMemo(
     () =>
       (affiliates?.payouts || []).filter(
-        (row: any) =>
+        (row) =>
           [
             "requested",
             "approved",
             "processing",
-          ].includes(row.status),
+          ].includes(String(row.status || '')),
       ),
     [affiliates],
   );
@@ -239,7 +306,7 @@ export default function OwnerControlCenter() {
   const pendingPix = useMemo(
     () =>
       (affiliates?.profiles || []).filter(
-        (row: any) =>
+        (row) =>
           row.payout_status !== "verified",
       ),
     [affiliates],
@@ -634,7 +701,7 @@ export default function OwnerControlCenter() {
               <div className="mt-5 grid gap-2">
                 {topPartners
                   .slice(0, 5)
-                  .map((row: any) => (
+                  .map((row) => (
                     <div
                       key={row.id}
                       className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-[#f8faff] p-4"

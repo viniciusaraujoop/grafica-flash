@@ -3,22 +3,98 @@ import { auditLog, can, fail, getCurrentAdmin, supabaseAdmin } from '@/lib/admin
 
 type Severity = 'baixa' | 'media' | 'alta' | 'critica'
 
-function isBlank(value: any) {
+type CompanyRow = {
+  id: string
+  owner_id?: string | null
+  tester_id?: string | null
+  nome?: string | null
+  slug?: string | null
+  subdomain_slug?: string | null
+  whatsapp?: string | null
+  pix_key?: string | null
+  assinatura_expira_em?: string | null
+  assinatura_status?: string | null
+  ativo?: boolean | null
+}
+
+type OrderRow = {
+  id: string
+  company_id?: string | null
+  nome?: string | null
+  produto?: string | null
+  telefone?: string | null
+  status?: string | null
+  created_at?: string | null
+}
+
+type ProductRow = {
+  id: string
+  company_id?: string | null
+  nome?: string | null
+  preco?: number | string | null
+}
+
+type ProposalRow = {
+  id: string
+  cliente_nome?: string | null
+  status?: string | null
+  created_at?: string | null
+}
+
+type LeadRow = {
+  id: string
+  empresa_nome?: string | null
+  email?: string | null
+  status?: string | null
+  converted_user_id?: string | null
+  created_at?: string | null
+}
+
+type FinanceRow = {
+  id: string
+  descricao?: string | null
+  vencimento?: string | null
+  status?: string | null
+  origem?: string | null
+  nota_chave?: string | null
+}
+
+type MemberRow = { user_id?: string | null }
+type BugReportRow = { status?: string | null; [key: string]: unknown }
+type ScanRunRow = Record<string, unknown>
+type AuthUserRow = { id: string; email?: string; confirmed_at?: string | null }
+
+type ScanIssue = {
+  code: string
+  title: string
+  description: string
+  severity: Severity
+  area: string
+  entity_type: string | null
+  entity_id: string | null
+  entity_label: string | null
+  affected_table: string | null
+  affected_field: string | null
+  suggested_action: string | null
+  fix_steps: string[]
+  fix_sql: string | null
+  fix_route: string | null
+  auto_fixable: boolean
+  metadata: Record<string, unknown>
+}
+
+function isBlank(value: unknown) {
   return value === null || value === undefined || String(value).trim() === ''
 }
 
-function daysAgo(value: any) {
+function daysAgo(value: string | number | Date | null | undefined) {
   if (!value) return 9999
   return Math.floor((Date.now() - new Date(value).getTime()) / (1000 * 60 * 60 * 24))
 }
 
-function daysUntil(value: any) {
+function daysUntil(value: string | number | Date | null | undefined) {
   if (!value) return null
   return Math.ceil((new Date(value).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-}
-
-function safe(value: string) {
-  return String(value || '').replace(/'/g, "''")
 }
 
 function issue(args: {
@@ -37,7 +113,7 @@ function issue(args: {
   fixSql?: string
   fixRoute?: string
   autoFixable?: boolean
-  metadata?: any
+  metadata?: Record<string, unknown>
 }) {
   return {
     code: args.code,
@@ -59,13 +135,15 @@ function issue(args: {
   }
 }
 
-async function dataOrEmpty(query: any) {
+async function dataOrEmpty<T>(
+  query: PromiseLike<{ data: T[] | null; error: unknown }>,
+): Promise<T[]> {
   const { data, error } = await query
   if (error) return []
   return data || []
 }
 
-async function saveIssues(issues: any[]) {
+async function saveIssues(issues: ScanIssue[]) {
   for (const item of issues) {
     const { data: existing } = await supabaseAdmin
       .from('admin_bug_reports')
@@ -110,8 +188,8 @@ export async function GET(request: NextRequest) {
     if (!can(admin, 'bugs')) return fail('Sem permissão para scanner.', 403)
 
     const [bugs, runs] = await Promise.all([
-      dataOrEmpty(supabaseAdmin.from('admin_bug_reports').select('*').order('last_seen_at', { ascending: false }).limit(300)),
-      dataOrEmpty(supabaseAdmin.from('admin_scan_runs').select('*').order('started_at', { ascending: false }).limit(50)),
+      dataOrEmpty<BugReportRow>(supabaseAdmin.from('admin_bug_reports').select('*').order('last_seen_at', { ascending: false }).limit(300)),
+      dataOrEmpty<ScanRunRow>(supabaseAdmin.from('admin_scan_runs').select('*').order('started_at', { ascending: false }).limit(50)),
     ])
 
     return NextResponse.json({ bugs, runs })
@@ -152,38 +230,38 @@ export async function POST(request: NextRequest) {
       bugsOpen,
       usersResult,
     ] = await Promise.all([
-      dataOrEmpty(supabaseAdmin.from('companies').select('*').limit(1000)),
-      dataOrEmpty(supabaseAdmin.from('orders').select('*').limit(1000)),
-      dataOrEmpty(supabaseAdmin.from('products').select('*').limit(1000)),
-      dataOrEmpty(supabaseAdmin.from('proposals').select('*').limit(1000)),
-      dataOrEmpty(supabaseAdmin.from('signup_leads').select('*').limit(1000)),
-      dataOrEmpty(supabaseAdmin.from('financial_transactions').select('*').limit(1000)),
-      dataOrEmpty(supabaseAdmin.from('company_members').select('*').limit(1000)),
-      dataOrEmpty(supabaseAdmin.from('admin_bug_reports').select('*').in('status', ['aberto', 'em_analise']).limit(1000)),
+      dataOrEmpty<CompanyRow>(supabaseAdmin.from('companies').select('*').limit(1000)),
+      dataOrEmpty<OrderRow>(supabaseAdmin.from('orders').select('*').limit(1000)),
+      dataOrEmpty<ProductRow>(supabaseAdmin.from('products').select('*').limit(1000)),
+      dataOrEmpty<ProposalRow>(supabaseAdmin.from('proposals').select('*').limit(1000)),
+      dataOrEmpty<LeadRow>(supabaseAdmin.from('signup_leads').select('*').limit(1000)),
+      dataOrEmpty<FinanceRow>(supabaseAdmin.from('financial_transactions').select('*').limit(1000)),
+      dataOrEmpty<MemberRow>(supabaseAdmin.from('company_members').select('*').limit(1000)),
+      dataOrEmpty<BugReportRow>(supabaseAdmin.from('admin_bug_reports').select('*').in('status', ['aberto', 'em_analise']).limit(1000)),
       supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     ])
 
-    const users = usersResult?.data?.users || []
-    const issues: any[] = []
-    const companyIds = new Set(companies.map((c: any) => c.id))
-    const ownerIds = new Set(companies.map((c: any) => c.owner_id).filter(Boolean))
-    const memberUserIds = new Set(members.map((m: any) => m.user_id).filter(Boolean))
+    const users = (usersResult?.data?.users || []) as AuthUserRow[]
+    const issues: ScanIssue[] = []
+    const companyIds = new Set(companies.map((c) => c.id))
+    const ownerIds = new Set(companies.map((c) => c.owner_id).filter(Boolean))
+    const memberUserIds = new Set(members.map((m) => m.user_id).filter(Boolean))
 
-    const slugMap = new Map<string, any[]>()
-    companies.forEach((company: any) => {
+    const slugMap = new Map<string, CompanyRow[]>()
+    companies.forEach((company) => {
       const slug = String(company.slug || '').trim().toLowerCase()
       if (!slug) return
       slugMap.set(slug, [...(slugMap.get(slug) || []), company])
     })
 
-    const subMap = new Map<string, any[]>()
-    companies.forEach((company: any) => {
+    const subMap = new Map<string, CompanyRow[]>()
+    companies.forEach((company) => {
       const sub = String(company.subdomain_slug || '').trim().toLowerCase()
       if (!sub) return
       subMap.set(sub, [...(subMap.get(sub) || []), company])
     })
 
-    companies.forEach((company: any) => {
+    companies.forEach((company) => {
       const label = company.nome || company.slug || company.id
       const exp = daysUntil(company.assinatura_expira_em)
 
@@ -348,7 +426,7 @@ export async function POST(request: NextRequest) {
             'Escolha qual empresa deve manter o slug atual.',
             'Altere o slug das demais empresas para valores únicos.',
           ],
-          metadata: { companies: list.map((c: any) => ({ id: c.id, nome: c.nome })) },
+          metadata: { companies: list.map((c) => ({ id: c.id, nome: c.nome })) },
         }))
       }
     })
@@ -373,12 +451,12 @@ export async function POST(request: NextRequest) {
             'Mantenha o subdomínio em uma empresa.',
             'Altere subdomain_slug das demais.',
           ],
-          metadata: { companies: list.map((c: any) => ({ id: c.id, nome: c.nome })) },
+          metadata: { companies: list.map((c) => ({ id: c.id, nome: c.nome })) },
         }))
       }
     })
 
-    users.forEach((user: any) => {
+    users.forEach((user) => {
       if (!ownerIds.has(user.id) && !memberUserIds.has(user.id)) {
         issues.push(issue({
           code: `user:${user.id}:orphan`,
@@ -423,10 +501,10 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    orders.forEach((order: any) => {
+    orders.forEach((order) => {
       const label = order.nome || order.produto || order.id
 
-      if (!companyIds.has(order.company_id)) {
+      if (!companyIds.has(String(order.company_id || ''))) {
         issues.push(issue({
           code: `order:${order.id}:invalid-company`,
           title: 'Pedido sem empresa válida',
@@ -494,7 +572,7 @@ export async function POST(request: NextRequest) {
         }))
       }
 
-      if (!['Entregue', 'Pronto'].includes(order.status) && daysAgo(order.created_at) > 15) {
+      if (!['Entregue', 'Pronto'].includes(String(order.status || '')) && daysAgo(order.created_at) > 15) {
         issues.push(issue({
           code: `order:${order.id}:stale`,
           title: 'Pedido parado há muitos dias',
@@ -518,10 +596,10 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    products.forEach((product: any) => {
+    products.forEach((product) => {
       const label = product.nome || product.id
 
-      if (!companyIds.has(product.company_id)) {
+      if (!companyIds.has(String(product.company_id || ''))) {
         issues.push(issue({
           code: `product:${product.id}:invalid-company`,
           title: 'Produto sem empresa válida',
@@ -568,7 +646,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    proposals.forEach((proposal: any) => {
+    proposals.forEach((proposal) => {
       const label = proposal.cliente_nome || proposal.id
 
       if (!['aprovada', 'aprovado', 'approved'].includes(String(proposal.status || '').toLowerCase()) && daysAgo(proposal.created_at) > 10) {
@@ -594,7 +672,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    leads.forEach((lead: any) => {
+    leads.forEach((lead) => {
       const label = lead.empresa_nome || lead.email || lead.id
 
       if (lead.status === 'pago' && isBlank(lead.converted_user_id)) {
@@ -619,7 +697,7 @@ export async function POST(request: NextRequest) {
         }))
       }
 
-      if (['lead', 'checkout_criado'].includes(lead.status) && daysAgo(lead.created_at) > 3) {
+      if (['lead', 'checkout_criado'].includes(String(lead.status || '')) && daysAgo(lead.created_at) > 3) {
         issues.push(issue({
           code: `lead:${lead.id}:stale`,
           title: 'Lead parado',
@@ -642,7 +720,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    finance.forEach((tx: any) => {
+    finance.forEach((tx) => {
       const label = tx.descricao || tx.id
       const due = daysUntil(tx.vencimento)
 
@@ -717,7 +795,7 @@ export async function POST(request: NextRequest) {
 
     await saveIssues(issues)
 
-    const counts = issues.reduce((acc: any, item: any) => {
+    const counts = issues.reduce((acc, item) => {
       if (item.severity === 'critica') acc.critical += 1
       if (item.severity === 'alta') acc.high += 1
       if (item.severity === 'media') acc.medium += 1
@@ -744,7 +822,7 @@ export async function POST(request: NextRequest) {
             proposals: proposals.length,
             leads: leads.length,
             finance: finance.length,
-            generated_issue_codes: issues.map((item: any) => item.code),
+            generated_issue_codes: issues.map((item) => item.code),
           },
         })
         .eq('id', runId)

@@ -11,8 +11,6 @@ import { signupMercadoPagoRequest } from "@/lib/payments/signup/mercado-pago";
 type JsonRecord = Record<string, unknown>;
 type SignupPlanKey = "essencial" | "profissional" | "premium";
 
-const DAY_MS = 86_400_000;
-
 export const SIGNUP_PLANS: Record<
   SignupPlanKey,
   {

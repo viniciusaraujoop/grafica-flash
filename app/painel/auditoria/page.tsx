@@ -4,6 +4,32 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getAccessTokenClient } from '@/lib/current-company-client'
 
+type HealthCheck = {
+  key: string
+  title: string
+  description: string
+  ok: boolean
+}
+
+type HealthModule = {
+  ok: boolean
+  count: number
+  error?: string | null
+}
+
+type SystemHealth = {
+  checks: HealthCheck[]
+  modules: Record<string, HealthModule>
+}
+
+type AuditLog = {
+  id: string
+  action: string
+  entity?: string | null
+  entity_id?: string | null
+  created_at: string
+}
+
 function formatDate(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
@@ -11,8 +37,8 @@ function formatDate(value: string) {
 }
 
 export default function AuditoriaPage() {
-  const [health, setHealth] = useState<any>(null)
-  const [logs, setLogs] = useState<any[]>([])
+  const [health, setHealth] = useState<SystemHealth | null>(null)
+  const [logs, setLogs] = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -66,7 +92,7 @@ export default function AuditoriaPage() {
         {error && <div className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">{error}</div>}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {(health?.checks || []).map((check: any) => (
+          {(health?.checks || []).map((check) => (
             <article key={check.key} className="rounded-[1.6rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -84,7 +110,7 @@ export default function AuditoriaPage() {
         <section className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-950/5">
           <h2 className="text-2xl font-black tracking-[-0.04em]">Módulos</h2>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {Object.entries(health?.modules || {}).map(([key, value]: any) => (
+            {Object.entries(health?.modules || {}).map(([key, value]) => (
               <div key={key} className="rounded-2xl bg-[#f5f8ff] p-4">
                 <p className="text-sm font-black text-slate-500">{key}</p>
                 <p className="mt-1 text-2xl font-black text-[#05245c]">{value?.ok ? value.count : 'Erro'}</p>

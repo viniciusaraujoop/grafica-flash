@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
 import { createAuditLog, createNotification } from '@/lib/orcaly-audit'
 
-function cleanTask(body: any) {
+function cleanTask(body: Record<string, unknown>) {
   const titulo = String(body.titulo || '').trim()
   if (!titulo) throw new Error('Informe o título da tarefa.')
 

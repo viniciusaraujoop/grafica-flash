@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
 
-function valueOf(row: any) {
+function valueOf(row: { total_amount?: unknown; total?: unknown; valor_total?: unknown; preco_estimado?: unknown }) {
   return Number(row.total_amount || row.total || row.valor_total || row.preco_estimado || 0)
 }
 

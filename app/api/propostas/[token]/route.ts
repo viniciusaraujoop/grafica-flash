@@ -8,6 +8,49 @@ type RouteContext = {
   params: Promise<{ token: string }>
 }
 
+type ProposalRow = {
+  id: string
+  company_id: string
+  order_id?: string | null
+  token?: string | null
+  titulo?: string | null
+  proposta_numero?: string | null
+  cliente_nome?: string | null
+  cliente_whatsapp?: string | null
+  status?: string | null
+  valid_until?: string | null
+  expired_at?: string | null
+  viewed_at?: string | null
+  valor_total?: number | string | null
+  valor_sinal?: number | string | null
+  pix_payload?: string | null
+  pix_txid?: string | null
+  pix_valor?: number | string | null
+  prazo?: unknown
+  condicoes?: unknown
+  itens?: unknown
+  production_order_id?: string | null
+  [key: string]: unknown
+}
+
+type ProposalConfig = {
+  auto_create_production?: boolean | null
+  default_production_steps?: ProductionStepInput[] | null
+  require_document?: boolean | null
+  require_drawn_signature?: boolean | null
+  require_signature_name?: boolean | null
+  allow_print_pdf?: boolean | null
+  auto_generate_pix?: boolean | null
+  [key: string]: unknown
+}
+
+type ProductionStepInput = {
+  titulo?: string | null
+  title?: string | null
+  descricao?: string | null
+  description?: string | null
+}
+
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -32,13 +75,13 @@ function makeHash(parts: Array<string | null | undefined>) {
   return crypto.createHash('sha256').update(parts.join('|')).digest('hex')
 }
 
-async function insertEvent(supabaseAdmin: any, proposal: any, event: {
+async function insertEvent(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, proposal: ProposalRow, event: {
   event_type: string
   actor_type?: string
   actor_name?: string
   actor_email?: string
   note?: string
-  metadata?: any
+  metadata?: Record<string, unknown>
   ip?: string
   user_agent?: string
 }) {
@@ -56,7 +99,7 @@ async function insertEvent(supabaseAdmin: any, proposal: any, event: {
   })
 }
 
-async function getProposalBundle(supabaseAdmin: any, token: string) {
+async function getProposalBundle(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, token: string) {
   const { data: proposta, error: propostaError } = await supabaseAdmin
     .from('proposals')
     .select('*')
@@ -106,7 +149,7 @@ async function getProposalBundle(supabaseAdmin: any, token: string) {
   return { proposta, empresa, config, events: events || [] }
 }
 
-async function createProductionOrder(supabaseAdmin: any, proposta: any, config: any) {
+async function createProductionOrder(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, proposta: ProposalRow, config: ProposalConfig) {
   if (!config?.auto_create_production) return null
 
   const existing = await supabaseAdmin
@@ -153,7 +196,7 @@ async function createProductionOrder(supabaseAdmin: any, proposta: any, config: 
         { titulo: 'Entregar ao cliente', descricao: 'Registrar entrega, retirada ou envio.' },
       ]
 
-  const steps = rawSteps.map((step: any, index: number) => ({
+  const steps = rawSteps.map((step, index) => ({
     production_order_id: order.id,
     company_id: proposta.company_id,
     title: step.titulo || step.title || `Etapa ${index + 1}`,

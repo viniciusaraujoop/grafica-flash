@@ -7,7 +7,6 @@ import { useSearchParams } from "next/navigation";
 import {
   businessTypes,
   getBusinessTypeConfig,
-  normalizeBusinessType,
   type BusinessType,
 } from "@/lib/business-types";
 import { getCompanyPublicHost } from "@/lib/company-url";

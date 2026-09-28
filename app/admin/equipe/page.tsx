@@ -2,7 +2,6 @@
 
 // ORCALY_OWNER_SUPPORT_CONTROL_V1
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -14,7 +13,23 @@ import {
 } from "react";
 import { supabase } from "@/lib/supabase";
 
-type Json = Record<string, any>;
+type TeamMember = {
+  [key: string]: unknown
+  id?: string
+  email?: string | null
+  nome?: string | null
+  observacoes?: string | null
+  role?: string | null
+  is_active?: boolean
+  last_login_at?: string | null
+  permissions?: Record<string, boolean>
+}
+
+type PermissionCatalogItem = {
+  key: string
+  label: string
+  description: string
+}
 
 const initialForm = {
   nome: "",
@@ -44,12 +59,12 @@ function dateTime(value: unknown) {
 
 export default function AdminEquipePage() {
   const router = useRouter();
-  const [team, setTeam] = useState<Json[]>([]);
-  const [catalog, setCatalog] = useState<Json[]>([]);
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [catalog, setCatalog] = useState<PermissionCatalogItem[]>([]);
   const [form, setForm] = useState(initialForm);
-  const [editing, setEditing] = useState<Json | null>(null);
+  const [editing, setEditing] = useState<TeamMember | null>(null);
   const [resetMember, setResetMember] =
-    useState<Json | null>(null);
+    useState<TeamMember | null>(null);
   const [resetPassword, setResetPassword] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");

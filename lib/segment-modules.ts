@@ -237,10 +237,6 @@ export const segmentInfos: SegmentInfo[] = [
   },
 ]
 
-function globalSegments(except: SegmentType[] = []): SegmentType[] {
-  return allSegments.filter((segment) => !except.includes(segment))
-}
-
 export const segmentModules: SegmentModule[] = [
   {
     id: 'dashboard',

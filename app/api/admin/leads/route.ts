@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-auth'
 
-function montarMensagem(lead: any) {
+type AdminSignupLead = {
+  nome_responsavel?: string | null
+  empresa_nome?: string | null
+  status?: string | null
+  followup_count?: number | null
+  whatsapp?: string | null
+}
+
+function montarMensagem(lead: AdminSignupLead) {
   const nome = lead.nome_responsavel || 'tudo bem'
   const empresa = lead.empresa_nome || 'sua empresa'
 
@@ -44,7 +52,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const leads = (data || []).map((lead: any) => {
+  const leads = (data || []).map((lead: AdminSignupLead) => {
     const mensagem = montarMensagem(lead)
 
     return {
