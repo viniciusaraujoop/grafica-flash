@@ -162,7 +162,7 @@ export async function getCompanyAccess(
 
   const { data: ownerCompany, error: ownerError } = await supabaseAdmin
     .from('companies')
-    .select(COMPANY_ACCESS_COLUMNS)
+    .select(COMPANY_ACCESS_COLUMNS as '*')
     .or(`owner_id.eq.${userId},tester_id.eq.${userId}`)
     .limit(1)
     .maybeSingle()
@@ -191,7 +191,7 @@ export async function getCompanyAccess(
   if (member?.company_id && isUuid(member.company_id)) {
     const { data: company, error: companyError } = await supabaseAdmin
       .from('companies')
-      .select(COMPANY_ACCESS_COLUMNS)
+      .select(COMPANY_ACCESS_COLUMNS as '*')
       .eq('id', member.company_id)
       .maybeSingle()
 
@@ -209,7 +209,7 @@ export async function getCompanyAccess(
     const { data: adminCompany, error: adminCompanyError } =
       await supabaseAdmin
         .from('companies')
-        .select(COMPANY_ACCESS_COLUMNS)
+        .select(COMPANY_ACCESS_COLUMNS as '*')
         .eq('slug', 'grafica-flash')
         .maybeSingle()
 

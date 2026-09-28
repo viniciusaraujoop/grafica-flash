@@ -328,7 +328,7 @@ export async function PATCH(request: NextRequest) {
       .from('companies')
       .update(update)
       .eq('id', company.id)
-      .select(COMPANY_ACCESS_COLUMNS)
+      .select(COMPANY_ACCESS_COLUMNS as '*')
       .single()
 
     if (error) throw error
