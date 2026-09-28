@@ -41,15 +41,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Assinatura inválida.' }, { status: 403 })
     }
 
-    let body: any
+    let body: unknown
     try {
       body = JSON.parse(rawBody || '{}')
     } catch {
       return NextResponse.json({ error: 'Payload inválido.' }, { status: 400 })
     }
+    const root = body && typeof body === 'object' && !Array.isArray(body)
+      ? body as Record<string, unknown>
+      : {}
     const supabaseAdmin = getSupabaseAdmin()
 
-    for (const entry of Array.isArray(body.entry) ? body.entry : []) {
+    for (const entry of Array.isArray(root.entry) ? root.entry : []) {
       for (const change of Array.isArray(entry.changes) ? entry.changes : []) {
         const value = change.value || {}
         const phoneNumberId = value.metadata?.phone_number_id || ''
