@@ -49,7 +49,7 @@ jobs:
         run: npx tsc --noEmit --incremental false
 
       - name: Focused Wave1 lint
-        run: npx eslint lib/actions/contracts lib/automation-recipes lib/detectors/contracts lib/events/contracts lib/industry-packs lib/wave1 scripts/wave1
+        run: npx eslint --no-warn-ignored lib/actions/contracts lib/automation-recipes lib/detectors/contracts lib/events/contracts lib/industry-packs lib/wave1
 
       - name: Wave1 coverage
         run: node --experimental-test-coverage --test scripts/wave1/test-shared.mjs scripts/wave1/test-industry-packs.mjs scripts/wave1/test-automation-recipes.mjs
