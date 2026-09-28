@@ -7,7 +7,7 @@
   --ox-text:#142033;--ox-text-muted:#586579;--ox-line:#d9e0e7;--ox-line-strong:#b8c4cf;
   --ox-info:#0b5cad;--ox-success:#0b6b4b;--ox-warning:#875000;--ox-danger:#b42318;
   --ox-info-bg:#e8f1fb;--ox-success-bg:#e6f4ee;--ox-warning-bg:#fff2dd;--ox-danger-bg:#fdecea;
-  --ox-accent:#164bc4;--ox-accent-text:#164bc4;--ox-accent-surface:#edf3ff;
+  --ox-accent:#164bc4;--ox-accent-text:var(--ox-skin-accent-text,#164bc4);--ox-accent-surface:var(--ox-skin-accent-surface,#edf3ff);
   --ox-shadow-raised:0 10px 30px rgb(20 32 51 / .10);--ox-shadow-floating:0 18px 52px rgb(20 32 51 / .16);
   --ox-focus:0 0 0 3px var(--ox-surface),0 0 0 6px #0b64c0;
   --ox-motion-micro:160ms;--ox-motion-ui:220ms;--ox-motion-overlay:280ms;--ox-motion-section:320ms;--ox-ease:cubic-bezier(.2,0,0,1);
