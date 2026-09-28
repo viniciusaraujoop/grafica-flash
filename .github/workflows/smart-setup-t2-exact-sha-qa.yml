@@ -1,0 +1,56 @@
+name: Smart Setup T2 Exact-SHA QA
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  smart-setup-t2-exact-sha:
+    name: Smart Setup T2 exact SHA execution
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout frozen Smart Setup T2 SHA
+        uses: actions/checkout@v4
+        with:
+          ref: 33bcd7c2c21d454a90090e5cb59bbbc8f38317ae
+          fetch-depth: 1
+
+      - name: Verify exact target SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          expected="33bcd7c2c21d454a90090e5cb59bbbc8f38317ae"
+          echo "actual=$actual"
+          echo "expected=$expected"
+          test "$actual" = "$expected"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: T2 focused tests
+        run: node --test scripts/wave1/test-smart-setup.mjs
+
+      - name: T2 mutation suite
+        run: node scripts/wave1/test-smart-setup-mutation.mjs
+
+      - name: Wave1 combined T1 + T2
+        run: npm run test:wave1
+
+      - name: T1 regression only
+        run: node --test scripts/wave1/test-shared.mjs scripts/wave1/test-industry-packs.mjs scripts/wave1/test-automation-recipes.mjs
+
+      - name: Smart Setup coverage
+        run: node --test --experimental-test-coverage --test-coverage-include='lib/smart-setup/**' scripts/wave1/test-smart-setup.mjs
