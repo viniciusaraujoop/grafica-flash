@@ -163,6 +163,10 @@ function GenericArchetype({ view }: { view: OrcalyArchetypeKey }) {
   return <><StandardHeader title={meta.title} description={`Arquétipo de demonstração: ${meta.intent}. Estado responsivo, tema escuro e foco fazem parte do contrato.`} /><StateView kind="unavailable" title="Protótipo estrutural" description="Este arquétipo usa a mesma fundação visual e está pronto para especialização pelo produto, sem criar rota real." /></>
 }
 
+const archetypeSkins: Partial<Record<OrcalyArchetypeKey,SkinKey>> = {
+  dashboard:'business','data-list':'business',detail:'business',analytics:'growth',settings:'business',editor:'flow',wizard:'business',checkout:'business',reader:'academy',search:'market',timeline:'business',workflow:'flow',market:'market',financial:'wealth',
+}
+
 function viewConfig(view: FrontendPreviewView): { skin?: SkinKey; product: string; nav?: readonly ShellNavGroup[]; content: ReactNode } {
   if (view==='hub-shell'||view==='mobile-shell') return { product:'Hub', content:<DashboardContent /> }
   if (view==='business-dashboard') return { skin:'business', product:'Business', nav:BUSINESS_NAV, content:<DashboardContent /> }
@@ -177,12 +181,7 @@ function viewConfig(view: FrontendPreviewView): { skin?: SkinKey; product: strin
   if (view==='command') return { product:'Hub', content:<CommandContent /> }
   if (view==='launcher') return { product:'Hub', content:<><DemoNotice /><PageHeader title="Launcher" description="Troca de produto sem perder a noção de contexto." /><div className={styles.launcherStage}><ProductLauncher /><p>Abra o launcher acima para inspecionar a superfície flutuante.</p></div></> }
   const key=view as OrcalyArchetypeKey
-  const skin:keyof typeof archetypeSkins = key
-  return { skin:archetypeSkins[skin], product:'Orçaly', content:<GenericArchetype view={key} /> }
-}
-
-const archetypeSkins: Partial<Record<OrcalyArchetypeKey,SkinKey>> = {
-  dashboard:'business','data-list':'business',detail:'business',analytics:'growth',settings:'business',editor:'flow',wizard:'business',checkout:'business',reader:'academy',search:'market',timeline:'business',workflow:'flow',market:'market',financial:'wealth',
+  return { skin:archetypeSkins[key], product:'Orçaly', content:<GenericArchetype view={key} /> }
 }
 
 export default function FrontendSystemPreview({ view='business-dashboard', theme }: { view?: FrontendPreviewView; theme?: 'light'|'dark' }) {
