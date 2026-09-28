@@ -190,15 +190,28 @@ export async function revokeGoogleCredential(credentials: Record<string, unknown
   const token = typeof credentials.refresh_token === 'string' && credentials.refresh_token
     ? credentials.refresh_token
     : typeof credentials.access_token === 'string' ? credentials.access_token : ''
-  if (!token) return
+  if (!token) return { revoked: false, skipped: true as const }
+
+  let response: Response
   try {
-    await fetch('https://oauth2.googleapis.com/revoke', {
+    response = await fetch('https://oauth2.googleapis.com/revoke', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ token }),
       signal: AbortSignal.timeout(10_000),
     })
-  } catch {
-    // Local disconnect must remain possible even if the provider is unavailable.
+  } catch (error) {
+    throw new IntegrationError('PROVIDER_DOWN', 'Google não pôde confirmar a revogação da credencial.', { cause: error })
   }
+
+  if (!response.ok) {
+    const code = response.status === 429
+      ? 'RATE_LIMITED'
+      : response.status >= 500
+        ? 'PROVIDER_DOWN'
+        : 'INVALID_CREDENTIAL'
+    throw new IntegrationError(code, 'Google não confirmou a revogação da credencial.', { status: response.status })
+  }
+
+  return { revoked: true, skipped: false as const }
 }

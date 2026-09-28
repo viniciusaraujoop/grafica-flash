@@ -29,12 +29,20 @@ function defaultPhoneNumberId() {
   return process.env.WHATSAPP_PHONE_NUMBER_ID || ''
 }
 
-export function verifyWhatsAppSignature(rawBody: string, signatureHeader?: string | null) {
-  const appSecret = process.env.WHATSAPP_APP_SECRET
-  if (!appSecret) return true
+export function verifyWhatsAppSignatureWithSecret(
+  rawBody: string,
+  signatureHeader: string | null | undefined,
+  appSecret: string | null | undefined,
+) {
+  const secret = String(appSecret || '').trim()
+  if (!secret) return false
   if (!signatureHeader || !signatureHeader.startsWith('sha256=')) return false
-  const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex')}`
+  const expected = `sha256=${crypto.createHmac('sha256', secret).update(rawBody).digest('hex')}`
   try { return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signatureHeader)) } catch { return false }
+}
+
+export function verifyWhatsAppSignature(rawBody: string, signatureHeader?: string | null) {
+  return verifyWhatsAppSignatureWithSecret(rawBody, signatureHeader, process.env.WHATSAPP_APP_SECRET)
 }
 
 export async function getWhatsAppSettings(supabaseAdmin: SupabaseAdmin, companyId: string) {
@@ -157,7 +165,7 @@ export async function getCompanyByWhatsAppPhoneNumberId(supabaseAdmin: SupabaseA
   const companyId = setting?.company_id
   if (!companyId) return null
 
-  const { data } = await supabaseAdmin.from('companies').select('*').eq('id', companyId).maybeSingle()
+  const { data } = await supabaseAdmin.from('companies').select('id,nome').eq('id', companyId).maybeSingle()
   return data || null
 }
 

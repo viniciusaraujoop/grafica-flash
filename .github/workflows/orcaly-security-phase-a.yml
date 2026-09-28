@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - gpt/orcaly-security-hardening
+      - gpt/orcaly-security-b1
     paths:
       - .github/workflows/orcaly-security-phase-a.yml
       - app/**
       - components/**
       - lib/**
       - scripts/test-security-phase-a.mjs
+      - scripts/test-security-phase-b1.mjs
       - package.json
       - package-lock.json
       - proxy.ts
@@ -54,6 +56,9 @@ jobs:
       - name: Security Phase A invariants
         run: npm run security:phase-a
 
+      - name: Security Phase B1 invariants
+        run: npm run security:phase-b1
+
       - name: Scoped lint for Security delta
         shell: bash
         run: |
@@ -72,8 +77,11 @@ jobs:
             app/api/checkout/lead/route.ts \
             app/api/checkout/signup/card/route.ts \
             app/api/checkout/signup/pix/route.ts \
+            app/api/company/current/route.ts \
             app/api/company/settings/route.ts \
             app/api/company/team/route.ts \
+            app/api/integrations/[provider]/route.ts \
+            app/api/whatsapp/webhook/route.ts \
             app/api/founders/activate/route.ts \
             app/api/leads/complete-account/route.ts \
             app/api/marketplace/payments/mercado-pago/connect/route.ts \
@@ -93,9 +101,14 @@ jobs:
             app/api/webhooks/asaas/route.ts \
             app/login/actions.ts \
             components/checkout/SignupCheckout.tsx \
+            lib/company-access.ts \
+            lib/integrations/adapters.ts \
+            lib/integrations/google/oauth.ts \
             lib/payments/server-context.ts \
             lib/payments/subscription-asaas.ts \
+            lib/security/company-client.ts \
             lib/security/mfa-core.ts \
+            lib/whatsapp.ts \
             lib/security/rate-limit.ts \
             > "$RUNNER_TEMP/security-eslint.json"
           ESLINT_EXIT=$?

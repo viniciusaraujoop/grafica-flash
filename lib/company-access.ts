@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
+import { COMPANY_ACCESS_COLUMNS } from '@/lib/security/company-client'
 
 export type CurrentRole =
   | 'dono'
@@ -161,7 +162,7 @@ export async function getCompanyAccess(
 
   const { data: ownerCompany, error: ownerError } = await supabaseAdmin
     .from('companies')
-    .select('*')
+    .select(COMPANY_ACCESS_COLUMNS)
     .or(`owner_id.eq.${userId},tester_id.eq.${userId}`)
     .limit(1)
     .maybeSingle()
@@ -208,7 +209,7 @@ export async function getCompanyAccess(
     const { data: adminCompany, error: adminCompanyError } =
       await supabaseAdmin
         .from('companies')
-        .select('*')
+        .select(COMPANY_ACCESS_COLUMNS)
         .eq('slug', 'grafica-flash')
         .maybeSingle()
 

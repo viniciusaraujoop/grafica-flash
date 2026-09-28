@@ -1,5 +1,7 @@
 import { registerIntegrationAdapter } from '@/lib/integrations/core/registry'
 import { googleCalendarAdapter, stopGoogleCalendarWatches } from '@/lib/integrations/google/calendar'
+import { revokeGoogleCredential } from '@/lib/integrations/google/oauth'
+import { normalizeIntegrationError } from '@/lib/integrations/core/errors'
 import { resendIntegrationAdapter } from '@/lib/integrations/email/resend'
 import { createConfigurationAdapter } from '@/lib/integrations/configuration-adapter'
 import type { IntegrationProviderKey } from '@/lib/integrations/core/types'
@@ -10,6 +12,25 @@ const googleCalendarRegisteredAdapter = {
   ...googleCalendarAdapter,
   async disconnect(context: Parameters<typeof stopGoogleCalendarWatches>[0]) {
     await stopGoogleCalendarWatches(context)
+    const credentials = await context.loadCredentials()
+    if (!credentials) return
+
+    try {
+      const result = await revokeGoogleCredential(credentials)
+      await context.emitAudit('integration.provider_revoke_succeeded', {
+        provider: 'google',
+        revoked: result.revoked,
+        skipped: result.skipped,
+      }).catch(() => undefined)
+    } catch (error) {
+      const normalized = normalizeIntegrationError(error)
+      await context.setConnectionStatus?.('ERROR', 'google_revoke_failed').catch(() => undefined)
+      await context.emitAudit('integration.provider_revoke_failed', {
+        provider: 'google',
+        code: normalized.code,
+      }).catch(() => undefined)
+      throw normalized
+    }
   },
 }
 

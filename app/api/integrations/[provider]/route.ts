@@ -9,6 +9,7 @@ import { resolveIntegrationServerContext } from '@/lib/integrations/server-conte
 import { createIntegrationRuntimeContext } from '@/lib/integrations/runtime'
 import { bootstrapIntegrationAdapters } from '@/lib/integrations/adapters'
 import { requireMfaStepUp } from '@/lib/security/mfa'
+import { normalizeIntegrationError, publicIntegrationError } from '@/lib/integrations/core/errors'
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ provider: string }> }) {
   const { provider: providerKey } = await params
@@ -39,11 +40,26 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   bootstrapIntegrationAdapters()
   const adapter = getIntegrationAdapter(provider.key)
   if (adapter?.disconnect) {
-    await adapter.disconnect(createIntegrationRuntimeContext(context.admin, {
-      companyId: context.companyId,
-      connection,
-      userId: context.userId,
-    }))
+    try {
+      await adapter.disconnect(createIntegrationRuntimeContext(context.admin, {
+        companyId: context.companyId,
+        connection,
+        userId: context.userId,
+      }))
+    } catch (error) {
+      const normalized = normalizeIntegrationError(error)
+      const publicError = publicIntegrationError(normalized)
+      const status = normalized.code === 'RATE_LIMITED'
+        ? 429
+        : normalized.code === 'PROVIDER_DOWN' || normalized.code === 'TIMEOUT'
+          ? 503
+          : 502
+      return NextResponse.json({
+        error: publicError.message,
+        code: 'PROVIDER_REVOKE_FAILED',
+        credential_preserved: true,
+      }, { status })
+    }
   }
 
   await deleteIntegrationCredentials(context.admin, context.companyId, connection.id)

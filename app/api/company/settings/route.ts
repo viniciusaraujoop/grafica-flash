@@ -6,6 +6,7 @@ import { getCompanyPublicUrl } from '@/lib/company-url'
 import { requireMfaStepUpForRequest } from '@/lib/security/mfa'
 import { getSensitiveSettingsFields } from '@/lib/security/privileged-actions'
 import { recordPrivilegedAudit } from '@/lib/security/privileged-audit'
+import { COMPANY_ACCESS_COLUMNS, hasDeprecatedCompanySecretWrite } from '@/lib/security/company-client'
 
 const supabaseAdmin = getSupabaseAdmin()
 
@@ -235,6 +236,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
+    if (hasDeprecatedCompanySecretWrite(body)) {
+      return NextResponse.json({ error: 'Campos legados de credencial WhatsApp não aceitam novas gravações.' }, { status: 400 })
+    }
     const sensitiveFields = getSensitiveSettingsFields(body)
 
     if (sensitiveFields.length > 0) {
@@ -324,7 +328,7 @@ export async function PATCH(request: NextRequest) {
       .from('companies')
       .update(update)
       .eq('id', company.id)
-      .select('*')
+      .select(COMPANY_ACCESS_COLUMNS)
       .single()
 
     if (error) throw error

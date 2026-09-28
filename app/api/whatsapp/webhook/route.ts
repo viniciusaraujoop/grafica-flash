@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/company-access'
 import { generateAiReply, getCompanyByWhatsAppPhoneNumberId, getWhatsAppSettings, saveInbound, sanitizePhone, sendWhatsAppMessage, verifyWhatsAppSignature } from '@/lib/whatsapp'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+const MAX_WEBHOOK_BODY_BYTES = 1_000_000
+
 function parseText(message: any) {
   if (message?.type === 'text') return String(message.text?.body || '').trim()
   if (message?.type === 'button') return String(message.button?.text || message.button?.payload || '').trim()
@@ -14,18 +19,34 @@ export async function GET(request: NextRequest) {
   const mode = searchParams.get('hub.mode')
   const token = searchParams.get('hub.verify_token')
   const challenge = searchParams.get('hub.challenge')
-  if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) return new NextResponse(challenge || '', { status: 200 })
+  const verifyToken = String(process.env.WHATSAPP_VERIFY_TOKEN || '').trim()
+  if (!verifyToken) return NextResponse.json({ error: 'Webhook indisponível.' }, { status: 503 })
+  if (mode === 'subscribe' && token === verifyToken) return new NextResponse(challenge || '', { status: 200 })
   return NextResponse.json({ error: 'Token inválido.' }, { status: 403 })
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const contentLength = Number(request.headers.get('content-length') || '0')
+    if (Number.isFinite(contentLength) && contentLength > MAX_WEBHOOK_BODY_BYTES) {
+      return NextResponse.json({ error: 'Payload excede o limite permitido.' }, { status: 413 })
+    }
+
     const rawBody = await request.text()
+    if (Buffer.byteLength(rawBody, 'utf8') > MAX_WEBHOOK_BODY_BYTES) {
+      return NextResponse.json({ error: 'Payload excede o limite permitido.' }, { status: 413 })
+    }
+
     if (!verifyWhatsAppSignature(rawBody, request.headers.get('x-hub-signature-256'))) {
       return NextResponse.json({ error: 'Assinatura inválida.' }, { status: 403 })
     }
 
-    const body = JSON.parse(rawBody || '{}')
+    let body: any
+    try {
+      body = JSON.parse(rawBody || '{}')
+    } catch {
+      return NextResponse.json({ error: 'Payload inválido.' }, { status: 400 })
+    }
     const supabaseAdmin = getSupabaseAdmin()
 
     for (const entry of Array.isArray(body.entry) ? body.entry : []) {
@@ -108,6 +129,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro no webhook WhatsApp.' }, { status: 500 })
+    console.error(JSON.stringify({
+      event: 'whatsapp_webhook_failure',
+      error_name: error instanceof Error ? error.name : 'UnknownError',
+    }))
+    return NextResponse.json({ error: 'Falha ao processar webhook WhatsApp.' }, { status: 500 })
   }
 }

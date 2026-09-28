@@ -6,6 +6,7 @@ import {
   getSupabaseAdmin,
 } from '@/lib/company-access'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { toClientCompany } from '@/lib/security/company-client'
 
 type RequesterIdentity = {
   id: string
@@ -100,7 +101,7 @@ export async function GET(request: NextRequest) {
         id: requester.id,
         email: requester.email,
       },
-      company: access.company,
+      company: toClientCompany(access.company),
       role: access.role,
       assinatura_ativa: assinaturaEstaAtiva(access.company),
       is_admin_master: access.isAdminMaster,
