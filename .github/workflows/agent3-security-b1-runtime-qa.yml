@@ -114,8 +114,12 @@ jobs:
           cat > agent3-google-revoke-b1.mts <<'TS'
           import assert from 'node:assert/strict'
           import fs from 'node:fs'
-          import { bootstrapIntegrationAdapters } from './lib/integrations/adapters.ts'
-          import { getIntegrationAdapter } from './lib/integrations/core/registry.ts'
+          const adaptersImport: any = await import('./lib/integrations/adapters.ts')
+          const registryImport: any = await import('./lib/integrations/core/registry.ts')
+          const adaptersModule = adaptersImport.default ?? adaptersImport
+          const registryModule = registryImport.default ?? registryImport
+          const bootstrapIntegrationAdapters = adaptersModule.bootstrapIntegrationAdapters
+          const getIntegrationAdapter = registryModule.getIntegrationAdapter
 
           function query(events: string[], table: string) {
             const q: any = {}
