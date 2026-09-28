@@ -1,0 +1,74 @@
+name: Import CSV T3 dependency install
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  install-csv-parse:
+    name: Install csv-parse on feature branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout target feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/orcaly-import-csv-t3
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Verify exact feature HEAD
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          expected="a5fef6e5197c55c19ac8b6cdfe52f3b37a2b8a69"
+          echo "actual=$actual"
+          echo "expected=$expected"
+          test "$actual" = "$expected"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install exact dependency
+        run: npm install --save-exact csv-parse@7.0.2
+
+      - name: Verify package install
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ls csv-parse --depth=0
+          node -e "const p=require('./package.json'); if(p.dependencies?.['csv-parse']!=='7.0.2'){process.exit(1)}"
+
+      - name: Guard changed files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          changed="$(git diff --name-only)"
+          test -n "$changed"
+          bad="$(printf '%s
+' "$changed" | grep -Ev '^(package\.json|package-lock\.json)$' || true)"
+          if [ -n "$bad" ]; then
+            echo "Unexpected changed files:"
+            echo "$bad"
+            exit 1
+          fi
+
+      - name: Commit dependency files back to feature branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "orcaly-qa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore(import-engine): pin csv-parse 7.0.2"
+          git push origin HEAD:claude/orcaly-import-csv-t3
