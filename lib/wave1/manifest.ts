@@ -11,6 +11,17 @@ import {
 } from '../automation-recipes'
 import { buildRegistrySnapshot, industryPackCatalog, validatePack, type PackRegistrySnapshot } from '../industry-packs'
 import { DETECTORS } from '../detectors/contracts/registry'
+import {
+  OUTCOMES,
+  QUESTIONNAIRE_V1,
+  QUESTIONNAIRE_VERSION,
+  RULESET_SUMMARY,
+  RULESET_VERSION,
+  SMART_SETUP_PACKS,
+  THRESHOLDS_BPS,
+  WEIGHTS,
+  MAX_PACK_POINTS_PER_QUESTION,
+} from '../smart-setup/core'
 import { DOMAIN_EVENTS, TIMELINE_ONLY_EVENTS } from '../events/contracts/registry'
 
 export function buildWave1PackRegistry(): PackRegistrySnapshot {
@@ -90,5 +101,29 @@ export function buildRecipeManifest() {
         valid: validateRecipe(recipe, registry).ok,
       }
     }),
+  }
+}
+
+/** Smart Setup T2 manifest — safe metadata only. Never contains user answers. */
+export function buildSmartSetupManifest() {
+  return {
+    manifest: 'orcaly.smart-setup',
+    schemaVersion: 1,
+    questionnaireVersion: QUESTIONNAIRE_VERSION,
+    rulesetVersion: RULESET_VERSION,
+    supportedPacks: [...SMART_SETUP_PACKS],
+    questions: QUESTIONNAIRE_V1.map((question) => ({ id: question.id, role: question.role, selection: question.selection, scored: question.scored, conditional: question.condition !== null })),
+    weights: { ...WEIGHTS, maxPackPointsPerQuestion: MAX_PACK_POINTS_PER_QUESTION },
+    thresholds: {
+      T_CLEAR: THRESHOLDS_BPS.T_CLEAR / 10000,
+      T_MIN: THRESHOLDS_BPS.T_MIN / 10000,
+      MARGIN: THRESHOLDS_BPS.MARGIN / 10000,
+      MIN_COMPLETENESS: THRESHOLDS_BPS.MIN_COMPLETENESS / 10000,
+    },
+    outcomes: [...OUTCOMES],
+    businessTypeRole: RULESET_SUMMARY.businessTypeRole,
+    adaptations: [...RULESET_SUMMARY.adaptations],
+    runtimeStatus: 'PURE_RECOMMENDATION_ONLY',
+    applyStatus: 'NOT_AUTHORIZED',
   }
 }
