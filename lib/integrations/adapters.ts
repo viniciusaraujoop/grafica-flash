@@ -24,11 +24,19 @@ const googleCalendarRegisteredAdapter = {
       }).catch(() => undefined)
     } catch (error) {
       const normalized = normalizeIntegrationError(error)
-      await context.setConnectionStatus?.('ERROR', 'google_revoke_failed').catch(() => undefined)
-      await context.emitAudit('integration.provider_revoke_failed', {
-        provider: 'google',
-        code: normalized.code,
-      }).catch(() => undefined)
+      try {
+        await context.setConnectionStatus?.('ERROR', 'google_revoke_failed')
+      } catch {
+        // Provider revoke failure remains authoritative; status telemetry is best-effort.
+      }
+      try {
+        await context.emitAudit('integration.provider_revoke_failed', {
+          provider: 'google',
+          code: normalized.code,
+        })
+      } catch {
+        // Never destroy the recoverable provider credential because audit persistence failed.
+      }
       throw normalized
     }
   },
