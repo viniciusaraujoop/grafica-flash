@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --check scripts/e2e-auth-first-login.mjs && node scripts/verify-platform-evolution-3-foundation.mjs && node scripts/verify-auth-first-login-race.mjs && node scripts/verify-critical-hotfix.mjs && node scripts/verify-partner-portal-v2.mjs && node scripts/verify-admin-control-center-v2.mjs && node scripts/verify-storefront-marketplace-v2.mjs && node scripts/verify-main-site-v2.mjs && node scripts/verify-main-site-visual-lock.mjs && node scripts/verify-orcaly-3-1-access-control.mjs && node scripts/verify-orcaly-3-1-mfa.mjs",
-    "test:wave1": "node --test scripts/wave1/test-shared.mjs scripts/wave1/test-industry-packs.mjs scripts/wave1/test-automation-recipes.mjs scripts/wave1/test-smart-setup.mjs scripts/wave1/test-import-csv.mjs",
+    "test:wave1": "node --test scripts/wave1/test-shared.mjs scripts/wave1/test-industry-packs.mjs scripts/wave1/test-automation-recipes.mjs scripts/wave1/test-smart-setup.mjs scripts/wave1/test-import-csv.mjs scripts/wave1/test-import-csv-parse-policy.mjs scripts/wave1/test-import-csv-parser-real.mjs",
     "e2e:auth": "node scripts/e2e-auth-first-login.mjs",
     "security:check": "node scripts/security-check.mjs",
     "security:dependencies": "node scripts/orcaly-3-1-dependency-audit.mjs --gate",

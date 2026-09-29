@@ -1,5 +1,6 @@
 // Wave 1 T3 — Import CSV mutation sensitivity. Each mutant injects a deliberate unsafe change into
-// lib/import-engine/**, runs scripts/wave1/test-import-csv.mjs and ALWAYS restores the file.
+// lib/import-engine/**, runs its test file (default scripts/wave1/test-import-csv.mjs;
+// adapter-layer mutants run scripts/wave1/test-import-csv-parse-policy.mjs) and ALWAYS restores the file.
 // Usage: node scripts/wave1/test-import-csv-mutation.mjs   (exit 1 if any mutant survives)
 import { readFileSync, writeFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
@@ -188,6 +189,105 @@ const MUTANTS = [
   "from": "const onRequest = values['product.price_on_request'] === true",
   "to": "const onRequest = values['product.price_on_request'] !== false"
  }
+,
+ {
+  "name": "adapter: enable columns (object records)",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "columns: STRICT_PARSER_POLICY.columns,",
+  "to": "columns: true,",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: enable group_columns_by_name",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "group_columns_by_name: false,",
+  "to": "group_columns_by_name: true,",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: enable delimiter_auto",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "delimiter_auto: false,",
+  "to": "delimiter_auto: true,",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: relax extra columns",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "relax_column_count_more: false,",
+  "to": "relax_column_count_more: true,",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: skip records with empty values",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "skip_records_with_empty_values: false,",
+  "to": "skip_records_with_empty_values: true,",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: retain info objects",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "info: false,",
+  "to": "info: true,",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: guard drops row limit",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "if (records > maxRecords) throw",
+  "to": "if (false) throw",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: guard drops cell limit",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "if (cells > maxCells) throw",
+  "to": "if (false) throw",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: request can widen limits",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "? Math.min(requested, ceiling)",
+  "to": "? requested",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: max record size reported as syntax",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "  ['CSV_MAX_RECORD_SIZE', 'RECORD_TOO_LARGE'],\n",
+  "to": "",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: ragged rows reported as syntax",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "  ['CSV_RECORD_INCONSISTENT_FIELDS_LENGTH', 'INCONSISTENT_COLUMNS'],\n",
+  "to": "",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: accept look-alike policy object",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "candidate.policy === STRICT_PARSER_POLICY",
+  "to": "typeof candidate.policy === 'object'",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: accept non-allowlisted delimiter",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "isAllowedDelimiter(candidate.delimiter)",
+  "to": "typeof candidate.delimiter === 'string'",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ },
+ {
+  "name": "adapter: record number from untrusted non-integer",
+  "file": "lib/import-engine/csv-parse-policy.ts",
+  "from": "Number.isInteger(records) && records >= 0",
+  "to": "records === records",
+  "test": "scripts/wave1/test-import-csv-parse-policy.mjs"
+ }
 ]
 
 const results = []
@@ -198,7 +298,7 @@ for (const mutant of MUTANTS) {
   if (count !== 1) { results.push({ name: mutant.name, outcome: `INVALID (pattern x${count})` }); continue }
   try {
     writeFileSync(file, original.replace(mutant.from, () => mutant.to))
-    const run = spawnSync(process.execPath, ['--test', 'scripts/wave1/test-import-csv.mjs'], { cwd: root, encoding: 'utf8', timeout: 600000 })
+    const run = spawnSync(process.execPath, ['--test', mutant.test ?? 'scripts/wave1/test-import-csv.mjs'], { cwd: root, encoding: 'utf8', timeout: 600000 })
     const fail = Number(/# fail (\d+)/.exec(run.stdout ?? '')?.[1] ?? -1)
     results.push({ name: mutant.name, outcome: fail > 0 ? `KILLED (fail ${fail})` : fail === 0 ? 'SURVIVED' : 'ERROR' })
   } finally {
