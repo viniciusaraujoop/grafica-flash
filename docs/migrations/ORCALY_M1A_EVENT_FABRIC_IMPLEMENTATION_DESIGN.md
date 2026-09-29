@@ -32,6 +32,21 @@ This artifact is an **implementation-design package only**.
 
 It creates no migration, executes no SQL, changes no runtime code, mutates no database, and authorizes no deployment.
 
+## Coordinator Required Amendment
+
+Coordinator review of commit `d0db8a0bd812e4b53f6da26d5acaf6bafa442c0b` returned:
+
+`ACCEPT_WITH_REQUIRED_AMENDMENT`
+
+This revision resolves only:
+
+1. Event Fabric job-claim isolation inside the existing shared `background_jobs` queue;
+2. destructive `transactional_outbox` privileges, including both DELETE and TRUNCATE;
+3. current company-delete CASCADE semantics;
+4. compatibility-default governance for `producer` and `event_version`.
+
+All previously accepted M1A architecture remains unchanged.
+
 ---
 
 # 1. Authority and Baseline
@@ -324,7 +339,22 @@ Purpose:
 
 Stable product/domain ownership of the event contract.
 
-The default preserves current `orcaly_record_business_event` behavior without rewriting the trigger.
+The default is a **legacy compatibility bridge only** for the already-existing `orcaly_record_business_event` trigger path.
+
+It must not become a general producer inference rule.
+
+After M1A:
+
+- existing legacy producers may continue to rely on the compatibility default while they are unchanged;
+- every **new** producer must explicitly write `producer`;
+- every new producer must be registered in the TypeScript Event Contract Registry before it can be activated;
+- omission by a new producer is an application-contract defect even though the DB compatibility default still exists.
+
+Future cleanup path, not implemented by M1A:
+
+1. modernize every legacy producer to write `producer` explicitly;
+2. certify there are no implicit-default producer paths;
+3. remove the DB default in that owning migration so future omission fails structurally.
 
 DB responsibility:
 
@@ -349,6 +379,21 @@ Compatibility default:
 Purpose:
 
 Version the payload/contract of a stable event key.
+
+The default is also a **legacy compatibility bridge only**.
+
+After M1A:
+
+- existing legacy producers may remain on implicit version 1 temporarily;
+- every **new** producer must explicitly provide `event_version`;
+- every new `producer + event_type + event_version` tuple must exist in the TypeScript registry before activation;
+- the DB default must never be interpreted as permission to classify an unknown future event as v1.
+
+Future cleanup, after all legacy producers explicitly write version 1 or a newer approved version:
+
+- remove the `event_version` default in the owning migration;
+- keep the column NOT NULL;
+- make omission fail structurally.
 
 Rules:
 
@@ -589,6 +634,98 @@ For relay-derived jobs only:
 Canonical relay-derived job payload should normally contain only durable linkage/dispatch metadata such as the outbox event reference.
 
 The actual event payload remains in `transactional_outbox`.
+
+---
+
+## 5.4 Canonical Job Classification and Claim Isolation
+
+`background_jobs` remains the **one canonical generic queue**.
+
+No second queue/table is introduced.
+
+### Canonical discriminator
+
+`outbox_event_id IS NOT NULL`
+
+means:
+
+> this is an Event Fabric relay-derived job.
+
+`outbox_event_id IS NULL`
+
+means:
+
+> this is a legacy/direct/shared background job outside the Event Fabric relay path.
+
+This discriminator is sufficient. M1A does **not** add a redundant `job_family`, `queue_name`, or `consumer_family` column.
+
+The sufficiency depends on a hard contract:
+
+- the Event Fabric atomic dispatch boundary always sets `outbox_event_id`;
+- non-Event-Fabric producers do not set it;
+- Event Fabric worker claim requires it to be non-null;
+- generic existing worker claim requires it to be null.
+
+### New Event Fabric-specific claim boundary
+
+M1A must introduce a narrow service-only RPC conceptually named:
+
+`claim_event_fabric_jobs(p_worker text, p_limit integer default 10)`
+
+Eligibility must include:
+
+- `outbox_event_id IS NOT NULL`;
+- `status IN ('queued','retrying')`;
+- `run_after <= database current time`.
+
+It preserves the existing canonical claim behavior:
+
+- `FOR UPDATE SKIP LOCKED`;
+- oldest eligible scheduling order;
+- bounded batch, clamped to the existing safe range;
+- status → `running`;
+- attempts increment;
+- `locked_at = now()`;
+- bounded `locked_by`;
+- `started_at` initialized once;
+- rows returned only to the service worker.
+
+Security:
+
+- fixed safe search_path;
+- EXECUTE revoked from PUBLIC/anon/authenticated;
+- service/worker only.
+
+### Existing generic claim compatibility transition
+
+The existing:
+
+`claim_background_jobs(p_worker text, p_limit integer)`
+
+must preserve its signature and lifecycle semantics, but M1A must narrow its eligibility by adding:
+
+`outbox_event_id IS NULL`
+
+to its current queued/retrying eligibility predicate.
+
+This is an intentional compatibility hardening, not a second queue.
+
+Why existing consumers remain correct:
+
+1. `outbox_event_id` does not exist before M1A, so every pre-M1A existing job becomes null when the additive column is introduced;
+2. current direct job families such as `integration.sync` and `google.calendar.full_resync` do not originate from Event Fabric and therefore remain null;
+3. existing generic workers continue calling the same RPC signature;
+4. only relay-derived Event Fabric jobs receive non-null `outbox_event_id`.
+
+The migration must create the column and redefine both claim boundaries atomically in the same migration transaction, so there is no committed compatibility window in which Event Fabric jobs exist while the generic claim still accepts them.
+
+### Settlement and stale recovery
+
+`settle_background_job` may remain shared because settlement requires a running row with matching `locked_by`.
+
+`recover_stale_background_jobs` may remain shared because it performs queue-lifecycle recovery only and does not invoke a domain handler.
+
+Neither shared lifecycle primitive authorizes domain execution.
 
 ---
 
@@ -1210,13 +1347,35 @@ Likely file:
 
 `lib/event-fabric/worker.ts`
 
-The generic worker continues to use existing:
+The Event Fabric worker must **never** call the unfiltered/generic `claim_background_jobs` boundary.
+
+It uses only:
+
+- `claim_event_fabric_jobs`
+
+for claiming Event Fabric work.
+
+It may continue to use the shared lifecycle primitives:
+
+- `settle_background_job`
+- `recover_stale_background_jobs`
+
+under the ownership rules defined above.
+
+Existing non-Event-Fabric workers continue using:
 
 - `claim_background_jobs`
-- `settle_background_job`
-- `recover_stale_background_jobs`.
 
-For each claimed job:
+whose M1A definition is compatibility-narrowed to `outbox_event_id IS NULL`.
+
+Therefore:
+
+- Event Fabric workers cannot claim `integration.sync`;
+- Event Fabric workers cannot claim `google.calendar.full_resync`;
+- generic workers cannot claim relay-derived Event Fabric jobs;
+- multiple Event Fabric workers still coordinate using `FOR UPDATE SKIP LOCKED`.
+
+For each Event Fabric-claimed job:
 
 1. lookup exact job_type/job_version;
 2. unknown contract → needs_attention;
@@ -1652,9 +1811,25 @@ Protected statuses:
 
 ## M1A database protection
 
-The future M1A migration should remove ordinary application-service direct DELETE capability from `transactional_outbox`.
+Read-only production verification confirmed that `service_role` currently has both:
 
-Relay does not need DELETE.
+- DELETE
+- TRUNCATE
+
+on `transactional_outbox`.
+
+M1A should revoke **both DELETE and TRUNCATE** from ordinary `service_role` table access, subject to Agent 4 final security approval.
+
+Reason:
+
+- producers need INSERT, not destructive privileges;
+- relay needs SELECT/UPDATE, not DELETE/TRUNCATE;
+- TRUNCATE bypasses row-by-row retention semantics entirely;
+- direct DELETE can erase unresolved durable events.
+
+Migration/owner/admin capabilities are separate from application `service_role` capabilities and are not redefined by this rule.
+
+M1A does not revoke the table privileges required for current producers/relay operation.
 
 No time-based delete RPC is introduced by M1A.
 
@@ -1671,6 +1846,66 @@ Relay-derived jobs reference outbox rows through outbox_event_id with restrictiv
 Therefore a completed outbox row cannot disappear while dependent job history still requires it.
 
 Future retention policy must coordinate completed job/outbox retention explicitly.
+
+## Company deletion CASCADE semantics
+
+Current production foreign keys are:
+
+- `transactional_outbox.company_id → companies(id) ON DELETE CASCADE`;
+- `background_jobs.company_id → companies(id) ON DELETE CASCADE`.
+
+Therefore a hard company delete currently deletes company-scoped Event Fabric rows and company-scoped background jobs, including rows that may be:
+
+- queued;
+- retrying;
+- running/processing;
+- failed;
+- needs_attention.
+
+This also affects existing non-Event-Fabric job families such as integration/calendar work.
+
+### M1A decision
+
+**PRESERVE ON DELETE CASCADE for compatibility.**
+
+M1A must not silently change these FKs.
+
+Changing them now would have broad effects:
+
+- RESTRICT could block existing tenant-deletion flows because any historical/queued job exists;
+- SET NULL could incorrectly convert tenant-owned work into platform-scoped work;
+- changing only Event Fabric semantics would also change current integration/calendar behavior because `background_jobs` is shared.
+
+### Explicit durability exception
+
+A privileged, intentional hard tenant deletion is an explicit **lifecycle cancellation exception** to normal Event Fabric durability.
+
+It is not:
+
+- age-based retention;
+- automatic purge;
+- worker cleanup.
+
+Canonical rule remains:
+
+> unprocessed outbox is never purged by age.
+
+But when a company itself is deliberately hard-deleted under an authorized tenant-deletion workflow, the current CASCADE semantics cancel/delete its company-scoped queued work.
+
+### Governance requirement
+
+Before any future hard tenant deletion workflow is considered safe, it must:
+
+1. identify queued/retrying/running/failed/needs_attention outbox/jobs for the tenant;
+2. surface the destructive consequence;
+3. require explicit privileged authorization/cancellation intent;
+4. audit the tenant-deletion decision outside the rows that will cascade away;
+5. prevent ordinary application service paths from performing accidental company deletion;
+6. define whether operational work must first be drained, cancelled, or deliberately abandoned.
+
+That tenant-deletion governance is not implemented by M1A.
+
+Agent 4 must review this explicit exception.
 
 ## No day count
 
@@ -1723,10 +1958,14 @@ The one future migration should own:
 - partial generic enqueue-dedupe index;
 - relay-derived invariant checks.
 
-### relay DB boundaries
+### relay / worker DB boundaries
 
 - narrow atomic dispatch function;
 - narrow relay failure settlement function;
+- new `claim_event_fabric_jobs` service-only claim boundary;
+- redefine existing `claim_background_jobs` with the same signature plus `outbox_event_id IS NULL` isolation;
+- preserve `settle_background_job` compatibility;
+- preserve `recover_stale_background_jobs` compatibility;
 - fixed safe search_path;
 - service-only execution grants.
 
@@ -1734,7 +1973,22 @@ The one future migration should own:
 
 - preserve no anon/authenticated access;
 - preserve service worker requirements;
-- remove direct service-role DELETE from outbox if Agent 4 confirms the retention hardening model.
+- revoke ordinary `service_role` DELETE from `transactional_outbox`, subject to Agent 4 final review;
+- revoke ordinary `service_role` TRUNCATE from `transactional_outbox`, subject to Agent 4 final review;
+- retain required INSERT/SELECT/UPDATE operations for producers/relay.
+
+### company FKs
+
+- preserve current `ON DELETE CASCADE` on `transactional_outbox.company_id`;
+- preserve current `ON DELETE CASCADE` on `background_jobs.company_id`;
+- document hard tenant deletion as an explicit lifecycle-cancellation exception.
+
+### compatibility defaults
+
+- retain `producer DEFAULT 'business'` only for existing legacy producer compatibility;
+- retain `event_version DEFAULT 1` only for existing legacy producer compatibility;
+- new producers must provide both explicitly;
+- future default removal occurs only after all legacy producers are modernized.
 
 ## No separate generic validation migration
 
@@ -1788,10 +2042,20 @@ No relay activation yet.
 
 Existing producer triggers remain compatible because:
 
-- producer defaults to business;
-- event_version defaults to 1;
+- current legacy Business trigger may use `producer DEFAULT 'business'`;
+- current legacy Business trigger may use `event_version DEFAULT 1`;
 - correlation gets a root UUID;
 - new optional fields remain nullable where compatibility requires.
+
+These defaults are explicitly **not** the contract for new producers.
+
+Any producer introduced after M1A must explicitly provide:
+
+- producer;
+- event_version;
+- every registry-required contract field.
+
+New producer activation must fail review/QA if it relies on the compatibility defaults.
 
 ## Phase 2 — Runtime code deployed disabled
 
@@ -1982,6 +2246,15 @@ to add the M1A verification command to the canonical test/prebuild gate after im
 | QA-38 | no payload leakage in admin health | health output contains counts/ids/types only |
 | QA-39 | registry attempts dynamic handler from payload | impossible by API/type design |
 | QA-40 | full repository test command | passes without weakening prior P1 notification isolation |
+| QA-41 | Queue contains `integration.sync`, `google.calendar.full_resync`, and one Event Fabric job; Event Fabric worker claims | only the Event Fabric row is returned/locked |
+| QA-42 | Generic existing claim and Event Fabric claim run concurrently against mixed queue | generic claim returns only `outbox_event_id IS NULL`; Event Fabric claim returns only non-null; no job is executed by the wrong worker |
+| QA-43 | Multiple Event Fabric workers claim concurrently | SKIP LOCKED prevents duplicate claim; each Event Fabric job is leased at most once |
+| QA-44 | service_role attempts DELETE on transactional_outbox | denied after M1A privilege hardening |
+| QA-45 | service_role attempts TRUNCATE on transactional_outbox | denied after M1A privilege hardening |
+| QA-46 | existing integration/calendar jobs after M1A | still claimable by unchanged generic worker API |
+| QA-47 | relay-derived Event Fabric job after M1A | never claimable through generic `claim_background_jobs` |
+| QA-48 | new producer omits producer/event_version in application contract test | rejected by registry/QA policy; defaults are not accepted as new-producer behavior |
+| QA-49 | authorized tenant hard-delete fixture with queued work in controlled test environment | CASCADE consequence is explicit, audited/governed, and no row is misclassified as retention purge |
 
 ---
 
@@ -1995,7 +2268,9 @@ Review:
 
 - atomic outbox dispatch function;
 - outbox failure settlement function;
-- unchanged claim/settle/recover job functions.
+- new `claim_event_fabric_jobs`;
+- compatibility-redefined `claim_background_jobs`;
+- unchanged settlement/stale-recovery lifecycle functions.
 
 Requirements:
 
@@ -2021,7 +2296,9 @@ Verify:
 - authenticated EXECUTE denied;
 - service/worker only;
 - no anon/authenticated table grants introduced;
-- proposed outbox DELETE hardening does not break legitimate operational tooling.
+- ordinary service_role DELETE revocation on outbox does not break legitimate producer/relay operations;
+- ordinary service_role TRUNCATE revocation on outbox does not break legitimate producer/relay operations;
+- migration/admin-owner destructive capabilities remain separate and appropriately restricted.
 
 ## Data API exposure
 
@@ -2050,12 +2327,18 @@ Confirm:
 - no provider credential/raw document payload;
 - runtime validators are exact by event version.
 
-## job ownership
+## job ownership / claim isolation
 
 Confirm:
 
+- `outbox_event_id IS NOT NULL` is an acceptable canonical Event Fabric discriminator;
+- Event Fabric claim selects only non-null outbox_event_id;
+- generic existing claim selects only null outbox_event_id after M1A;
+- existing integration/calendar consumers remain compatible with the unchanged generic claim signature;
+- both claim functions preserve SKIP LOCKED and bounded batches;
 - locked_by is lease identity only;
 - settlement remains bound to worker;
+- stale recovery may remain shared because it does not execute domain handlers;
 - domain authorization is separate.
 
 ## idempotency
@@ -2089,13 +2372,24 @@ Confirm:
 - structured logs redact auth/provider secrets;
 - correlation/causation identifiers are non-secret.
 
-## retention
+## retention / destructive privileges
 
 Confirm:
 
-- direct application DELETE of outbox is unnecessary and may be revoked;
+- ordinary application/service-role DELETE on outbox is unnecessary and should be revoked;
+- ordinary application/service-role TRUNCATE on outbox is unnecessary and should be revoked;
 - unprocessed rows have no age-based deletion path;
-- later completed-row retention requires separate explicit approval.
+- later completed-row retention requires separate explicit approval and a narrow boundary;
+- tenant hard deletion remains a separately governed lifecycle-cancellation exception.
+
+## company delete CASCADE
+
+Confirm:
+
+- preserving current CASCADE is safer for M1A compatibility than changing shared queue semantics now;
+- hard company deletion may destroy unprocessed outbox/jobs;
+- tenant-deletion governance must surface and audit that consequence;
+- no ordinary product API may use company deletion as a shortcut for Event Fabric cleanup.
 
 ---
 
@@ -2112,6 +2406,8 @@ Relay/worker activation is prohibited unless all are true:
 - scopes are DB-derived;
 - error sanitization active;
 - job dedupe index active;
+- Event Fabric-specific claim boundary active;
+- generic claim excludes Event Fabric rows;
 - correlation propagation active;
 - current authorization re-check hooks exist for sensitive handlers;
 - health checks active;
@@ -2213,6 +2509,31 @@ Mitigation:
 
 execution-time authorization/entitlement/consent re-check.
 
+## Risk: generic worker claims Event Fabric job
+
+Mitigation:
+
+- outbox_event_id is the canonical discriminator;
+- Event Fabric claim requires non-null;
+- generic claim requires null;
+- both changes ship atomically in the M1A migration.
+
+## Risk: tenant deletion cascades away queued work
+
+Mitigation:
+
+- preserve current FK semantics for compatibility;
+- classify hard tenant deletion as explicit lifecycle cancellation;
+- require privileged tenant-deletion governance and external audit of the destructive decision.
+
+## Risk: compatibility defaults misclassify new events
+
+Mitigation:
+
+- defaults are legacy-only;
+- new producer review/tests require explicit producer/version;
+- later cleanup removes defaults after legacy modernization.
+
 ## Risk: current producer event has no consumer
 
 Mitigation:
@@ -2250,17 +2571,23 @@ Coordinator should confirm before actual implementation authorization:
 4. event_idempotency remains unchanged;
 5. producer/event version/correlation/causation/scope/dedupe columns accepted;
 6. background_jobs outbox linkage/dedupe/correlation/job_version accepted;
-7. atomic service-only dispatch RPC accepted;
-8. service-only failure settlement RPC accepted;
-9. no-consumer condition fails closed;
-10. no-op handlers are forbidden;
-11. direct application outbox DELETE removal accepted;
-12. relay feature gate accepted;
-13. health thresholds/formula accepted;
-14. TypeScript registry file family accepted;
-15. cron route authentication model accepted;
-16. Agent 4 handoff complete;
-17. Agent 3 matrix complete.
+7. `outbox_event_id` accepted as the canonical Event Fabric job discriminator;
+8. new Event Fabric-specific claim boundary accepted;
+9. existing generic claim compatibility narrowing (`outbox_event_id IS NULL`) accepted;
+10. atomic service-only dispatch RPC accepted;
+11. service-only failure settlement RPC accepted;
+12. no-consumer condition fails closed;
+13. no-op handlers are forbidden;
+14. ordinary service-role outbox DELETE removal accepted;
+15. ordinary service-role outbox TRUNCATE removal accepted;
+16. current company ON DELETE CASCADE preserved and lifecycle-cancellation exception accepted;
+17. compatibility defaults explicitly limited to legacy producers;
+18. relay feature gate accepted;
+19. health thresholds/formula accepted;
+20. TypeScript registry file family accepted;
+21. cron route authentication model accepted;
+22. Agent 4 handoff complete;
+23. Agent 3 matrix complete.
 
 ---
 
@@ -2270,8 +2597,35 @@ Coordinator should confirm before actual implementation authorization:
 M1A_IMPLEMENTATION_DESIGN:
 COMPLETE
 
+M1A_DESIGN_AMENDMENT:
+COMPLETE
+
 BASE_SHA:
 26b78cc716eb35da18a12500d22a7703e8ce0aa6
+
+AMENDMENT_BASE_SHA:
+d0db8a0bd812e4b53f6da26d5acaf6bafa442c0b
+
+JOB_CLAIM_ISOLATION:
+RESOLVED
+
+EVENT_FABRIC_CLAIM_BOUNDARY:
+DEFINED
+
+EXISTING_JOB_COMPATIBILITY:
+PASS
+
+OUTBOX_DELETE_PRIVILEGE:
+RESOLVED
+
+OUTBOX_TRUNCATE_PRIVILEGE:
+RESOLVED
+
+COMPANY_CASCADE_SEMANTICS:
+DEFINED
+
+COMPATIBILITY_DEFAULTS:
+DEFINED
 
 EVENT_MODEL:
 DEFINED
