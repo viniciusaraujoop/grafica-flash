@@ -1,5 +1,7 @@
 import 'server-only'
 
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 import {
   EventFabricContractError,
   type EventFabricRow,
@@ -21,7 +23,7 @@ function nextRetry(attempts: number) {
 }
 
 async function settleJob(
-  db: any,
+  db: SupabaseClient,
   job: EventFabricJobRow,
   workerId: string,
   status: 'completed' | 'retrying' | 'needs_attention',
@@ -53,7 +55,7 @@ function sameTrustedContext(job: EventFabricJobRow, event: EventFabricRow) {
   )
 }
 
-export async function runEventFabricWorker(db: any, workerId: string, limit = 10) {
+export async function runEventFabricWorker(db: SupabaseClient, workerId: string, limit = 10) {
   const normalizedWorker = String(workerId || '').trim().slice(0, 120)
   if (!normalizedWorker) throw new Error('Event Fabric worker id is required.')
 
