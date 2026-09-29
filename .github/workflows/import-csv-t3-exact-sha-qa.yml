@@ -1,0 +1,68 @@
+name: Import CSV T3 Exact-SHA QA
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  import-csv-t3-exact-sha:
+    name: Import CSV T3 exact SHA execution
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout frozen Import CSV T3 SHA
+        uses: actions/checkout@v4
+        with:
+          ref: 9d43b93805700d14273384e393567b43ae173259
+          fetch-depth: 0
+
+      - name: Verify exact target SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          expected="9d43b93805700d14273384e393567b43ae173259"
+          echo "actual=$actual"
+          echo "expected=$expected"
+          test "$actual" = "$expected"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify csv-parse version
+        run: npm ls csv-parse --depth=0
+
+      - name: Dependency audit
+        run: npm audit
+
+      - name: Real csv-parse adapter tests
+        run: node --test scripts/wave1/test-import-csv-parser-real.mjs
+
+      - name: Wave1 combined T1 + T2 + T3
+        run: npm run test:wave1
+
+      - name: Import mutation suite
+        run: node scripts/wave1/test-import-csv-mutation.mjs
+
+      - name: Smart Setup mutation regression
+        run: node scripts/wave1/test-smart-setup-mutation.mjs
+
+      - name: Project tests
+        run: npm test
+
+      - name: Typecheck
+        run: npx tsc --noEmit --pretty false
+
+      - name: Build
+        run: npm run build
+
+      - name: Import CSV coverage
+        run: node --test --experimental-test-coverage --test-coverage-include='lib/import-engine/**' scripts/wave1/test-import-csv.mjs scripts/wave1/test-import-csv-parse-policy.mjs scripts/wave1/test-import-csv-parser-real.mjs
