@@ -1,0 +1,516 @@
+{
+  "label": "staging-shield-delta",
+  "expectedSha256": "5282e2529aa5c9a6ee5d42c35fd4d279f031901074ba6a9f0ae4fecf1625e04b",
+  "actualSha256": "d301410de29c1976d018944eb8337bec0c36428ad52b8538a669922989320d8b",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2775,
+      "actual": 2802
+    },
+    "indexes": {
+      "expected": 712,
+      "actual": 715
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 176,
+      "actual": 177
+    },
+    "triggers": {
+      "expected": 61,
+      "actual": 62
+    },
+    "functions": {
+      "expected": 164,
+      "actual": 167
+    },
+    "relations": {
+      "expected": 188,
+      "actual": 190
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 817,
+      "actual": 835
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 55,
+  "changes": [
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_protection_commands.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "46d60efe95d6c65adebf364a5ae23a1321c7708f14a4586f46c6465489f7c43e"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_protection_commands.token",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "58329ee0316d0b73b809f2a9b5086271382ebaff79fc5c88a32af7acd40104a6"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_protection_commands.operation",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "21ee031bdc2e9b512aa7b4e7db15b2aad2235527d4d0023862ac18156340a1a2"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_protection_commands.input_hash",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "43dde86048743add7db754cf82441b785cea7e1baa7031518213b277353d1062"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_protection_commands.result_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "77c9412e8ea31a4c85606d3533d1957a9736cf7ca301eb80fcfe9ed1d9ab1d4b"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_protection_commands.created_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1d2b1c6d7c16c8db2797fc33853bb2d66214dad023f4ff87849eb49b8b7973d6"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5d37a80bcd61c7cf9956a01be9d78e64b31cb0a43bbf902fc17139dcf2e2f8d4"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "2f78088a77b14f33eedd83f518c6f94929b8196421dcf0e39591b1b741b5d7f3"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.title",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "2b774557056659e318119b2655ae96f1d5813fe2ee8d637e3fbfb128e210de6f"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.category",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c6594d3c0931d25efc1b8793558af28f3cb49053b73bbed853b10cbf50c8230c"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.insurer",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7ad8063c9806cefd625e740d83df82bb0a9b8a4bfefaf3546471795547c30212"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.reference",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "76bd37ec58f029a37159b3639a62247ad0102c0e2336360aa7c78d8e18d32452"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.coverage_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5546b0d5305545ad4ed94682228fae774351de3f2c9223018b5c940736843b3b"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.deductible_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c1bc7528aeb962eeb5c40c6123d2879a162a9a440769215afbd0a7897554eefc"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.premium_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "83b49526507a691baae39ef4b99531f9d6c2fef8717a327f94923ee7b578b988"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.premium_period",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "42fa1a2ced8aa180fc920c1b47b06324f258b507990a5ee0392a2ffff37118c7"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.starts_on",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "32544eb7b6b9a6e69d497657782782275c9dea0b0f234352a7fac621e5988a30"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.ends_on",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7c0e9afc206fb7597cc3f0744350d7c14c881204472a1c9d0f2e7afdad318124"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.status",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "81a995f171f4aec0baecda69e13785fc91d9953aaf086f7852bab00ab4ea4243"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.asset_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ed9aab58ed2789b9de6551e2505b9204090139b56570431430cc05f2c1170a77"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.document_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ea49a97e5c7dc8ff3cd62dc3ec9bb0ae759e877fe82753bfe6c726b905f0a218"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.schedule_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5cc2556efcab294e7718f56a3160331b93562f164c6873837be7614354c229f3"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.notes",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c6d9ba59276dcde6fe9c0f3af7d6d34e482cdc2ace51943c700013d8f311566a"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.archived_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ee063329b0084c2a81fa6a19eb0d6f5b54d81209fbe3023b4f815d4061f108aa"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.version",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a0565ad85d59e0ec8242d872d3709c84ee258d3c28ffb3b2a752a2c3cfd49388"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.created_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7c73c68ba897acd8961ab1aba6c61389c89f5781a629dd9e3c3403cf2a152d14"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_protection_policies.updated_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5f9b6d2ecd1541b1aeb7ea1d4f8e66c51a3a408a2becaf51c45deb4113ad9c82"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_protection_commands_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c87871382f5916755e66f623198777847f1a2266715b743f7218270bd322c1a6"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_protection_owner_end",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1e29ede4eac2180a0f8e82497eb1ac13bfbf5ffa850c12a0f6cb8cf66c8928c8"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_protection_policies_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ee51ba6a4b91364b06c5ac3675da9d0553bc60aa0a35c58651bfe272d04e8e91"
+    },
+    {
+      "category": "policies",
+      "id": "public.wealth_protection_policies.protection_owner_read",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "2d53589a680b47e2ed883734fafb5c48a700f9966e14ca60aa8361792c42c251"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_protection_policies.protection_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "38b4435197b117b03fbe9fc82e7814297af5882f546e9e7e67314e1d65bc6638"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.manage_wealth_protection.p_operation text, p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f9e74b60380075442e3f50d3b2c5220884650d10f850dec72370adcdfc7fb56c"
+    },
+    {
+      "category": "functions",
+      "id": "public.manage_wealth_protection.p_operation text, p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "85f2749ed0e3725e5dea86dde4a58322241456a6c2d2bb54371a6091215bcb3e"
+    },
+    {
+      "category": "functions",
+      "id": "public.wealth_shield_overview.p_date date, p_page integer, p_filter text, p_id uuid",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ae4ff3c68c9cc9ea5a699294a1605a89e2d101f508aec2deb324480d3ac401ef"
+    },
+    {
+      "category": "relations",
+      "id": "ecosystem_private.wealth_protection_commands",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "cf0736cc68f177ea01b28b8f44dd3e30dc4a7af9074d927a56f05783fec01df6"
+    },
+    {
+      "category": "relations",
+      "id": "public.wealth_protection_policies",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "cedd34fa903426d03691256f889cb57d8ec24a03b39b7b5b254651c0fe6574e3"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_protection_commands.wealth_protection_commands_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "33c2c6842ad316f1671cef3e980fd67daa1016805b47e2fbdb4adabea2881b3d"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_protection_commands.wealth_protection_commands_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "6a058990fde4523c6c7ae4054507fef12d9ca0be117ae23b061d30e46c40b142"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_category_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7b3ae67f416c485823c8f4f8c20b56bfdec56696cdffcc9ae97e3fd0c6af40e0"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "305c6a3d14ad0db661332f5366beb6647149890baa2f8a68b3234d90e714ab92"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_coverage_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5a8800ae39a4d16a516b3ec497a84bf40ea976417700961e1d72e0c3f0ccb973"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_deductible_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e880ef0b40a3731d895b5a249259211d71ee975fde049e5fb4900dd65ed83ffa"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_ends_on_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "6a4bbc592034eaa243e4b28ab3b92195de33b1449f05b0d886349269dfd18568"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_insurer_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7b7b69213a2f229996005580a7e45989f28e57a70c4363441f44d0fb2790b5bb"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_notes_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ccdb8701164159700cfa5ecb6c0c371c44974bffe2f8ef3340d62ad278020751"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "dcf268878b58025ce2462ee6db18e1af46c46f3c7f9db259815682416627a7f4"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_premium_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3eb6624a06d0d70cd6ae76c28bbda278ddf9fa78616042bcc1751199bec68124"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_premium_period_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3ce5d962172acc4e21a6eb79ce89dd7842d7309b37450d2a5db4b32b12d20277"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_reference_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "17b7b699dfce749e92cedbcd668691a219a0e7f719e4ea6ec93e4092541ac1ee"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_starts_on_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e0a112f4a9b9d48c9c776c3236cfd7b4953f9531cfbef369e737e524eaddb343"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_status_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "22145621688752209f4dcf98992509511cc4696a1ae3e53103aad8a60a5d4f22"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_title_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1bd4ab115417edbfcd8f50e6e6148bc6c78644cd6ef500ba93290b3a71429554"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "40f35d43e5ada2e466222a47bbf1022cc21de140f1d447b50b7689c8681d79ee"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_protection_policies.wealth_protection_policies_version_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b877d46b128c748a565aed3ca5abf59a575b84ed0991422922ed1e4729f3de6d"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     template: '%s | Orçaly',
   },
   description:
-    'Orçaly é uma plataforma completa para empresas criarem site, catálogo, marketplace, receberem pedidos e organizarem sua operação.',
+    'Orçaly é um ecossistema de produtos especializados para negócios, vida financeira, aprendizado e novas possibilidades.',
   applicationName: 'Orçaly',
   authors: [{ name: 'Orçaly' }],
   creator: 'Orçaly',
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Orçaly',
     description:
-      'Crie seu site, catálogo, marketplace e organize pedidos, pagamentos e operação em uma única plataforma.',
+      'Um Orçaly. Várias possibilidades. Produtos especializados conectados por uma identidade.',
     url: appUrl,
     siteName: 'Orçaly',
     images: [
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
         url: '/og-orcaly.png',
         width: 1200,
         height: 630,
-        alt: 'Orçaly - Plataforma completa para empresas venderem online',
+        alt: 'Orçaly — Um ecossistema de possibilidades',
       },
     ],
     locale: 'pt_BR',
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Orçaly',
-    description: 'Site, catálogo, marketplace, pedidos, pagamentos e operação para empresas.',
+    description: 'Produtos para seu negócio, seu futuro e suas próximas possibilidades.',
     images: ['/og-orcaly.png'],
   },
 }

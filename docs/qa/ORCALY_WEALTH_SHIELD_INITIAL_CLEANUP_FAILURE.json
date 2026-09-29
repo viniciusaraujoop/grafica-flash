@@ -1,0 +1,144 @@
+{
+  "project": "zwxulgpjucxudadjdqov",
+  "appUrl": "https://orcaly-2n45x21q2-vinicius-araujos-projects.vercel.app",
+  "commit": "d0c3383098264fc0ae1e4db708eb52c2c3d81d94",
+  "startedAt": "2026-09-27T00:56:35.158Z",
+  "finishedAt": "2026-09-27T00:59:26.406Z",
+  "report": [
+    {
+      "check": "Vercel-Preview-exact-commit-staging-bundle-and-no-service-secret",
+      "status": "PASS"
+    },
+    {
+      "check": "hosted-Auth-password-login-and-verified-JWT-issuer",
+      "status": "PASS"
+    },
+    {
+      "check": "hosted-Auth-token-refresh",
+      "status": "PASS"
+    },
+    {
+      "check": "anonymous-denial-and-no-client-entitlement-escalation",
+      "status": "PASS"
+    },
+    {
+      "check": "cross-user-select-insert-update-delete-and-owner-transfer-isolation",
+      "status": "PASS"
+    },
+    {
+      "check": "missing-revoked-expired-future-and-read-only-entitlements",
+      "status": "PASS"
+    },
+    {
+      "check": "consent-owner-isolation-column-grants-and-irreversible-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "private-audit-trigger-and-identifier-only-payload",
+      "status": "PASS"
+    },
+    {
+      "check": "real-login-Server-Action-App-Hub-Wealth-and-WCAG",
+      "status": "PASS"
+    },
+    {
+      "check": "Server-Actions-profile-entry-goal-persistence-cents-and-forged-owner-rejected",
+      "status": "PASS"
+    },
+    {
+      "check": "browser-cross-user-isolation-and-unentitled-gate",
+      "status": "PASS"
+    },
+    {
+      "check": "unauthenticated-action-replay-and-stale-form-after-entitlement-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "consent-Server-Action-clock-skew-microseconds-and-authenticated-home-redirect",
+      "status": "PASS"
+    },
+    {
+      "check": "documents-real-private-Storage-owner-RLS-no-sign-list-upsert-and-replay",
+      "status": "PASS"
+    },
+    {
+      "check": "documents-real-CAS-concurrency-and-entitlement-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "documents-upload-route-signature-size-CSRF-idempotency-and-authenticated-download",
+      "status": "PASS"
+    },
+    {
+      "check": "documents-Server-Actions-stale-version-read-only-and-download-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "documents-six-widths-two-themes-Axe-keyboard-and-reduced-motion",
+      "status": "PASS"
+    },
+    {
+      "check": "documents-delete-and-recover-interrupted-Storage-cleanup-with-immediate-download-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "shield-create-Server-Action-private-Vault-source-exact-cents-forged-owner-and-anonymous-denial",
+      "status": "PASS"
+    },
+    {
+      "check": "shield-exact-concurrent-replay-CAS-unknown-values-cross-user-context-and-direct-DML-denial",
+      "status": "PASS"
+    },
+    {
+      "check": "shield-stale-UI-archive-restore-and-declared-cancellation-preserve-contract-references-and-financial-sources",
+      "status": "PASS"
+    },
+    {
+      "check": "shield-entitlement-recheck-private-audit-invalid-filter-and-empty-state",
+      "status": "PASS"
+    },
+    {
+      "check": "shield-six-widths-two-themes-expanded-form-Axe-keyboard-focus-reduced-motion-and-pagination",
+      "status": "PASS"
+    },
+    {
+      "check": "fees-original-Portfolio-Server-Action-exact-costs-tax-separation-archived-history-and-no-second-balance",
+      "status": "PASS"
+    },
+    {
+      "check": "fees-hosted-RLS-cross-user-scope-read-only-write-only-expired-revoked-and-anonymous-server-denial",
+      "status": "PASS"
+    },
+    {
+      "check": "fees-Lab-empty-lower-bound-invalid-period-hosted-pagination-and-full-aggregate",
+      "status": "PASS"
+    },
+    {
+      "check": "fees-six-widths-two-themes-Axe-keyboard-focus-reduced-motion-and-interactive-period-filter",
+      "status": "PASS"
+    },
+    {
+      "check": "no-browser-errors-or-production-requests",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "cleanup": {
+    "billDetailsRemaining": 0,
+    "usersRemaining": 0,
+    "auditRowsRemaining": 52,
+    "schedulesRemaining": 0,
+    "occurrencesRemaining": 0,
+    "jobsRemaining": 0,
+    "idempotencyRemaining": 0,
+    "outboxRemaining": 0,
+    "documents": 0,
+    "storageFolders": 0,
+    "protectionPolicies": 0
+  },
+  "limits": [
+    "Next.js served by protected Vercel Preview; Supabase staging hosted in sa-east-1",
+    "Auth, JWT, refresh, PostgREST, RLS, grants and persistence use real hosted Supabase staging",
+    "No production data or credentials used; no email sent; all accounts confirmed by staging Admin API"
+  ]
+}

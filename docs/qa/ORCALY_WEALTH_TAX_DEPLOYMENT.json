@@ -1,0 +1,12 @@
+{
+  "status": "READY",
+  "target": "preview",
+  "runtime_sha": "d47ac1869dcfc22b93e122508153caf665d09cdf",
+  "deployment_id": "dpl_BscyaUKzc7ZrE3PZxwQSUjnBMQmv",
+  "url": "https://orcaly-htbz9mjp2-vinicius-araujos-projects.vercel.app",
+  "exact_preview_build_verified": true,
+  "deployment_protection": "enabled",
+  "qa_access": "temporary exact deployment share from staging Vault",
+  "branch_alias_used_for_certification": false,
+  "production_promoted": false
+}

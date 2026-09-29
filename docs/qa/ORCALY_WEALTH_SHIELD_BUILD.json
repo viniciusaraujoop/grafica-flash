@@ -1,0 +1,11 @@
+{
+  "commit": "d0c3383098264fc0ae1e4db708eb52c2c3d81d94",
+  "tests": 176,
+  "passed": 176,
+  "failed": 0,
+  "lintErrors": 0,
+  "inheritedLintWarnings": 3,
+  "buildCompleted": true,
+  "deploymentCompleted": true,
+  "source": "Vercel inspect --logs; complete raw log kept ignored"
+}

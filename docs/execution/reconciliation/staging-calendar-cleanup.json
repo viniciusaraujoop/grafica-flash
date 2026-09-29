@@ -1,0 +1,21 @@
+{
+  "jobs": 0,
+  "audit": 0,
+  "goals": 0,
+  "users": 0,
+  "outbox": 0,
+  "entries": 0,
+  "project": "zwxulgpjucxudadjdqov",
+  "commands": 0,
+  "holdings": 0,
+  "debtTerms": 0,
+  "schedules": 0,
+  "snapshots": 0,
+  "activeCron": 0,
+  "migrations": 14,
+  "portfolios": 0,
+  "billDetails": 0,
+  "idempotency": 0,
+  "occurrences": 0,
+  "transactions": 0
+}

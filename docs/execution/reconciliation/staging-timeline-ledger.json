@@ -1,0 +1,135 @@
+[
+  {
+    "version": "20260926014103",
+    "name": "ecosystem_identity_wealth",
+    "sha256": "58862143c3384632e3cc4aeee3b2b7b87423052ff95464214fa23182c7b611b5",
+    "local": "supabase/migrations/20260926014103_ecosystem_identity_wealth.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926030809",
+    "name": "production_schema_baseline",
+    "sha256": "87c63653f6d382d7674eb034f3a61d0daea4bd1fc9a34b6c73dddf94c4f53036",
+    "local": "supabase/baselines/20260926030809_production_schema_baseline.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926103114",
+    "name": "wealth_lifecycle_aggregates",
+    "sha256": "a1ab880670c493a4fe8b3a3a856d16f13991404b438d1dd377779620584d8f83",
+    "local": "supabase/migrations/20260926103114_wealth_lifecycle_aggregates.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926110128",
+    "name": "wealth_recurring_schedules",
+    "sha256": "28b823b24c0d8851a9b4fc1c259faf2c0ceb20a52b850a1a825b33829b754047",
+    "local": "supabase/migrations/20260926110128_wealth_recurring_schedules.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926153138",
+    "name": "wealth_recurrence_rpc_boundary",
+    "sha256": "3ff81420c324baba696989030ed020664549e9d50bc8388eb7cf176a0373097f",
+    "local": "supabase/migrations/20260926153138_wealth_recurrence_rpc_boundary.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926164000",
+    "name": "wealth_recurrence_clock",
+    "sha256": "00e77914174a348135e420619bee4177b0fb33eedeee619b544bbef88a5f2e65",
+    "local": "supabase/migrations/20260926164000_wealth_recurrence_clock.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926165000",
+    "name": "wealth_debt_center",
+    "sha256": "6cccbc9078b294f5400fe3f97358dc5bdfc732ad70db890161ab109b3efd7ea2",
+    "local": "supabase/migrations/20260926165000_wealth_debt_center.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926171000",
+    "name": "wealth_debt_conflict_response",
+    "sha256": "93c361e50ddee175c690faf330f09461e0999aede501d3ad5c765a98f724e263",
+    "local": "supabase/migrations/20260926171000_wealth_debt_conflict_response.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926180000",
+    "name": "wealth_net_worth",
+    "sha256": "bed98f1bb3e78d88154aab1739c9796e241691c24c20fdde7ea354f76dad0af8",
+    "local": "supabase/migrations/20260926180000_wealth_net_worth.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926181546",
+    "name": "wealth_portfolio_foundation",
+    "sha256": "65587f9653b26d3a39456b300f3c23ee013bb4918ab3f475171aa7cf3d8dda4d",
+    "local": "supabase/migrations/20260926181546_wealth_portfolio_foundation.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926185024",
+    "name": "wealth_portfolio_target_binding",
+    "sha256": "7ec8a877ec19a08a4468478027bf36f40c01a7858d3dc9c960f543a81a647668",
+    "local": "supabase/migrations/20260926185024_wealth_portfolio_target_binding.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926190000",
+    "name": "wealth_financial_health",
+    "sha256": "cb6b4a34a2387627b62f801ed94751b16c21bce67e5c91fd2e3987b48c9efdca",
+    "local": "supabase/migrations/20260926190000_wealth_financial_health.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926190250",
+    "name": "wealth_portfolio_blind_dml_guard",
+    "sha256": "d7638637a4fa85a2926f29819ed144d54d6de8f024ce9cc8069d625c16145cfc",
+    "local": "supabase/migrations/20260926190250_wealth_portfolio_blind_dml_guard.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926195246",
+    "name": "wealth_financial_calendar",
+    "sha256": "35424433eee99be38f6b87553e00350e86df738c8a2ac8c1571a60fb0a799543",
+    "local": "supabase/migrations/20260926195246_wealth_financial_calendar.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926205052",
+    "name": "wealth_goal_funding_life_plans",
+    "sha256": "7ff665992f1813f1888ea6e430c6f047f8f717774acdb017f253ca023b408bcb",
+    "local": "supabase/migrations/20260926205052_wealth_goal_funding_life_plans.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926214929",
+    "name": "wealth_documents_vault",
+    "sha256": "069e3646afc4e58ea9154bfce93efb36e550a681caddc4571111d5bd69d328c7",
+    "local": "supabase/migrations/20260926214929_wealth_documents_vault.sql",
+    "match": "NORMALIZED_LF"
+  },
+  {
+    "version": "20260926220404",
+    "name": "wealth_documents_storage_read_compatibility",
+    "sha256": "0ea54ee9bde24e9bb7256917eb9118e986edd00549515199076f7e1caf6cdd46",
+    "local": "supabase/migrations/20260926220404_wealth_documents_storage_read_compatibility.sql",
+    "match": "NORMALIZED_LF"
+  },
+  {
+    "version": "20260926222248",
+    "name": "wealth_timeline_read_model",
+    "sha256": "9725a0b45784197b5011432955171e9ec698687b7ac27a8f7bd9acc6167340b3",
+    "local": "supabase/migrations/20260926222248_wealth_timeline_read_model.sql",
+    "match": "RAW"
+  },
+  {
+    "version": "20260926222931",
+    "name": "wealth_timeline_transaction_binding",
+    "sha256": "41693ad426fe8080f95fd2c501cfb309fc0c8e4b259436845d5bf098103564d8",
+    "local": "supabase/migrations/20260926222931_wealth_timeline_transaction_binding.sql",
+    "match": "NORMALIZED_LF"
+  }
+]

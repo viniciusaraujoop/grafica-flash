@@ -1,0 +1,25 @@
+{
+  "goals": 0,
+  "entries": 0,
+  "project": "zwxulgpjucxudadjdqov",
+  "consents": 0,
+  "profiles": 0,
+  "cron_jobs": 0,
+  "auth_users": 0,
+  "migrations": [
+    {
+      "name": "ecosystem_identity_wealth",
+      "version": "20260926014103"
+    },
+    {
+      "name": "production_schema_baseline",
+      "version": "20260926030809"
+    }
+  ],
+  "captured_at": "2026-09-26T04:23:40.828965+00:00",
+  "audit_events": 0,
+  "entitlements": 0,
+  "vault_secrets": 0,
+  "storage_buckets": 0,
+  "storage_objects": 0
+}

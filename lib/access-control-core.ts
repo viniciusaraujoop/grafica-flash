@@ -12,6 +12,14 @@ export type CompanyPermission =
   | 'subscription.manage'
   | 'data.export'
   | 'company.settings'
+  | 'integrations.read'
+  | 'integrations.manage'
+  | 'integrations.sync'
+  | 'integrations.disconnect'
+  | 'integrations.credentials.manage'
+  | 'fiscal.issue'
+  | 'esign.send'
+  | 'marketplace.manage'
 
 export type CompanyPermissionContext = {
   role: string | null
@@ -39,15 +47,13 @@ export type AccessDecision = {
   deniedBy: Array<'tenant' | 'permission' | 'entitlement' | 'feature_flag'>
 }
 
-export function companyPermissionAllowed(
-  access: CompanyPermissionContext,
-  permission: CompanyPermission,
-) {
+export function companyPermissionAllowed(access: CompanyPermissionContext, permission: CompanyPermission) {
   if (!access.role && !access.isAdminMaster) return false
   if (access.isAdminMaster) return true
 
   switch (permission) {
     case 'orders.read':
+    case 'integrations.read':
       return true
     case 'orders.update':
       return access.canManage || access.canProposal || access.canProduction
@@ -55,17 +61,24 @@ export function companyPermissionAllowed(
       return access.canProducts
     case 'finance.read':
     case 'finance.manage':
+    case 'fiscal.issue':
       return access.canFinance
     case 'site.publish':
     case 'team.manage':
     case 'data.export':
     case 'company.settings':
+    case 'integrations.disconnect':
+    case 'integrations.credentials.manage':
       return access.canConfig
     case 'proposals.manage':
+    case 'esign.send':
       return access.canProposal
     case 'production.manage':
       return access.canProduction
     case 'automations.manage':
+    case 'integrations.manage':
+    case 'integrations.sync':
+    case 'marketplace.manage':
       return access.canManage
     case 'subscription.manage':
       return access.canSubscription
@@ -84,8 +97,5 @@ export function evaluateFeatureAccess(input: AccessDecisionInput): AccessDecisio
   if (!input.entitlementAllowed) deniedBy.push('entitlement')
   if (!input.featureFlagAllowed) deniedBy.push('feature_flag')
 
-  return {
-    allowed: deniedBy.length === 0,
-    deniedBy,
-  }
+  return { allowed: deniedBy.length === 0, deniedBy }
 }

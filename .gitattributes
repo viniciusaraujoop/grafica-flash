@@ -1,0 +1,2 @@
+# Baseline manifests hash exact SQL bytes; preserve LF across Windows checkouts.
+supabase/baselines/*.sql text eol=lf

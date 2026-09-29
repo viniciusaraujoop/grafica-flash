@@ -1,0 +1,92 @@
+{
+  "label": "staging-timeline-delta",
+  "expectedSha256": "2937b34d943592c0be3c0b315d360d0fbeeb030642e38c4242725e103596bd15",
+  "actualSha256": "1206cbee933585564d2469ec1e9a0a57e47ad455b2cb8d3da1a3538f47655baa",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2734,
+      "actual": 2734
+    },
+    "indexes": {
+      "expected": 696,
+      "actual": 696
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 176,
+      "actual": 176
+    },
+    "triggers": {
+      "expected": 57,
+      "actual": 57
+    },
+    "functions": {
+      "expected": 148,
+      "actual": 150
+    },
+    "relations": {
+      "expected": 183,
+      "actual": 183
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 794,
+      "actual": 794
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 2,
+  "changes": [
+    {
+      "category": "functions",
+      "id": "ecosystem_private.wealth_timeline.p_from date, p_to date, p_page integer, p_source text, p_operation text, p_as_of timestamp with time zone",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5e69d07fabea4dab6dd34842c2c6cd945e88b0837e638c39cbaeb98443fac470"
+    },
+    {
+      "category": "functions",
+      "id": "public.wealth_timeline.p_from date, p_to date, p_page integer, p_source text, p_operation text, p_as_of timestamp with time zone",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e68913d55283e1b4a3d0abe4405ec1cd5f6bb04547e051d0a8caa33c082dae65"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

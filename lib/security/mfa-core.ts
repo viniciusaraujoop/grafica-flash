@@ -6,6 +6,7 @@ export type SensitiveAction =
   | 'subscription.manage'
   | 'team.elevated.manage'
   | 'api_keys.manage'
+  | 'integrations.credentials.manage'
   | 'data.export'
   | 'platform.impersonation.write'
 
@@ -21,39 +22,16 @@ const STEP_UP_ACTIONS = new Set<SensitiveAction>([
   'subscription.manage',
   'team.elevated.manage',
   'api_keys.manage',
+  'integrations.credentials.manage',
   'data.export',
   'platform.impersonation.write',
 ])
 
-export function requiresMfaStepUp(action: SensitiveAction) {
-  return STEP_UP_ACTIONS.has(action)
-}
+export function requiresMfaStepUp(action: SensitiveAction) { return STEP_UP_ACTIONS.has(action) }
 
-export function evaluateMfaStepUp(input: {
-  action: SensitiveAction
-  hasVerifiedFactor: boolean
-  currentLevel: MfaAssuranceLevel
-  nextLevel: MfaAssuranceLevel
-}): MfaStepUpDecision {
-  if (!requiresMfaStepUp(input.action)) {
-    return { allowed: true, required: false, reason: null }
-  }
-
-  if (!input.hasVerifiedFactor) {
-    return {
-      allowed: false,
-      required: true,
-      reason: 'mfa_enrollment_required',
-    }
-  }
-
-  if (input.currentLevel !== 'aal2') {
-    return {
-      allowed: false,
-      required: true,
-      reason: 'mfa_challenge_required',
-    }
-  }
-
+export function evaluateMfaStepUp(input: { action: SensitiveAction; hasVerifiedFactor: boolean; currentLevel: MfaAssuranceLevel; nextLevel: MfaAssuranceLevel }): MfaStepUpDecision {
+  if (!requiresMfaStepUp(input.action)) return { allowed: true, required: false, reason: null }
+  if (!input.hasVerifiedFactor) return { allowed: false, required: true, reason: 'mfa_enrollment_required' }
+  if (input.currentLevel !== 'aal2') return { allowed: false, required: true, reason: 'mfa_challenge_required' }
   return { allowed: true, required: true, reason: null }
 }

@@ -1,0 +1,29 @@
+{
+  "project": "zwxulgpjucxudadjdqov",
+  "scope": "security",
+  "notices": [
+    {
+      "name": "rls_enabled_no_policy",
+      "level": "INFO",
+      "count": 46,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+      "newPortfolioFindings": [
+        {
+          "detail": "Table \\`ecosystem_private.wealth_portfolio_commands\\` has RLS enabled, but no policies exist",
+          "metadata": {
+            "name": "wealth_portfolio_commands",
+            "type": "table",
+            "schema": "ecosystem_private"
+          }
+        }
+      ]
+    },
+    {
+      "name": "authenticated_security_definer_function_executable",
+      "level": "WARN",
+      "count": 1,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+      "newPortfolioFindings": []
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "status": "PASS",
+  "runtime_sha": "d47ac1869dcfc22b93e122508153caf665d09cdf",
+  "tax_domain": {
+    "pass": 7,
+    "fail": 0
+  },
+  "tax_scoped_lint": {
+    "status": "PASS",
+    "errors": 0,
+    "warnings": 1,
+    "warning": "Hosted E2E file ignored by global ESLint ignore pattern"
+  },
+  "rolling_v8": {
+    "run_id": 36319880582,
+    "status": "PASS",
+    "full_build": true,
+    "diff_check": true
+  },
+  "platform_quality_gate": {
+    "run_id": 36319883451,
+    "status": "PASS",
+    "regression_tests": true,
+    "payments": true,
+    "security_static": true,
+    "dependency_security": true,
+    "typescript": true,
+    "production_build": true,
+    "diff_check": true
+  },
+  "next_build": {
+    "compiled": true,
+    "typescript": true,
+    "warnings": 3
+  },
+  "separate_repo_gate": {
+    "name": "Main Site v2 QA / global-lint-baseline",
+    "status": "FAIL",
+    "errors": 257,
+    "warnings": 148,
+    "used_for_tax_certification": false
+  }
+}

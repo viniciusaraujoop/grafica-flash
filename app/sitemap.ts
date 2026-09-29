@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { marketingSolutions } from '@/lib/marketing/main-site'
+import { products } from '@/lib/ecosystem/products'
 
 const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://orcaly.com.br').replace(/\/$/, '')
 
@@ -7,6 +8,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date()
 
   return [
+    ...products.map((product) => ({ url: `${appUrl}${product.href}`, changeFrequency: 'monthly' as const, priority: 0.7 })),
+    { url: `${appUrl}/business`, changeFrequency: 'monthly', priority: 0.9 },
     {
       url: appUrl,
       lastModified: now,

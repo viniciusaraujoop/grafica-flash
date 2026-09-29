@@ -4,8 +4,9 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Orçaly',
     short_name: 'Orçaly',
-    description: 'O sistema que entende como sua empresa trabalha.',
-    start_url: '/painel/inicio',
+    id: '/apps',
+    description: 'Um Orçaly. Várias possibilidades.',
+    start_url: '/apps',
     scope: '/',
     display: 'standalone',
     background_color: '#f4f7fb',

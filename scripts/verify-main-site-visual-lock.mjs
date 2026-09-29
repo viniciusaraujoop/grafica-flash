@@ -6,7 +6,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8')
 const assert = (condition, message) => { if (!condition) throw new Error(message) }
 const includesAll = (source, values, label) => values.forEach((value) => assert(source.includes(value), `${label} missing: ${value}`))
 
-const page = read('app/page.tsx')
+const page = read('app/business/page.tsx')
 const main = read('components/marketing/MainSiteV2.tsx')
 const demo = read('components/marketing/ProductDemoTabs.tsx')
 const selector = read('components/marketing/PlanSelector.tsx')

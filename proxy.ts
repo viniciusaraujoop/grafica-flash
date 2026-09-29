@@ -31,7 +31,9 @@ function secureResponse(response: NextResponse, request: NextRequest, cookies: C
   const internal = pathname === '/admin' || pathname.startsWith('/admin/') || pathname === '/suporte' || pathname.startsWith('/suporte/') || pathname === '/api/admin' || pathname.startsWith('/api/admin/') || pathname === '/api/platform-admin' || pathname.startsWith('/api/platform-admin/')
   const protectedPanel = pathname === '/painel' || pathname.startsWith('/painel/')
 
-  if (internal || protectedPanel) {
+  const protectedEcosystem = pathname === '/apps' || pathname.startsWith('/apps/') || pathname.startsWith('/api/ecosystem/')
+  const personalizedHome = pathname === '/' && request.cookies.getAll().some((cookie) => cookie.name.startsWith('sb-') && cookie.name.includes('-auth-token'))
+  if (internal || protectedPanel || protectedEcosystem || personalizedHome) {
     secured.headers.set('Cache-Control', 'private, no-store, no-cache, max-age=0, must-revalidate')
     secured.headers.set('Pragma', 'no-cache')
     secured.headers.set('Expires', '0')
@@ -57,7 +59,9 @@ export async function proxy(request: NextRequest) {
   const supportPage = pathname === '/suporte' || pathname.startsWith('/suporte/')
   const adminPage = !adminLoginPage && !passwordPage && (pathname === '/admin' || pathname.startsWith('/admin/'))
   const companyPage = pathname === '/painel' || pathname.startsWith('/painel/')
-  const sensitive = adminPage || passwordPage || supportPage || affiliatePage || companyPage
+  const ecosystemPage = pathname === '/apps' || pathname.startsWith('/apps/')
+  const authenticatedHome = pathname === '/' && !subdomain && request.cookies.getAll().some((cookie) => cookie.name.startsWith('sb-') && cookie.name.includes('-auth-token'))
+  const sensitive = adminPage || passwordPage || supportPage || affiliatePage || companyPage || ecosystemPage || authenticatedHome
   const cookiesToSet: CookieToSet[] = []
   const authHeaders: ResponseHeaders = {}
 
@@ -84,10 +88,18 @@ export async function proxy(request: NextRequest) {
     const userId = typeof claims?.sub === 'string' ? claims.sub : ''
 
     if (claimsError || !userId) {
+      if (authenticatedHome) return secureResponse(NextResponse.next({ request }), request, cookiesToSet, authHeaders)
       const login = request.nextUrl.clone()
       login.pathname = adminPage || passwordPage || supportPage || affiliatePage ? '/parceiros/login' : '/login'
       login.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
       return secureResponse(NextResponse.redirect(login), request, cookiesToSet, authHeaders)
+    }
+
+    if (authenticatedHome) {
+      const hub = request.nextUrl.clone()
+      hub.pathname = '/apps'
+      hub.search = ''
+      return secureResponse(NextResponse.redirect(hub), request, cookiesToSet, authHeaders)
     }
 
     const userEmail = typeof claims?.email === 'string' ? claims.email : ''

@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "runtime_sha": "9a2c66dbb2e6bf00c484b1791103b2bccd15becd",
+  "domain_postgresql": {
+    "pass": 5,
+    "fail": 0
+  },
+  "scoped_lint": {
+    "status": "PASS",
+    "errors": 0,
+    "warnings": 1,
+    "warning": "Hosted E2E file ignored by global ESLint ignore pattern"
+  },
+  "rolling_v8": {
+    "run_id": 36325027679,
+    "status": "PASS",
+    "full_build": true,
+    "diff_check": true
+  },
+  "platform_quality_gate": {
+    "run_id": 36325030319,
+    "status": "PASS",
+    "regression_tests": true,
+    "payments": true,
+    "security_static": true,
+    "dependency_security": true,
+    "typescript": true,
+    "production_build": true,
+    "diff_check": true
+  },
+  "separate_repo_gate": {
+    "name": "Main Site v2 QA / global-lint-baseline",
+    "status": "FAIL",
+    "errors": 257,
+    "warnings": 148,
+    "used_for_briefing_certification": false
+  }
+}

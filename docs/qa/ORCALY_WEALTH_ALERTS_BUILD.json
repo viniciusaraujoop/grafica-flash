@@ -1,0 +1,42 @@
+{
+  "module": "wealth-alerts",
+  "status": "PASS",
+  "runtime_sha": "7401e20576ca4b686c03871ff0211474001ce620",
+  "domain_postgresql": {
+    "pass": 6,
+    "fail": 0
+  },
+  "scoped_lint": {
+    "errors": 0
+  },
+  "rolling_v8": {
+    "run": 36332287973,
+    "status": "success"
+  },
+  "platform_quality_gate": {
+    "run": 36332291135,
+    "status": "success"
+  },
+  "main_site_global": {
+    "run": 36332291200,
+    "status": "failure",
+    "classification": "INHERITED_BRANCH_WIDE_NOT_ALERTS",
+    "passing_steps": [
+      "Domain and regression invariants",
+      "Payment boundary regression",
+      "Focused lint",
+      "TypeScript and production build"
+    ],
+    "failing_steps": [
+      {
+        "name": "Protected checkout and auth diff check",
+        "reason": "app/login/actions.ts and app/login/page.tsx differ from old baseline; Alerts delta does not touch login/checkout"
+      },
+      {
+        "name": "global-lint-baseline",
+        "errors": 257,
+        "warnings": 148
+      }
+    ]
+  }
+}

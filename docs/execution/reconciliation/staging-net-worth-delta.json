@@ -1,0 +1,299 @@
+{
+  "label": "staging-net-worth-delta",
+  "expectedSha256": "d8caac15e1bb1a66d0fc2977f5921c6c95c458b74104313557afe72815f50586",
+  "actualSha256": "6380ae4c1ea26833c7d174da776f8217c87c387118477ba5557214b6fc198945",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2625,
+      "actual": 2635
+    },
+    "indexes": {
+      "expected": 669,
+      "actual": 672
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 165,
+      "actual": 166
+    },
+    "triggers": {
+      "expected": 48,
+      "actual": 49
+    },
+    "functions": {
+      "expected": 127,
+      "actual": 131
+    },
+    "relations": {
+      "expected": 172,
+      "actual": 173
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 704,
+      "actual": 711
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 28,
+  "changes": [
+    {
+      "category": "columns",
+      "id": "public.wealth_entries.position_class",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "df5d3d0387d57d705f33cbdb08068d89267fa7a002affc1f0d46d36ff804ed71"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_entries.liquidity",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "24c436008165a5a12bded7b6db38e1cbb1822c60fcbe465355505ccfb32d9839"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_net_worth_snapshots.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e13bf887652484f53dc9cea678fcd4599021f360f71ccb08fcf5b6debbf6c440"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_net_worth_snapshots.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7e18d94a39ac3fefae4b2b0c061c873e98cf104ac63bbb1c810e2f5b3a5a3257"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_net_worth_snapshots.idempotency_key",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e8c9002d8e3a6e20fe430e86e2f1c0fca19b08c94a990856fc9cf32edc9223c3"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_net_worth_snapshots.captured_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "938787fce19b9dd1c054affb2a5adb2d2e669d89dac57002803bdad7f5ddb5f3"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_net_worth_snapshots.local_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e9134f812e7b0aa21d6956598fd33b13b71edfaabdc25cf0675533f2d450b542"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_net_worth_snapshots.timezone",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e3af022ba2efaadd0fbfefcdc99b9a710afa964177c12b8aeb98d92d23d687dc"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_net_worth_snapshots.source",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "130ebb64e4b5980a7a562c789867b15ad798abf15fede2b2e71a108daa0a2816"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_net_worth_snapshots.composition",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "18f1e88bbbe2029a573c26007e5b9ec413197cc60c11bff638d9c7cabc8ef03f"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_net_worth_snapshots_owner_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "2ea8c1ae1a2fbe67cb7c218bdce82978bb0a20a9c89dda1bf4c7f63132fbcc68"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_net_worth_snapshots_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c1fe0074fb4cd1e4e85695c020f4709a7a57961dd575cdd4c9c0ce6b28069201"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_net_worth_snapshots_user_id_idempotency_key_key",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3d2a4114fb6adbde013ee3f519c3b3a3193878e047de5da5ae4db9fc85e54824"
+    },
+    {
+      "category": "policies",
+      "id": "public.wealth_net_worth_snapshots.wealth_snapshot_read",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "27b5c2ef8ef1106b7854877d842c60d418ee5f1fee12ac4f1284675804f44c1c"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_net_worth_snapshots.wealth_snapshot_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d65782e72494ffb3e11efa0ea333023e776b38faa95c9f31cd1e0d7d5e35cc36"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.capture_wealth_net_worth.p_idempotency_key uuid",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f425dc2dddb2eef01a0b3ea58106fe4bae48e1e054dce3a228df9434dd3a16c9"
+    },
+    {
+      "category": "functions",
+      "id": "public.capture_wealth_net_worth.p_idempotency_key uuid",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "89d31c1e93505d493e6bd931b3654a8a1ed6925a17f7128e5d5107e4158e71e9"
+    },
+    {
+      "category": "functions",
+      "id": "public.classify_wealth_position.p_entry_id uuid, p_version bigint, p_class text, p_liquidity text",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "585ed037914b225c88c9ebc5493bae8fd4eb83e66e84fd6fc3fa4e2476ae82d1"
+    },
+    {
+      "category": "functions",
+      "id": "public.wealth_net_worth.",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "32a3486d39a17a42440b27470b87c2ca85015aa1a5b6cc5c54c85c56d2b78ada"
+    },
+    {
+      "category": "relations",
+      "id": "public.wealth_net_worth_snapshots",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0b162877207271798b2a4d42e7bcf908cdcf48549653d2eb9e19a3c9ba858753"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_entries.wealth_liquidity_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f78e3457e728a22fdd9662de9b3b374387b1b0113727435bc16f4f5c17aab4c3"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_entries.wealth_position_class_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c01c7cea7c120da317f71c98e7d9a126688b0b987577cf69879a33ddf0444418"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_net_worth_snapshots.wealth_net_worth_snapshots_composition_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8a3d67aa4a5b1901a2a1e00e1dafc7c3fb61ffc3caf4ce4e88215d65cb335e25"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_net_worth_snapshots.wealth_net_worth_snapshots_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f4905e5140c8a1d84adef85b5928d161c748ca67fee2a6e4b952986413ee8b02"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_net_worth_snapshots.wealth_net_worth_snapshots_source_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "77bfb47a182a0ea2f16133a7f70499b8ef7cb5e0bd12395743330ab386a5c0d6"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_net_worth_snapshots.wealth_net_worth_snapshots_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "bef7325110710eff64d2157968371a1e0fa5fa04ee94634531a6c7604c628467"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_net_worth_snapshots.wealth_net_worth_snapshots_user_id_idempotency_key_key",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9d2b7ef8d988a43a9b18487e29267a98afbdd6fe086ceac54c2e8e5a020d0a9e"
+    },
+    {
+      "category": "column_order",
+      "id": "public.wealth_entries",
+      "kind": "changed",
+      "beforeSha256": "24fb91e02fe2839f19ddc346e3f21c6eee84a0ddc3090d7eb7a6145a9cef01a0",
+      "afterSha256": "608dafe56e3be7eff6947fc4ec1600ce7e2510f1aeb25b24fbba5b24f2be7db0"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

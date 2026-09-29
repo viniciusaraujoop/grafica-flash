@@ -1,0 +1,63 @@
+{
+  "status": "PASS",
+  "runtime_sha": "d47ac1869dcfc22b93e122508153caf665d09cdf",
+  "workflow_run_id": 36319880597,
+  "deployment_id": "dpl_BscyaUKzc7ZrE3PZxwQSUjnBMQmv",
+  "preview_url": "https://orcaly-htbz9mjp2-vinicius-araujos-projects.vercel.app",
+  "finished_at": "2026-09-27T12:46:36.262Z",
+  "checks": [
+    "staging-auth-real-password-and-JWT-issuer",
+    "tax-ledger-exact-declared-facts-and-no-second-cash",
+    "tax-RLS-owner-and-entitlement-boundaries",
+    "protected-preview-exact-commit-authenticated-tax-render",
+    "tax-Lab-and-invalid-window-UI-states",
+    "tax-six-widths-two-themes-Axe-keyboard-reduced-motion-filter",
+    "tax-cross-user-UI-and-anonymous-redirect"
+  ],
+  "failed": 0,
+  "page_errors": [],
+  "widths": [
+    320,
+    390,
+    768,
+    1024,
+    1440,
+    1920
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "accessibility": {
+    "axe_widths": [
+      320,
+      1440
+    ],
+    "violations": 0,
+    "keyboard": true,
+    "focus": true,
+    "reduced_motion": true,
+    "no_overflow": true
+  },
+  "screenshots": 12,
+  "artifact": {
+    "id": 10932416353,
+    "name": "wealth-tax-hosted-d47ac1869dcfc22b93e122508153caf665d09cdf",
+    "files": 13,
+    "size_bytes": 4520447,
+    "sha256": "fa24f01a1718c0f4f6dcc77707bbd1ea30dbc269c4c94e47862a2058bcda9e1d"
+  },
+  "production_requests_observed": 0,
+  "cleanup": {
+    "auth_users": 0,
+    "auth_sessions": 0,
+    "storage_objects": 0,
+    "wealth_public": 0,
+    "wealth_private_receipts": 0,
+    "audit": 0,
+    "background_jobs": 0,
+    "outbox": 0,
+    "idempotency": 0,
+    "active_cron": 0
+  }
+}

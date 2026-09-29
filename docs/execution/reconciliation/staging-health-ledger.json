@@ -1,0 +1,102 @@
+[
+  {
+    "version": "20260926014103",
+    "name": "ecosystem_identity_wealth",
+    "sha256": "58862143c3384632e3cc4aeee3b2b7b87423052ff95464214fa23182c7b611b5",
+    "localFile": "supabase/migrations/20260926014103_ecosystem_identity_wealth.sql",
+    "equivalent": true,
+    "comparison": "raw bytes",
+    "sha256Raw": "58862143c3384632e3cc4aeee3b2b7b87423052ff95464214fa23182c7b611b5",
+    "sha256LF": "58862143c3384632e3cc4aeee3b2b7b87423052ff95464214fa23182c7b611b5"
+  },
+  {
+    "version": "20260926030809",
+    "name": "production_schema_baseline",
+    "sha256": "87c63653f6d382d7674eb034f3a61d0daea4bd1fc9a34b6c73dddf94c4f53036",
+    "localFile": "supabase/baselines/20260926030809_production_schema_baseline.sql",
+    "equivalent": true,
+    "comparison": "raw bytes",
+    "sha256Raw": "87c63653f6d382d7674eb034f3a61d0daea4bd1fc9a34b6c73dddf94c4f53036",
+    "sha256LF": "b79b549e95e576673d12b262c6cbd0914ca7a1ee3b68b6f7a1d2c501d2c380a3"
+  },
+  {
+    "version": "20260926103114",
+    "name": "wealth_lifecycle_aggregates",
+    "sha256": "a1ab880670c493a4fe8b3a3a856d16f13991404b438d1dd377779620584d8f83",
+    "localFile": "supabase/migrations/20260926103114_wealth_lifecycle_aggregates.sql",
+    "equivalent": true,
+    "comparison": "raw bytes",
+    "sha256Raw": "a1ab880670c493a4fe8b3a3a856d16f13991404b438d1dd377779620584d8f83",
+    "sha256LF": "a1ab880670c493a4fe8b3a3a856d16f13991404b438d1dd377779620584d8f83"
+  },
+  {
+    "version": "20260926110128",
+    "name": "wealth_recurring_schedules",
+    "sha256": "28b823b24c0d8851a9b4fc1c259faf2c0ceb20a52b850a1a825b33829b754047",
+    "localFile": "supabase/migrations/20260926110128_wealth_recurring_schedules.sql",
+    "equivalent": true,
+    "comparison": "raw bytes",
+    "sha256Raw": "28b823b24c0d8851a9b4fc1c259faf2c0ceb20a52b850a1a825b33829b754047",
+    "sha256LF": "28b823b24c0d8851a9b4fc1c259faf2c0ceb20a52b850a1a825b33829b754047"
+  },
+  {
+    "version": "20260926153138",
+    "name": "wealth_recurrence_rpc_boundary",
+    "sha256": "3ff81420c324baba696989030ed020664549e9d50bc8388eb7cf176a0373097f",
+    "localFile": "supabase/migrations/20260926153138_wealth_recurrence_rpc_boundary.sql",
+    "equivalent": true,
+    "comparison": "raw bytes",
+    "sha256Raw": "3ff81420c324baba696989030ed020664549e9d50bc8388eb7cf176a0373097f",
+    "sha256LF": "3ff81420c324baba696989030ed020664549e9d50bc8388eb7cf176a0373097f"
+  },
+  {
+    "version": "20260926164000",
+    "name": "wealth_recurrence_clock",
+    "sha256": "00e77914174a348135e420619bee4177b0fb33eedeee619b544bbef88a5f2e65",
+    "localFile": "supabase/migrations/20260926164000_wealth_recurrence_clock.sql",
+    "equivalent": true,
+    "comparison": "raw bytes",
+    "sha256Raw": "00e77914174a348135e420619bee4177b0fb33eedeee619b544bbef88a5f2e65",
+    "sha256LF": "00e77914174a348135e420619bee4177b0fb33eedeee619b544bbef88a5f2e65"
+  },
+  {
+    "version": "20260926165000",
+    "name": "wealth_debt_center",
+    "sha256": "6cccbc9078b294f5400fe3f97358dc5bdfc732ad70db890161ab109b3efd7ea2",
+    "localFile": "supabase/migrations/20260926165000_wealth_debt_center.sql",
+    "equivalent": true,
+    "comparison": "raw bytes",
+    "sha256Raw": "6cccbc9078b294f5400fe3f97358dc5bdfc732ad70db890161ab109b3efd7ea2",
+    "sha256LF": "6cccbc9078b294f5400fe3f97358dc5bdfc732ad70db890161ab109b3efd7ea2"
+  },
+  {
+    "version": "20260926171000",
+    "name": "wealth_debt_conflict_response",
+    "sha256": "93c361e50ddee175c690faf330f09461e0999aede501d3ad5c765a98f724e263",
+    "localFile": "supabase/migrations/20260926171000_wealth_debt_conflict_response.sql",
+    "equivalent": true,
+    "comparison": "raw bytes",
+    "sha256Raw": "93c361e50ddee175c690faf330f09461e0999aede501d3ad5c765a98f724e263",
+    "sha256LF": "93c361e50ddee175c690faf330f09461e0999aede501d3ad5c765a98f724e263"
+  },
+  {
+    "version": "20260926180000",
+    "name": "wealth_net_worth",
+    "sha256": "bed98f1bb3e78d88154aab1739c9796e241691c24c20fdde7ea354f76dad0af8",
+    "localFile": "supabase/migrations/20260926180000_wealth_net_worth.sql",
+    "equivalent": true,
+    "comparison": "raw bytes",
+    "sha256Raw": "bed98f1bb3e78d88154aab1739c9796e241691c24c20fdde7ea354f76dad0af8",
+    "sha256LF": "bed98f1bb3e78d88154aab1739c9796e241691c24c20fdde7ea354f76dad0af8"
+  },
+  {
+    "version": "20260926190000",
+    "name": "wealth_financial_health",
+    "sha256": "cb6b4a34a2387627b62f801ed94751b16c21bce67e5c91fd2e3987b48c9efdca",
+    "localFile": "supabase/migrations/20260926190000_wealth_financial_health.sql",
+    "equivalent": true,
+    "comparison": "raw bytes",
+    "sha256Raw": "cb6b4a34a2387627b62f801ed94751b16c21bce67e5c91fd2e3987b48c9efdca",
+    "sha256LF": "cb6b4a34a2387627b62f801ed94751b16c21bce67e5c91fd2e3987b48c9efdca"
+  }
+]

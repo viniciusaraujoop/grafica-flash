@@ -1,0 +1,31 @@
+{
+  "module": "wealth-alerts",
+  "status": "READY",
+  "runtime_sha": "7401e20576ca4b686c03871ff0211474001ce620",
+  "deployment_id": "dpl_DXssFBge1nK46tnpPaA8LGgMUNHA",
+  "preview_url": "https://orcaly-g2h28o1hr-vinicius-araujos-projects.vercel.app",
+  "target": null,
+  "source": "git",
+  "environment": "preview",
+  "production_promoted": false,
+  "staging": {
+    "project": "zwxulgpjucxudadjdqov",
+    "migration_count": 27
+  },
+  "production": {
+    "project": "ozrasuktfthsvbqprtel",
+    "read_only": true,
+    "alerts_migrations_present": false,
+    "alerts_functions_present": false
+  },
+  "cleanup": {
+    "qa_users": 0,
+    "qa_sessions": 0,
+    "storage_objects": 0,
+    "wealth_entries": 0,
+    "alert_commands": 0,
+    "alert_preferences": 0,
+    "alert_state": 0,
+    "active_cron": 0
+  }
+}

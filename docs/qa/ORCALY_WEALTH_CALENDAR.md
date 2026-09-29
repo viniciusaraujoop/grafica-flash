@@ -1,0 +1,31 @@
+# Financial Calendar & Recurring Bills — V5
+
+Implementação da primeira unidade V5 a partir de d3bdb972ebe14018954b5e8a6031e40accdd3d06. Produção somente leitura; staging zwxulgpjucxudadjdqov. Preview certificado: https://orcaly-ef77tbh5l-vinicius-araujos-projects.vercel.app, deployment dpl_DeRBdKH4qx637GkhWMoqS5eFTUSb READY/Preview, SHA de aplicação 1b5328190bd1ad81ef9c957bdf2f4856a9f0f7d3. 43 checks hospedados PASS, finalizados 2026-09-26T20:27:57.415Z, zero erros de navegador/chamadas à produção. Evidência: docs/qa/ORCALY_WEALTH_CALENDAR_VERCEL_E2E.json. Build/testes/lint/TypeScript aprovados; três warnings legados do prebuild permanecem. Commit documental posterior não altera esse runtime/SQL.
+
+## Contratos e semântica
+
+- `/apps/wealth/calendario`: mês, semana, agenda, próximos e vencidos; filtros por origem, direção, carteira e estado. Links de dias abrem agenda diária e fontes preservam ownership. RPC `wealth_calendar` INVOKER: intervalo máximo 366 dias de diferença, 50 eventos/página, contagens diárias e total sobre TODOS os resultados, autorização pessoal e RLS das fontes. Valores inteiros em strings, sem somar origens incompatíveis.
+- Entradas geradas ligam-se ao ledger de ocorrências; não reaparecem como previsão, mesmo arquivadas. Ativos/passivos são posições, dívidas mostram mínimo declarado, metas mostram gap, maturidade não inventa valor de resgate, operações de carteira não geram caixa. REALIZED aparece como Registrado, sem afirmar liquidação. Hypothetical é um filtro explícito vazio: Labs atuais não possuem datas de eventos; não foram fabricadas.
+- `/apps/wealth/recorrencias`: conserva create/change/run e adiciona classificação/revisão. RPC `wealth_bills` INVOKER agrega todas as contas e pagina 25. Totais sempre abrangem todas as contas ativas, independentemente do filtro; pausadas/canceladas/concluídas projetam zero. Ano = hoje no fuso do perfil até véspera de hoje + 1 ano; média mensal anual/12 arredondada ao centavo. Datas selecionadas e projeções de contratos atuais podem incluir lançamentos já registrados; não são saldo nem despesas adicionais.
+- Projeção usa âncora original, fim de mês/bissexto, intervalo, término e máximo; salta diretamente ao intervalo consultado. Não expande toda a história desde 1900. Não altera geração/noon/timezone/cron.
+- `wealth_bill_details`: metadados 1:1 com schedule; SELECT RLS, nenhuma escrita direta autenticada. `save_wealth_bill` wrapper INVOKER → implementação privada DEFINER com auth/read/write, binding owner, CAS/PT409 e advisory lock por titular. Não modifica valores/schedules. Auditoria contém só identificadores.
+- Predecessor precisa ser da mesma pessoa, cancelado, criado antes, mesma direção/moeda/frequência/intervalo; uma única revisão por predecessor. Vínculo explicitamente declarado; aumento compara valores por ocorrência. Possível duplicidade exige mesmo fornecedor normalizado/tipo/valor/frequência/intervalo/direção e ambas ativas. Não afirma uso, esquecimento, cobrança bancária ou fraude.
+- Seletores de carteiras e predecessores exibem até 100 com limite informado e preservam ID selecionado. DB aceita IDs próprios fora da lista. Calendário vazio/erro/loading, formulários pending/success/conflict, reduced motion e claro/escuro implementados.
+
+## Banco e segurança
+
+Migration `20260926195246_wealth_financial_calendar.sql`, gerada pelo CLI e aplicada explicitamente após as 13 versões certificadas. SHA LF `35424433eee99be38f6b87553e00350e86df738c8a2ac8c1571a60fb0a799543`, EXACT_MATCH local/staging e LOCAL_ONLY produção. Tipos gerados do staging. Histórico aplicado permanece imutável.
+
+Delta vs Portfolio: 27 adições + grant EXECUTE ao helper privado puro wealth_recurrence_date (somente cálculo com argumentos; não lê dados). Nenhum objeto legado de produção alterado/removido. Cumulativo: 426 adições vs produção; snapshot read-only de produção não mudou. Sem novo WARN; herdados e leaked-password Auth continuam pendentes. Evidências em reconciliation/staging-calendar-*.json e calendar-advisors-summary.json, com links oficiais de remediação.
+
+## Validação desta unidade
+
+- 121 testes de domínio/PostgreSQL PASS (113 anteriores + oito grupos Calendar/Bills): leap/end-month, âncora 1900, ranges, deduplicação inclusive archive, pausas/cancelamento, 1.100 contas, totais exatos/paginação, revisões/CAS/duplicatas, todas as fontes não caixa, RLS/read-only/write-only/anon/cross-user.
+- E2E local com Auth/PostgREST de staging: 17 checks PASS; regressão de recorrências/worker PASS em execução separada. Forms reais, dono forjado, stale, direitos revogados, linking/navegação, estados vazios, Axe A/AA em 320/1440 light/dark e screenshots nas seis larguras. Ajustes finais de ícone nativo no tema escuro e dias vazios revalidados no Preview.
+- Erros corrigidos: fixture Debt usava user_id inexistente; `<small>` fora do `<dd>`; runner precisava aguardar navegação e incluir hook Calendar. CLI exige --linked junto de --project-ref. Nenhuma dessas falhas alterou produção.
+- E2E final Preview: 43 checks PASS incluindo regressão completa e bundle do SHA exato, encerrado 2026-09-26T20:27:57.415Z. 24 screenshots light/dark nas seis larguras em assets/wealth-calendar; desktop/mobile inspecionados. Nenhum erro/chamada produção. Build integral aprovado.
+- Cleanup local zero: auth, audit, detalhes, schedules, occurrences, jobs/idempotency/outbox. Cleanup final hospedado também zero para entries/goals/debt/holdings/transactions/private receipts/snapshots e todos os demais fixtures, confirmado por API e SQL. Cron não ativado. Servidor QA e sessão agent-browser encerrados.
+
+## Comandos principais
+
+`npx supabase migration new wealth_financial_calendar`; `node --test scripts/test-wealth-calendar.mjs`; `node scripts/prepare-wealth-staging.mjs calendar`; `npx supabase db query --linked --project-ref zwxulgpjucxudadjdqov --file .local-qa/reconciliation/apply-wealth-continuation.sql`; `npm run test:ecosystem`; `npm run typecheck`; eslint de escopo; `node scripts/e2e-ecosystem-staging.mjs` com ORCALY_QA_CALENDAR=true e rodada separada ORCALY_QA_RECURRENCE=true. Catálogos read-only, comparação local, hash do ledger, tipos e advisors via MCP. Não executar novamente a migration aplicada.

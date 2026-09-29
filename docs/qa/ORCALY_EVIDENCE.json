@@ -1,0 +1,125 @@
+{
+  "recordedAt": "2026-09-26T02:21:09.060Z",
+  "implementationCommit": "c3f367b87b844dbe85220264ebe6fa0f5b647a3c",
+  "runtime": {
+    "node": "v24.16.0",
+    "next": "16.3.4"
+  },
+  "newTests": {
+    "total": 60,
+    "passed": 60,
+    "failed": 0,
+    "databaseTests": 18,
+    "contractTests": 42
+  },
+  "build": "PASS",
+  "typecheck": "PASS",
+  "securityCheck": "PASS",
+  "newScopeLint": "PASS",
+  "globalLint": {
+    "errors": 257,
+    "warnings": 148,
+    "files": 666,
+    "note": "Baseline used installed Next/eslint 16.2.9 despite 16.3.4 lock. Final uses 16.3.4. All warnings are in preexisting files."
+  },
+  "dependencyVulnerabilities": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "browser": {
+    "report": [
+      {
+        "check": "public-home-320",
+        "status": "PASS"
+      },
+      {
+        "check": "public-home-390",
+        "status": "PASS"
+      },
+      {
+        "check": "public-home-768",
+        "status": "PASS"
+      },
+      {
+        "check": "public-home-1440",
+        "status": "PASS"
+      },
+      {
+        "check": "home-WCAG-A-AA-axe",
+        "status": "PASS"
+      },
+      {
+        "check": "product-discovery-business-pricing-private-redirect-invalid-product",
+        "status": "PASS"
+      },
+      {
+        "check": "public-home-1920",
+        "status": "PASS"
+      },
+      {
+        "check": "wealth-WCAG-A-AA-axe",
+        "status": "PASS"
+      },
+      {
+        "check": "authenticated-wealth-loaded-with-postgres-RLS",
+        "status": "PASS"
+      },
+      {
+        "check": "profile-budget-entry-goal-simulation-reload-persistence",
+        "status": "PASS"
+      },
+      {
+        "check": "cross-user-privacy-unentitled-denial-authenticated-home-hub",
+        "status": "PASS"
+      }
+    ],
+    "consoleErrors": [],
+    "limits": [
+      "Auth/PostgREST protocol fixture; hosted Supabase Auth is not certified",
+      "No production database changes or test accounts created"
+    ]
+  },
+  "hostedDatabaseMigrationApplied": false,
+  "preview": {
+    "deploymentId": "dpl_EJNCkF8pbfMhZUP1mxx4xhw7kD33",
+    "state": "READY",
+    "target": "preview",
+    "origin": "https://orcaly-md3lq40q7-vinicius-araujos-projects.vercel.app",
+    "checks": [
+      {
+        "check": "protected-preview-home",
+        "status": "PASS"
+      },
+      {
+        "check": "exact-implementation-commit",
+        "status": "PASS",
+        "commit": "c3f367b87b844dbe85220264ebe6fa0f5b647a3c"
+      },
+      {
+        "check": "hosted-home-WCAG-A-AA",
+        "status": "PASS"
+      },
+      {
+        "check": "hosted-responsive-images",
+        "status": "PASS"
+      },
+      {
+        "check": "eight-hosted-product-pages",
+        "status": "PASS"
+      },
+      {
+        "check": "business-price-private-login-redirect",
+        "status": "PASS"
+      },
+      {
+        "check": "manifest-invalid-product",
+        "status": "PASS"
+      }
+    ],
+    "pageErrors": []
+  }
+}

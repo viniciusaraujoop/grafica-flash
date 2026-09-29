@@ -1,0 +1,75 @@
+{
+  "project": "zwxulgpjucxudadjdqov",
+  "appUrl": "https://orcaly-mkw4graiy-vinicius-araujos-projects.vercel.app",
+  "commit": "df87d092d617facf9d937fb8fcfb1e095837b53b",
+  "startedAt": "2026-09-26T03:47:22.130Z",
+  "finishedAt": "2026-09-26T03:48:05.718Z",
+  "report": [
+    {
+      "check": "Vercel-Preview-exact-commit-staging-bundle-and-no-service-secret",
+      "status": "PASS"
+    },
+    {
+      "check": "hosted-Auth-password-login-and-verified-JWT-issuer",
+      "status": "PASS"
+    },
+    {
+      "check": "hosted-Auth-token-refresh",
+      "status": "PASS"
+    },
+    {
+      "check": "anonymous-denial-and-no-client-entitlement-escalation",
+      "status": "PASS"
+    },
+    {
+      "check": "cross-user-select-insert-update-delete-and-owner-transfer-isolation",
+      "status": "PASS"
+    },
+    {
+      "check": "missing-revoked-expired-future-and-read-only-entitlements",
+      "status": "PASS"
+    },
+    {
+      "check": "consent-owner-isolation-column-grants-and-irreversible-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "private-audit-trigger-and-identifier-only-payload",
+      "status": "PASS"
+    },
+    {
+      "check": "real-login-Server-Action-App-Hub-Wealth-and-WCAG",
+      "status": "PASS"
+    },
+    {
+      "check": "Server-Actions-profile-entry-goal-persistence-cents-and-forged-owner-rejected",
+      "status": "PASS"
+    },
+    {
+      "check": "browser-cross-user-isolation-and-unentitled-gate",
+      "status": "PASS"
+    },
+    {
+      "check": "unauthenticated-action-replay-and-stale-form-after-entitlement-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "consent-Server-Action-clock-skew-microseconds-and-authenticated-home-redirect",
+      "status": "PASS"
+    },
+    {
+      "check": "no-browser-errors-or-production-requests",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "cleanup": {
+    "usersRemaining": 0,
+    "auditRowsRemaining": 0
+  },
+  "limits": [
+    "Next.js served by protected Vercel Preview; Supabase staging hosted in sa-east-1",
+    "Auth, JWT, refresh, PostgREST, RLS, grants and persistence use real hosted Supabase staging",
+    "No production data or credentials used; no email sent; all accounts confirmed by staging Admin API"
+  ]
+}

@@ -1,0 +1,668 @@
+{
+  "label": "staging-planning-delta",
+  "expectedSha256": "8d7cbd869f13726a6fd12c81afbb36265edbb019bf5f89603e6e838e9f6f7b3f",
+  "actualSha256": "9793419364bbd7650d5a27affc9a6d1246a1d82b299019245faa9c58c032001c",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2682,
+      "actual": 2714
+    },
+    "indexes": {
+      "expected": 687,
+      "actual": 692
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 170,
+      "actual": 172
+    },
+    "triggers": {
+      "expected": 54,
+      "actual": 56
+    },
+    "functions": {
+      "expected": 142,
+      "actual": 145
+    },
+    "relations": {
+      "expected": 178,
+      "actual": 181
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 752,
+      "actual": 779
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 74,
+  "changes": [
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_planning_commands.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "37c0ba333fa58fb4b6d6584758bbc71506a159460122aad0dc7a2cd301bf4c46"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_planning_commands.token",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "6fe78e2408d8bf3ce865dd4c52cf32569d443f0e298cf7bf15ae38624f709c7f"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_planning_commands.operation",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0e0b1b7269084c56ff568965cc60567064de166f4ea6dd8da6f9fa4f299d0475"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_planning_commands.input",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "cad0d6bf61923e3afcb9b4a90e8433d13f5735ae7d44aa896b7ac29f526bb652"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_planning_commands.result",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b2ee4e7559ec546772cb8b54ccd25ac712f7f3ce2ef2221af13278ab584e2ade"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_goal_funding.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5219685c68625c434a1fdf9c75268de07ccbf5864c995be41000093399b7a936"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_goal_funding.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "2d0b668c3e9b44b86bed87b072aefc8bcdc89238560a206d3b130a952d96073b"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_goal_funding.priority",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "00af4a658ba2c2984fdca5def94f2efb76982994b27904709504735d0f76435e"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_goal_funding.category",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e4cfa37295237165f39380d0880f1cd4d868a6e4e6e7e85ab76f6e1e7ac28428"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_goal_funding.sources",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5f7b4f7e5e5773f6aae88fa915de63fcfa4d981ce744638901b0935b5fb1045f"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_goal_funding.notes",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7c0c3f78a1ef393de096c1479c53df4e2b30cac402ef8b87aa73262ad8613982"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_goal_funding.updated_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ec61454e5036d3ad0864210d2220692ba40552f2eacd773940c993fba742a390"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "cc8e7bce63126c6e68b9c9eae4a279740a6764932bcc692a624613cf2d06a322"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "876a4d9fb20e748fa95bd19a3e91a6760b2dba7f7d6a9a3f9816cc944dfc6f16"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.title",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "62bee94996715ebf4cce55d2396dfb134cd7c0ace1038a5d4fef90c6a1da6032"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.event_type",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c503e615c4e36ee03cd65cdf4637b5b3ab1f9f40635d678d0195325654947d74"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.target_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "266577e45fc362445d6dc827f3f96d51cc7b91e8cc47f57b160ca1be3c6930ea"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.scenario",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "6943e876fdc314e2832928642628fcabc767e394db0641d5c4801fded7cf9df8"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.status",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "993df88d4f1650a348b94838426158cc821c4be5d0b9925cbd24dfe74fdd63dd"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.upfront_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "240a59d3405bdaf03961d8e2e8f8f6b1a4a365a6d7be0f4280d172404b543b05"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.monthly_impact_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "525eedab6be8714c4887bec9b7859b47efaa95a44cc53d73480f7b265d8f5dab"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.impact_months",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d4ec079f45155024179c4b75f0cf2fc37d5f9f03f15efd4ce49345eb97a8dfaf"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.current_funding_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d583c468d63f5b2085996d28f1f5635772c92218102c61274b40c81cab5d2a1d"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.monthly_capacity_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0609b49fc0e73813008f70c8239028cef5490365fb3faf72520857d94cac8c3e"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.reserve_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "354506d9c170635cd6abed5c95547a85f5ef03b522a211d159ed713d4486efb9"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.reserve_draw_cents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "deaf47d769fb98fa55a29fc7960bf2565d156a66b79bc606aa4873e3a288a631"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.links",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a6d0b12334d262d4ed5e2eb24ff64637ed6207183372149590e04d00572e3434"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.assumptions",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ca7cced37620d76ce793348a2a5996d477331d1250a4a8aab33f50feb489c6d9"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.notes",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "17f2f4598b9118fbe3921c191bd2fe0dfc487e98c371767065b68d30c1692b95"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.version",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "aef5feb4458f6a83f4949f2d6ba717275ef5411eec28720758255711154e48ee"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.created_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "fb542bb27580f4f70b434cdfdaa5d2cff5db31f8645791d895378e6a0e5fa91c"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_life_plans.updated_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "1402f6e510ac8749247d1412233bb3d82899413c9115b340b810aab588274931"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_planning_commands_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "29ad2ef8a2b3c59a9fa04aa33cfc42439a519428c0311ad0f5abc115f24b2756"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_goal_funding_owner",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "82df8a712b99655958f45977cee072f360de777a57b8b9b6deb8351bde852c7f"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_goal_funding_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ef44b527d8c091b888a20a9a6c4a5b4a3534512361590d0e8c7bade7a2ce9552"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_life_plans_owner_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ca867079ab4f82c799232913c50367984884fb358cbfd7c7824f6fbda94ad077"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_life_plans_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ef98bb010cf9d4629bf3de1548b309a46c91db1ac897f07c76ffdb81e635161c"
+    },
+    {
+      "category": "policies",
+      "id": "public.wealth_goal_funding.planning_read",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c0a805d84739e304d69cfb9956f177e848ec52724c58d52a32f308897980d45d"
+    },
+    {
+      "category": "policies",
+      "id": "public.wealth_life_plans.planning_read",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "68b070283d021719a5411566a1624df78612f5846042014c352563e73d59a733"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_goal_funding.planning_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "54a1cde7cabdfa8a730a9f27e7663edf154942c3667a608b9f0a09b79fd89349"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_life_plans.planning_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f867746713d49f6b552d2ffd0cab3150912e14736d0154949023c835b4527dc3"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.manage_wealth_planning.p_operation text, p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "01f5c062eb396d2a2e55547cd34078e2aa56e871b4487e382b74dbda15a2ac90"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.validate_wealth_planning_links.p_links jsonb, p_goal boolean",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5db5f4fd7ffdedd10392c7c7e1369f6040fd2301b8270ad6b9062f0f30449aa3"
+    },
+    {
+      "category": "functions",
+      "id": "public.manage_wealth_planning.p_operation text, p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8861135c89d4feeb14b306956b0f16531407d83cc5dea0f67de301c33510af9a"
+    },
+    {
+      "category": "relations",
+      "id": "ecosystem_private.wealth_planning_commands",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "262490c159e8f26a784d23157908382e7627ce4b252b73f6120b85907b2fff31"
+    },
+    {
+      "category": "relations",
+      "id": "public.wealth_goal_funding",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "531bead31d835dfa5801835c9608f4548214649b3492791467edc79a7ce85d5c"
+    },
+    {
+      "category": "relations",
+      "id": "public.wealth_life_plans",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5208aab348e92ac0658677dff9fb9d2d567d73bf40b1e2e99fc1385024a73cff"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_planning_commands.wealth_planning_commands_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b58e9ab64c465ea7525217c306ad8f55311f8dc34dede3292b55cd55825258a6"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_planning_commands.wealth_planning_commands_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d0ecf60fd9d0e4c18ef715d80cc337e7377c8b0972d7a1056fd17f7d4f61cae2"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_goal_funding.wealth_goal_funding_category_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b4a6779f5f16a36040e6edb9d29a9dca9ac603bf49500bab5834cae956bff46d"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_goal_funding.wealth_goal_funding_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a41aa6930d82671a1c087de3e2ca43ba1c91dec9f3569e5739b844b9426030ef"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_goal_funding.wealth_goal_funding_notes_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5f2e5502a61074a486b36d3b49a3d5a88bd2fa312bc9f05d7d88a9dfb52f89d9"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_goal_funding.wealth_goal_funding_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "02123161c492073ea80ddb0a7f14b7ae7c3c904661f1afda1c98ccaf0522e23b"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_goal_funding.wealth_goal_funding_priority_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "bab77914659e4b9e6860df805692b114b30ea74f0fb181cc3cd574f6240d3316"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_goal_funding.wealth_goal_funding_sources_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c41ec5b694d1ce0e048d86573655743d1e6c67316682566b06a8eb0f18178a68"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_goal_funding.wealth_goal_funding_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f3457ae3404b588558bdd4d2b7c9a2ad8af69246af52d2a61b366f8f5e4853b2"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_assumptions_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a7d9fdf29746c1940e2b5d6fc20d6dda70770374de500d700db59b335ce7705f"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ffc289f644121d27b0b53e6acb58e8b07f54102f56b4338ea3374f8efaa78fac"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_current_funding_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "57ec5cda3c87eebe110f6a54aa6e8b5688c428342cae95b7ddfce9ae088a4021"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_event_type_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8c5756dfcc9c2bd7d192954bdde2aa24122ee9c8e8d59b964c6eab3be43a73cc"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_impact_months_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e893fbebfe33a3b1a708864b4e5a1ae5bcf8a4e40ad4986717c0eb50185fd97f"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_links_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ae271ca882203a6ed42343016ca3cb72955decbb4b6958e1216ba4a1f84d6abf"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_monthly_capacity_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "4aefafd5c2eaa16ca10da0e175bda74936a37634bc4e829a89b4e8206ff373dd"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_monthly_impact_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a33e782e78036b7fc4c00f681fba1d98efc64ad65bed6cfdc801d5e71d404707"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_notes_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "dab56b44aa0772d7fbcbebcb3d9a401bbc52fba449ff383ce80d14f1e60786fe"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "700ac0325944139bfb4f8cf80d8f0a73559ddf93e0eb03808c93f77d606f3460"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_reserve_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ab18f09e7fac6e835fe048573c19048c606ffe41ae38d0e033453070d0fbb564"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_scenario_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8dc329e5ff50d9317594be4a3f300025ddec34bb20367e6532bcf26a991b3367"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_status_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "6f27bbb73f5a4e39dbf1bad8c555e8e43613ebdeb3b4a5a4ef5696850ec5ea86"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_target_date_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "05bfc30434be13d6b10c02a11627006e1f08bdb41c5ce914484a8a15ea9c0060"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_title_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ec7acf30f30a7cdd7fcccc60105868066a0f375f0ff50b69d75d0a799a6c345f"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_upfront_cents_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "09ab18515f4863ce3c149fb67c28421697dd165287328552829cf1a938737fe6"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "efd5fbfc40e97b3ccd4af659bfe82843b3f24dd888b83e9dda91fd804e946495"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_life_plans.wealth_life_plans_version_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "c629fbf6fcbaf752a082334c3a8bac703e02f74e10dd2d75ac2e962cd7f50424"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

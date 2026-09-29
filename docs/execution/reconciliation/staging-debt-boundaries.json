@@ -1,0 +1,57 @@
+{
+  "users": 0,
+  "entries": 0,
+  "anonSave": false,
+  "termsRls": true,
+  "auditRows": 0,
+  "debtTerms": 0,
+  "activeCron": 0,
+  "debtHashes": [
+    {
+      "sha256": "6cccbc9078b294f5400fe3f97358dc5bdfc732ad70db890161ab109b3efd7ea2",
+      "version": "20260926165000"
+    },
+    {
+      "sha256": "93c361e50ddee175c690faf330f09461e0999aede501d3ad5c765a98f724e263",
+      "version": "20260926171000"
+    }
+  ],
+  "migrations": [
+    {
+      "name": "production_schema_baseline",
+      "version": "20260926030809"
+    },
+    {
+      "name": "ecosystem_identity_wealth",
+      "version": "20260926014103"
+    },
+    {
+      "name": "wealth_lifecycle_aggregates",
+      "version": "20260926103114"
+    },
+    {
+      "name": "wealth_recurring_schedules",
+      "version": "20260926110128"
+    },
+    {
+      "name": "wealth_recurrence_rpc_boundary",
+      "version": "20260926153138"
+    },
+    {
+      "name": "wealth_recurrence_clock",
+      "version": "20260926164000"
+    },
+    {
+      "name": "wealth_debt_center",
+      "version": "20260926165000"
+    },
+    {
+      "name": "wealth_debt_conflict_response",
+      "version": "20260926171000"
+    }
+  ],
+  "savePublicDefiner": false,
+  "authenticatedInsert": false,
+  "authenticatedSelect": true,
+  "versionConflictUsesPT409": true
+}

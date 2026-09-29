@@ -1,0 +1,22 @@
+# Wealth — Patrimônio (6.6 / Finalization V3)
+
+`/apps/wealth/patrimonio` reutiliza wealth_entries para ativos/passivos e o mesmo saldo do Debt Center. Implementa as 16 classes de ativos, oito de passivos, cinco níveis de liquidez e estado não classificado para registros existentes. Metadados obedecem RLS/entitlement, versão CAS PT409 e lifecycle; saldo continua editável pelo histórico, sem cópias ou cotações automáticas.
+
+Totais, composição e liquidez consideram todas as posições ativas em SQL. Centavos agregados chegam como texto e são tratados com BigInt. Concentração usa o total integral do respectivo tipo; maiores posições limitam apenas a lista a dez por tipo, explicitamente. Concentração é por registro, não por emissor. Posições e histórico paginados em 25, com contagem exata.
+
+Snapshots são confirmações explícitas, fonte owner_declared, instante servidor, data local e fuso do perfil (fallback America/Sao_Paulo). Guardam totais, composição integral, liquidez e maiores posições daquele instante. Chave idempotente por usuário retorna a captura original, mesmo após mudança no saldo. Sem DML autenticado, sem backfill ou reconstrução usando auditoria antiga. Histórico permite selecionar e comparar com o presente; diferença não é rentabilidade. Não há cron ou webhook novo.
+
+Migration nova `20260926180000_wealth_net_worth`, SHA LF `bed98f1bb3e78d88154aab1739c9796e241691c24c20fdde7ea354f76dad0af8`. Aplicada somente em staging por prepare-wealth-staging.mjs netWorth e db query com ref explícito, transação/guard de baseline e ledger atômico. Nenhum db push, reset, repair ou SQL histórico editado. Nove migrations no staging. RLS habilitada, SELECT autenticado próprio, INSERT/UPDATE/DELETE negados, captura pública invoker/implementação privada com auth/entitlement/owner. Auditoria id-only. Types hospedados regenerados.
+
+Validação local: 100 testes de domínio/PostgreSQL (cinco novos), typecheck, lint de escopo e build PASS. Build mantém três warnings legados, sem erro. Novo teste cobre 1.010 ativos e soma acima de Number.MAX_SAFE_INTEGER, classificação inválida, versões concorrentes, arquivo/restauração, isolamento, revogação e persistência imutável. E2E local + Supabase real: 16 checks PASS, cleanup zero, seis larguras 320/390/768/1024/1440/1920 e Axe A/AA, screenshot mobile inspecionado. Primeiro E2E identificou seletor Playwright exato que incluía texto das opções; corrigido para seleção por label, sem relaxar validações de produto. Todas as tentativas limparam fixtures.
+
+Schema: 27 objetos/colunas adicionados e expansão esperada de column_order de wealth_entries vs Debt. Cumulativo: 298 adições vs produção; nenhum objeto antigo alterado/removido. Leitura atual de produção mostrou zero mudanças. Advisors sem novo WARN estrutural; alertas legados/Auth não certificados como resolvidos. Evidências em docs/execution/reconciliation/staging-net-worth-* e net-worth-advisors-summary.json.
+
+Comandos: node --test scripts/test-wealth-net-worth.mjs; npm run test:ecosystem; npm run typecheck; npx eslint app/apps/wealth/patrimonio app/apps/wealth/page.tsx components/wealth/WealthNetWorthForms.tsx lib/wealth/net-worth.ts; node scripts/start-staging-qa.mjs; agent-browser open/snapshot/errors; ORCALY_QA_NET_WORTH=true node scripts/e2e-ecosystem-staging.mjs; npm run build; compare-schema-snapshots.mjs. CLI de staging sempre zwxulgpjucxudadjdqov, produção somente catálogo read-only. Cron preexistente permanece pausado.
+
+Certificação hospedada concluída no Preview abaixo. O master V3 completo permanece em execução; não é um relatório final de release.
+
+O primeiro Preview com massa integral encontrou scrollable-region-focusable em tabela horizontal, ausente na massa pequena local. Corrigido com região nomeada e tabIndex=0 nas três tabelas de Patrimônio. Validação hospedada será repetida no novo SHA; as 28 verificações anteriores passaram, incluindo snapshots, e cleanup terminou zero.
+
+Preview certificado: https://orcaly-rh4b0iz24-vinicius-araujos-projects.vercel.app; deployment dpl_8RkJ1jNeu2qjoR3F6W3GqERv2t23; SHA de aplicação 84581c93e258367ee8ec4b919b1b5b4322cdbce7. READY/Preview. 30 checks hospedados PASS, zero erros de navegador/requests para produção e cleanup inteiro zero. Evidência docs/qa/ORCALY_WEALTH_NET_WORTH_VERCEL_E2E.json.
+Screenshot hospedado mobile inspecionado. O master V3 permanece em execução, próxima unidade Financial Health.

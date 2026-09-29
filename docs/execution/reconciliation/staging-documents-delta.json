@@ -1,0 +1,468 @@
+{
+  "label": "staging-documents-delta",
+  "expectedSha256": "9793419364bbd7650d5a27affc9a6d1246a1d82b299019245faa9c58c032001c",
+  "actualSha256": "18b9ca6fe4418067f83269be313f53d3baf6df73f61d03f186736ba07c9fba1e",
+  "counts": {
+    "roles": {
+      "expected": 14,
+      "actual": 14
+    },
+    "types": {
+      "expected": 0,
+      "actual": 0
+    },
+    "columns": {
+      "expected": 2714,
+      "actual": 2734
+    },
+    "indexes": {
+      "expected": 692,
+      "actual": 696
+    },
+    "schemas": {
+      "expected": 12,
+      "actual": 12
+    },
+    "policies": {
+      "expected": 172,
+      "actual": 176
+    },
+    "triggers": {
+      "expected": 56,
+      "actual": 57
+    },
+    "functions": {
+      "expected": 145,
+      "actual": 148
+    },
+    "relations": {
+      "expected": 181,
+      "actual": 183
+    },
+    "sequences": {
+      "expected": 3,
+      "actual": 3
+    },
+    "extensions": {
+      "expected": 6,
+      "actual": 6
+    },
+    "constraints": {
+      "expected": 779,
+      "actual": 794
+    },
+    "default_acl": {
+      "expected": 27,
+      "actual": 27
+    },
+    "publications": {
+      "expected": 1,
+      "actual": 1
+    },
+    "event_triggers": {
+      "expected": 6,
+      "actual": 6
+    }
+  },
+  "changeCount": 49,
+  "changes": [
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_document_commands.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "3633c6fcb27691a41e4be5f1ef48cf4bb38a8b1454b48de1f1ea721658bb7220"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_document_commands.token",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b14e21040077a2c87f7730bfa3bec46046042cfcd91f7745f871d0bd0d0c8c62"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_document_commands.operation",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "5aa6c7624df8de9265bd3a2ddcdbeedc88047e8ff6c5b39878dcf69a0f1f688c"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_document_commands.input",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "990e9cb1438ade370b29c29d9638ea4cf03902eee0d19eb924924d66c6b868e6"
+    },
+    {
+      "category": "columns",
+      "id": "ecosystem_private.wealth_document_commands.result",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7c7c03e10409799ab395a4e12c14ab51988c469c5169fda7126a6ad903e834ef"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "435e5228e317f0f5362157cb5fde3d2f5e37c36ea872795c5721b6a03a324244"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.user_id",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "56ae9442e805b9b389f6342f375fbff9f0c78b6deb13178b97be4dbbb6b9232c"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.title",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "28560e46d3b2b5574a578f77d8dd8d51f2281733abe5d1ce65bf4e2b7ecb6ead"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.category",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "7bf5fe88a75113b9f9cc7f34907935096e4de4e7e9d0f0047cc1bd3c0a54c5e9"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.document_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "09b0b5b653c50f2bb818e674e51002e45278e2eb64057182c1e150123f26e62a"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.notes",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "348bd70af4b48a80a29e5f550a85940c6f0840a893c83dc9b0c74e73142b40c2"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.links",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e636fcde5252a2365a2a60cba9054fa08e2e4ab1af241c1cadd4f7474f906787"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.mime_type",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "4562f31cbe7e50912d6b9e0129ba967fec56753821a684a53534c09606885920"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.size_bytes",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d9bdee28b872f978a7a7a190990f47082094b4c5f5accefd2bcb9662ddcf173a"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.sha256",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "8a4b4e5d5fa6691dc1c14127e843d56ba4740bfd70306dab1985a25ebe52a3d1"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.object_path",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b506fe18bbf359b5f3c12ecefa2a1887d14776008f7d13452fc070de3bf50368"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.status",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "24af62afa70f331a770d92900e4ea65c88f671bea307d7e4675c2369cf3112f9"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.version",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f4fa28826f127d054a7faef0ba967c9ba205b2d7b3ca23d828cb2c92f87cbfc2"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.created_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a36243f8d6eb974d1ac653c643f2c734b18fdd1cead20f2304afe23440092d5f"
+    },
+    {
+      "category": "columns",
+      "id": "public.wealth_documents.updated_at",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0e5f339903c50124859aa663e79b643998ffaad98b1db334c1e18cc64b328c8a"
+    },
+    {
+      "category": "indexes",
+      "id": "ecosystem_private.wealth_document_commands_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f6da19289bade4d8ae1d7c416ad2e28322031d5aff379ff8405e77b9d1bf29c3"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_documents_object_path_key",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "a29868aa0db21f918f49405ccac85a6ec43eb420b017177621d53b69a41ed05c"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_documents_owner_date",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "660570d456f131fb986c2d8a4225723cca5d9730cece3d50ed7167580145d9f4"
+    },
+    {
+      "category": "indexes",
+      "id": "public.wealth_documents_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "af5ae795bb04b521009fd1b71367e8326e73dd2ffcdd6d739870c2ba075c4d94"
+    },
+    {
+      "category": "policies",
+      "id": "public.wealth_documents.documents_read",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "9e4b543218f5c1653fc661ebccf9ea0838df3b8d945cc3d01ef57e1596034c89"
+    },
+    {
+      "category": "policies",
+      "id": "storage.objects.wealth_documents_download",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "cc1fc21a2b8bedce6978f98e7e35a8520e9ba56726d07e3fc6d41c4fe2958837"
+    },
+    {
+      "category": "policies",
+      "id": "storage.objects.wealth_documents_remove",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "729f532d09086b11918783bf3af37b1e8e214d10ff4f3d548586acbfcae07eca"
+    },
+    {
+      "category": "policies",
+      "id": "storage.objects.wealth_documents_upload",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0aa4e6f00afcd53e95ef11a99b48a937c271f1548bd143c79681ccef4328b5cd"
+    },
+    {
+      "category": "triggers",
+      "id": "public.wealth_documents.documents_audit",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ddfd41a96578cfb7cad4089b017776049e264522fe2c7a373da8840d86fa7fc7"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.allow_wealth_document_upload.p_path text",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b2201c8fb88a8bf5062dd3a2147f9c75fe69ca2f8cb243bc05b41d8157e86cde"
+    },
+    {
+      "category": "functions",
+      "id": "ecosystem_private.manage_wealth_document.p_operation text, p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "20dc156aa4ddb39af722cf552fde70ed3d650cf772a1b703eb24c6dc93fab3e7"
+    },
+    {
+      "category": "functions",
+      "id": "public.manage_wealth_document.p_operation text, p_input jsonb",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "6abebed9065ad6cde8764a605c51980c4624e2c1e462cba8fdcf2d3ba5159939"
+    },
+    {
+      "category": "relations",
+      "id": "ecosystem_private.wealth_document_commands",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ac8e99eaf4a4c1ee1afe4c96165a98b8a63d7e0e95c324ff9fda0c20da269cea"
+    },
+    {
+      "category": "relations",
+      "id": "public.wealth_documents",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "70050190416c9107e5eba6e90df18815f308123daa4c49d9f6f3e3a5f1d8d8b8"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_document_commands.wealth_document_commands_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "ebc88692e659f621ffe8484ee0beef73053816775a51e2f8ba9e4f99a4bda4d3"
+    },
+    {
+      "category": "constraints",
+      "id": "ecosystem_private.wealth_document_commands.wealth_document_commands_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d09c1190200b57a095cff9428cfa754384b28d3995c5bf692232340fd0a034ef"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_category_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "4641eec4e652d60d2546df011e5832beaffef189c55a3d7685ca466ad2ff7950"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_document_date_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "cf61f5ea4cf0887550452f921d948f5b14b09600b8960608b970b2e6e077c4ff"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_links_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "87dcadf5c838fed539a9ac8b640ac8abc41c950d71ae428970d004a35d4c2bb9"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_mime_type_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "eed5fd00d067dd5e3bd3944bfca873a48b8894fd90f08674994166ff3afcf3ee"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_notes_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "0383f7b02734fdb5feef0e9a4cf520d3fbad3bc45eb453bbeca7ef1a9be95376"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_object_path_key",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "88ef9d4d824c8bd5f230e5dd5f19ece77ea45b67e658423493641335cbd02bd8"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_pkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "b5990b681b2afba71b91d858693afc10956559fbc25224466ff155a3ad76d3b3"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_sha256_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "450c78f6e1839d19f4678303d783f60048f528abad0da109ec749dd0e0b555b8"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_size_bytes_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "d51cf8291a30deb52a518993571d85b42fd4c134bf88550ba25a3219c5ea08e1"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_status_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "f67ab9692aa44a04dcaec0566bc5a2dbd8ed4eeefa707babcd6d9f38111abdc0"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_title_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "2f9fff5788910a512610971c250d8c3386e07666a7837b66acd145d7abbbe7d0"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_user_id_fkey",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "16ec7f2b78b7edbda2100db731953af835a5fb5767d71dbdea82bc9cdc2e55fb"
+    },
+    {
+      "category": "constraints",
+      "id": "public.wealth_documents.wealth_documents_version_check",
+      "kind": "added",
+      "fields": null,
+      "beforeSha256": null,
+      "afterSha256": "e8a66e5b16dcd756345068211c0209b9fa240663171279c5446c953926d00051"
+    }
+  ],
+  "normalizations": [
+    "ACL/metadata array ordering",
+    "Physical attnum gaps; visible column order checked separately",
+    "Migration-ledger schema ACL excluded; ledger intentionally starts at baseline",
+    "PostgreSQL/Supabase patch version strings excluded"
+  ]
+}

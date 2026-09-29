@@ -1,0 +1,246 @@
+{
+  "project": "zwxulgpjucxudadjdqov",
+  "appUrl": "https://orcaly-pjfogxjs0-vinicius-araujos-projects.vercel.app",
+  "commit": "da9c03f68d7f39f9a96851521e1c41154a641911",
+  "startedAt": "2026-09-26T22:15:14.338Z",
+  "finishedAt": "2026-09-26T22:21:09.181Z",
+  "report": [
+    {
+      "check": "Vercel-Preview-exact-commit-staging-bundle-and-no-service-secret",
+      "status": "PASS"
+    },
+    {
+      "check": "hosted-Auth-password-login-and-verified-JWT-issuer",
+      "status": "PASS"
+    },
+    {
+      "check": "hosted-Auth-token-refresh",
+      "status": "PASS"
+    },
+    {
+      "check": "anonymous-denial-and-no-client-entitlement-escalation",
+      "status": "PASS"
+    },
+    {
+      "check": "cross-user-select-insert-update-delete-and-owner-transfer-isolation",
+      "status": "PASS"
+    },
+    {
+      "check": "missing-revoked-expired-future-and-read-only-entitlements",
+      "status": "PASS"
+    },
+    {
+      "check": "consent-owner-isolation-column-grants-and-irreversible-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "private-audit-trigger-and-identifier-only-payload",
+      "status": "PASS"
+    },
+    {
+      "check": "real-login-Server-Action-App-Hub-Wealth-and-WCAG",
+      "status": "PASS"
+    },
+    {
+      "check": "Server-Actions-profile-entry-goal-persistence-cents-and-forged-owner-rejected",
+      "status": "PASS"
+    },
+    {
+      "check": "browser-cross-user-isolation-and-unentitled-gate",
+      "status": "PASS"
+    },
+    {
+      "check": "unauthenticated-action-replay-and-stale-form-after-entitlement-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "consent-Server-Action-clock-skew-microseconds-and-authenticated-home-redirect",
+      "status": "PASS"
+    },
+    {
+      "check": "history-pagination-month-filter-cross-user-exclusion-CSV-permission-escaping-download-and-audit",
+      "status": "PASS"
+    },
+    {
+      "check": "entry-edit-Server-Action-exact-cents-owner-immutable-fields-audit-reload-and-WCAG",
+      "status": "PASS"
+    },
+    {
+      "check": "stale-edit-does-not-overwrite-newer-values",
+      "status": "PASS"
+    },
+    {
+      "check": "entry-edit-forged-owner-cross-user-read-only-and-anonymous-denial",
+      "status": "PASS"
+    },
+    {
+      "check": "entry-archive-restore-totals-CSV-filters-and-ABA-stale-protection",
+      "status": "PASS"
+    },
+    {
+      "check": "goal-edit-complete-archive-restore-stale-cross-user-and-read-only-boundaries",
+      "status": "PASS"
+    },
+    {
+      "check": "full-precision-hosted-aggregates-over-1000-entries-100-goals-pagination-and-export-cap",
+      "status": "PASS"
+    },
+    {
+      "check": "recurrence-creation-Server-Action-exact-cents-owner-pause-resume-stale-and-cross-user",
+      "status": "PASS"
+    },
+    {
+      "check": "recurrence-owner-refresh-concurrent-idempotency-cancel-and-read-only-Server-Action",
+      "status": "PASS"
+    },
+    {
+      "check": "recurrence-real-worker-handler-lease-fencing-concurrent-delivery-private-ledger-and-WCAG",
+      "status": "PASS"
+    },
+    {
+      "check": "debt-creation-Server-Action-exact-cents-linked-liability-and-cross-user-isolation",
+      "status": "PASS"
+    },
+    {
+      "check": "debt-simulator-three-strategies-insufficient-budget-edit-stale-read-only-and-declared-payoff",
+      "status": "PASS"
+    },
+    {
+      "check": "debt-existing-liability-reuse-private-audit-and-responsive-WCAG",
+      "status": "PASS"
+    },
+    {
+      "check": "net-worth-classification-Server-Action-version-conflict-isolation-and-complete-exact-aggregates",
+      "status": "PASS"
+    },
+    {
+      "check": "net-worth-immutable-explicit-snapshot-timezone-idempotency-history-and-entitlement",
+      "status": "PASS"
+    },
+    {
+      "check": "net-worth-audit-WCAG-and-six-responsive-widths",
+      "status": "PASS"
+    },
+    {
+      "check": "portfolio-create-and-holding-Server-Actions-owner-binding-and-single-balance",
+      "status": "PASS"
+    },
+    {
+      "check": "portfolio-sale-basis-CAS-idempotency-DML-boundary-isolation-and-unknown-CSV",
+      "status": "PASS"
+    },
+    {
+      "check": "portfolio-hosted-concurrent-CAS-exact-replay-transfer-conservation-and-isolation",
+      "status": "PASS"
+    },
+    {
+      "check": "portfolio-valuation-provenance-allocation-rebalance-and-future-simulations",
+      "status": "PASS"
+    },
+    {
+      "check": "portfolio-lab-isolation-and-revoked-Server-Action-entitlements",
+      "status": "PASS"
+    },
+    {
+      "check": "portfolio-audit-WCAG-six-widths-and-screenshots",
+      "status": "PASS"
+    },
+    {
+      "check": "financial-health-ten-explained-indicators-own-complete-inputs-and-payoff-scenario",
+      "status": "PASS"
+    },
+    {
+      "check": "financial-health-read-only-entitlement-revocation-and-cross-user-browser-isolation",
+      "status": "PASS"
+    },
+    {
+      "check": "financial-health-WCAG-and-six-responsive-widths",
+      "status": "PASS"
+    },
+    {
+      "check": "calendar-bills-Server-Action-owner-CAS-comparable-price-change-and-duplicate-evidence",
+      "status": "PASS"
+    },
+    {
+      "check": "calendar-hosted-RLS-read-only-write-only-range-bound-and-leap-anchor",
+      "status": "PASS"
+    },
+    {
+      "check": "calendar-month-week-agenda-upcoming-overdue-hypothesis-and-source-deep-links",
+      "status": "PASS"
+    },
+    {
+      "check": "calendar-bills-six-widths-light-dark-Axe-keyboard-and-reduced-motion",
+      "status": "PASS"
+    },
+    {
+      "check": "planning-goal-Server-Action-owner-bound-CAS-and-alternative-without-balance-mutation",
+      "status": "PASS"
+    },
+    {
+      "check": "life-plan-Server-Action-exact-cost-references-concurrent-CAS-replay-and-cross-user-isolation",
+      "status": "PASS"
+    },
+    {
+      "check": "planning-read-only-detail-and-revoked-write-Server-Action-write-only-database-gates",
+      "status": "PASS"
+    },
+    {
+      "check": "planning-six-widths-light-dark-Axe-expanded-forms-keyboard-reduced-motion",
+      "status": "PASS"
+    },
+    {
+      "check": "documents-real-private-Storage-owner-RLS-no-sign-list-upsert-and-replay",
+      "status": "PASS"
+    },
+    {
+      "check": "documents-real-CAS-concurrency-and-entitlement-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "documents-upload-route-signature-size-CSRF-idempotency-and-authenticated-download",
+      "status": "PASS"
+    },
+    {
+      "check": "documents-Server-Actions-stale-version-read-only-and-download-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "documents-six-widths-two-themes-Axe-keyboard-and-reduced-motion",
+      "status": "PASS"
+    },
+    {
+      "check": "documents-delete-and-recover-interrupted-Storage-cleanup-with-immediate-download-revocation",
+      "status": "PASS"
+    },
+    {
+      "check": "no-browser-errors-or-production-requests",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "cleanup": {
+    "billDetailsRemaining": 0,
+    "usersRemaining": 0,
+    "auditRowsRemaining": 0,
+    "schedulesRemaining": 0,
+    "occurrencesRemaining": 0,
+    "jobsRemaining": 0,
+    "idempotencyRemaining": 0,
+    "outboxRemaining": 0,
+    "debtTermsRemaining": 0,
+    "snapshotsRemaining": 0,
+    "wealth_portfolios": 0,
+    "wealth_holdings": 0,
+    "wealth_portfolio_transactions": 0,
+    "wealth_goal_funding": 0,
+    "wealth_life_plans": 0,
+    "documents": 0,
+    "storageFolders": 0
+  },
+  "limits": [
+    "Next.js served by protected Vercel Preview; Supabase staging hosted in sa-east-1",
+    "Auth, JWT, refresh, PostgREST, RLS, grants and persistence use real hosted Supabase staging",
+    "No production data or credentials used; no email sent; all accounts confirmed by staging Admin API"
+  ]
+}
