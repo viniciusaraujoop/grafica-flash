@@ -407,4 +407,22 @@ assert.equal(
 )
 
 console.log('M1A explicit typecheck exit code: ' + explicitTypecheck.status)
+
+const npxCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx'
+const scopedLint = spawnSync(
+  npxCommand,
+  ['eslint', 'lib/event-fabric/relay.ts', 'scripts/verify-m1a-event-fabric.mjs'],
+  {
+    cwd: new URL('..', import.meta.url),
+    env: process.env,
+    stdio: 'inherit',
+  },
+)
+assert.equal(
+  scopedLint.status,
+  0,
+  'M1A scoped ESLint failed with exit code ' + scopedLint.status,
+)
+
+console.log('M1A scoped ESLint exit code: ' + scopedLint.status)
 console.log('M1A Event Fabric static and runtime contract checks: PASS')
