@@ -3,7 +3,7 @@ name: Import CSV T3 dependency install
 on:
   pull_request:
     branches:
-      - main
+      - qa/import-csv-t3-dependency-install
 
 permissions:
   contents: write
@@ -55,8 +55,23 @@ jobs:
           git status --short
           changed="$(git diff --name-only)"
           test -n "$changed"
-          bad="$(printf '%s
-' "$changed" | grep -Ev '^(package\.json|package-lock\.json)$' || true)"
+          bad="$(printf '%s\\n' "$changed" | grep -Ev '^(package\\.json|package-lock\\.json)
+          if [ -n "$bad" ]; then
+            echo "Unexpected changed files:"
+            echo "$bad"
+            exit 1
+          fi
+
+      - name: Commit dependency files back to feature branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "orcaly-qa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore(import-engine): pin csv-parse 7.0.2"
+          git push origin HEAD:claude/orcaly-import-csv-t3
+ || true)"
           if [ -n "$bad" ]; then
             echo "Unexpected changed files:"
             echo "$bad"
