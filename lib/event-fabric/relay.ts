@@ -32,7 +32,7 @@ async function settleFailure(
     sanitizeDiagnosticText(reason instanceof Error ? reason.message : reason, 2000) ||
     'outbox_dispatch_failed'
 
-  const { error } = await db.rpc('orcaly_settle_outbox_failure', {
+  const { data: settled, error } = await db.rpc('orcaly_settle_outbox_failure', {
     p_outbox_event_id: event.id,
     p_retryable: retryable,
     p_run_after: retryable ? retryAt(event.attempts) : null,
@@ -40,6 +40,7 @@ async function settleFailure(
   })
 
   if (error) throw error
+  return settled === true
 }
 
 export async function runEventFabricRelay(db: SupabaseClient, limit = 20) {
@@ -51,6 +52,7 @@ export async function runEventFabricRelay(db: SupabaseClient, limit = 20) {
       'id,company_id,user_id,producer,event_type,event_version,aggregate_type,aggregate_id,payload,correlation_id,causation_id,status,attempts,max_attempts,available_at,created_at',
     )
     .in('status', ['queued', 'retrying'])
+    .lte('available_at', 'now')
     .order('available_at', { ascending: true })
     .order('created_at', { ascending: true })
     .limit(boundedLimit)
@@ -65,6 +67,7 @@ export async function runEventFabricRelay(db: SupabaseClient, limit = 20) {
     needsAttention: 0,
     duplicateDispatches: 0,
     notDue: 0,
+    settlementSkipped: 0,
   }
 
   for (const raw of data || []) {
@@ -74,8 +77,14 @@ export async function runEventFabricRelay(db: SupabaseClient, limit = 20) {
       const contract = validateEventRecord(event)
 
       if (!contract.consumers.length) {
-        await settleFailure(db, event, false, 'event_contract_has_no_authorized_consumer')
-        summary.needsAttention += 1
+        const settled = await settleFailure(
+          db,
+          event,
+          false,
+          'event_contract_has_no_authorized_consumer',
+        )
+        if (settled) summary.needsAttention += 1
+        else summary.settlementSkipped += 1
         continue
       }
 
@@ -111,9 +120,13 @@ export async function runEventFabricRelay(db: SupabaseClient, limit = 20) {
       const nonRetryable = error instanceof EventFabricContractError
 
       try {
-        await settleFailure(db, event, !nonRetryable, error)
-        if (nonRetryable) summary.needsAttention += 1
-        else summary.retrying += 1
+        const settled = await settleFailure(db, event, !nonRetryable, error)
+        if (settled) {
+          if (nonRetryable) summary.needsAttention += 1
+          else summary.retrying += 1
+        } else {
+          summary.settlementSkipped += 1
+        }
       } catch (settlementError) {
         console.error(
           JSON.stringify({
