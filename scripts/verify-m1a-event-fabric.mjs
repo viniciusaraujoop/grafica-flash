@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import ts from 'typescript'
 
@@ -174,8 +175,8 @@ assert.match(contracts, /FORBIDDEN_SECRET_KEYS/)
 
 // Aggregate contract model is explicit, static and payload identity is not authoritative.
 assert.equal((contracts.match(/aggregate: \{/g) || []).length, 4)
-assert.equal((contracts.match(/type: 'order'/g) || []).length, 3)
-assert.equal((contracts.match(/type: 'proposal'/g) || []).length, 1)
+assert.equal((contracts.match(/aggregate: \{\n\s+type: 'order'/g) || []).length, 3)
+assert.equal((contracts.match(/aggregate: \{\n\s+type: 'proposal'/g) || []).length, 1)
 assert.match(contracts, /invalid_aggregate_type/)
 assert.match(contracts, /invalid_aggregate_id/)
 assert.match(contracts, /aggregate_resource_mismatch/)
@@ -327,4 +328,17 @@ assert.equal(
   true,
 )
 
-console.log('M1A Event Fabric static contract checks: PASS')
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+const explicitTypecheck = spawnSync(npmCommand, ['run', 'typecheck'], {
+  cwd: new URL('..', import.meta.url),
+  env: process.env,
+  stdio: 'inherit',
+})
+assert.equal(
+  explicitTypecheck.status,
+  0,
+  'Explicit npm run typecheck failed with exit code ' + explicitTypecheck.status,
+)
+
+console.log('M1A explicit typecheck exit code: ' + explicitTypecheck.status)
+console.log('M1A Event Fabric static and runtime contract checks: PASS')
