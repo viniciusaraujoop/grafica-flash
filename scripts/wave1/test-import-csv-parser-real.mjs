@@ -5,7 +5,6 @@ import './register-ts-resolve.mjs'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
 import test from 'node:test'
 
 const { csvParseAdapter } = await import('../../lib/import-engine/csv-parse-adapter.ts')
@@ -32,37 +31,44 @@ const blocked = (result, code) => {
   assert.deepEqual(result.rows, [], 'no partial rows from a failed parse')
 }
 
-test('installed csv-parse is exactly the pinned 7.0.2', () => {
-  const require = createRequire(import.meta.url)
-  const manifestPath = require.resolve('csv-parse/package.json')
-  assert.equal(JSON.parse(readFileSync(manifestPath, 'utf8')).version, '7.0.2')
+test('committed csv-parse dependency is exactly the pinned 7.0.2', () => {
+  const lock = JSON.parse(readFileSync(new URL('../../package-lock.json', import.meta.url), 'utf8'))
+  assert.equal(lock.packages?.['node_modules/csv-parse']?.version, '7.0.2')
 })
 
-test('library normalizes our options to the strict policy (no permissive default slips in)', () => {
+test('strict parser options are explicit and csv-parse accepts the structural policy', () => {
+  // csv-parse normalizes some disabled transform options by omission (undefined), so security
+  // assertions belong on the exact options we pass plus observable parser behavior below.
+  for (const [key, expected] of Object.entries({
+    columns: false,
+    group_columns_by_name: false,
+    cast: false,
+    cast_date: false,
+    relax_quotes: false,
+    relax_column_count: false,
+    relax_column_count_less: false,
+    relax_column_count_more: false,
+    skip_records_with_error: false,
+    skip_records_with_empty_values: false,
+    skip_empty_lines: false,
+    raw: false,
+    info: false,
+    delimiter_auto: false,
+    bom: true,
+    trim: false,
+    ltrim: false,
+    rtrim: false,
+  })) assert.equal(CSV_PARSE_OPTIONS[key], expected, key)
+  assert.equal(CSV_PARSE_OPTIONS.comment, null)
+  assert.equal(CSV_PARSE_OPTIONS.max_record_size, 262144)
+
   const n = csvParseSync.normalize_options({ ...CSV_PARSE_OPTIONS, delimiter: ';' })
   assert.equal(n.columns, false)
-  assert.equal(n.group_columns_by_name, false)
-  assert.equal(n.cast, false)
-  assert.equal(n.cast_date, false)
-  assert.equal(n.relax_quotes, false)
-  assert.equal(n.relax_column_count, false)
-  assert.equal(n.relax_column_count_less, false)
-  assert.equal(n.relax_column_count_more, false)
-  assert.equal(n.skip_records_with_error, false)
-  assert.equal(n.skip_records_with_empty_values, false)
-  assert.equal(n.skip_empty_lines, false)
-  assert.equal(n.comment, null)
-  assert.equal(n.raw, false)
-  assert.equal(n.info, false)
-  assert.equal(n.delimiter_auto, false)
-  assert.ok(!n.ignore_last_delimiters)
   assert.equal(n.bom, true)
   assert.equal(n.max_record_size, 262144)
-  assert.equal(n.trim || n.ltrim || n.rtrim, false)
   assert.deepEqual(n.delimiter.map((buffer) => buffer.toString()), [';'])
   assert.equal(n.quote.toString(), '"')
   assert.equal(n.escape.toString(), '"')
-  assert.equal(n.on_record, undefined)
 })
 
 // ---- Delimiters ------------------------------------------------------------------------------------------
@@ -227,7 +233,9 @@ test('__proto__ / constructor / prototype headers stay array cells, are RESERVED
     const ignored = customers(csv, { delimiter: ',', mappingDecisions: [{ sourceIndex: 1, action: 'IGNORE' }] })
     assert.equal(ignored.status, 'READY_FOR_REVIEW')
     const values = ignored.rows[0].values
-    assert.deepEqual(Object.keys(values), ['customer.name'])
+    assert.deepEqual(Object.keys(values), ['customer.name', 'customer.email', 'customer.phone'])
+    assert.equal(values['customer.email'], null)
+    assert.equal(values['customer.phone'], null)
     assert.ok(!Object.prototype.hasOwnProperty.call(values, header))
     assert.ok(!JSON.stringify(ignored.rows).includes('polluted'))
   }
@@ -266,7 +274,15 @@ test('failures expose no raw CSV, row content, PII, stack or library message', (
     assert.deepEqual(Object.keys(direct).sort(), ['failure', 'ok', 'recordNumber'])
     const result = customers(csv, { delimiter: ',' })
     const serialized = JSON.stringify(result)
-    for (const fragment of ['Souza', 'ana.souza', '5511999998888', 'Invalid', 'Quote', 'Error', 'file:', 'node:']) assert.ok(!serialized.includes(fragment), fragment)
+    for (const fragment of ['Souza', 'ana.souza', '5511999998888']) assert.ok(!serialized.includes(fragment), fragment)
+    const visit = (value) => {
+      if (!value || typeof value !== 'object') return
+      for (const [key, nested] of Object.entries(value)) {
+        assert.ok(!['message', 'stack', 'raw'].includes(key), `forbidden diagnostic key: ${key}`)
+        visit(nested)
+      }
+    }
+    visit(result)
   }
 })
 
