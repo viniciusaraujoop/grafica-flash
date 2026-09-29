@@ -7,10 +7,13 @@ const migrationPath =
   '../supabase/migrations/20260929211421_m1a_event_fabric_safety_contract.sql'
 const correctiveMigrationPath =
   '../supabase/migrations/20260929222634_m1a_event_fabric_dispatch_eligibility_fix.sql'
+const finalCorrectiveMigrationPath =
+  '../supabase/migrations/20260929225302_m1a_event_fabric_failure_settlement_due_guard.sql'
 
 const [
   migration,
   correctiveMigration,
+  finalCorrectiveMigration,
   contracts,
   handlers,
   relay,
@@ -22,6 +25,7 @@ const [
 ] = await Promise.all([
   readFile(new URL(migrationPath, import.meta.url), 'utf8'),
   readFile(new URL(correctiveMigrationPath, import.meta.url), 'utf8'),
+  readFile(new URL(finalCorrectiveMigrationPath, import.meta.url), 'utf8'),
   readFile(new URL('../lib/event-fabric/contracts.ts', import.meta.url), 'utf8'),
   readFile(new URL('../lib/event-fabric/handlers.ts', import.meta.url), 'utf8'),
   readFile(new URL('../lib/event-fabric/relay.ts', import.meta.url), 'utf8'),
@@ -158,6 +162,37 @@ assert.match(
   /grant execute on function public\.orcaly_dispatch_outbox_event\(uuid, text, text, smallint, jsonb\) to service_role/,
 )
 
+// Final corrective migration makes failure settlement respect DB-time due state.
+const settleStateCheck = finalCorrectiveMigration.indexOf(
+  "if v_event.status not in ('queued', 'processing', 'retrying') then",
+)
+const settlementDueGuard = finalCorrectiveMigration.indexOf(
+  "if v_event.status in ('queued', 'retrying')",
+)
+const settlementDbTime = finalCorrectiveMigration.indexOf(
+  'and v_event.available_at > now() then',
+)
+const settlementAttemptIncrement = finalCorrectiveMigration.indexOf(
+  'v_attempts := v_event.attempts + 1',
+)
+
+assert.ok(settleStateCheck >= 0)
+assert.ok(settlementDueGuard > settleStateCheck)
+assert.ok(settlementDbTime > settlementDueGuard)
+assert.ok(settlementAttemptIncrement > settlementDbTime)
+assert.match(finalCorrectiveMigration, /return false;/)
+assert.match(finalCorrectiveMigration, /return true;/)
+assert.match(finalCorrectiveMigration, /security definer/)
+assert.match(finalCorrectiveMigration, /set search_path = pg_catalog/)
+assert.match(
+  finalCorrectiveMigration,
+  /revoke all on function public\.orcaly_settle_outbox_failure\(uuid, boolean, timestamptz, text\) from public/,
+)
+assert.match(
+  finalCorrectiveMigration,
+  /grant execute on function public\.orcaly_settle_outbox_failure\(uuid, boolean, timestamptz, text\) to service_role/,
+)
+
 // Known producer contracts are validation-only: no fake consumer.
 for (const eventType of [
   'order.created',
@@ -278,17 +313,48 @@ assert.equal(worker.includes('validateEventRecord(event)'), true)
 assert.equal(worker.includes('handlerAcceptsEvent(handler, event)'), true)
 assert.equal(worker.includes('handler.isAlreadyApplied(context)'), true)
 
-// Relay never executes domain handlers and DB time owns dispatch eligibility.
+// Relay never executes domain handlers. PostgreSQL time owns both candidate
+// prefiltering and the authoritative settlement/dispatch boundaries.
 assert.equal(relay.includes('handler.execute'), false)
 assert.equal(relay.includes("'orcaly_dispatch_outbox_event'"), true)
 assert.equal(relay.includes("'orcaly_settle_outbox_failure'"), true)
-assert.equal(relay.includes(".lte('available_at'"), false)
+assert.equal(relay.includes(".lte('available_at', 'now')"), true)
+assert.equal(relay.includes(".lte('available_at', new Date"), false)
+assert.equal(relay.includes(".lte('available_at', Date.now"), false)
 assert.equal(relay.includes("result?.status === 'not_due'"), true)
 assert.equal(relay.includes('notDue: 0'), true)
+assert.equal(relay.includes('settlementSkipped: 0'), true)
+assert.equal(relay.includes('data: settled'), true)
+assert.equal(relay.includes('return settled === true'), true)
 
 const notDueBranch = relay.indexOf("if (result?.status === 'not_due')")
 const failureCatch = relay.indexOf('} catch (error) {')
 assert.ok(notDueBranch >= 0 && failureCatch > notDueBranch)
+
+const noConsumerSettlement = relay.indexOf(
+  "const settled = await settleFailure(\n          db,\n          event,\n          false,",
+)
+const noConsumerMutationMetric = relay.indexOf(
+  'if (settled) summary.needsAttention += 1',
+)
+const noConsumerSkipMetric = relay.indexOf(
+  'else summary.settlementSkipped += 1',
+)
+assert.ok(noConsumerSettlement >= 0)
+assert.ok(noConsumerMutationMetric > noConsumerSettlement)
+assert.ok(noConsumerSkipMetric > noConsumerMutationMetric)
+
+const catchSettlement = relay.indexOf(
+  'const settled = await settleFailure(db, event, !nonRetryable, error)',
+)
+const catchMutationGuard = relay.indexOf('if (settled) {', catchSettlement)
+const catchSkipMetric = relay.indexOf(
+  'summary.settlementSkipped += 1',
+  catchMutationGuard,
+)
+assert.ok(catchSettlement >= 0)
+assert.ok(catchMutationGuard > catchSettlement)
+assert.ok(catchSkipMetric > catchMutationGuard)
 
 // Static handler registry rejects duplicate ownership; production registry is empty.
 assert.match(handlers, /Duplicate Event Fabric handler ownership/)
