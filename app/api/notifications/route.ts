@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyAccess, getRequester, getSupabaseAdmin } from '@/lib/company-access'
+import { notificationVisibilityFilter } from '@/lib/security/notification-recipient'
 
 async function access(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
       .from('app_notifications')
       .select('id,tipo,titulo,mensagem,status,link_url,payload,created_at,read_at')
       .eq('company_id', result.companyAccess!.company.id)
+      .or(notificationVisibilityFilter(result.requester!.id))
       .order('created_at', { ascending: false })
       .limit(100)
 
@@ -44,6 +46,7 @@ export async function PATCH(request: NextRequest) {
       .from('app_notifications')
       .update({ status: 'read', read_at: new Date().toISOString() })
       .eq('company_id', result.companyAccess!.company.id)
+      .eq('user_id', result.requester!.id)
 
     if (!all) {
       if (!ids.length) return NextResponse.json({ ok: true })
