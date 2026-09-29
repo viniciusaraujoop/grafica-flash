@@ -47,6 +47,23 @@ This revision resolves only:
 
 All previously accepted M1A architecture remains unchanged.
 
+## Agent 4 Final Security Requirements Amendment
+
+Security review base:
+
+`2efd0680da4fa2105c5d84a9dc5c2caa1a66e2eb`
+
+Security review artifact:
+
+`docs/security/ORCALY_M1A_EVENT_FABRIC_SECURITY_REVIEW.md`
+
+Agent 4 required exactly two final design changes:
+
+1. dedupe uniqueness must be structurally scope-aware;
+2. Event Fabric runtime must use a dedicated cron/worker secret.
+
+This revision incorporates only those requirements and preserves every other accepted M1A decision.
+
 ---
 
 # 1. Authority and Baseline
@@ -455,17 +472,50 @@ Purpose:
 
 Optional **event publication** dedupe for contracts that have a deterministic semantic publication identity.
 
-Canonical uniqueness:
+Canonical uniqueness is **scope-aware**.
+
+Company scope:
+
+`company_id + producer + event_type + dedupe_key`
+
+when:
+
+- dedupe_key is not null;
+- company_id is not null;
+- user_id is null.
+
+Personal scope:
+
+`user_id + producer + event_type + dedupe_key`
+
+when:
+
+- dedupe_key is not null;
+- user_id is not null;
+- company_id is null.
+
+Platform scope:
 
 `producer + event_type + dedupe_key`
 
-when dedupe_key is not null.
+when:
+
+- dedupe_key is not null;
+- company_id is null;
+- user_id is null.
 
 Do not include contract version in publication uniqueness.
 
+Do not create a synthetic scope string.
+
+Do not depend on application string concatenation for tenant isolation.
+
 Reason:
 
-Changing a schema version must not silently republish the same semantic event.
+- two different companies may legitimately publish the same local dedupe key;
+- two different personal users may legitimately publish the same local dedupe key;
+- platform-scope publication remains globally unique for the same producer/event/key;
+- changing a schema version must not silently republish the same semantic event.
 
 ### scope integrity
 
@@ -518,9 +568,13 @@ Required future structural rules:
 5. event_version positive bounded check;
 6. dedupe_key bounded check;
 7. payload serialized-size bound;
-8. partial unique publication-dedupe index:
-   `(producer, event_type, dedupe_key)`
-   where dedupe_key is not null.
+8. three scope-aware partial unique publication-dedupe indexes:
+   - company: `(company_id, producer, event_type, dedupe_key)`
+     where dedupe_key is not null AND company_id is not null AND user_id is null;
+   - personal: `(user_id, producer, event_type, dedupe_key)`
+     where dedupe_key is not null AND user_id is not null AND company_id is null;
+   - platform: `(producer, event_type, dedupe_key)`
+     where dedupe_key is not null AND company_id is null AND user_id is null.
 
 No `locked_at` or `locked_by` columns are added to outbox.
 
@@ -574,11 +628,41 @@ Generic enqueue dedupe.
 
 Required for every relay-generated job.
 
-Canonical uniqueness:
+Canonical uniqueness is **scope-aware**.
+
+Company scope:
+
+`(company_id, job_type, dedupe_key)`
+
+when:
+
+- dedupe_key is not null;
+- company_id is not null;
+- user_id is null.
+
+Personal scope:
+
+`(user_id, job_type, dedupe_key)`
+
+when:
+
+- dedupe_key is not null;
+- user_id is not null;
+- company_id is null.
+
+Platform scope:
 
 `(job_type, dedupe_key)`
 
-where dedupe_key is not null.
+when:
+
+- dedupe_key is not null;
+- company_id is null;
+- user_id is null.
+
+Existing rows with null dedupe_key remain unaffected.
+
+Existing specialized indexes for `integration.sync` and `google.calendar.full_resync` remain untouched.
 
 Normal relay key is deterministic from:
 
@@ -995,11 +1079,17 @@ contract-specific `dedupe_key`
 
 Uniqueness:
 
-`producer + event_type + dedupe_key`
+scope-aware structural uniqueness:
+
+- company: `company_id + producer + event_type + dedupe_key`;
+- personal: `user_id + producer + event_type + dedupe_key`;
+- platform: `producer + event_type + dedupe_key`.
+
+Each identity is enforced by its own partial unique index for the matching canonical scope.
 
 Purpose:
 
-Prevent the same semantic domain event from being published twice when the producer can deterministically identify it.
+Prevent the same semantic domain event from being published twice **inside the same trusted scope** when the producer can deterministically identify it, without causing cross-tenant/user dedupe collisions.
 
 Not every event requires publication dedupe.
 
@@ -1023,11 +1113,17 @@ deterministic from:
 
 Uniqueness:
 
-`job_type + dedupe_key`
+scope-aware structural uniqueness:
+
+- company: `company_id + job_type + dedupe_key`;
+- personal: `user_id + job_type + dedupe_key`;
+- platform: `job_type + dedupe_key`.
+
+Each identity is enforced by a scope-specific partial unique index.
 
 Purpose:
 
-Two relay executions cannot enqueue the same consumer work twice.
+Two relay executions cannot enqueue the same consumer work twice inside the same trusted scope, while direct/shared jobs in different companies or personal subjects may legitimately reuse a local dedupe key.
 
 This is generic enqueue idempotency.
 
@@ -1073,12 +1169,22 @@ Likely runtime entrypoint:
 Authentication pattern:
 
 - Node runtime;
-- `Authorization: Bearer <CRON_SECRET>`;
-- no query-string secret fallback;
-- fail closed if secret unavailable;
-- service-role database client only after route authentication.
+- dedicated environment secret: `ORCALY_EVENT_FABRIC_CRON_SECRET`;
+- request header only: `Authorization: Bearer <ORCALY_EVENT_FABRIC_CRON_SECRET>`;
+- **no fallback to `CRON_SECRET`**;
+- no query-string fallback;
+- no cookie fallback;
+- no user-session fallback;
+- fail closed if the dedicated configured secret is absent;
+- fail closed if the supplied bearer secret is absent or invalid;
+- perform timing-safe secret comparison;
+- if byte lengths differ, reject safely before timing-safe equality;
+- never log configured, supplied, partial, or hashed secret;
+- instantiate/use the service-role database execution path only after the Event Fabric runtime boundary has passed.
 
-A separate dedicated worker secret may be required by Agent 4, but M1A does not accept user/session auth as worker authorization.
+`CRON_SECRET` is explicitly **not** an Event Fabric credential.
+
+The future route must not inherit authorization from any other cron surface.
 
 ## 13.2 Activation gate
 
@@ -1101,6 +1207,24 @@ Relay activation is allowed only when:
 5. every dispatchable event contract has at least one allowlisted handler;
 6. observability is live;
 7. backlog handling runbook is ready.
+
+### Service-role ordering
+
+The future Event Fabric route must evaluate the runtime boundary before any privileged database/RPC work.
+
+Required order:
+
+1. evaluate fail-closed `ORCALY_EVENT_FABRIC_ENABLED`;
+2. load/validate the dedicated `ORCALY_EVENT_FABRIC_CRON_SECRET` configuration;
+3. validate the supplied Authorization bearer value with timing-safe comparison;
+4. only then create/use the service-role database client;
+5. only then invoke relay/worker RPCs.
+
+An unauthenticated or incorrectly authenticated request must cause **zero Event Fabric service-role DB/RPC execution**.
+
+Preview remains OFF unless explicitly activated for authorized QA.
+
+No environment may fall back to a production/global cron credential.
 
 ## 13.3 Candidate read
 
@@ -1259,7 +1383,7 @@ No DB handler registry table.
 
 Each handler definition contains conceptually:
 
-- stable job_type;
+- stable globally unique job_type;
 - job_version;
 - owning domain/product;
 - accepted producer/event contracts;
@@ -1276,6 +1400,31 @@ Unknown job_type/job_version:
 No dynamic module path may come from the database or payload.
 
 No `eval`, reflection-based function invocation, or user-supplied action names.
+
+### job_type namespace
+
+`job_type` remains globally unique in the TypeScript handler registry.
+
+New Event Fabric job types must be domain-qualified, conceptually:
+
+- `business.<operation>`
+- `wealth.<operation>`
+- `growth.<operation>`
+- `flow.<operation>`
+- `academy.<operation>`
+- `market.<operation>`
+- `partners.<operation>`
+- `platform.<operation>`
+- `integration.<operation>`
+
+Existing canonical types remain valid, including:
+
+- `integration.sync`
+- `google.calendar.full_resync`.
+
+Registry/CI validation must reject two owners registering the same `job_type`.
+
+No DB registry table is introduced.
 
 ---
 
@@ -1945,7 +2094,7 @@ The one future migration should own:
 - event version constraint;
 - producer/dedupe bounds;
 - payload bound;
-- publication-dedupe index.
+- three scope-aware publication-dedupe partial unique indexes.
 
 ### background_jobs
 
@@ -1955,7 +2104,7 @@ The one future migration should own:
 - correlation;
 - generic dedupe;
 - outbox link;
-- partial generic enqueue-dedupe index;
+- three scope-aware generic enqueue-dedupe partial unique indexes;
 - relay-derived invariant checks.
 
 ### relay / worker DB boundaries
@@ -1997,6 +2146,10 @@ M1F was removed by Coordinator reconciliation.
 Validation belongs to this owning domain change.
 
 Current live tables are empty.
+
+The three outbox scope-aware unique indexes and three background-job scope-aware unique indexes belong in this same migration.
+
+The dedicated cron secret is runtime/environment configuration and does **not** add a database migration.
 
 The additive checks can be validated as part of the same M1A migration boundary after mandatory preflight.
 
@@ -2133,10 +2286,14 @@ Create:
 
 Responsibilities:
 
-- Authorization Bearer cron/worker authentication;
-- fail-closed feature gate;
+- fail-closed `ORCALY_EVENT_FABRIC_ENABLED` gate;
+- require `Authorization: Bearer <ORCALY_EVENT_FABRIC_CRON_SECRET>`;
+- reject legacy `CRON_SECRET` as an Event Fabric credential;
+- header-only authentication with no query/cookie/session fallback;
+- timing-safe secret comparison with safe unequal-length rejection;
+- perform no service-role DB/RPC operation before gate + dedicated authentication succeed;
 - invoke bounded relay + worker ticks;
-- return sanitized operational summary.
+- return sanitized operational summary with no credential material.
 
 Modify at activation time:
 
@@ -2255,6 +2412,23 @@ to add the M1A verification command to the canonical test/prebuild gate after im
 | QA-47 | relay-derived Event Fabric job after M1A | never claimable through generic `claim_background_jobs` |
 | QA-48 | new producer omits producer/event_version in application contract test | rejected by registry/QA policy; defaults are not accepted as new-producer behavior |
 | QA-49 | authorized tenant hard-delete fixture with queued work in controlled test environment | CASCADE consequence is explicit, audited/governed, and no row is misclassified as retention purge |
+| QA-50 | Company A and Company B publish same producer/event_type/dedupe_key | both valid events coexist; no cross-company collision |
+| QA-51 | User A and User B publish same producer/event_type/dedupe_key | both valid personal events coexist |
+| QA-52 | Same company + same producer + same event_type + same dedupe_key | second publication deduped |
+| QA-53 | Same personal user + same producer + same event_type + same dedupe_key | second publication deduped |
+| QA-54 | Platform same producer + same event_type + same dedupe_key | second publication deduped globally in platform scope |
+| QA-55 | Direct/shared jobs in different companies use same job_type + same dedupe_key | both jobs coexist |
+| QA-56 | Same company + same job_type + same dedupe_key | second job deduped |
+| QA-57 | Event Fabric route receives correct dedicated secret | authorized after feature gate |
+| QA-58 | Event Fabric route receives legacy CRON_SECRET value only | rejected; no fallback |
+| QA-59 | dedicated secret supplied through query string only | rejected |
+| QA-60 | dedicated configured secret missing | fail closed |
+| QA-61 | dedicated supplied secret wrong | fail closed |
+| QA-62 | unauthorized request | no service-role client/RPC/DB Event Fabric work |
+| QA-63 | configured/supplied secret in error-path fixture | no secret, partial secret, or hash appears in logs/errors |
+| QA-64 | preview without explicit ORCALY_EVENT_FABRIC_ENABLED activation | relay/worker does not run |
+| QA-65 | unequal-length supplied secret | safe reject before timing-safe equality; no crash/DB work |
+| QA-66 | duplicate job_type ownership in registry fixture | CI/registry validation rejects duplicate owner |
 
 ---
 
@@ -2352,6 +2526,14 @@ Confirm all four boundaries remain separate:
 
 No generic key is accepted as proof of all four.
 
+Confirm publication/enqueue uniqueness is structurally scope-aware:
+
+- company partial unique indexes include company_id;
+- personal partial unique indexes include user_id;
+- platform partial unique indexes apply only when both scope columns are null;
+- no synthetic scope string or application concatenation convention is trusted for isolation;
+- dedupe_key is server contract metadata and never trusted from browser/HTTP/provider/event payload.
+
 ## replay
 
 Confirm:
@@ -2371,6 +2553,21 @@ Confirm:
 - bounded sanitized last_error;
 - structured logs redact auth/provider secrets;
 - correlation/causation identifiers are non-secret.
+
+## Event Fabric cron/runtime authentication
+
+Confirm:
+
+- dedicated secret is exactly `ORCALY_EVENT_FABRIC_CRON_SECRET`;
+- no fallback to legacy/shared `CRON_SECRET`;
+- Authorization header only;
+- no query-string/cookie/session fallback;
+- missing/invalid secret fails closed;
+- timing-safe comparison is used;
+- unequal byte lengths are rejected safely before timing-safe equality;
+- no configured/supplied/partial secret or secret hash is logged;
+- feature-gate + dedicated authentication occur before any service-role DB/RPC work;
+- preview remains disabled unless explicitly activated.
 
 ## retention / destructive privileges
 
@@ -2402,6 +2599,8 @@ Relay/worker activation is prohibited unless all are true:
 - no browser Event Fabric write path;
 - fixed safe search paths;
 - registry is static/allowlisted;
+- job_type namespace is globally unique and domain-qualified for new Event Fabric jobs;
+- publication and enqueue dedupe indexes are scope-aware;
 - payload validators active;
 - scopes are DB-derived;
 - error sanitization active;
@@ -2411,6 +2610,9 @@ Relay/worker activation is prohibited unless all are true:
 - correlation propagation active;
 - current authorization re-check hooks exist for sensitive handlers;
 - health checks active;
+- dedicated Event Fabric cron secret configured for the authorized environment;
+- legacy CRON_SECRET fallback absent;
+- timing-safe dedicated-secret comparison active before service-role use;
 - Agent 4 review passed;
 - Agent 3 concurrency/security QA passed.
 
@@ -2475,7 +2677,8 @@ Mitigation:
 
 - DB transaction boundary;
 - deterministic job dedupe;
-- unique job_type + dedupe_key.
+- scope-aware partial uniqueness around company/user/platform identities;
+- globally unique job_type registry ownership.
 
 ## Risk: exactly-once myth
 
@@ -2534,6 +2737,23 @@ Mitigation:
 - new producer review/tests require explicit producer/version;
 - later cleanup removes defaults after legacy modernization.
 
+## Risk: cross-tenant dedupe collision
+
+Mitigation:
+
+- structural scope-aware unique indexes;
+- no synthetic scope string;
+- no application-concatenation convention as the isolation control.
+
+## Risk: shared cron credential compromises Event Fabric boundary
+
+Mitigation:
+
+- dedicated `ORCALY_EVENT_FABRIC_CRON_SECRET`;
+- no `CRON_SECRET` fallback;
+- timing-safe comparison;
+- no service-role DB/RPC work before gate + dedicated authentication.
+
 ## Risk: current producer event has no consumer
 
 Mitigation:
@@ -2570,24 +2790,30 @@ Coordinator should confirm before actual implementation authorization:
 3. outbox relay uses no persistent lock columns;
 4. event_idempotency remains unchanged;
 5. producer/event version/correlation/causation/scope/dedupe columns accepted;
-6. background_jobs outbox linkage/dedupe/correlation/job_version accepted;
-7. `outbox_event_id` accepted as the canonical Event Fabric job discriminator;
-8. new Event Fabric-specific claim boundary accepted;
-9. existing generic claim compatibility narrowing (`outbox_event_id IS NULL`) accepted;
-10. atomic service-only dispatch RPC accepted;
-11. service-only failure settlement RPC accepted;
-12. no-consumer condition fails closed;
-13. no-op handlers are forbidden;
-14. ordinary service-role outbox DELETE removal accepted;
-15. ordinary service-role outbox TRUNCATE removal accepted;
-16. current company ON DELETE CASCADE preserved and lifecycle-cancellation exception accepted;
-17. compatibility defaults explicitly limited to legacy producers;
-18. relay feature gate accepted;
-19. health thresholds/formula accepted;
-20. TypeScript registry file family accepted;
-21. cron route authentication model accepted;
-22. Agent 4 handoff complete;
-23. Agent 3 matrix complete.
+6. outbox dedupe uniqueness accepted as three scope-aware partial unique indexes;
+7. background_jobs outbox linkage/dedupe/correlation/job_version accepted;
+8. job dedupe uniqueness accepted as three scope-aware partial unique indexes;
+9. global TypeScript job_type namespace governance accepted;
+10. `outbox_event_id` accepted as the canonical Event Fabric job discriminator;
+11. new Event Fabric-specific claim boundary accepted;
+12. existing generic claim compatibility narrowing (`outbox_event_id IS NULL`) accepted;
+13. atomic service-only dispatch RPC accepted;
+14. service-only failure settlement RPC accepted;
+15. no-consumer condition fails closed;
+16. no-op handlers are forbidden;
+17. ordinary service-role outbox DELETE removal accepted;
+18. ordinary service-role outbox TRUNCATE removal accepted;
+19. current company ON DELETE CASCADE preserved and lifecycle-cancellation exception accepted;
+20. compatibility defaults explicitly limited to legacy producers;
+21. relay feature gate accepted;
+22. health thresholds/formula accepted;
+23. TypeScript registry file family accepted;
+24. dedicated Event Fabric cron secret model accepted;
+25. legacy CRON_SECRET fallback forbidden;
+26. timing-safe dedicated-secret comparison accepted;
+27. service-role ordering after gate/auth accepted;
+28. Agent 4 handoff complete;
+29. Agent 3 matrix complete.
 
 ---
 
@@ -2600,11 +2826,38 @@ COMPLETE
 M1A_DESIGN_AMENDMENT:
 COMPLETE
 
+M1A_FINAL_SECURITY_AMENDMENT:
+COMPLETE
+
 BASE_SHA:
 26b78cc716eb35da18a12500d22a7703e8ce0aa6
 
 AMENDMENT_BASE_SHA:
 d0db8a0bd812e4b53f6da26d5acaf6bafa442c0b
+
+FINAL_SECURITY_BASE_SHA:
+2efd0680da4fa2105c5d84a9dc5c2caa1a66e2eb
+
+OUTBOX_SCOPE_AWARE_DEDUPE:
+RESOLVED
+
+JOB_SCOPE_AWARE_DEDUPE:
+RESOLVED
+
+JOB_TYPE_NAMESPACE:
+DEFINED
+
+EVENT_FABRIC_DEDICATED_SECRET:
+DEFINED
+
+LEGACY_CRON_SECRET_FALLBACK:
+FORBIDDEN
+
+TIMING_SAFE_COMPARISON:
+REQUIRED
+
+QA_MATRIX_UPDATED:
+YES
 
 JOB_CLAIM_ISOLATION:
 RESOLVED
@@ -2676,6 +2929,9 @@ PRODUCTION_MUTATION:
 NONE
 
 READY_FOR_COORDINATOR_REVIEW:
+YES
+
+READY_FOR_COORDINATOR_FINAL_FREEZE:
 YES
 ```
 
