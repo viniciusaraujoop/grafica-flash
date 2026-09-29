@@ -1,9 +1,9 @@
 name: Import CSV T3 dependency install
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
+      - qa/import-csv-t3-dependency-install
 
 permissions:
   contents: write
