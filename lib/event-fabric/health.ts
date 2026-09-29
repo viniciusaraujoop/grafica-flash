@@ -10,14 +10,24 @@ type HealthOptions = {
 const OUTBOX_UNPROCESSED = ['queued', 'processing', 'retrying', 'failed', 'needs_attention']
 const JOB_ACTIVE_OR_BAD = ['queued', 'running', 'retrying', 'failed', 'needs_attention']
 
-async function statusCounts(db: any, table: string, statuses: readonly string[]) {
+async function statusCounts(
+  db: any,
+  table: string,
+  statuses: readonly string[],
+  eventFabricJobsOnly = false,
+) {
   const entries = await Promise.all(
     statuses.map(async (status) => {
-      const { count, error } = await db
+      let query = db
         .from(table)
         .select('id', { count: 'exact', head: true })
         .eq('status', status)
 
+      if (eventFabricJobsOnly) {
+        query = query.not('outbox_event_id', 'is', null)
+      }
+
+      const { count, error } = await query
       if (error) throw error
       return [status, count || 0] as const
     }),
@@ -48,7 +58,7 @@ export async function readEventFabricHealth(db: any, options: HealthOptions) {
       staleJobResult,
     ] = await Promise.all([
       statusCounts(db, 'transactional_outbox', [...OUTBOX_UNPROCESSED, 'completed']),
-      statusCounts(db, 'background_jobs', [...JOB_ACTIVE_OR_BAD, 'completed']),
+      statusCounts(db, 'background_jobs', [...JOB_ACTIVE_OR_BAD, 'completed'], true),
       db
         .from('transactional_outbox')
         .select('id,event_type,status,created_at,available_at')
