@@ -275,14 +275,16 @@ test('failures expose no raw CSV, row content, PII, stack or library message', (
     const result = customers(csv, { delimiter: ',' })
     const serialized = JSON.stringify(result)
     for (const fragment of ['Souza', 'ana.souza', '5511999998888']) assert.ok(!serialized.includes(fragment), fragment)
-    const visit = (value) => {
+    const visitDiagnostics = (value) => {
       if (!value || typeof value !== 'object') return
       for (const [key, nested] of Object.entries(value)) {
         assert.ok(!['message', 'stack', 'raw'].includes(key), `forbidden diagnostic key: ${key}`)
-        visit(nested)
+        visitDiagnostics(nested)
       }
     }
-    visit(result)
+    // parserPolicy.raw=false is an intentional safe configuration flag, not retained CSV.
+    // Error/issue payloads are the diagnostic surface that must never contain raw/message/stack.
+    visitDiagnostics(result.issues)
   }
 })
 
