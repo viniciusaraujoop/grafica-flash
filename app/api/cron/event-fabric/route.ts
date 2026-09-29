@@ -21,7 +21,7 @@ function bearerSecret(request: NextRequest) {
   return match?.[1] || ''
 }
 
-export function timingSafeSecretEqual(expected: string, supplied: string) {
+function timingSafeSecretEqual(expected: string, supplied: string) {
   const expectedBytes = Buffer.from(expected, 'utf8')
   const suppliedBytes = Buffer.from(supplied, 'utf8')
   if (expectedBytes.length !== suppliedBytes.length) return false
