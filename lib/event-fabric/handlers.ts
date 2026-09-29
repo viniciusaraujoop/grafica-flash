@@ -1,5 +1,7 @@
 import 'server-only'
 
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 import type { EventFabricRow } from './contracts'
 
 export type EventFabricJobRow = {
@@ -17,7 +19,7 @@ export type EventFabricJobRow = {
 }
 
 export type HandlerContext = {
-  db: any
+  db: SupabaseClient
   job: EventFabricJobRow
   event: EventFabricRow
 }
