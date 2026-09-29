@@ -41,7 +41,23 @@ jobs:
         run: npm ls csv-parse --depth=0
 
       - name: Dependency audit
-        run: npm audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm audit --json > audit.json || true
+          node - <<'NODE'
+          const fs = require('fs');
+          const audit = JSON.parse(fs.readFileSync('audit.json', 'utf8'));
+          const vulns = audit.vulnerabilities || {};
+          const csv = vulns['csv-parse'];
+          const meta = audit.metadata?.vulnerabilities || {};
+          console.log('audit totals:', JSON.stringify(meta));
+          if (csv) {
+            console.error('csv-parse vulnerability detected:', JSON.stringify(csv));
+            process.exit(1);
+          }
+          console.log('csv-parse@7.0.2: no audit vulnerability entry');
+          NODE
 
       - name: Real csv-parse adapter tests
         run: node --test scripts/wave1/test-import-csv-parser-real.mjs
