@@ -15,7 +15,7 @@ jobs:
       - name: Checkout frozen Import CSV T3 SHA
         uses: actions/checkout@v4
         with:
-          ref: 9d43b93805700d14273384e393567b43ae173259
+          ref: e5ad651862612b26ecca2ae49b539f2f90404a18
           fetch-depth: 0
 
       - name: Verify exact target SHA
@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           actual="$(git rev-parse HEAD)"
-          expected="9d43b93805700d14273384e393567b43ae173259"
+          expected="e5ad651862612b26ecca2ae49b539f2f90404a18"
           echo "actual=$actual"
           echo "expected=$expected"
           test "$actual" = "$expected"
