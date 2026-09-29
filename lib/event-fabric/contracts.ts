@@ -25,11 +25,17 @@ export type EventFabricRow = {
   causation_id?: string | null
 }
 
+export type EventAggregateContract = {
+  type: 'order' | 'proposal'
+  payloadResourceId: (payload: unknown) => unknown
+}
+
 export type EventContract = {
   producer: string
   eventType: string
   eventVersion: number
   scopeKinds: readonly EventScopeKind[]
+  aggregate: EventAggregateContract
   consumers: readonly EventConsumerSpec[]
   validatePayload: (payload: unknown) => void
 }
@@ -129,6 +135,11 @@ function uuidField(value: unknown, field: string) {
   }
 }
 
+function payloadResourceId(payload: unknown, field: 'order_id' | 'proposal_id') {
+  const row = plainRecord(payload)
+  return row?.[field] ?? null
+}
+
 function validateOrderCreated(payload: unknown) {
   const row = plainRecord(payload)
   if (!row) throw new EventFabricContractError('invalid_payload', 'order.created payload must be an object.')
@@ -167,6 +178,10 @@ const EVENT_CONTRACTS: readonly EventContract[] = [
     eventType: 'order.created',
     eventVersion: 1,
     scopeKinds: ['company'],
+    aggregate: {
+      type: 'order',
+      payloadResourceId: (payload) => payloadResourceId(payload, 'order_id'),
+    },
     consumers: [],
     validatePayload: validateOrderCreated,
   },
@@ -175,6 +190,10 @@ const EVENT_CONTRACTS: readonly EventContract[] = [
     eventType: 'order.ready',
     eventVersion: 1,
     scopeKinds: ['company'],
+    aggregate: {
+      type: 'order',
+      payloadResourceId: (payload) => payloadResourceId(payload, 'order_id'),
+    },
     consumers: [],
     validatePayload: validateOrderReady,
   },
@@ -183,6 +202,10 @@ const EVENT_CONTRACTS: readonly EventContract[] = [
     eventType: 'payment.confirmed',
     eventVersion: 1,
     scopeKinds: ['company'],
+    aggregate: {
+      type: 'order',
+      payloadResourceId: (payload) => payloadResourceId(payload, 'order_id'),
+    },
     consumers: [],
     validatePayload: validatePaymentConfirmed,
   },
@@ -191,6 +214,10 @@ const EVENT_CONTRACTS: readonly EventContract[] = [
     eventType: 'proposal.accepted',
     eventVersion: 1,
     scopeKinds: ['company'],
+    aggregate: {
+      type: 'proposal',
+      payloadResourceId: (payload) => payloadResourceId(payload, 'proposal_id'),
+    },
     consumers: [],
     validatePayload: validateProposalAccepted,
   },
@@ -235,6 +262,36 @@ export function validateEventRecord(row: EventFabricRow) {
   }
 
   contract.validatePayload(row.payload)
+
+  if (row.aggregate_type !== contract.aggregate.type) {
+    throw new EventFabricContractError(
+      'invalid_aggregate_type',
+      'Event aggregate_type does not match the allowlisted contract.',
+    )
+  }
+
+  if (!isUuid(row.aggregate_id)) {
+    throw new EventFabricContractError(
+      'invalid_aggregate_id',
+      'Event aggregate_id must be a UUID required by the allowlisted contract.',
+    )
+  }
+
+  const resourceId = contract.aggregate.payloadResourceId(row.payload)
+  if (!isUuid(resourceId)) {
+    throw new EventFabricContractError(
+      'invalid_payload',
+      'Event payload resource identity is invalid.',
+    )
+  }
+
+  if (resourceId !== row.aggregate_id) {
+    throw new EventFabricContractError(
+      'aggregate_resource_mismatch',
+      'Event aggregate_id does not match the payload resource identity.',
+    )
+  }
+
   return contract
 }
 
