@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
+import ts from 'typescript'
 
 const migrationPath =
   '../supabase/migrations/20260929211421_m1a_event_fabric_safety_contract.sql'
+const correctiveMigrationPath =
+  '../supabase/migrations/20260929222634_m1a_event_fabric_dispatch_eligibility_fix.sql'
 
 const [
   migration,
+  correctiveMigration,
   contracts,
   handlers,
   relay,
@@ -16,6 +20,7 @@ const [
   packageJson,
 ] = await Promise.all([
   readFile(new URL(migrationPath, import.meta.url), 'utf8'),
+  readFile(new URL(correctiveMigrationPath, import.meta.url), 'utf8'),
   readFile(new URL('../lib/event-fabric/contracts.ts', import.meta.url), 'utf8'),
   readFile(new URL('../lib/event-fabric/handlers.ts', import.meta.url), 'utf8'),
   readFile(new URL('../lib/event-fabric/relay.ts', import.meta.url), 'utf8'),
@@ -121,6 +126,37 @@ assert.match(migration, /octet_length\(payload::text\) <= 8192/)
 assert.equal(contracts.includes('EVENT_PAYLOAD_MAX_BYTES = 32 * 1024'), true)
 assert.equal(contracts.includes('RELAY_JOB_PAYLOAD_MAX_BYTES = 8 * 1024'), true)
 
+// Corrective migration makes DB time authoritative under the locked row.
+const statusEligibilityCheck = correctiveMigration.indexOf(
+  "if v_event.status not in ('queued', 'retrying') then",
+)
+const dbTimeEligibilityCheck = correctiveMigration.indexOf(
+  'if v_event.available_at > now() then',
+)
+const retryBudgetCheck = correctiveMigration.indexOf(
+  'if v_event.attempts >= v_event.max_attempts then',
+)
+const attemptIncrement = correctiveMigration.indexOf(
+  "set status = 'processing',\n      attempts = attempts + 1",
+)
+
+assert.ok(statusEligibilityCheck >= 0)
+assert.ok(dbTimeEligibilityCheck > statusEligibilityCheck)
+assert.ok(retryBudgetCheck > dbTimeEligibilityCheck)
+assert.ok(attemptIncrement > dbTimeEligibilityCheck)
+assert.match(correctiveMigration, /'status', 'not_due'/)
+assert.match(correctiveMigration, /'outbox_event_id', v_event\.id/)
+assert.match(correctiveMigration, /security definer/)
+assert.match(correctiveMigration, /set search_path = pg_catalog/)
+assert.match(
+  correctiveMigration,
+  /revoke all on function public\.orcaly_dispatch_outbox_event\(uuid, text, text, smallint, jsonb\) from public/,
+)
+assert.match(
+  correctiveMigration,
+  /grant execute on function public\.orcaly_dispatch_outbox_event\(uuid, text, text, smallint, jsonb\) to service_role/,
+)
+
 // Known producer contracts are validation-only: no fake consumer.
 for (const eventType of [
   'order.created',
@@ -136,6 +172,104 @@ assert.equal((contracts.match(/consumers: \[\]/g) || []).length, 4)
 assert.match(contracts, /payloadHasForbiddenSecret\(item\)/)
 assert.match(contracts, /FORBIDDEN_SECRET_KEYS/)
 
+// Aggregate contract model is explicit, static and payload identity is not authoritative.
+assert.equal((contracts.match(/aggregate: \{/g) || []).length, 4)
+assert.equal((contracts.match(/type: 'order'/g) || []).length, 3)
+assert.equal((contracts.match(/type: 'proposal'/g) || []).length, 1)
+assert.match(contracts, /invalid_aggregate_type/)
+assert.match(contracts, /invalid_aggregate_id/)
+assert.match(contracts, /aggregate_resource_mismatch/)
+
+// Execute the real contracts module after TypeScript transpilation.
+const executableContractsSource = contracts.replace("import 'server-only'", '')
+const executableContractsJs = ts.transpileModule(executableContractsSource, {
+  compilerOptions: {
+    module: ts.ModuleKind.ES2022,
+    target: ts.ScriptTarget.ES2022,
+  },
+}).outputText
+const contractModule = await import(
+  'data:text/javascript;base64,' +
+    Buffer.from(executableContractsJs, 'utf8').toString('base64')
+)
+
+const validateEventRecord = contractModule.validateEventRecord
+const orderId = '11111111-1111-4111-8111-111111111111'
+const proposalId = '22222222-2222-4222-8222-222222222222'
+const companyId = '33333333-3333-4333-8333-333333333333'
+const correlationId = '44444444-4444-4444-8444-444444444444'
+
+function eventFixture(overrides = {}) {
+  return {
+    id: '55555555-5555-4555-8555-555555555555',
+    company_id: companyId,
+    user_id: null,
+    producer: 'business',
+    event_type: 'order.created',
+    event_version: 1,
+    aggregate_type: 'order',
+    aggregate_id: orderId,
+    payload: { order_id: orderId, source: 'manual' },
+    correlation_id: correlationId,
+    causation_id: null,
+    ...overrides,
+  }
+}
+
+for (const fixture of [
+  eventFixture(),
+  eventFixture({
+    event_type: 'order.ready',
+    payload: { order_id: orderId, status: 'ready' },
+  }),
+  eventFixture({
+    event_type: 'payment.confirmed',
+    payload: { order_id: orderId, payment_status: 'approved' },
+  }),
+  eventFixture({
+    event_type: 'proposal.accepted',
+    aggregate_type: 'proposal',
+    aggregate_id: proposalId,
+    payload: { proposal_id: proposalId, status: 'approved' },
+  }),
+]) {
+  assert.doesNotThrow(() => validateEventRecord(fixture))
+}
+
+assert.throws(
+  () => validateEventRecord(eventFixture({ aggregate_type: 'proposal' })),
+  (error) => error?.code === 'invalid_aggregate_type',
+)
+assert.throws(
+  () => validateEventRecord(eventFixture({ aggregate_id: null })),
+  (error) => error?.code === 'invalid_aggregate_id',
+)
+assert.throws(
+  () => validateEventRecord(eventFixture({ aggregate_id: 'not-a-uuid' })),
+  (error) => error?.code === 'invalid_aggregate_id',
+)
+assert.throws(
+  () =>
+    validateEventRecord(
+      eventFixture({
+        aggregate_id: '66666666-6666-4666-8666-666666666666',
+      }),
+    ),
+  (error) => error?.code === 'aggregate_resource_mismatch',
+)
+assert.throws(
+  () =>
+    validateEventRecord(
+      eventFixture({
+        event_type: 'proposal.accepted',
+        aggregate_type: 'proposal',
+        aggregate_id: '77777777-7777-4777-8777-777777777777',
+        payload: { proposal_id: proposalId, status: 'approved' },
+      }),
+    ),
+  (error) => error?.code === 'aggregate_resource_mismatch',
+)
+
 // Worker can only claim Event Fabric jobs.
 assert.equal(worker.includes("db.rpc('claim_event_fabric_jobs'"), true)
 assert.equal(worker.includes("db.rpc('claim_background_jobs'"), false)
@@ -143,10 +277,17 @@ assert.equal(worker.includes('validateEventRecord(event)'), true)
 assert.equal(worker.includes('handlerAcceptsEvent(handler, event)'), true)
 assert.equal(worker.includes('handler.isAlreadyApplied(context)'), true)
 
-// Relay never executes domain handlers.
+// Relay never executes domain handlers and DB time owns dispatch eligibility.
 assert.equal(relay.includes('handler.execute'), false)
 assert.equal(relay.includes("'orcaly_dispatch_outbox_event'"), true)
 assert.equal(relay.includes("'orcaly_settle_outbox_failure'"), true)
+assert.equal(relay.includes(".lte('available_at'"), false)
+assert.equal(relay.includes("result?.status === 'not_due'"), true)
+assert.equal(relay.includes('notDue: 0'), true)
+
+const notDueBranch = relay.indexOf("if (result?.status === 'not_due')")
+const failureCatch = relay.indexOf('} catch (error) {')
+assert.ok(notDueBranch >= 0 && failureCatch > notDueBranch)
 
 // Static handler registry rejects duplicate ownership; production registry is empty.
 assert.match(handlers, /Duplicate Event Fabric handler ownership/)
