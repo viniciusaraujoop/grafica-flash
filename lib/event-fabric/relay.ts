@@ -1,5 +1,7 @@
 import 'server-only'
 
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 import {
   EventFabricContractError,
   type EventFabricRow,
@@ -21,7 +23,7 @@ function retryAt(attempts: number) {
 }
 
 async function settleFailure(
-  db: any,
+  db: SupabaseClient,
   event: OutboxCandidate,
   retryable: boolean,
   reason: unknown,
@@ -40,7 +42,7 @@ async function settleFailure(
   if (error) throw error
 }
 
-export async function runEventFabricRelay(db: any, limit = 20) {
+export async function runEventFabricRelay(db: SupabaseClient, limit = 20) {
   const boundedLimit = Math.max(1, Math.min(Number(limit) || 20, 50))
   const now = new Date().toISOString()
 
