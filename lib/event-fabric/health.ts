@@ -1,5 +1,7 @@
 import 'server-only'
 
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 export type EventFabricHealthStatus = 'Operational' | 'Degraded' | 'Down' | 'Unknown'
 
 type HealthOptions = {
@@ -11,7 +13,7 @@ const OUTBOX_UNPROCESSED = ['queued', 'processing', 'retrying', 'failed', 'needs
 const JOB_ACTIVE_OR_BAD = ['queued', 'running', 'retrying', 'failed', 'needs_attention']
 
 async function statusCounts(
-  db: any,
+  db: SupabaseClient,
   table: string,
   statuses: readonly string[],
   eventFabricJobsOnly = false,
@@ -43,7 +45,7 @@ function ageSeconds(value?: string | null) {
   return Math.max(0, Math.floor((Date.now() - parsed) / 1000))
 }
 
-export async function readEventFabricHealth(db: any, options: HealthOptions) {
+export async function readEventFabricHealth(db: SupabaseClient, options: HealthOptions) {
   try {
     const cadenceSeconds = Math.max(10, Math.min(Number(options.cadenceSeconds || 60), 3600))
     const warningAge = Math.max(300, 3 * cadenceSeconds)
