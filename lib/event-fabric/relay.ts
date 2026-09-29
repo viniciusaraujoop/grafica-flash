@@ -44,7 +44,6 @@ async function settleFailure(
 
 export async function runEventFabricRelay(db: SupabaseClient, limit = 20) {
   const boundedLimit = Math.max(1, Math.min(Number(limit) || 20, 50))
-  const now = new Date().toISOString()
 
   const { data, error } = await db
     .from('transactional_outbox')
@@ -52,7 +51,6 @@ export async function runEventFabricRelay(db: SupabaseClient, limit = 20) {
       'id,company_id,user_id,producer,event_type,event_version,aggregate_type,aggregate_id,payload,correlation_id,causation_id,status,attempts,max_attempts,available_at,created_at',
     )
     .in('status', ['queued', 'retrying'])
-    .lte('available_at', now)
     .order('available_at', { ascending: true })
     .order('created_at', { ascending: true })
     .limit(boundedLimit)
@@ -66,6 +64,7 @@ export async function runEventFabricRelay(db: SupabaseClient, limit = 20) {
     retrying: 0,
     needsAttention: 0,
     duplicateDispatches: 0,
+    notDue: 0,
   }
 
   for (const raw of data || []) {
@@ -98,6 +97,11 @@ export async function runEventFabricRelay(db: SupabaseClient, limit = 20) {
       )
 
       if (dispatchError) throw dispatchError
+
+      if (result?.status === 'not_due') {
+        summary.notDue += 1
+        continue
+      }
 
       summary.dispatched += 1
       summary.jobsEnsured += Number(result?.jobs_ensured || jobs.length || 0)
