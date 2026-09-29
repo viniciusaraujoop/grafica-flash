@@ -83,9 +83,11 @@ jobs:
       - name: Build environment check
         shell: bash
         run: |
+          set +e
           set -o pipefail
           npm run build 2>&1 | tee build.log
           code=${PIPESTATUS[0]}
+          set -e
           if [ "$code" -eq 0 ]; then
             echo "Build passed in GitHub Actions."
             exit 0
