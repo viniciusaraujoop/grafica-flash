@@ -709,7 +709,7 @@ begin
       (v_row->>'user_id')::uuid,
       null,
       'wealth',
-      'wealth.debt.term',
+      'wealth.debt_term',
       'shared_audit.row_change',
       'database_trigger',
       null,null,null,null,null,null,null,null,null,null,
