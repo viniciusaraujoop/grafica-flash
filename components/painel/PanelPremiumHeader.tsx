@@ -4,6 +4,9 @@ import Link from 'next/link'
 import { signOutAction } from '@/app/painel/actions'
 import { getBusinessTypeConfig } from '@/lib/business-types'
 import PanelGlobalSearch from '@/components/painel/PanelGlobalSearch'
+import UniversalLauncher from '@/components/orcaly-next/launcher/UniversalLauncher'
+import { buildHubSections, type HubProductSnapshot } from '@/lib/orcaly-next/hub-model'
+import { productRegistry } from '@/lib/orcaly-next/product-registry'
 import styles from './PanelChromeV3.module.css'
 import contrast from './PanelContrastV4.module.css'
 
@@ -82,6 +85,19 @@ const pageDescriptions: Record<string, string> = {
   '/painel/central-operacional': 'Reúna operação, comercial, pendências e ferramentas sem misturar tudo na mesma tela.',
 }
 
+
+const businessLauncherSnapshots: readonly HubProductSnapshot[] = [
+  { productId: 'business', status: 'ACTIVE' },
+  { productId: 'wealth', status: 'COMING_SOON' },
+  { productId: 'growth', status: 'COMING_SOON' },
+  { productId: 'flow', status: 'COMING_SOON' },
+  { productId: 'academy', status: 'COMING_SOON' },
+  { productId: 'market', status: 'COMING_SOON' },
+  { productId: 'partners', status: 'AVAILABLE' },
+]
+const businessLauncherSections = buildHubSections(productRegistry, businessLauncherSnapshots)
+const businessLauncherTiles = [...businessLauncherSections.yourApps, ...businessLauncherSections.otherProducts]
+
 function normalizePlan(value?: string | null) {
   const normalized = String(value || '').toLowerCase()
   if (normalized === 'basico' || normalized === 'essencial') return 'Essencial'
@@ -134,6 +150,7 @@ export default function PanelPremiumHeader({ company, pathname }: { company: Pan
 
       <div className={`panel-adaptive-header-actions ${styles.headerActions}`}>
         <PanelGlobalSearch />
+        <div className={styles.launcherSlot}><UniversalLauncher tiles={businessLauncherTiles} one={businessLauncherSections.one} label="Trocar produto Orçaly" /></div>
         <div className={`panel-adaptive-company-card ${styles.companyCard} ${contrast.companyCardContrast}`} title={company.nome || 'Empresa Orçaly'}>
           {company.logo_url ? <span className={`panel-adaptive-company-logo ${styles.companyLogo}`}><img src={company.logo_url} alt=""/></span> : <span className={`panel-adaptive-company-logo panel-adaptive-company-initial ${styles.companyLogo}`} aria-hidden="true">{(company.nome || 'O').slice(0, 1)}</span>}
           <span className="min-w-0"><strong>{company.nome || 'Empresa Orçaly'}</strong><small>{normalizePlan(company.assinatura_plano || company.plano)}</small></span>

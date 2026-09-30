@@ -775,3 +775,7 @@
     transition: none !important;
   }
 }
+
+.skipLink{position:fixed;z-index:220;left:12px;top:8px;transform:translateY(-170%);border-radius:.75rem;background:#fff;padding:.7rem 1rem;color:#05245c;font-weight:800;text-decoration:none;box-shadow:0 12px 30px rgba(4,24,55,.22)}.skipLink:focus{transform:none;outline:3px solid #8cc3ff;outline-offset:2px}.launcherSlot{display:inline-flex;align-items:center}
+@media(max-width:760px){.headerActions{grid-template-columns:minmax(0,1fr) 44px 44px!important}.launcherSlot{grid-column:2;grid-row:1;align-self:stretch}.companyCard{grid-column:1/-1;grid-row:2}.openSite{display:none!important}.logout{grid-column:3;grid-row:1;min-width:44px!important;min-height:44px!important}}
+@media(prefers-reduced-motion:reduce){.skipLink{transition:none}}

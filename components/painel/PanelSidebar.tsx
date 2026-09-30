@@ -63,6 +63,18 @@ export default function PanelSidebar({ company }: { company: PanelSidebarCompany
     }
   }, [])
 
+  useEffect(() => {
+    if (!showActions && !showMore) return
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setShowActions(false)
+        setShowMore(false)
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [showActions, showMore])
+
   function toggleFavorite(href: string) {
     setFavorites((current) => {
       const next = current.includes(href) ? current.filter((item) => item !== href) : [...current, href].slice(-8)
