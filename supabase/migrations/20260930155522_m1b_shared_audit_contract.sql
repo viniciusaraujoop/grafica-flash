@@ -709,7 +709,7 @@ begin
       (v_row->>'user_id')::uuid,
       null,
       'wealth',
-      'wealth.debt_term',
+      'wealth.debt.term',
       'shared_audit.row_change',
       'database_trigger',
       null,null,null,null,null,null,null,null,null,null,
@@ -729,7 +729,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 -- The debt-detail scope is owned by wealth_entries. Delete auditing for the
 -- parent and debt detail must happen before the FK cascade removes that owner.
@@ -785,108 +785,7 @@ begin
       if v_field is null
          or char_length(v_field)<1
          or char_length(v_field)>96
-         or v_field !~ '^[a-z][a-z0-9_]{0,95}        raise exception using
-          errcode='23514',
-          message='M1B changed_fields item violates canonical bounds';
-      end if;
-    end loop;
-  end if;
-
-  return new;
-end;
-$$;
-
-revoke all on function ecosystem_private.enforce_shared_audit_insert_contract() from public;
-revoke all on function ecosystem_private.enforce_shared_audit_insert_contract() from anon;
-revoke all on function ecosystem_private.enforce_shared_audit_insert_contract() from authenticated;
-revoke all on function ecosystem_private.enforce_shared_audit_insert_contract() from service_role;
-
-create trigger ecosystem_audit_events_insert_contract_guard
-before insert on public.ecosystem_audit_events
-for each row
-execute function ecosystem_private.enforce_shared_audit_insert_contract();
-
--- STEP 6 — access-pattern and ACTION dedupe indexes.
-create index ecosystem_audit_company_date
-  on public.ecosystem_audit_events(company_id, recorded_at desc)
-  where company_id is not null;
-
-create index ecosystem_audit_personal_date
-  on public.ecosystem_audit_events(scope_user_id, recorded_at desc)
-  where scope_user_id is not null;
-
-create index ecosystem_audit_product_action_date
-  on public.ecosystem_audit_events(product_id, event_type, recorded_at desc)
-  where product_id is not null;
-
-create index ecosystem_audit_resource_date
-  on public.ecosystem_audit_events(resource_type, entity_id, recorded_at desc)
-  where resource_type is not null;
-
-create index ecosystem_audit_correlation_date
-  on public.ecosystem_audit_events(correlation_id, recorded_at desc)
-  where correlation_id is not null;
-
-create index ecosystem_audit_kind_date
-  on public.ecosystem_audit_events(audit_kind, recorded_at desc)
-  where audit_kind is not null;
-
-create unique index uq_ecosystem_audit_action_company_dedupe
-  on public.ecosystem_audit_events(company_id, source, audit_kind, dedupe_key)
-  where audit_contract_version=1
-    and audit_kind='ACTION'
-    and scope_kind='COMPANY'
-    and company_id is not null
-    and scope_user_id is null
-    and dedupe_key is not null;
-
-create unique index uq_ecosystem_audit_action_personal_dedupe
-  on public.ecosystem_audit_events(scope_user_id, source, audit_kind, dedupe_key)
-  where audit_contract_version=1
-    and audit_kind='ACTION'
-    and scope_kind='PERSONAL'
-    and scope_user_id is not null
-    and company_id is null
-    and dedupe_key is not null;
-
-create unique index uq_ecosystem_audit_action_platform_dedupe
-  on public.ecosystem_audit_events(source, audit_kind, dedupe_key)
-  where audit_contract_version=1
-    and audit_kind='ACTION'
-    and scope_kind='PLATFORM'
-    and company_id is null
-    and scope_user_id is null
-    and dedupe_key is not null;
-
--- STEP 7 — RLS and final normal application grants.
-alter table public.ecosystem_audit_events enable row level security;
-
-revoke all on table public.ecosystem_audit_events from public;
-revoke all on table public.ecosystem_audit_events from anon;
-revoke all on table public.ecosystem_audit_events from authenticated;
-revoke all on table public.ecosystem_audit_events from service_role;
-
-grant select, insert on table public.ecosystem_audit_events to service_role;
-
--- STEP 8 — validate final structural contract.
-alter table public.ecosystem_audit_events
-  validate constraint ecosystem_audit_v1_version_shape_check;
-
-alter table public.ecosystem_audit_events
-  validate constraint ecosystem_audit_v1_common_check;
-
-alter table public.ecosystem_audit_events
-  validate constraint ecosystem_audit_v1_actor_check;
-
-alter table public.ecosystem_audit_events
-  validate constraint ecosystem_audit_v1_scope_check;
-
-alter table public.ecosystem_audit_events
-  validate constraint ecosystem_audit_v1_action_check;
-
-alter table public.ecosystem_audit_events
-  validate constraint ecosystem_audit_v1_row_change_check;
- then
+         or v_field !~ '^[a-z][a-z0-9_]{0,95}$' then
         raise exception using
           errcode='23514',
           message='M1B changed_fields item violates canonical bounds';
