@@ -10,10 +10,14 @@ import contrast from './PanelContrastV4.module.css'
 export default function PanelPremiumShell({
   company,
   pathname,
+  businessAccessActive,
+  businessSubscriptionStatus,
   children,
 }: {
   company: PanelPremiumCompany
   pathname: string
+  businessAccessActive: boolean
+  businessSubscriptionStatus?: string | null
   children: ReactNode
 }) {
   const dashboardContrast = pathname === '/painel/inicio' ? contrast.dashboardContrast : ''
@@ -29,7 +33,12 @@ export default function PanelPremiumShell({
 
       <div className={`panel-adaptive-content min-w-0 ${styles.content}`}>
         <div className={`panel-adaptive-top-line ${styles.topLine}`} aria-hidden="true" />
-        <PanelPremiumHeader company={company} pathname={pathname} />
+        <PanelPremiumHeader
+          company={company}
+          pathname={pathname}
+          businessAccessActive={businessAccessActive}
+          businessSubscriptionStatus={businessSubscriptionStatus}
+        />
 
         <main id="panel-main" tabIndex={-1} className={`panel-adaptive-page-slot min-w-0 ${styles.pageSlot}`}>
           <div className={`panel-adaptive-page-width ${styles.pageWidth}`}>

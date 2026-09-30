@@ -139,5 +139,14 @@ export default function PanelAuthenticatedLayout({ payload, children }: { payloa
     return <PainelBloqueado payload={payload} />
   }
 
-  return <PanelPremiumShell company={payload.company} pathname={pathname}>{children}</PanelPremiumShell>
+  return (
+    <PanelPremiumShell
+      company={payload.company}
+      pathname={pathname}
+      businessAccessActive={payload.assinatura_ativa}
+      businessSubscriptionStatus={payload.company.assinatura_status}
+    >
+      {children}
+    </PanelPremiumShell>
+  )
 }
