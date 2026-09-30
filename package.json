@@ -17,7 +17,8 @@
     "verify:orcaly31": "node scripts/verify-orcaly-3-1-access-control.mjs && node scripts/verify-orcaly-3-1-mfa.mjs",
     "verify:payments": "node scripts/verify-payment-flow-boundaries.mjs",
     "verify:payment-credentials": "node scripts/auditar-isolamento-pagamentos.cjs",
-    "verify:notification-isolation": "node scripts/verify-notification-recipient-isolation.mjs"
+    "verify:notification-isolation": "node scripts/verify-notification-recipient-isolation.mjs",
+    "test:visual-wave-1": "node scripts/test-orcaly-visual-wave-1.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",
