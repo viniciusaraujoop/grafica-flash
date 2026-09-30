@@ -62,6 +62,15 @@ begin
 
     if exists (
       select 1
+      from pg_policies
+      where schemaname='public'
+        and tablename='ecosystem_audit_events'
+    ) then
+      raise exception 'M1B expected no pre-existing ecosystem_audit_events RLS policies';
+    end if;
+
+    if exists (
+      select 1
       from information_schema.columns
       where table_schema='public'
         and table_name='ecosystem_audit_events'
@@ -181,6 +190,7 @@ alter table public.ecosystem_audit_events
       and char_length(resource_type) between 1 and 96
       and resource_type ~ '^[a-z0-9][a-z0-9_-]*(\.[a-z0-9][a-z0-9_-]*)*$'
       and char_length(entity_id) between 1 and 256
+      and entity_id !~ '[[:cntrl:]]'
       and actor_kind in ('USER','SERVICE','SYSTEM','AUTOMATION','AI')
       and scope_kind in ('COMPANY','PERSONAL','PLATFORM')
       and source is not null
@@ -231,10 +241,7 @@ alter table public.ecosystem_audit_events
       )
       and (
         risk_class is null
-        or (
-          char_length(risk_class) between 1 and 32
-          and risk_class !~ '[[:cntrl:]]'
-        )
+        or risk_class in ('LOW','MEDIUM','HIGH','CRITICAL')
       )
     )
   ) not valid,
@@ -335,6 +342,7 @@ declare
   v_scope_kind text;
   v_company_id uuid;
   v_scope_user_id uuid;
+  v_subject_user_id uuid;
   v_retention_class text := 'AUDIT_STANDARD';
   v_actor_id uuid := auth.uid();
   v_actor_kind text;
@@ -398,6 +406,7 @@ begin
       v_entity_id := v_row->>'id';
       v_scope_kind := 'PERSONAL';
       v_scope_user_id := (v_row->>'owner_id')::uuid;
+      v_subject_user_id := (v_row->>'member_id')::uuid;
       v_safe_fields := array['state','version','accepted_at','revoked_at'];
 
     when 'ecosystem_private.wealth_family_shares' then
@@ -406,6 +415,7 @@ begin
       v_entity_id := v_row->>'id';
       v_scope_kind := 'PERSONAL';
       v_scope_user_id := (v_row->>'owner_id')::uuid;
+      v_subject_user_id := (v_row->>'recipient_id')::uuid;
       v_safe_fields := array['scope','state','version','accepted_at','revoked_at'];
 
     when 'public.ecosystem_context_consents' then
@@ -444,16 +454,22 @@ begin
       v_resource_type := 'wealth.debt_term';
       v_entity_id := v_row->>'id';
       v_scope_kind := 'PERSONAL';
-      v_scope_user_id := auth.uid();
-      if v_scope_user_id is null then
-        select e.user_id
-          into v_scope_user_id
-        from public.wealth_entries e
-        where e.id=(v_row->>'id')::uuid;
+
+      select e.user_id
+        into v_scope_user_id
+      from public.wealth_entries e
+      where e.id=(v_row->>'id')::uuid;
+
+      if v_scope_user_id is null and tg_op='DELETE' then
+        -- Parent wealth_entries BEFORE DELETE writes the canonical debt-term
+        -- delete evidence before ON DELETE CASCADE removes the child.
+        return old;
       end if;
+
       if v_scope_user_id is null then
         raise exception 'M1B cannot derive PERSONAL scope for wealth_debt_terms';
       end if;
+
       v_safe_fields := array[
         'installment_count',
         'remaining_installments',
@@ -638,7 +654,7 @@ begin
     v_scope_kind,
     v_company_id,
     v_scope_user_id,
-    null,
+    v_subject_user_id,
     v_product_id,
     v_resource_type,
     'shared_audit.row_change',
@@ -663,12 +679,79 @@ begin
     null
   );
 
+  if tg_table_schema='public'
+     and tg_table_name='wealth_entries'
+     and tg_op='DELETE'
+     and exists (
+       select 1
+       from public.wealth_debt_terms d
+       where d.id=(v_row->>'id')::uuid
+     ) then
+    insert into public.ecosystem_audit_events (
+      actor_id,event_type,entity_id,audit_contract_version,audit_kind,key_version,
+      actor_kind,actor_key,scope_kind,company_id,scope_user_id,subject_user_id,
+      product_id,resource_type,purpose_key,source,request_id,correlation_id,
+      causation_id,event_id,action_instance_id,result,risk_class,approval_required,
+      confirmation_required,assistance_mode,retention_class,row_table,row_operation,
+      changed_fields,before_snapshot,after_snapshot,metadata,dedupe_key
+    )
+    values (
+      v_actor_id,
+      'wealth_debt_terms.delete',
+      v_row->>'id',
+      1,
+      'ROW_CHANGE',
+      1,
+      v_actor_kind,
+      v_actor_key,
+      'PERSONAL',
+      null,
+      (v_row->>'user_id')::uuid,
+      null,
+      'wealth',
+      'wealth.debt_term',
+      'shared_audit.row_change',
+      'database_trigger',
+      null,null,null,null,null,null,null,null,null,null,
+      'AUDIT_STANDARD',
+      'public.wealth_debt_terms',
+      'DELETE',
+      '{}'::text[],
+      null,
+      null,
+      '{}'::jsonb,
+      null
+    );
+  end if;
+
   if tg_op='DELETE' then
     return old;
   end if;
   return new;
 end;
-$$;
+$;
+
+-- The debt-detail scope is owned by wealth_entries. Delete auditing for the
+-- parent and debt detail must happen before the FK cascade removes that owner.
+drop trigger if exists ecosystem_audit on public.wealth_entries;
+create trigger ecosystem_audit
+after insert or update on public.wealth_entries
+for each row execute function ecosystem_private.record_change();
+
+drop trigger if exists ecosystem_audit_delete on public.wealth_entries;
+create trigger ecosystem_audit_delete
+before delete on public.wealth_entries
+for each row execute function ecosystem_private.record_change();
+
+drop trigger if exists wealth_debt_audit on public.wealth_debt_terms;
+create trigger wealth_debt_audit
+after insert or update on public.wealth_debt_terms
+for each row execute function ecosystem_private.record_change();
+
+drop trigger if exists wealth_debt_audit_delete on public.wealth_debt_terms;
+create trigger wealth_debt_audit_delete
+before delete on public.wealth_debt_terms
+for each row execute function ecosystem_private.record_change();
 
 revoke all on function ecosystem_private.record_change() from public;
 revoke all on function ecosystem_private.record_change() from anon;
@@ -702,7 +785,108 @@ begin
       if v_field is null
          or char_length(v_field)<1
          or char_length(v_field)>96
-         or v_field ~ '[[:cntrl:]]' then
+         or v_field !~ '^[a-z][a-z0-9_]{0,95}        raise exception using
+          errcode='23514',
+          message='M1B changed_fields item violates canonical bounds';
+      end if;
+    end loop;
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function ecosystem_private.enforce_shared_audit_insert_contract() from public;
+revoke all on function ecosystem_private.enforce_shared_audit_insert_contract() from anon;
+revoke all on function ecosystem_private.enforce_shared_audit_insert_contract() from authenticated;
+revoke all on function ecosystem_private.enforce_shared_audit_insert_contract() from service_role;
+
+create trigger ecosystem_audit_events_insert_contract_guard
+before insert on public.ecosystem_audit_events
+for each row
+execute function ecosystem_private.enforce_shared_audit_insert_contract();
+
+-- STEP 6 — access-pattern and ACTION dedupe indexes.
+create index ecosystem_audit_company_date
+  on public.ecosystem_audit_events(company_id, recorded_at desc)
+  where company_id is not null;
+
+create index ecosystem_audit_personal_date
+  on public.ecosystem_audit_events(scope_user_id, recorded_at desc)
+  where scope_user_id is not null;
+
+create index ecosystem_audit_product_action_date
+  on public.ecosystem_audit_events(product_id, event_type, recorded_at desc)
+  where product_id is not null;
+
+create index ecosystem_audit_resource_date
+  on public.ecosystem_audit_events(resource_type, entity_id, recorded_at desc)
+  where resource_type is not null;
+
+create index ecosystem_audit_correlation_date
+  on public.ecosystem_audit_events(correlation_id, recorded_at desc)
+  where correlation_id is not null;
+
+create index ecosystem_audit_kind_date
+  on public.ecosystem_audit_events(audit_kind, recorded_at desc)
+  where audit_kind is not null;
+
+create unique index uq_ecosystem_audit_action_company_dedupe
+  on public.ecosystem_audit_events(company_id, source, audit_kind, dedupe_key)
+  where audit_contract_version=1
+    and audit_kind='ACTION'
+    and scope_kind='COMPANY'
+    and company_id is not null
+    and scope_user_id is null
+    and dedupe_key is not null;
+
+create unique index uq_ecosystem_audit_action_personal_dedupe
+  on public.ecosystem_audit_events(scope_user_id, source, audit_kind, dedupe_key)
+  where audit_contract_version=1
+    and audit_kind='ACTION'
+    and scope_kind='PERSONAL'
+    and scope_user_id is not null
+    and company_id is null
+    and dedupe_key is not null;
+
+create unique index uq_ecosystem_audit_action_platform_dedupe
+  on public.ecosystem_audit_events(source, audit_kind, dedupe_key)
+  where audit_contract_version=1
+    and audit_kind='ACTION'
+    and scope_kind='PLATFORM'
+    and company_id is null
+    and scope_user_id is null
+    and dedupe_key is not null;
+
+-- STEP 7 — RLS and final normal application grants.
+alter table public.ecosystem_audit_events enable row level security;
+
+revoke all on table public.ecosystem_audit_events from public;
+revoke all on table public.ecosystem_audit_events from anon;
+revoke all on table public.ecosystem_audit_events from authenticated;
+revoke all on table public.ecosystem_audit_events from service_role;
+
+grant select, insert on table public.ecosystem_audit_events to service_role;
+
+-- STEP 8 — validate final structural contract.
+alter table public.ecosystem_audit_events
+  validate constraint ecosystem_audit_v1_version_shape_check;
+
+alter table public.ecosystem_audit_events
+  validate constraint ecosystem_audit_v1_common_check;
+
+alter table public.ecosystem_audit_events
+  validate constraint ecosystem_audit_v1_actor_check;
+
+alter table public.ecosystem_audit_events
+  validate constraint ecosystem_audit_v1_scope_check;
+
+alter table public.ecosystem_audit_events
+  validate constraint ecosystem_audit_v1_action_check;
+
+alter table public.ecosystem_audit_events
+  validate constraint ecosystem_audit_v1_row_change_check;
+ then
         raise exception using
           errcode='23514',
           message='M1B changed_fields item violates canonical bounds';
