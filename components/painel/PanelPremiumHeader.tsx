@@ -88,7 +88,7 @@ const pageDescriptions: Record<string, string> = {
 
 const businessLauncherSnapshots: readonly HubProductSnapshot[] = [
   { productId: 'business', status: 'ACTIVE' },
-  { productId: 'wealth', status: 'COMING_SOON' },
+  { productId: 'wealth', status: 'AVAILABLE' },
   { productId: 'growth', status: 'COMING_SOON' },
   { productId: 'flow', status: 'COMING_SOON' },
   { productId: 'academy', status: 'COMING_SOON' },

@@ -49,7 +49,7 @@ export default function HubHome({ registry, snapshots }: {
           ) : null}
         </section>
 
-        <section className={styles.products} aria-labelledby="hub-products" id="hub-products">
+        <section className={styles.products} aria-labelledby="hub-products">
           <div className={styles.sectionHead}>
             <div><p className={styles.eyebrow}>Acessos e possibilidades</p><h2 id="hub-products">Seus produtos</h2></div>
             <p>O status mostrado aqui vem somente das informações de acesso já existentes.</p>
