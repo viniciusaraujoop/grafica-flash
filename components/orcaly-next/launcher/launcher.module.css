@@ -46,3 +46,5 @@
 .kind { font-size: var(--ox-text-xs); color: var(--ox-ink-muted); }
 
 .footnote { margin-top: var(--ox-space-3); font-size: var(--ox-text-xs); color: var(--ox-ink-muted); }
+
+.foundationRoot{display:inline-flex;background:transparent;color:inherit;font:inherit;line-height:inherit}.oneLink{display:flex;align-items:center;justify-content:space-between;gap:var(--ox-space-3);min-height:var(--ox-target-min);margin-top:var(--ox-space-3);padding:var(--ox-space-3);border-top:1px solid var(--ox-line);color:var(--ox-ink);text-decoration:none}.oneLink>span:first-child{display:grid;gap:2px}.oneLink strong{font-size:var(--ox-text-sm)}.oneLink small{color:var(--ox-ink-muted);font-size:var(--ox-text-xs)}.oneLink:hover{background:var(--ox-surface-muted)}

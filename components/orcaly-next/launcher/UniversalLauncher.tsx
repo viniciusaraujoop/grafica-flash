@@ -3,8 +3,10 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import type { HubTile } from '@/lib/orcaly-next/hub-model'
+import type { ProductRegistryEntry } from '@/lib/orcaly-next/product-registry'
 import { hubStatusCopy } from '@/lib/orcaly-next/product-status'
 import { skinContracts } from '@/lib/orcaly-next/skins'
+import { FoundationRoot } from '../foundation/primitives'
 import styles from './launcher.module.css'
 
 /**
@@ -14,8 +16,9 @@ import styles from './launcher.module.css'
  * Home/End jump, Esc closes and returns focus to the trigger, Tab leaves normally.
  * Outside pointer closes. Subscribed → app, unsubscribed → landing (resolveProductDestination).
  */
-export default function UniversalLauncher({ tiles, hubHref = '/apps', label = 'Produtos Orçaly' }: {
+export default function UniversalLauncher({ tiles, one, hubHref = '/apps', label = 'Produtos Orçaly' }: {
   tiles: readonly HubTile[]
+  one?: ProductRegistryEntry | null
   hubHref?: string
   label?: string
 }) {
@@ -66,7 +69,8 @@ export default function UniversalLauncher({ tiles, hubHref = '/apps', label = 'P
   }
 
   return (
-    <div className={styles.wrap} ref={wrapRef}>
+    <FoundationRoot className={styles.foundationRoot}>
+      <div className={styles.wrap} ref={wrapRef}>
       <button
         ref={triggerRef}
         type="button"
@@ -109,10 +113,17 @@ export default function UniversalLauncher({ tiles, hubHref = '/apps', label = 'P
               )
             })}
           </ul>
+          {one ? (
+            <Link className={styles.oneLink} href={one.landing.path} onClick={() => close(false)}>
+              <span><strong>{one.shortName}</strong><small>Proposta de acesso integrado</small></span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
           <p className={styles.footnote}>Assinaturas são verificadas em cada produto. Nenhum dado é compartilhado entre eles sem o seu consentimento.</p>
         </div>
       ) : null}
-    </div>
+      </div>
+    </FoundationRoot>
   )
 }
 

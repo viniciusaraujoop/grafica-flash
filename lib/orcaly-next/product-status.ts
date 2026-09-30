@@ -76,7 +76,7 @@ export type HubStatusCopy = {
 export const hubStatusCopy: Record<HubStatus, HubStatusCopy> = {
   ACTIVE: { label: 'Ativo', detail: 'Seu acesso está ativo.', action: 'Abrir', tone: 'success' },
   TRIAL: { label: 'Em teste', detail: 'Você está no período de teste deste produto.', action: 'Abrir', tone: 'info' },
-  AVAILABLE: { label: 'Disponível', detail: 'Disponível para a sua conta.', action: 'Conhecer', tone: 'accent' },
+  AVAILABLE: { label: 'Disponível', detail: 'Confira a disponibilidade e como começar.', action: 'Conhecer', tone: 'accent' },
   NOT_SUBSCRIBED: { label: 'Sem assinatura', detail: 'Sua assinatura deste produto não está ativa.', action: 'Ver opções', tone: 'neutral' },
   PAYMENT_PENDING: { label: 'Pagamento pendente', detail: 'Há um pagamento aguardando confirmação.', action: 'Ver pagamento', tone: 'warning' },
   SUSPENDED: { label: 'Suspenso', detail: 'O acesso está suspenso. Seus dados não foram apagados.', action: 'Entender', tone: 'danger' },

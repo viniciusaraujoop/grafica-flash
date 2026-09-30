@@ -19,3 +19,5 @@
 .healthDetails { display: grid; gap: .5rem; overflow-wrap: anywhere; }
 .healthDetails dt { font-weight: 700; margin-top: .5rem; }
 .healthDetails dd { margin: 0; min-width: 0; }
+
+.authenticatedNav{display:flex;align-items:center;gap:14px}.headerLauncher{display:inline-flex;align-items:center}.accountForm{display:flex;margin:0}.accountButton{min-height:44px;border:1px solid #bdcbd5;border-radius:24px;background:transparent;padding:0 16px;color:var(--ink);font:inherit;font-size:12px;font-weight:700;cursor:pointer}.accountButton:hover{background:#f4f7fa}.accountButton:focus-visible{outline:3px solid #0c67ce;outline-offset:2px}@media(max-width:760px){.authenticatedNav{gap:8px}.authenticatedPrivacy{display:none}.accountButton{padding:0 12px}}
