@@ -1,0 +1,47 @@
+import 'server-only'
+
+import { cache } from 'react'
+import { assinaturaEstaAtiva } from '@/lib/company-access'
+import { getPersonalProductAccess, requireEcosystemIdentity } from '@/lib/ecosystem/server'
+import type { HubProductSnapshot } from '@/lib/orcaly-next/hub-model'
+import type { HubStatus } from '@/lib/orcaly-next/product-status'
+
+/**
+ * Runtime adapter for the authenticated Hub.
+ *
+ * It only translates access signals that already exist in the current runtime.
+ * It never grants access and it deliberately falls back to neutral/coming-soon
+ * states whenever the existing architecture cannot prove an entitlement.
+ */
+function resolveBusinessHubStatus(company: Record<string, unknown> | null): HubStatus {
+  if (!company) return 'AVAILABLE'
+  if (!assinaturaEstaAtiva(company)) return 'NOT_SUBSCRIBED'
+  return String(company.assinatura_status || '').toLowerCase() === 'trialing' ? 'TRIAL' : 'ACTIVE'
+}
+
+export const getCurrentHubSnapshots = cache(async (): Promise<readonly HubProductSnapshot[]> => {
+  const { db } = await requireEcosystemIdentity()
+
+  const [companies, partner, wealth] = await Promise.all([
+    db
+      .from('companies')
+      .select('id,assinatura_status,assinatura_expira_em,trial_ends_at,founder_trial_ends_at')
+      .limit(1)
+      .maybeSingle(),
+    db.from('affiliate_profiles').select('id,status').limit(1).maybeSingle(),
+    getPersonalProductAccess('wealth', 'wealth.read'),
+  ])
+
+  const company = !companies.error && companies.data ? companies.data as Record<string, unknown> : null
+  const hasPartner = !partner.error && Boolean(partner.data?.id) && partner.data?.status === 'active'
+
+  return [
+    { productId: 'business', status: resolveBusinessHubStatus(company) },
+    { productId: 'wealth', status: wealth.allowed ? 'ACTIVE' : 'COMING_SOON' },
+    { productId: 'growth', status: 'COMING_SOON' },
+    { productId: 'flow', status: 'COMING_SOON' },
+    { productId: 'academy', status: 'COMING_SOON' },
+    { productId: 'market', status: 'COMING_SOON' },
+    { productId: 'partners', status: hasPartner ? 'ACTIVE' : 'AVAILABLE' },
+  ]
+})
