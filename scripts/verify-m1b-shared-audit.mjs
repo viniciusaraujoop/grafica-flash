@@ -2,9 +2,11 @@ import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
 
 const root = new URL('..', import.meta.url)
+const rootPath = fileURLToPath(root)
 const migrationPath =
   '../supabase/migrations/20260930155522_m1b_shared_audit_contract.sql'
 
@@ -290,8 +292,8 @@ async function walk(dir) {
 }
 
 const appFiles = [
-  ...(await walk(new URL('../app', import.meta.url))),
-  ...(await walk(new URL('../lib', import.meta.url))),
+  ...(await walk(path.join(rootPath, 'app'))),
+  ...(await walk(path.join(rootPath, 'lib'))),
 ]
 const directWriters = []
 
@@ -302,7 +304,7 @@ for (const filename of appFiles) {
       body,
     )
   ) {
-    directWriters.push(path.relative(new URL('..', import.meta.url).pathname, filename))
+    directWriters.push(path.relative(rootPath, filename))
   }
 }
 
