@@ -279,6 +279,133 @@ assert.equal(writer.includes('actorId:'), false)
 assert.equal(writer.includes('companyId:'), false)
 assert.equal(writer.includes('dedupeKey:'), true)
 
+// Execute the real writer against a deterministic mock database.
+const writerWithoutServerOnly = writer.replace("import 'server-only'\n\n", '')
+const writerWithoutTypeImport = writerWithoutServerOnly.replace(
+  "import type { SupabaseClient } from '@supabase/supabase-js'\n",
+  '',
+)
+const writerWithoutContractImport = writerWithoutTypeImport.replace(
+  /import \{[\s\S]*?\} from '\.\/shared-audit-contracts'\n\n/,
+  '',
+)
+const executableWriterJs = ts.transpileModule(
+  executableContractsSource + '\n' + writerWithoutContractImport,
+  {
+    compilerOptions: {
+      module: ts.ModuleKind.ES2022,
+      target: ts.ScriptTarget.ES2022,
+    },
+  },
+).outputText
+const writerModule = await import(
+  'data:text/javascript;base64,' +
+    Buffer.from(executableWriterJs, 'utf8').toString('base64')
+)
+
+function makeAuditDbMock({ duplicate = false, existing = null } = {}) {
+  const state = {
+    inserts: [],
+    duplicateLookups: 0,
+  }
+
+  const db = {
+    from(table) {
+      assert.equal(table, 'ecosystem_audit_events')
+
+      return {
+        insert(row) {
+          state.inserts.push(row)
+          return {
+            select() {
+              return {
+                async single() {
+                  if (duplicate) {
+                    return { data: null, error: { code: '23505' } }
+                  }
+                  return {
+                    data: { id: '33333333-3333-4333-8333-333333333333', ...row },
+                    error: null,
+                  }
+                },
+              }
+            },
+          }
+        },
+        select() {
+          state.duplicateLookups += 1
+          const chain = {
+            eq() {
+              return chain
+            },
+            is() {
+              return chain
+            },
+            async maybeSingle() {
+              return { data: existing, error: null }
+            },
+          }
+          return chain
+        },
+      }
+    },
+  }
+
+  return { db, state }
+}
+
+const writerInput = {
+  ...validInput,
+  actor_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  actor_kind: 'AI',
+  actor_key: 'evil.actor',
+  company_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  scope_kind: 'COMPANY',
+  product_id: 'evil',
+  source: 'evil',
+  purpose_key: 'evil',
+  dedupe_key: 'evil',
+}
+const firstMock = makeAuditDbMock()
+const firstWrite = await writerModule.writeSharedAuditAction(
+  firstMock.db,
+  'platform.shared_audit.verify',
+  writerInput,
+)
+assert.equal(firstWrite.inserted, true)
+assert.equal(firstMock.state.inserts.length, 1)
+assert.equal(firstMock.state.inserts[0].actor_id, null)
+assert.equal(firstMock.state.inserts[0].actor_kind, 'SYSTEM')
+assert.equal(firstMock.state.inserts[0].actor_key, 'system.shared_audit_verifier')
+assert.equal(firstMock.state.inserts[0].scope_kind, 'PLATFORM')
+assert.equal(firstMock.state.inserts[0].company_id, null)
+assert.equal(firstMock.state.inserts[0].source, 'm1b.shared_audit')
+assert.equal(firstMock.state.inserts[0].dedupe_key, canonical.dedupe_key)
+
+const duplicateExisting = {
+  id: '44444444-4444-4444-8444-444444444444',
+  event_type: canonical.event_type,
+  key_version: canonical.key_version,
+  action_instance_id: canonical.action_instance_id,
+  result: canonical.result,
+  source: canonical.source,
+  dedupe_key: canonical.dedupe_key,
+}
+const duplicateMock = makeAuditDbMock({
+  duplicate: true,
+  existing: duplicateExisting,
+})
+const duplicateWrite = await writerModule.writeSharedAuditAction(
+  duplicateMock.db,
+  'platform.shared_audit.verify',
+  validInput,
+)
+assert.equal(duplicateWrite.inserted, false)
+assert.equal(duplicateWrite.id, duplicateExisting.id)
+assert.equal(duplicateWrite.dedupeKey, canonical.dedupe_key)
+assert.equal(duplicateMock.state.inserts.length, 1)
+assert.equal(duplicateMock.state.duplicateLookups, 1)
+
 // ACTION application insertion ownership must remain centralized.
 async function walk(dir) {
   const entries = await readdir(dir, { withFileTypes: true })
