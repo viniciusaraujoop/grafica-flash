@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import type { HubTile } from '@/lib/orcaly-next/hub-model'
@@ -16,9 +17,10 @@ import styles from './launcher.module.css'
  * Home/End jump, Esc closes and returns focus to the trigger, Tab leaves normally.
  * Outside pointer closes. Subscribed → app, unsubscribed → landing (resolveProductDestination).
  */
-export default function UniversalLauncher({ tiles, one, hubHref = '/apps', label = 'Produtos Orçaly' }: {
+export default function UniversalLauncher({ tiles, one, currentProductId = null, hubHref = '/apps', label = 'Produtos Orçaly' }: {
   tiles: readonly HubTile[]
   one?: ProductRegistryEntry | null
+  currentProductId?: string | null
   hubHref?: string
   label?: string
 }) {
@@ -92,20 +94,27 @@ export default function UniversalLauncher({ tiles, one, hubHref = '/apps', label
           <ul className={styles.grid} ref={gridRef} onKeyDown={onGridKeyDown} aria-label="Produtos">
             {tiles.map((tile, index) => {
               const copy = hubStatusCopy[tile.status]
-              const accent = skinContracts[tile.product.skin].accent
+              const skin = skinContracts[tile.product.skin]
+              const isCurrent = tile.product.id === currentProductId
               return (
                 <li key={tile.product.id}>
                   <Link
                     ref={(node) => { tileRefs.current[index] = node }}
                     href={tile.destination.href}
                     className={styles.tile}
-                    style={{ '--tile-accent': accent } as CSSProperties}
+                    style={{ '--tile-accent': skin.accent, '--tile-surface': skin.surface } as CSSProperties}
                     data-status={tile.status}
+                    data-current={isCurrent ? 'true' : undefined}
                     data-destination={tile.destination.kind}
                     onClick={() => close(false)}
                   >
-                    <span className={styles.mark} aria-hidden="true">{tile.product.shortName.slice(0, 1)}</span>
-                    <span className={styles.name}>{tile.product.shortName}</span>
+                    <span className={styles.mark} aria-hidden="true">
+                      {tile.product.logo.src ? <Image src={tile.product.logo.src} alt="" width={30} height={30} className={styles.logo} /> : tile.product.shortName.slice(0, 1)}
+                    </span>
+                    <span className={styles.nameRow}>
+                      <span className={styles.name}>{tile.product.shortName}</span>
+                      {isCurrent ? <span className={styles.current}>Atual</span> : null}
+                    </span>
                     <span className={styles.status}>{copy.label}</span>
                     <span style={srOnly}>{tile.destination.kind === 'app' ? '— abre o aplicativo' : '— abre a página do produto'}</span>
                   </Link>

@@ -169,7 +169,7 @@ export default function PanelPremiumHeader({
 
       <div className={`panel-adaptive-header-actions ${styles.headerActions}`}>
         <PanelGlobalSearch />
-        <div className={styles.launcherSlot}><UniversalLauncher tiles={businessLauncherTiles} one={businessLauncherSections.one} label="Trocar produto Orçaly" /></div>
+        <div className={styles.launcherSlot}><UniversalLauncher tiles={businessLauncherTiles} one={businessLauncherSections.one} currentProductId="business" label="Trocar produto Orçaly" /></div>
         <div className={`panel-adaptive-company-card ${styles.companyCard} ${contrast.companyCardContrast}`} title={company.nome || 'Empresa Orçaly'}>
           {company.logo_url ? <span className={`panel-adaptive-company-logo ${styles.companyLogo}`}><img src={company.logo_url} alt=""/></span> : <span className={`panel-adaptive-company-logo panel-adaptive-company-initial ${styles.companyLogo}`} aria-hidden="true">{(company.nome || 'O').slice(0, 1)}</span>}
           <span className="min-w-0"><strong>{company.nome || 'Empresa Orçaly'}</strong><small>{normalizePlan(company.assinatura_plano || company.plano)}</small></span>

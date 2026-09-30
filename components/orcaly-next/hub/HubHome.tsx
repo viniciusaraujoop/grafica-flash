@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import { buildHubSections, type HubProductSnapshot, type HubTile } from '@/lib/orcaly-next/hub-model'
@@ -75,10 +76,12 @@ export default function HubHome({ registry, snapshots }: {
 
 function ProductRow({ tile }: { tile: HubTile }) {
   const copy = hubStatusCopy[tile.status]
-  const accent = skinContracts[tile.product.skin].accent
+  const skin = skinContracts[tile.product.skin]
   return (
-    <li className={styles.productRow} style={{ '--hub-accent': accent } as CSSProperties}>
-      <span className={styles.productMark} aria-hidden="true">{tile.product.shortName.slice(0, 1)}</span>
+    <li className={styles.productRow} style={{ '--hub-accent': skin.accent, '--hub-surface': skin.surface } as CSSProperties}>
+      <span className={styles.productMark} aria-hidden="true">
+        {tile.product.logo.src ? <Image src={tile.product.logo.src} alt="" width={38} height={38} className={styles.productLogo} /> : tile.product.shortName.slice(0, 1)}
+      </span>
       <span className={styles.productCopy}><strong>{tile.product.shortName}</strong><small>{tile.product.description}</small></span>
       <span className={styles.productStatus}><StatusPill tone={copy.tone}>{copy.label}</StatusPill></span>
       <Link className={f.button} href={tile.destination.href}>{copy.action}<span className={styles.srOnly}> {tile.product.shortName}</span></Link>
