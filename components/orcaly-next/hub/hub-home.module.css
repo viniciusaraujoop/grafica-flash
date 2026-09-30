@@ -8,3 +8,10 @@
 .productLogo{width:38px;height:38px;object-fit:contain}.productCopy strong{color:var(--hub-accent);font-size:var(--ox-text-lg)}.productCopy small{max-width:70ch}
 @media(max-width:767px){.productRow{grid-template-columns:52px minmax(0,1fr) auto;padding:var(--ox-space-4);background:color-mix(in srgb,var(--hub-surface) 72%,white)}.productRow>a{grid-column:2/-1}}
 @media(max-width:390px){.productRow{grid-template-columns:52px minmax(0,1fr)}.productStatus{grid-column:2}.productRow>a{grid-column:1/-1}}
+
+
+/* Final skin corrective: luminous ecosystem presentation, still low-density. */
+.productRow{min-height:108px;grid-template-columns:68px minmax(0,1fr) auto auto;gap:var(--ox-space-5);border:1px solid color-mix(in srgb,var(--hub-accent) 12%,var(--ox-line));background:color-mix(in srgb,var(--hub-surface) 52%,#fff);box-shadow:0 8px 24px rgba(18,34,61,.045),inset 3px 0 0 color-mix(in srgb,var(--hub-accent) 72%,transparent)}
+.productMark{width:60px;height:60px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--hub-accent) 18%,transparent),0 6px 16px rgba(18,34,61,.05)}
+.productLogo{width:44px;height:44px}.productCopy{gap:4px}.productCopy strong{font-size:20px}.productCopy small{font-size:13px;line-height:1.45;white-space:normal}.productStatus{align-self:start;padding-top:4px}
+@media(max-width:767px){.productRow{min-height:0;grid-template-columns:58px minmax(0,1fr) auto;gap:var(--ox-space-4)}.productMark{width:52px;height:52px}.productLogo{width:38px;height:38px}}

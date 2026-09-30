@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react'
 import { buildHubSections, type HubProductSnapshot, type HubTile } from '@/lib/orcaly-next/hub-model'
 import { hubStatusCopy } from '@/lib/orcaly-next/product-status'
 import type { ProductRegistryEntry } from '@/lib/orcaly-next/product-registry'
-import { skinContracts } from '@/lib/orcaly-next/skins'
+import { productVisualMark, skinContracts } from '@/lib/orcaly-next/skins'
 import { FoundationRoot, StatusPill, foundationStyles as f } from '@/components/orcaly-next/foundation/primitives'
 import styles from './hub-home.module.css'
 
@@ -19,7 +19,7 @@ export default function HubHome({ registry, snapshots }: {
   const business = allTiles.find((tile) => tile.product.id === 'business')
 
   return (
-    <FoundationRoot className={styles.root}>
+    <FoundationRoot theme="light" className={styles.root}>
       <div className={`${f.container} ${styles.page}`}>
         <section className={styles.hero} aria-labelledby="hub-title">
           <div className={styles.heroCopy}>
@@ -77,10 +77,11 @@ export default function HubHome({ registry, snapshots }: {
 function ProductRow({ tile }: { tile: HubTile }) {
   const copy = hubStatusCopy[tile.status]
   const skin = skinContracts[tile.product.skin]
+  const mark = productVisualMark(tile.product.id, tile.product.logo.src)
   return (
     <li className={styles.productRow} style={{ '--hub-accent': skin.accent, '--hub-surface': skin.surface } as CSSProperties}>
       <span className={styles.productMark} aria-hidden="true">
-        {tile.product.logo.src ? <Image src={tile.product.logo.src} alt="" width={38} height={38} className={styles.productLogo} /> : tile.product.shortName.slice(0, 1)}
+        {mark ? <Image src={mark} alt="" width={44} height={44} className={styles.productLogo} /> : tile.product.shortName.slice(0, 1)}
       </span>
       <span className={styles.productCopy}><strong>{tile.product.shortName}</strong><small>{tile.product.description}</small></span>
       <span className={styles.productStatus}><StatusPill tone={copy.tone}>{copy.label}</StatusPill></span>

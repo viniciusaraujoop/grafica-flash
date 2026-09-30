@@ -4,7 +4,7 @@ import { FoundationRoot, foundationStyles as f } from '@/components/orcaly-next/
 
 export default function AppsError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
-    <FoundationRoot>
+    <FoundationRoot theme="light">
       <section className={f.container} role="alert" style={{ display: 'grid', gap: 16, paddingBlock: 48 }}>
         <div>
           <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ox-danger)' }}>App Hub indisponível</p>

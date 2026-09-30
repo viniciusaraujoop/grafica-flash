@@ -6,7 +6,7 @@ import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, ty
 import type { HubTile } from '@/lib/orcaly-next/hub-model'
 import type { ProductRegistryEntry } from '@/lib/orcaly-next/product-registry'
 import { hubStatusCopy } from '@/lib/orcaly-next/product-status'
-import { skinContracts } from '@/lib/orcaly-next/skins'
+import { productVisualMark, skinContracts } from '@/lib/orcaly-next/skins'
 import { FoundationRoot } from '../foundation/primitives'
 import styles from './launcher.module.css'
 
@@ -71,7 +71,7 @@ export default function UniversalLauncher({ tiles, one, currentProductId = null,
   }
 
   return (
-    <FoundationRoot className={styles.foundationRoot}>
+    <FoundationRoot theme="light" className={styles.foundationRoot}>
       <div className={styles.wrap} ref={wrapRef}>
       <button
         ref={triggerRef}
@@ -95,6 +95,7 @@ export default function UniversalLauncher({ tiles, one, currentProductId = null,
             {tiles.map((tile, index) => {
               const copy = hubStatusCopy[tile.status]
               const skin = skinContracts[tile.product.skin]
+              const mark = productVisualMark(tile.product.id, tile.product.logo.src)
               const isCurrent = tile.product.id === currentProductId
               return (
                 <li key={tile.product.id}>
@@ -109,7 +110,7 @@ export default function UniversalLauncher({ tiles, one, currentProductId = null,
                     onClick={() => close(false)}
                   >
                     <span className={styles.mark} aria-hidden="true">
-                      {tile.product.logo.src ? <Image src={tile.product.logo.src} alt="" width={30} height={30} className={styles.logo} /> : tile.product.shortName.slice(0, 1)}
+                      {mark ? <Image src={mark} alt="" width={38} height={38} className={styles.logo} /> : tile.product.shortName.slice(0, 1)}
                     </span>
                     <span className={styles.nameRow}>
                       <span className={styles.name}>{tile.product.shortName}</span>

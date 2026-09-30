@@ -61,7 +61,7 @@ export default function BusinessHome() {
   const healthWarnings = useMemo(() => payload?.dataHealth ? Object.values(payload.dataHealth).filter(Boolean).length : 0, [payload])
 
   if (loading) return (
-    <FoundationRoot skin="business" className={styles.root}>
+    <FoundationRoot skin="business" theme="light" className={styles.root}>
       <div className={styles.loading} role="status" aria-label="Carregando estado atual do Business">
         <div className={`${styles.skeleton} ${styles.skeletonHero}`} /><div className={`${styles.skeleton} ${styles.skeletonAction}`} />
         <div className={styles.skeletonMetrics}>{Array.from({ length: 4 }, (_, index) => <div key={index} className={`${styles.skeleton} ${styles.skeletonMetric}`} />)}</div>
@@ -70,7 +70,7 @@ export default function BusinessHome() {
   )
 
   if (error || !payload) return (
-    <FoundationRoot skin="business" className={styles.root}>
+    <FoundationRoot skin="business" theme="light" className={styles.root}>
       <section className={styles.error} role="alert"><div><p className={styles.eyebrow}>Business indisponível</p><h2>Não conseguimos montar sua Home agora.</h2><p>{error || 'Tente carregar novamente.'}</p></div>
         <button type="button" className={`${f.button} ${f.buttonPrimary}`} onClick={() => void load()}>Tentar novamente</button></section>
     </FoundationRoot>
@@ -84,7 +84,7 @@ export default function BusinessHome() {
   const updatedAt = dateTime(payload.generatedAt)
 
   return (
-    <FoundationRoot skin="business" className={styles.root}>
+    <FoundationRoot skin="business" theme="light" className={styles.root}>
       <div className={styles.page}>
         <section className={styles.hero} aria-labelledby="business-state"><p className={styles.eyebrow}>Estado atual</p><div className={styles.heroLine}><div>
           <h2 id="business-state">{currentState}</h2><p>{healthWarnings > 0 ? `${healthWarnings} fonte(s) de dados não responderam. Esta Home mostra apenas o que foi confirmado.` : `${updatedAt ? `Atualizado ${updatedAt}` : 'Atualizado agora'} com os dados operacionais já existentes.`}</p>

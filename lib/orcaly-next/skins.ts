@@ -33,6 +33,23 @@ export type SkinContract = {
   illustration: string
 }
 
+export const productVisualMarkAssets = {
+  business: '/brand/business/endorsed.png',
+  wealth: '/brand/wealth/endorsed.png',
+  growth: '/brand/growth/endorsed.png',
+  flow: '/brand/flow/endorsed.png',
+  academy: '/brand/academy/endorsed.png',
+  market: '/brand/market/endorsed.png',
+  partners: '/brand/partners/endorsed.png',
+} as const
+
+export function productVisualMark(productId: string, registrySrc?: string | null): string | null {
+  if (registrySrc) return registrySrc
+  return productId in productVisualMarkAssets
+    ? productVisualMarkAssets[productId as keyof typeof productVisualMarkAssets]
+    : null
+}
+
 export const skinContracts: Record<SkinKey, SkinContract> = {
   business: {
     key: 'business', accent: '#164bc4', surface: '#edf3ff', accentText: null,
