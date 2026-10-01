@@ -439,7 +439,9 @@ for (const filename of appFiles) {
       body,
     )
   ) {
-    directWriters.push(path.relative(rootPath, filename))
+    const relativePath = path.relative(rootPath, filename)
+    const normalizedPath = relativePath.split(path.sep).join('/')
+    directWriters.push(normalizedPath)
   }
 }
 
