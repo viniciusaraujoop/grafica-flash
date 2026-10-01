@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from 'react'
 import { signInWithPasswordFormAction } from './actions'
+import { safeNextPath } from '@/lib/auth-navigation'
 
 type MessageType = 'info' | 'erro' | 'sucesso'
 
@@ -101,22 +102,7 @@ function isValidEmail(value: string) {
 // ORCALY_LOGIN_DEFAULT_INICIO_V1
 function getSafeNextPath() {
   if (typeof window === 'undefined') return '/painel/inicio'
-
-  const params = new URLSearchParams(window.location.search)
-  const rawNext = params.get('next')
-
-  if (!rawNext) return '/painel/inicio'
-
-  const next = rawNext.trim()
-
-  if (!next) return '/painel/inicio'
-  if (!next.startsWith('/')) return '/painel/inicio'
-  if (next.startsWith('//')) return '/painel/inicio'
-  if (next.includes('://')) return '/painel/inicio'
-  if (next.startsWith('/login')) return '/painel/inicio'
-  if (next.startsWith('/cadastro')) return '/painel/inicio'
-
-  return next
+  return safeNextPath(new URLSearchParams(window.location.search).get('next'))
 }
 
 function Icon({
@@ -807,6 +793,10 @@ export default function LoginPage() {
 
             <form
               action={loginAction}
+              onSubmitCapture={() => {
+                // Preserve the destination after controlled fields rerender the hidden input.
+                if (nextPathRef.current) nextPathRef.current.value = getSafeNextPath()
+              }}
               className="relative overflow-hidden rounded-[2.1rem] border border-white bg-white p-5 shadow-[0_35px_100px_rgba(6,26,54,.16)] sm:p-8"
             >
               <input

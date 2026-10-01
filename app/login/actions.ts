@@ -5,6 +5,7 @@ import { redirect, RedirectType } from 'next/navigation'
 import { getCompanyAccess, getSupabaseAdmin } from '@/lib/company-access'
 import { getMfaSecurityState } from '@/lib/security/mfa'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { isPersonalEcosystemDestination, safeNextPath } from '@/lib/auth-navigation'
 
 export type LoginActionResult = {
   ok: false
@@ -14,20 +15,6 @@ export type LoginActionResult = {
 export type LoginFormState = {
   ok: boolean
   error: string
-}
-
-function safeNextPath(rawNext?: string | null) {
-  const next = String(rawNext || '').trim()
-
-  if (!next) return '/painel/inicio'
-  if (!next.startsWith('/')) return '/painel/inicio'
-  if (next.startsWith('//')) return '/painel/inicio'
-  if (next.includes('://')) return '/painel/inicio'
-  if (next.startsWith('/login')) return '/painel/inicio'
-  if (next.startsWith('/mfa')) return '/painel/inicio'
-  if (next.startsWith('/cadastro')) return '/painel/inicio'
-
-  return next
 }
 
 function friendlyAuthError(message: string) {
@@ -96,7 +83,8 @@ export async function signInWithPasswordAction(input: {
       data.user.email,
     )
 
-    const postLoginDestination = access.company?.id ? nextPath : '/cadastro'
+    const personalDestination = isPersonalEcosystemDestination(nextPath)
+    const postLoginDestination = access.company?.id || personalDestination ? nextPath : '/cadastro'
     const mfa = await getMfaSecurityState(supabase)
 
     destination = mfa.hasVerifiedFactor && mfa.currentLevel !== 'aal2'

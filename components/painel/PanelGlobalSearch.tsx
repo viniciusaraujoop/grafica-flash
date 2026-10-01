@@ -120,7 +120,7 @@ export default function PanelGlobalSearch() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 text-sm font-bold text-white/90 transition duration-200 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 text-sm font-bold text-white/90 transition duration-200 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
         aria-label="Abrir busca global"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -153,7 +153,7 @@ export default function PanelGlobalSearch() {
                 aria-label="Pesquisar no Orçaly"
                 className="min-w-0 flex-1 bg-transparent py-2 text-base font-semibold text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-400 sm:text-lg"
               />
-              <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-bold text-slate-500 hover:bg-slate-50">Esc</button>
+              <button type="button" onClick={() => setOpen(false)} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-slate-200 px-2 py-1 text-xs font-bold text-slate-500 hover:bg-slate-50">Esc</button>
             </div>
 
             <div className="max-h-[62vh] overflow-y-auto p-2 sm:p-3">

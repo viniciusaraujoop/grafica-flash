@@ -1,11 +1,5 @@
-import RepurchaseOpportunitiesPanel from '@/components/painel/RepurchaseOpportunitiesPanel'
-import TodayOperationsCenter from '@/components/painel/TodayOperationsCenter'
+import BusinessHome from '@/components/painel/BusinessHome'
 
 export default function InicioPage() {
-  return (
-    <div className="grid gap-4">
-      <TodayOperationsCenter />
-      <RepurchaseOpportunitiesPanel />
-    </div>
-  )
+  return <BusinessHome />
 }
