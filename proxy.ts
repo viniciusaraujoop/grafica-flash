@@ -30,8 +30,9 @@ function secureResponse(response: NextResponse, request: NextRequest, cookies: C
   const pathname = request.nextUrl.pathname
   const internal = pathname === '/admin' || pathname.startsWith('/admin/') || pathname === '/suporte' || pathname.startsWith('/suporte/') || pathname === '/api/admin' || pathname.startsWith('/api/admin/') || pathname === '/api/platform-admin' || pathname.startsWith('/api/platform-admin/')
   const protectedPanel = pathname === '/painel' || pathname.startsWith('/painel/')
+  const protectedEcosystem = pathname === '/apps' || pathname.startsWith('/apps/')
 
-  if (internal || protectedPanel) {
+  if (internal || protectedPanel || protectedEcosystem) {
     secured.headers.set('Cache-Control', 'private, no-store, no-cache, max-age=0, must-revalidate')
     secured.headers.set('Pragma', 'no-cache')
     secured.headers.set('Expires', '0')
@@ -57,7 +58,8 @@ export async function proxy(request: NextRequest) {
   const supportPage = pathname === '/suporte' || pathname.startsWith('/suporte/')
   const adminPage = !adminLoginPage && !passwordPage && (pathname === '/admin' || pathname.startsWith('/admin/'))
   const companyPage = pathname === '/painel' || pathname.startsWith('/painel/')
-  const sensitive = adminPage || passwordPage || supportPage || affiliatePage || companyPage
+  const ecosystemPage = pathname === '/apps' || pathname.startsWith('/apps/')
+  const sensitive = adminPage || passwordPage || supportPage || affiliatePage || companyPage || ecosystemPage
   const cookiesToSet: CookieToSet[] = []
   const authHeaders: ResponseHeaders = {}
 

@@ -4,6 +4,10 @@ import Link from 'next/link'
 import { signOutAction } from '@/app/painel/actions'
 import { getBusinessTypeConfig } from '@/lib/business-types'
 import PanelGlobalSearch from '@/components/painel/PanelGlobalSearch'
+import UniversalLauncher from '@/components/orcaly-next/launcher/UniversalLauncher'
+import { buildHubSections, type HubProductSnapshot } from '@/lib/orcaly-next/hub-model'
+import { productRegistry } from '@/lib/orcaly-next/product-registry'
+import type { HubStatus } from '@/lib/orcaly-next/product-status'
 import styles from './PanelChromeV3.module.css'
 import contrast from './PanelContrastV4.module.css'
 
@@ -82,6 +86,15 @@ const pageDescriptions: Record<string, string> = {
   '/painel/central-operacional': 'Reúna operação, comercial, pendências e ferramentas sem misturar tudo na mesma tela.',
 }
 
+
+function resolveBusinessLauncherStatus(
+  assinaturaAtiva: boolean,
+  assinaturaStatus?: string | null,
+): HubStatus {
+  if (assinaturaAtiva !== true) return 'NOT_SUBSCRIBED'
+  return String(assinaturaStatus || '').toLowerCase() === 'trialing' ? 'TRIAL' : 'ACTIVE'
+}
+
 function normalizePlan(value?: string | null) {
   const normalized = String(value || '').toLowerCase()
   if (normalized === 'basico' || normalized === 'essencial') return 'Essencial'
@@ -103,7 +116,17 @@ function HeaderIcon({ name }: { name: 'external' | 'logout' }) {
   return <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8"/><path d="M19 13.5V19H5V5h5.5"/></svg>
 }
 
-export default function PanelPremiumHeader({ company, pathname }: { company: PanelPremiumCompany; pathname: string }) {
+export default function PanelPremiumHeader({
+  company,
+  pathname,
+  businessAccessActive,
+  businessSubscriptionStatus,
+}: {
+  company: PanelPremiumCompany
+  pathname: string
+  businessAccessActive: boolean
+  businessSubscriptionStatus?: string | null
+}) {
   const title = titleFromPath(pathname)
   const description = pageDescriptions[pathname] || 'Gerencie esta área com clareza, contexto e menos ruído visual.'
   const publicSlug = company.subdomain_slug || company.slug || ''
@@ -111,6 +134,18 @@ export default function PanelPremiumHeader({ company, pathname }: { company: Pan
   const publicUrl = publicSlug ? `https://${publicSlug}.${rootDomain}` : ''
   const parts = pathname.split('/').filter(Boolean).slice(1)
   const segmentLabel = getBusinessTypeConfig(company.business_type || company.site_template || 'services').label
+  const businessStatus = resolveBusinessLauncherStatus(businessAccessActive, businessSubscriptionStatus)
+  const businessLauncherSnapshots: readonly HubProductSnapshot[] = [
+    { productId: 'business', status: businessStatus },
+    { productId: 'wealth', status: 'AVAILABLE' },
+    { productId: 'growth', status: 'COMING_SOON' },
+    { productId: 'flow', status: 'COMING_SOON' },
+    { productId: 'academy', status: 'COMING_SOON' },
+    { productId: 'market', status: 'COMING_SOON' },
+    { productId: 'partners', status: 'AVAILABLE' },
+  ]
+  const businessLauncherSections = buildHubSections(productRegistry, businessLauncherSnapshots)
+  const businessLauncherTiles = [...businessLauncherSections.yourApps, ...businessLauncherSections.otherProducts]
 
   async function logout() {
     await signOutAction()
@@ -134,6 +169,7 @@ export default function PanelPremiumHeader({ company, pathname }: { company: Pan
 
       <div className={`panel-adaptive-header-actions ${styles.headerActions}`}>
         <PanelGlobalSearch />
+        <div className={styles.launcherSlot}><UniversalLauncher tiles={businessLauncherTiles} one={businessLauncherSections.one} currentProductId="business" label="Trocar produto Orçaly" /></div>
         <div className={`panel-adaptive-company-card ${styles.companyCard} ${contrast.companyCardContrast}`} title={company.nome || 'Empresa Orçaly'}>
           {company.logo_url ? <span className={`panel-adaptive-company-logo ${styles.companyLogo}`}><img src={company.logo_url} alt=""/></span> : <span className={`panel-adaptive-company-logo panel-adaptive-company-initial ${styles.companyLogo}`} aria-hidden="true">{(company.nome || 'O').slice(0, 1)}</span>}
           <span className="min-w-0"><strong>{company.nome || 'Empresa Orçaly'}</strong><small>{normalizePlan(company.assinatura_plano || company.plano)}</small></span>
