@@ -5,15 +5,23 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
 
+function normalizeLineEndings(text) {
+  return text.replace(/\r\n?/g, '\n')
+}
+
+async function readSource(url) {
+  return normalizeLineEndings(await readFile(url, 'utf8'))
+}
+
 const root = new URL('..', import.meta.url)
 const rootPath = fileURLToPath(root)
 const migrationPath =
   '../supabase/migrations/20260930155522_m1b_shared_audit_contract.sql'
 
 const [migration, contracts, writer] = await Promise.all([
-  readFile(new URL(migrationPath, import.meta.url), 'utf8'),
-  readFile(new URL('../lib/audit/shared-audit-contracts.ts', import.meta.url), 'utf8'),
-  readFile(new URL('../lib/audit/shared-audit.ts', import.meta.url), 'utf8'),
+  readSource(new URL(migrationPath, import.meta.url)),
+  readSource(new URL('../lib/audit/shared-audit-contracts.ts', import.meta.url)),
+  readSource(new URL('../lib/audit/shared-audit.ts', import.meta.url)),
 ])
 
 // One canonical shared surface only.
@@ -425,7 +433,7 @@ const appFiles = [
 const directWriters = []
 
 for (const filename of appFiles) {
-  const body = await readFile(filename, 'utf8')
+  const body = await readSource(filename)
   if (
     /\.from\(['"]ecosystem_audit_events['"]\)[\s\S]{0,300}\.insert\(/m.test(
       body,

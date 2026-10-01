@@ -3,6 +3,14 @@ import { spawnSync } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import ts from 'typescript'
 
+function normalizeLineEndings(text) {
+  return text.replace(/\r\n?/g, '\n')
+}
+
+async function readSource(url) {
+  return normalizeLineEndings(await readFile(url, 'utf8'))
+}
+
 const migrationPath =
   '../supabase/migrations/20260929211421_m1a_event_fabric_safety_contract.sql'
 const correctiveMigrationPath =
@@ -23,17 +31,17 @@ const [
   vercel,
   packageJson,
 ] = await Promise.all([
-  readFile(new URL(migrationPath, import.meta.url), 'utf8'),
-  readFile(new URL(correctiveMigrationPath, import.meta.url), 'utf8'),
-  readFile(new URL(finalCorrectiveMigrationPath, import.meta.url), 'utf8'),
-  readFile(new URL('../lib/event-fabric/contracts.ts', import.meta.url), 'utf8'),
-  readFile(new URL('../lib/event-fabric/handlers.ts', import.meta.url), 'utf8'),
-  readFile(new URL('../lib/event-fabric/relay.ts', import.meta.url), 'utf8'),
-  readFile(new URL('../lib/event-fabric/worker.ts', import.meta.url), 'utf8'),
-  readFile(new URL('../lib/event-fabric/health.ts', import.meta.url), 'utf8'),
-  readFile(new URL('../app/api/cron/event-fabric/route.ts', import.meta.url), 'utf8'),
-  readFile(new URL('../vercel.json', import.meta.url), 'utf8'),
-  readFile(new URL('../package.json', import.meta.url), 'utf8'),
+  readSource(new URL(migrationPath, import.meta.url)),
+  readSource(new URL(correctiveMigrationPath, import.meta.url)),
+  readSource(new URL(finalCorrectiveMigrationPath, import.meta.url)),
+  readSource(new URL('../lib/event-fabric/contracts.ts', import.meta.url)),
+  readSource(new URL('../lib/event-fabric/handlers.ts', import.meta.url)),
+  readSource(new URL('../lib/event-fabric/relay.ts', import.meta.url)),
+  readSource(new URL('../lib/event-fabric/worker.ts', import.meta.url)),
+  readSource(new URL('../lib/event-fabric/health.ts', import.meta.url)),
+  readSource(new URL('../app/api/cron/event-fabric/route.ts', import.meta.url)),
+  readSource(new URL('../vercel.json', import.meta.url)),
+  readSource(new URL('../package.json', import.meta.url)),
 ])
 
 // Exactly the frozen additive columns.
