@@ -5,7 +5,7 @@ import { redirect, RedirectType } from 'next/navigation'
 import { getCompanyAccess, getSupabaseAdmin } from '@/lib/company-access'
 import { getMfaSecurityState } from '@/lib/security/mfa'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
-import { safeNextPath } from '@/lib/auth-navigation'
+import { isPersonalEcosystemDestination, safeNextPath } from '@/lib/auth-navigation'
 
 export type LoginActionResult = {
   ok: false
@@ -83,7 +83,7 @@ export async function signInWithPasswordAction(input: {
       data.user.email,
     )
 
-    const personalDestination = nextPath === '/apps' || nextPath.startsWith('/apps/')
+    const personalDestination = isPersonalEcosystemDestination(nextPath)
     const postLoginDestination = access.company?.id || personalDestination ? nextPath : '/cadastro'
     const mfa = await getMfaSecurityState(supabase)
 

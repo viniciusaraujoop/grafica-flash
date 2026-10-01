@@ -1,11 +1,10 @@
 import assert from 'node:assert/strict'
-import { safeNextPath } from '../lib/auth-navigation.ts'
+import { isPersonalEcosystemDestination, safeNextPath } from '../lib/auth-navigation.ts'
 
 const fallback = '/painel/inicio'
-const isPersonalDestination = (path) => path === '/apps' || path.startsWith('/apps/')
 const noCompanyDestination = (rawNext) => {
   const nextPath = safeNextPath(rawNext)
-  return isPersonalDestination(nextPath) ? nextPath : '/cadastro'
+  return isPersonalEcosystemDestination(nextPath) ? nextPath : '/cadastro'
 }
 
 const safeCases = new Map([
@@ -18,7 +17,7 @@ const safeCases = new Map([
 
 for (const [candidate, expected] of safeCases) {
   assert.equal(safeNextPath(candidate), expected, candidate)
-  assert.equal(isPersonalDestination(safeNextPath(candidate)), true, `personal: ${candidate}`)
+  assert.equal(isPersonalEcosystemDestination(safeNextPath(candidate)), true, `personal: ${candidate}`)
 }
 
 for (const candidate of [
@@ -41,11 +40,11 @@ for (const candidate of [
 }
 
 assert.equal(safeNextPath('/apps/%2e%2e/painel'), '/painel')
-assert.equal(isPersonalDestination(safeNextPath('/apps/%2e%2e/painel')), false)
+assert.equal(isPersonalEcosystemDestination(safeNextPath('/apps/%2e%2e/painel')), false)
 assert.equal(noCompanyDestination('/apps/%2e%2e/painel'), '/cadastro')
 
 assert.equal(safeNextPath('/apps/foo/%2e%2e/%2e%2e/painel'), '/painel')
-assert.equal(isPersonalDestination(safeNextPath('/apps/foo/%2e%2e/%2e%2e/painel')), false)
+assert.equal(isPersonalEcosystemDestination(safeNextPath('/apps/foo/%2e%2e/%2e%2e/painel')), false)
 assert.equal(noCompanyDestination('/apps/foo/%2e%2e/%2e%2e/painel'), '/cadastro')
 
 for (const candidate of [

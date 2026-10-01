@@ -44,3 +44,13 @@ export function safeNextPath(rawNext?: string | null) {
 
   return `${pathname}${url.search}${url.hash}`
 }
+
+export function isPersonalEcosystemDestination(safePath: string) {
+  try {
+    const url = new URL(safePath, AUTH_NAV_ORIGIN)
+    if (url.origin !== AUTH_NAV_ORIGIN) return false
+    return url.pathname === '/apps' || url.pathname.startsWith('/apps/')
+  } catch {
+    return false
+  }
+}
