@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { isMissingRelation } from '@/lib/admin/optional-schema'
 import { reportApplicationError } from '@/lib/observability/application-errors'
+import { readEventFabricHealth } from '@/lib/event-fabric/health'
 import { requirePlatformAdmin } from '@/lib/platform-admin'
 
 export const runtime = 'nodejs'
@@ -45,7 +46,19 @@ export async function GET(request: NextRequest) {
   try {
     const db = session.supabaseAdmin
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-    const [supabaseCheck, hooks, whatsapp, scan, security, assistant, applicationErrors] = await Promise.all([
+    const eventFabricEnabled =
+      String(process.env.ORCALY_EVENT_FABRIC_ENABLED || '').trim().toLowerCase() === 'true'
+    const eventFabricCadenceSeconds = Number(process.env.ORCALY_EVENT_FABRIC_CADENCE_SECONDS || 60)
+    const [
+      supabaseCheck,
+      hooks,
+      whatsapp,
+      scan,
+      security,
+      assistant,
+      applicationErrors,
+      eventFabric,
+    ] = await Promise.all([
       db.from('companies').select('id', { count: 'exact', head: true }),
       db.from('payment_webhook_events').select('id,provider,processing_status,received_at,error_message').gte('received_at', since).order('received_at', { ascending: false }).limit(300),
       db.from('whatsapp_message_logs').select('id,status,error,created_at').gte('created_at', since).order('created_at', { ascending: false }).limit(300),
@@ -53,6 +66,10 @@ export async function GET(request: NextRequest) {
       db.from('security_events').select('id', { count: 'exact', head: true }).eq('resolved', false),
       db.from('assistant_events').select('event_name,status,created_at,model').gte('created_at', since).order('created_at', { ascending: false }).limit(300),
       db.from('application_error_events').select('error_id,route,operation,error_type,error_code,http_status,created_at').gte('created_at', since).order('created_at', { ascending: false }).limit(100),
+      readEventFabricHealth(db, {
+        enabled: eventFabricEnabled,
+        cadenceSeconds: eventFabricCadenceSeconds,
+      }),
     ])
 
     const hookRows = hooks.data || []
@@ -87,6 +104,13 @@ export async function GET(request: NextRequest) {
           ? 'A consulta real de leitura falhou. Consulte o Error Explorer e os logs do provider.'
           : `Consulta real respondida · ${supabaseCheck.count || 0} empresas observadas.`,
         observedAt: new Date().toISOString(),
+      },
+      {
+        key: 'event_fabric',
+        name: 'Event Fabric',
+        status: eventFabric.status,
+        detail: eventFabric.detail,
+        observedAt: eventFabric.observedAt,
       },
       {
         key: 'vercel',
@@ -180,6 +204,7 @@ export async function GET(request: NextRequest) {
           applicationErrors24h: !errorTelemetryReadable ? null : recentErrors.length,
           application5xx24h: !errorTelemetryReadable ? null : error5xx,
           latestScan: scan.error ? null : scan.data || null,
+          eventFabric: eventFabric.metrics,
         },
         recentErrors: recentErrors.slice(0, 12).map((row) => ({
           errorId: row.error_id || null,
