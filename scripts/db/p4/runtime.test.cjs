@@ -73,8 +73,10 @@ test('whole signature comparator accepts only reviewed transformed catalog, deni
   assert.equal(s.compare(s.frozen().text).matched,false,'Historical email gate is NOT accepted in fresh runtime');
 });
 test('workflow is branch-scoped, standalone, readonly and never uses credentials or remote commands', () => {
-  const y = c.read('.github/workflows/r10-p4-disposable-replay.yml').toString();
-  assert.match(y,/branches: \[reconcile\/r10-production-base-canonicalization\]/);
+  const y = c.read('.github/workflows/r10-p4-disposable-replay.yml').toString().replace(/\r\n/g,'\n');
+  const trigger = y.split('\non:\n')[1].split('\npermissions:')[0];
+  assert.deepEqual([...trigger.matchAll(/^  ([a-z_]+):/gm)].map(match => match[1]),['workflow_dispatch']);
+  assert.match(y,/github\.ref == 'refs\/heads\/reconcile\/r10-production-base-canonicalization'/);
   assert.match(y,/contents: read/); assert.match(y,/ubuntu-24.04/);
   assert.doesNotMatch(y,/secrets\.|supabase link|db push|migration repair|--include-all|pull_request:/);
   assert.match(y,/7074584113aa00495beeac661c41fb09f1ddd0a483cd7333894b0d080086dc6e/);

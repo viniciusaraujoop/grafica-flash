@@ -7,15 +7,6 @@ on:
         description: Exact authorized R10 commit SHA (manual execution only)
         required: true
         type: string
-  push:
-    branches: [reconcile/r10-production-base-canonicalization]
-    paths:
-      - .github/workflows/r10-p4-disposable-replay.yml
-      - scripts/db/p4/**
-      - supabase/frontier/**
-      - supabase/provenance/catalog/**
-      - supabase/provenance/replay/**
-      - supabase/replay-forms/production/**
 
 permissions:
   contents: read
