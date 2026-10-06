@@ -1042,12 +1042,13 @@
       "name": "founder_invite_sales_integration_v1",
       "classification": "CANONICAL_MATCH",
       "target_file": "supabase/migrations/20260812003227_founder_invite_sales_integration_v1.sql",
-      "staged_replay_file": null,
-      "category": null,
-      "status": "MIGRATION_OWNER_DECISION_REQUIRED",
+      "staged_replay_file": "supabase/replay-forms/production/20260812003227_founder_invite_sales_integration_v1.sql",
+      "category": "NEUTRALIZED",
+      "status": "PREPARED_STATIC_VERIFIED_NOT_RUNTIME_CERTIFIED",
       "execution_evidence": "supabase/provenance/ledger/production/20260812003227_founder_invite_sales_integration_v1/ledger.sql",
       "meta": "supabase/provenance/ledger/production/20260812003227_founder_invite_sales_integration_v1/meta.json",
-      "schema_effect_change_approved": false
+      "schema_effect_change_approved": true,
+      "approval_reference": "supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json"
     },
     {
       "ordered_position": 31,

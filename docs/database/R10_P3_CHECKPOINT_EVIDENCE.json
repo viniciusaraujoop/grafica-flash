@@ -1,0 +1,40 @@
+{
+  "scope": "P3_ONLY",
+  "base_head": "761fd3c446e266b397b0016d94c014861cb70a4e",
+  "replay_forms_total": 51,
+  "counts": {
+    "NEUTRALIZED": 4,
+    "VERBATIM_LEDGER": 47
+  },
+  "entry30": "MATERIALIZED_STATIC_VERIFIED",
+  "historical_entry30_archive_sha256": "e655af3e2871b96dab7a3c88dff0f86726098e2da5250a4789dc04adf9f86ad9",
+  "historical_ledger_record": "UNCHANGED",
+  "private_raw_record_digest": "18b029935a03ca0cc323e3c6318079198d985cddfc1c2860cac5a6a218583766",
+  "verification": "STATIC_VERIFIED",
+  "tests": {
+    "total": 30,
+    "passed": 30,
+    "checkpoint_tests": 11,
+    "focused_static_tests": 19,
+    "required_security_checks": 18,
+    "command": "node --test scripts/db/r10-contract.test.cjs scripts/db/r10-p3-static.test.cjs",
+    "historical_ledger_and_other_50_replay_bytes": "STATIC_VERIFIED_UNCHANGED",
+    "manifest": "PASS",
+    "decoded_secret_pii_scan": "PASS",
+    "m1a_m1b_git_pins": "PASS",
+    "focused_eslint_no_ignore": "PASS",
+    "database_sql_tests": "NOT_EXECUTED"
+  },
+  "runtime_tests": "NOT_EXECUTED",
+  "server_caller_requirement": "Trusted server callers must derive/validate p_actor_admin_id from trusted execution context. Parameter possession is not authentication. No call-site redesign authorized.",
+  "remaining_requirements": [
+    "Agent4 implementation review",
+    "Disposable runtime availability and future runtime testing",
+    "P4 frontier prerequisite defaults validation"
+  ],
+  "p4_started": false,
+  "p5_expanded": false,
+  "p6_started": false,
+  "push": false,
+  "database_mutation": "NONE"
+}

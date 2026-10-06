@@ -1,0 +1,77 @@
+{
+  "classification": "SECURITY_REQUIRED_DIFFERENCE",
+  "replay_category": "NEUTRALIZED",
+  "approval_reference": "supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json",
+  "historical_archive_sha256": "e655af3e2871b96dab7a3c88dff0f86726098e2da5250a4789dc04adf9f86ad9",
+  "historical_raw_sha256": "18b029935a03ca0cc323e3c6318079198d985cddfc1c2860cac5a6a218583766",
+  "replay_body_sha256": "a77b758c2e9d693f3108b19a5a73b61b0b3637476557e592bbce972f3139a432",
+  "replay_file_sha256": "49aa1e62166eac75b2c016ab1a15c46347d2bb5b1e2d91e197e5ea74d36a6b96",
+  "schema_effect_change": true,
+  "schema_effect_change_scope": "Only four explicitly approved authorization gate edits; all other SQL byte-preserved against redacted historical record.",
+  "verification": "STATIC_VERIFIED",
+  "runtime_verified": false,
+  "agent4_implementation_review_required": true,
+  "exact_gate_patches": [
+    {
+      "function": "public.create_founder_invite_for_sales_lead",
+      "authorized_roles": [
+        "owner",
+        "prospector"
+      ],
+      "before": "  select lower(role), lower(email)\n    into v_actor_role, v_actor_email\n  from public.platform_admins\n  where id = p_actor_admin_id\n    and is_active = true;\n\n  if v_actor_role = 'owner'\n     and v_actor_email <> '[REDACTED_OWNER_EMAIL]'\n  then\n    raise exception 'FOUNDER_ACTOR_NOT_ALLOWED';\n  end if;\n\n  if v_actor_role not in ('owner','prospector') then\n    raise exception 'FOUNDER_ACTOR_NOT_ALLOWED';\n  end if;",
+      "after": "  if p_actor_admin_id is null then\n    raise exception 'FOUNDER_ACTOR_NOT_ALLOWED';\n  end if;\n\n  select lower(role), lower(email)\n    into v_actor_role, v_actor_email\n  from public.platform_admins\n  where id = p_actor_admin_id\n    and is_active = true;\n\n  if not found\n     or v_actor_role is null\n     or v_actor_role not in ('owner','prospector')\n  then\n    raise exception 'FOUNDER_ACTOR_NOT_ALLOWED';\n  end if;",
+      "before_sha256": "1e4b1eabd97d8994b90b57e901213bcc85011644ee4bccb880e25f49c0857bd2",
+      "after_sha256": "e6c2e8149386a92732d44c7a11e1b2c439e3f2332ae19b4b8c53ae3255f3656d",
+      "unchanged_remainder_sha256": "06ba079fef37ac42df4a0223cf7ecfab0449875a2e91d90303b5fc442446421a"
+    },
+    {
+      "function": "public.create_founder_test_invite",
+      "authorized_roles": [
+        "owner"
+      ],
+      "before": "  select lower(role), lower(email)\n    into v_actor_role, v_actor_email\n  from public.platform_admins\n  where id = p_actor_admin_id\n    and is_active = true;\n\n  if v_actor_role <> 'owner'\n     or v_actor_email <> '[REDACTED_OWNER_EMAIL]'\n  then\n    raise exception 'FOUNDER_TEST_OWNER_ONLY';\n  end if;",
+      "after": "  if p_actor_admin_id is null then\n    raise exception 'FOUNDER_TEST_OWNER_ONLY';\n  end if;\n\n  select lower(role), lower(email)\n    into v_actor_role, v_actor_email\n  from public.platform_admins\n  where id = p_actor_admin_id\n    and is_active = true;\n\n  if not found\n     or v_actor_role is null\n     or v_actor_role <> 'owner'\n  then\n    raise exception 'FOUNDER_TEST_OWNER_ONLY';\n  end if;",
+      "before_sha256": "877ef71e400985f31ea5b9d652f025e2ee6a43787fc46cd68d52ed29b7088ba8",
+      "after_sha256": "1c6c7074e67014a241feec53cd1ccb77115cb5edb7d41f9e5468b7da35b0dd9b",
+      "unchanged_remainder_sha256": "8e21ee8a4f27c3e1da7148fab23aa33a39a322442ead8dcf5221516a8e82116e"
+    },
+    {
+      "function": "public.rotate_founder_invite_token",
+      "authorized_roles": [
+        "owner",
+        "prospector"
+      ],
+      "before": "  select lower(role), lower(email)\n    into v_actor_role, v_actor_email\n  from public.platform_admins\n  where id = p_actor_admin_id\n    and is_active = true;\n\n  if v_actor_role = 'owner'\n     and v_actor_email <> '[REDACTED_OWNER_EMAIL]'\n  then\n    raise exception 'FOUNDER_ACTOR_NOT_ALLOWED';\n  end if;\n\n  if v_actor_role not in ('owner','prospector') then\n    raise exception 'FOUNDER_ACTOR_NOT_ALLOWED';\n  end if;",
+      "after": "  if p_actor_admin_id is null then\n    raise exception 'FOUNDER_ACTOR_NOT_ALLOWED';\n  end if;\n\n  select lower(role), lower(email)\n    into v_actor_role, v_actor_email\n  from public.platform_admins\n  where id = p_actor_admin_id\n    and is_active = true;\n\n  if not found\n     or v_actor_role is null\n     or v_actor_role not in ('owner','prospector')\n  then\n    raise exception 'FOUNDER_ACTOR_NOT_ALLOWED';\n  end if;",
+      "before_sha256": "1e4b1eabd97d8994b90b57e901213bcc85011644ee4bccb880e25f49c0857bd2",
+      "after_sha256": "e6c2e8149386a92732d44c7a11e1b2c439e3f2332ae19b4b8c53ae3255f3656d",
+      "unchanged_remainder_sha256": "c626d5c67996851ac5339251d2fb8c0394f9346c6cbd29c60c144bd76e651675"
+    },
+    {
+      "function": "public.revoke_founder_invite",
+      "authorized_roles": [
+        "owner",
+        "prospector"
+      ],
+      "before": "  select lower(role), lower(email)\n    into v_actor_role, v_actor_email\n  from public.platform_admins\n  where id = p_actor_admin_id\n    and is_active = true;\n\n  if v_actor_role = 'owner'\n     and v_actor_email <> '[REDACTED_OWNER_EMAIL]'\n  then\n    raise exception 'FOUNDER_ACTOR_NOT_ALLOWED';\n  end if;\n\n  if v_actor_role not in ('owner','prospector') then\n    raise exception 'FOUNDER_ACTOR_NOT_ALLOWED';\n  end if;",
+      "after": "  if p_actor_admin_id is null then\n    raise exception 'FOUNDER_ACTOR_NOT_ALLOWED';\n  end if;\n\n  select lower(role), lower(email)\n    into v_actor_role, v_actor_email\n  from public.platform_admins\n  where id = p_actor_admin_id\n    and is_active = true;\n\n  if not found\n     or v_actor_role is null\n     or v_actor_role not in ('owner','prospector')\n  then\n    raise exception 'FOUNDER_ACTOR_NOT_ALLOWED';\n  end if;",
+      "before_sha256": "1e4b1eabd97d8994b90b57e901213bcc85011644ee4bccb880e25f49c0857bd2",
+      "after_sha256": "e6c2e8149386a92732d44c7a11e1b2c439e3f2332ae19b4b8c53ae3255f3656d",
+      "unchanged_remainder_sha256": "e9312f46e43b7be59ad5059084b471a7fbd168171d51b31a315d71cc6e880c49"
+    }
+  ],
+  "forbidden_differences": [
+    "function signatures",
+    "prospector resource scope",
+    "token validation",
+    "plan validation",
+    "ownership",
+    "grants/revokes",
+    "RLS",
+    "SECURITY DEFINER",
+    "search_path",
+    "table privileges",
+    "indexes",
+    "constraints"
+  ]
+}

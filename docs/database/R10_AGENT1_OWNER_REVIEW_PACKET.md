@@ -1,5 +1,39 @@
 # R10 — Agent 1 owner review packet
 
+## P3 completion addendum — 2026-10-06
+
+The historical P1–P6 checkpoint below is retained as its original decision context.
+Its row30 blocker and 50-form total are superseded by this P3-only addendum:
+51 proposed forms (47 VERBATIM_LEDGER, 0 GIT_EQUIVALENT, 4 NEUTRALIZED).
+The Founder relayed AGENT_1's owner decision and AGENT_4 PASS_WITH_REQUIREMENTS in
+the direct instruction "R10 — P3 REPLAY FORMS COMPLETION". Evidence/reference:
+supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json.
+
+Row30 now uses only a matching active public.platform_admins row and exact owner
+or owner/prospector role sets. Explicit null actor, NOT FOUND and null role guards
+fail closed. No email predicate, alias, fallback, owner seed or provisioning.
+The email read from the authoritative row remains ONLY for unchanged audit fields.
+All four gates have exact before/after/remainder hashes in neutralization.json;
+the reversible static comparison preserves all other SQL bytes.
+
+The allowlist is supabase/provenance/replay/SIGNATURE_ALLOWLIST.json: only #1, #3,
+#18 and #30; no generic function-body/signature/ACL/RLS exception. #1 still requires
+is_active=false and automatic_payout_enabled=false defaults in a future frontier.
+#3 remains unscheduled; #18 has no identity/Auth/audit seed and retains its existing
+partial unique zero-or-one-active-owner index. No owner is required or provisioned.
+
+Trusted server callers MUST derive/validate p_actor_admin_id from trusted execution
+context. Possession of that parameter is not authentication. Call-site redesign is
+out of scope. Function owner DDL, SECURITY DEFINER, search_path and service_role-only
+ACL statements are unchanged; materialized runtime ownership/ACL still need later
+validation in disposable infrastructure.
+
+Tests: 30/30 (11 checkpoint + 19 focused P3 static tests, including all 18 required
+checks), STATIC_VERIFIED only. No database/PLpgSQL execution, frontier derivation,
+fixed-point, P5 expansion, P6, P7 or push. See R10_P3_CHECKPOINT_EVIDENCE.json.
+The old frontier status artifact is untouched historical checkpoint evidence; its
+row30 decision-pending note is superseded here, not a claim that P4 has started.
+
 Executor CODEX_ASTRA_6; migration owner AGENT_1. Architecture approved, implementation checkpoint BLOCKED.
 
 ## Frozen inputs

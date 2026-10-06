@@ -40,5 +40,15 @@
   "explicit_diff": {
     "removed": "supabase/provenance/ledger/production/20260729213924_harden_platform_admin_owner_access_v1/neutralization.json",
     "replacement": "No replacement SQL; app DDL/routines/ACL statements preserved."
-  }
+  },
+  "classification": "SECURITY_REQUIRED_DIFFERENCE",
+  "security_requirements_reference": "supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json",
+  "agent4_review_status": "PASS_WITH_REQUIREMENTS_RELAYED_BY_FOUNDER",
+  "runtime_verified": false,
+  "requirements": [
+    "No real owner provisioning",
+    "No auth.users metadata mutation",
+    "No person-specific audit seed",
+    "Existing zero-or-one-active-owner partial unique index unchanged"
+  ]
 }

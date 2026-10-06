@@ -1,5 +1,19 @@
 # R10 canonical production base — partial checkpoint
 
+P3 update (2026-10-06): the prior 50-form/row30-decision-pending checkpoint below
+is historical context. P3 now has 51 forms, four neutralizations, and exact
+owner/security-authorized fail-closed row30 gates. See R10_P3_CHECKPOINT_EVIDENCE.json,
+P3_OWNER_SECURITY_DECISION.json and SIGNATURE_ALLOWLIST.json. This does not begin P4
+or validate frontier defaults, runtime ownership, ACLs or convergence.
+Focused verification command:
+
+```text
+node --test scripts/db/r10-contract.test.cjs scripts/db/r10-p3-static.test.cjs
+```
+
+All P3 authorization results are STATIC_VERIFIED, not runtime PASS. No historical
+execution record, other prepared SQL, M1 files or active migration was modified.
+
 Executor: CODEX_ASTRA_6. Migration owner: AGENT_1. Base main: 9611d195290247694ad60d5aa2638ac8b96ecefb.
 
 ## Status and architecture

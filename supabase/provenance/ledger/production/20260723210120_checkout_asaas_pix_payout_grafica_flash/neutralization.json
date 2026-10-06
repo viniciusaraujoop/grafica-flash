@@ -16,5 +16,14 @@
   "explicit_diff": {
     "removed": "supabase/provenance/ledger/production/20260723210120_checkout_asaas_pix_payout_grafica_flash/neutralization.json",
     "replacement": "No replacement SQL; app DDL/routines/ACL statements preserved."
+  },
+  "classification": "EXPECTED_ENVIRONMENT_DATA_DIFFERENCE",
+  "security_requirements_reference": "supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json",
+  "agent4_review_status": "PASS_WITH_REQUIREMENTS_RELAYED_BY_FOUNDER",
+  "runtime_verified": false,
+  "required_defaults": {
+    "marketplace_payment_settings_is_active": false,
+    "automatic_payout_enabled": false,
+    "frontier_validation": "P4_PENDING_NOT_DERIVED"
   }
 }

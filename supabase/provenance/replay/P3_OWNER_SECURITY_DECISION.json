@@ -1,0 +1,29 @@
+{
+  "source": "FOUNDER_DIRECT_INSTRUCTION",
+  "source_title": "R10 — P3 REPLAY FORMS COMPLETION",
+  "date": "2026-10-06",
+  "migration_owner": "AGENT_1",
+  "security_review": "AGENT_4 PASS_WITH_REQUIREMENTS (relayed by Founder; not independently reissued)",
+  "scope": "P3_ONLY",
+  "approved_differences": [
+    "remove historical personal-email owner predicate",
+    "explicit null/missing/inactive/null-role/unauthorized-role rejection"
+  ],
+  "owner_proof": "active matching public.platform_admins row with lower(role) = owner",
+  "mixed_roles": [
+    "owner",
+    "prospector"
+  ],
+  "server_caller_requirement": "Trusted server callers must derive/validate p_actor_admin_id from trusted execution context. Parameter possession is not authentication. No call-site redesign authorized.",
+  "zero_owner": "Fail closed; provisioning out of scope",
+  "historical_record": "UNCHANGED_FROM_BASE_HEAD_REDACTED_ARCHIVE; private raw SQL digest preserved",
+  "runtime_validation": "NOT_EXECUTED",
+  "forbidden_scope": [
+    "P4",
+    "P5 expansion",
+    "P6",
+    "P7",
+    "push",
+    "database execution"
+  ]
+}

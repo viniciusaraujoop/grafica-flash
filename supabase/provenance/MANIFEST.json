@@ -3,13 +3,13 @@
   "base_main": "9611d195290247694ad60d5aa2638ac8b96ecefb",
   "deterministic_order": "ASCII/codepoint path order",
   "hash_algorithm": "SHA-256 UTF-8 bytes",
-  "tree_digest": "616f7d899a5e9615a92113bd3bb38c19ca7ceff27c3b37c388fe0742219b5b15",
+  "tree_digest": "916387c44530d98dba2938631beec6d4fb2431df2560972036562e684d43ce49",
   "self_excluded": true,
   "entries": [
     {
       "path": "supabase/provenance/ACTIVE_DIRECTORY_PLAN.json",
-      "sha256": "224a0274c0a2307cf99d2b1b79086fac38c249b02b644dcae4438ac4dab87e72",
-      "bytes": 71937
+      "sha256": "945505bcd95074de838a896a74cb84b64946289b34ee440e2582ad844e63f023",
+      "bytes": 72133
     },
     {
       "path": "supabase/provenance/IMMUTABLE_HASHES.json",
@@ -408,8 +408,8 @@
     },
     {
       "path": "supabase/provenance/ledger/production/20260723210120_checkout_asaas_pix_payout_grafica_flash/neutralization.json",
-      "sha256": "791c09a34a0aac57a3d3f48406713768106c563610ea6b9be385efb6b4081758",
-      "bytes": 1043
+      "sha256": "6b7711f711be247f2fd092696c01a2bf2b520203502135c3576669fef1eb0d1b",
+      "bytes": 1476
     },
     {
       "path": "supabase/provenance/ledger/production/20260723221339_subscription_webhook_unified/ledger.sql",
@@ -433,8 +433,8 @@
     },
     {
       "path": "supabase/provenance/ledger/production/20260728173219_orcaly_marketplace_stock_reservations/neutralization.json",
-      "sha256": "ae02f3d72487b7334b47762fe4c23701781d6cbc5bcb393c534bbc8b7a743f9d",
-      "bytes": 817
+      "sha256": "12186458c08fcce1eb8446437dc25896e1f7d544d2c50ad3865e81f248826a0e",
+      "bytes": 1216
     },
     {
       "path": "supabase/provenance/ledger/production/20260728173500_orcaly_marketplace_stock_fk_indexes/ledger.sql",
@@ -603,8 +603,8 @@
     },
     {
       "path": "supabase/provenance/ledger/production/20260729213924_harden_platform_admin_owner_access_v1/neutralization.json",
-      "sha256": "76b5dd7c26aeb2d8424f90d13575ca3fef0da53ccf0f6840bc5b8efd48edd279",
-      "bytes": 3650
+      "sha256": "f76f362329734c3b0aab10bad1c67b7bee3b27a7597dbca05b67771f316143fa",
+      "bytes": 4107
     },
     {
       "path": "supabase/provenance/ledger/production/20260808031654_affiliate_partner_growth_hub/ledger.sql",
@@ -723,8 +723,13 @@
     },
     {
       "path": "supabase/provenance/ledger/production/20260812003227_founder_invite_sales_integration_v1/meta.json",
-      "sha256": "3fca3779edd2cc95ada7ae9bfe9afc9d7e0af286ac78c6a7dd132987d32f7d2d",
-      "bytes": 3834
+      "sha256": "a5865bba07c384581c164d562b0e73f55ee25c9df4f991582785fa4e8a4413c3",
+      "bytes": 4306
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812003227_founder_invite_sales_integration_v1/neutralization.json",
+      "sha256": "dd52113ad4dccc535af01fd3ec0702e51fbdca75d99b5a61e4a138366e8e3635",
+      "bytes": 6321
     },
     {
       "path": "supabase/provenance/ledger/production/20260812005359_founder_public_activation_trial_v1/ledger.sql",
@@ -943,8 +948,18 @@
     },
     {
       "path": "supabase/provenance/ledger/production/INDEX.json",
-      "sha256": "66e6744f7617d554a2df763eccda1cb5eeda009ea2b6050e26636e3393124dfc",
-      "bytes": 39002
+      "sha256": "5ece125850321c529bb94c0dba7e781279c4101ef77210306f1540cf7484912b",
+      "bytes": 39198
+    },
+    {
+      "path": "supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json",
+      "sha256": "f7dc86d43b7d531de95b315677d1ae2e8086d9d3f0ea487f751d2156b5fe993d",
+      "bytes": 1109
+    },
+    {
+      "path": "supabase/provenance/replay/SIGNATURE_ALLOWLIST.json",
+      "sha256": "40444929708b1ec12a1be15e30854c8b7dc37f1574069da920bd999c49572377",
+      "bytes": 5499
     },
     {
       "path": "supabase/replay-forms/production/20260723210120_checkout_asaas_pix_payout_grafica_flash.sql",
@@ -1090,6 +1105,11 @@
       "path": "supabase/replay-forms/production/20260812002052_sales_prospecting_crm_hardening_v1.sql",
       "sha256": "a3d83ad5cd3d45736224c9123001733bba85b6aa48707144569896baee0ee1d2",
       "bytes": 6385
+    },
+    {
+      "path": "supabase/replay-forms/production/20260812003227_founder_invite_sales_integration_v1.sql",
+      "sha256": "49aa1e62166eac75b2c016ab1a15c46347d2bb5b1e2d91e197e5ea74d36a6b96",
+      "bytes": 17703
     },
     {
       "path": "supabase/replay-forms/production/20260812005359_founder_public_activation_trial_v1.sql",

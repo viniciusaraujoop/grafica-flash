@@ -16,5 +16,13 @@
   "explicit_diff": {
     "removed": "supabase/provenance/ledger/production/20260728173219_orcaly_marketplace_stock_reservations/neutralization.json",
     "replacement": "No replacement SQL; app DDL/routines/ACL statements preserved."
-  }
+  },
+  "classification": "EXPECTED_INFRASTRUCTURE_DIFFERENCE",
+  "security_requirements_reference": "supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json",
+  "agent4_review_status": "PASS_WITH_REQUIREMENTS_RELAYED_BY_FOUNDER",
+  "runtime_verified": false,
+  "requirements": [
+    "No cron.schedule/cron.unschedule/cron.job writes",
+    "Existing service_role-only function boundary preserved"
+  ]
 }

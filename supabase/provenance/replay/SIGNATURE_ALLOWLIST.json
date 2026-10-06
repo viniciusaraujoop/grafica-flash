@@ -1,0 +1,111 @@
+{
+  "scope": "P3_EXACT_APPROVED_REPLAY_DIFFERENCES_ONLY",
+  "production_signature_unchanged": true,
+  "not_a_fixed_point_attestation": true,
+  "default": "DENY_UNLISTED_DIFFERENCES",
+  "entries": [
+    {
+      "ordered_position": 1,
+      "version": "20260723210120",
+      "name": "checkout_asaas_pix_payout_grafica_flash",
+      "classification": "EXPECTED_ENVIRONMENT_DATA_DIFFERENCE",
+      "approval_reference": "supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json",
+      "neutralization_evidence": "supabase/provenance/ledger/production/20260723210120_checkout_asaas_pix_payout_grafica_flash/neutralization.json",
+      "allowed_difference": "ONLY_EXISTING_TENANT_SPECIFIC_UPDATE_OMISSION",
+      "function_patch_hashes": [],
+      "blanket_function_body_allowance": false,
+      "grant_or_signature_difference_allowed": false,
+      "exact_removed_units": [
+        {
+          "raw_sha256": "edaa93f4bdbe8e1eacb1842a65f16071325995fa4235bf5a066c1c990a45d652",
+          "redacted_sha256": "0e744a065905c5a54e058254db9651caa5242ac24be8fc709a2d76c89772899f"
+        }
+      ]
+    },
+    {
+      "ordered_position": 3,
+      "version": "20260728173219",
+      "name": "orcaly_marketplace_stock_reservations",
+      "classification": "EXPECTED_INFRASTRUCTURE_DIFFERENCE",
+      "approval_reference": "supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json",
+      "neutralization_evidence": "supabase/provenance/ledger/production/20260728173219_orcaly_marketplace_stock_reservations/neutralization.json",
+      "allowed_difference": "ONLY_EXISTING_CRON_SCHEDULE_OMISSION",
+      "function_patch_hashes": [],
+      "blanket_function_body_allowance": false,
+      "grant_or_signature_difference_allowed": false,
+      "exact_removed_units": [
+        {
+          "raw_sha256": "664a8bd928d0f1d5e0511bcd3724be72a0026f871121c002a83c6acbe5c95f2e",
+          "redacted_sha256": "c180e45aa366bfb554de51211a7a2cc23f7f1ee72e254dd1cb7ccf4c0ba8a093"
+        }
+      ]
+    },
+    {
+      "ordered_position": 18,
+      "version": "20260729213924",
+      "name": "harden_platform_admin_owner_access_v1",
+      "classification": "SECURITY_REQUIRED_DIFFERENCE",
+      "approval_reference": "supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json",
+      "neutralization_evidence": "supabase/provenance/ledger/production/20260729213924_harden_platform_admin_owner_access_v1/neutralization.json",
+      "allowed_difference": "ONLY_EXISTING_FOUR_IDENTITY_DML_OMISSIONS",
+      "function_patch_hashes": [],
+      "blanket_function_body_allowance": false,
+      "grant_or_signature_difference_allowed": false,
+      "exact_removed_units": [
+        {
+          "raw_sha256": "51dd15a98e8e41cc0b7f62d605e4476cddda24693980f90be12a41d8af0ecbef",
+          "redacted_sha256": "ce8e5140129ed722b947d50a72e5773d935fef7c157e209ce2b038cfc37bfee2"
+        },
+        {
+          "raw_sha256": "e4bcf360fecd151d960aa97c956bb3db8e8fe04decbd3e4a50da144f9d7bb0ac",
+          "redacted_sha256": "fbde13a31553a30bd2f8ae0d9cd885944e78f0edb95a2450b336855b454134fc"
+        },
+        {
+          "raw_sha256": "5891b6c78427ac214a4c6e97b99086bdcb41c7b58dcfe9cce1aed76f088af055",
+          "redacted_sha256": "f5418ed9006a631313f48f5377224f9987c856df0ebd826db4ab6fe3a112fa63"
+        },
+        {
+          "raw_sha256": "022d01739dee397ec94fc185506ae6e4f27e9ba9713f37f36f728cee5f098d2c",
+          "redacted_sha256": "9aec34d5252fbe28d920b6436dbad557e2db043b5d5988341df47a8f5ab3a568"
+        }
+      ]
+    },
+    {
+      "ordered_position": 30,
+      "version": "20260812003227",
+      "name": "founder_invite_sales_integration_v1",
+      "classification": "SECURITY_REQUIRED_DIFFERENCE",
+      "approval_reference": "supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json",
+      "neutralization_evidence": "supabase/provenance/ledger/production/20260812003227_founder_invite_sales_integration_v1/neutralization.json",
+      "allowed_difference": "ONLY_EXACT_GATE_PATCHES",
+      "function_patch_hashes": [
+        {
+          "function": "public.create_founder_invite_for_sales_lead",
+          "before": "1e4b1eabd97d8994b90b57e901213bcc85011644ee4bccb880e25f49c0857bd2",
+          "after": "e6c2e8149386a92732d44c7a11e1b2c439e3f2332ae19b4b8c53ae3255f3656d",
+          "remainder": "06ba079fef37ac42df4a0223cf7ecfab0449875a2e91d90303b5fc442446421a"
+        },
+        {
+          "function": "public.create_founder_test_invite",
+          "before": "877ef71e400985f31ea5b9d652f025e2ee6a43787fc46cd68d52ed29b7088ba8",
+          "after": "1c6c7074e67014a241feec53cd1ccb77115cb5edb7d41f9e5468b7da35b0dd9b",
+          "remainder": "8e21ee8a4f27c3e1da7148fab23aa33a39a322442ead8dcf5221516a8e82116e"
+        },
+        {
+          "function": "public.rotate_founder_invite_token",
+          "before": "1e4b1eabd97d8994b90b57e901213bcc85011644ee4bccb880e25f49c0857bd2",
+          "after": "e6c2e8149386a92732d44c7a11e1b2c439e3f2332ae19b4b8c53ae3255f3656d",
+          "remainder": "c626d5c67996851ac5339251d2fb8c0394f9346c6cbd29c60c144bd76e651675"
+        },
+        {
+          "function": "public.revoke_founder_invite",
+          "before": "1e4b1eabd97d8994b90b57e901213bcc85011644ee4bccb880e25f49c0857bd2",
+          "after": "e6c2e8149386a92732d44c7a11e1b2c439e3f2332ae19b4b8c53ae3255f3656d",
+          "remainder": "e9312f46e43b7be59ad5059084b471a7fbd168171d51b31a315d71cc6e880c49"
+        }
+      ],
+      "blanket_function_body_allowance": false,
+      "grant_or_signature_difference_allowed": false
+    }
+  ]
+}

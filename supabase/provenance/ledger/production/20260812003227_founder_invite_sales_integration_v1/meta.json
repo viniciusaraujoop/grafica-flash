@@ -60,9 +60,16 @@
   ],
   "raw_bytes": 17252,
   "redacted": true,
-  "replay_form_selection": null,
-  "replay_status": "MIGRATION_OWNER_DECISION_REQUIRED",
+  "replay_form_selection": "NEUTRALIZED",
+  "replay_status": "PREPARED_STATIC_VERIFIED_NOT_RUNTIME_CERTIFIED",
   "agent4_review_required": true,
   "executable": false,
-  "blocker": "Production owner-specific email is part of four authorization function bodies. Committing that identity or replacing it requires explicit owner/security choice; replacement alters function semantics/signature. No replay form emitted."
+  "staged_replay_form": "supabase/replay-forms/production/20260812003227_founder_invite_sales_integration_v1.sql",
+  "replay_form_body_sha256": "a77b758c2e9d693f3108b19a5a73b61b0b3637476557e592bbce972f3139a432",
+  "replay_form_sha256": "49aa1e62166eac75b2c016ab1a15c46347d2bb5b1e2d91e197e5ea74d36a6b96",
+  "neutralization_classification": "SECURITY_REQUIRED_DIFFERENCE",
+  "owner_decision_reference": "supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json",
+  "security_requirements_reference": "supabase/provenance/replay/P3_OWNER_SECURITY_DECISION.json",
+  "historical_archive_sha256": "e655af3e2871b96dab7a3c88dff0f86726098e2da5250a4789dc04adf9f86ad9",
+  "historical_record_unchanged": true
 }

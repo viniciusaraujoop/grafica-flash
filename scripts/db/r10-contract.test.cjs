@@ -15,13 +15,13 @@ test('plan covers 71 source files and declares exactly 51 + 4 identities', () =>
   assert.equal(p.plan.pending_migration_set.length, 4);
 });
 test('M1A/M1B Git bytes and working content remain pinned', () => assert.equal(c.immutable().m1.length, 4));
-test('50 prepared forms, three neutralizations and explicit row30 dependency', () => {
+test('P3: 51 prepared forms, four neutralizations and approved row30 mapping', () => {
   const rows = c.plan().index.rows;
   assert.equal(rows.filter(r => r.category === 'VERBATIM_LEDGER').length, 47);
-  assert.equal(rows.filter(r => r.category === 'NEUTRALIZED').length, 3);
-  assert.equal(rows.filter(r => r.staged_replay_file).length, 50);
-  assert.equal(rows[29].staged_replay_file, null);
-  assert.equal(rows[29].status, 'MIGRATION_OWNER_DECISION_REQUIRED');
+  assert.equal(rows.filter(r => r.category === 'NEUTRALIZED').length, 4);
+  assert.equal(rows.filter(r => r.staged_replay_file).length, 51);
+  assert.equal(rows[29].category, 'NEUTRALIZED');
+  assert.equal(rows[29].status, 'PREPARED_STATIC_VERIFIED_NOT_RUNTIME_CERTIFIED');
 });
 test('uncanonicalized active directory is rejected, not mislabeled PASS', () => assert.throws(() => c.activeDirectory(), /ACTIVE_DIRECTORY_NOT_CANONICAL/));
 test('secret scanner decodes opaque catalog and emits no matched values', () => assert.equal(c.secretScan().findings, 0));
