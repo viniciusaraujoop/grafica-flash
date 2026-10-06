@@ -1,0 +1,98 @@
+{
+  "kind": "PRELIMINARY_DERIVATION_DECISION_MATRIX",
+  "status": "STOPPED_AT_FRONTIER_DECISION_REQUIRED",
+  "complete_frontier_matrix": false,
+  "candidate_materialized": false,
+  "materialized_frontier_objects": 0,
+  "base_head": "8e5cc45839c3ffb38f141b522b51afb531ec4a21",
+  "frozen_signature_sha256": "affd3c4f7a5155fcbedb9bcf9999477c2e3275a492710fd2859b98ba88f82be9",
+  "ordered_ledger_sha256": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "method": "Reverse schema effects, distinguish required existence from recoverable definition. No schema snapshot copied into executable SQL.",
+  "rows": [
+    {
+      "identity": "public.marketplace_payment_settings",
+      "type": "TABLE",
+      "classification": "FRONTIER_REQUIRED",
+      "reason": "Ledger #1 performs unconditional ALTER TABLE and indexes; it does not create this relation.",
+      "first_dependent_ledger": "20260723210120_checkout_asaas_pix_payout_grafica_flash",
+      "historical_evidence": "supabase/provenance/git-history/20260706_marketplace_mercado_pago_split.sql:26",
+      "production_signature_evidence": "columns and relations: public.marketplace_payment_settings; is_active default=false",
+      "modified_later": true,
+      "not_created_by_ledger_reason": "The 51 explicit replay CREATE TABLE declarations do not define this table.",
+      "excluded_effects": "Historical owner/auth DML and all tenant/payment/provider configuration rows; ledger #1 added columns and indexes must not be duplicated.",
+      "definition_selection": "NOT_MATERIALIZED_GLOBAL_DERIVATION_GATE"
+    },
+    {
+      "identity": "public.payment_payouts",
+      "type": "TABLE",
+      "classification": "FRONTIER_REQUIRED",
+      "reason": "Ledger #1 unconditionally alters the table and indexes marketplace_payment_id and provider/provider_payout_id.",
+      "first_dependent_ledger": "20260723210120_checkout_asaas_pix_payout_grafica_flash",
+      "historical_evidence": "supabase/provenance/git-history/20260723_migracao_gradual_asaas_orcaly.sql:211",
+      "production_signature_evidence": "columns, indexes and relations: public.payment_payouts",
+      "modified_later": true,
+      "not_created_by_ledger_reason": "The 51 explicit replay CREATE TABLE declarations do not define this table.",
+      "definition_selection": "NOT_MATERIALIZED_GLOBAL_DERIVATION_GATE"
+    },
+    {
+      "identity": "public.companies",
+      "type": "TABLE",
+      "classification": "FRONTIER_REQUIRED",
+      "reason": "Historical payment-settings DDL references companies(id); ledger #3 requires the table for FK creation. Only schema, never company rows.",
+      "first_dependent_ledger": "20260728173219_orcaly_marketplace_stock_reservations",
+      "historical_evidence": "supabase/provenance/git-history/20260706_marketplace_mercado_pago_split.sql:28; prior archive ALTER TABLE statements establish existence, not a full original bootstrap",
+      "production_signature_evidence": "relations, columns and PK/FK metadata: public.companies",
+      "modified_later": true,
+      "not_created_by_ledger_reason": "The 51 explicit replay CREATE TABLE declarations do not define this table.",
+      "definition_selection": "NOT_MATERIALIZED_GLOBAL_DERIVATION_GATE"
+    },
+    {
+      "identity": "public.subscription_events",
+      "type": "TABLE",
+      "classification": "FRONTIER_REQUIRED",
+      "reason": "Ledger #2 unconditionally indexes provider/provider_event_id; it cannot create the relation from an empty schema.",
+      "first_dependent_ledger": "20260723221339_subscription_webhook_unified",
+      "historical_evidence": "supabase/provenance/ledger/production/20260723221339_subscription_webhook_unified/ledger.sql; no CREATE source selected",
+      "production_signature_evidence": "columns, constraints and relations: public.subscription_events",
+      "modified_later": true,
+      "not_created_by_ledger_reason": "The 51 explicit replay CREATE TABLE declarations do not define this table.",
+      "definition_selection": "NOT_MATERIALIZED_GLOBAL_DERIVATION_GATE"
+    },
+    {
+      "identity": "public.plan_payments",
+      "type": "TABLE",
+      "classification": "FRONTIER_REQUIRED",
+      "reason": "Ledger #2 unconditionally creates three indexes on existing payment/provider columns.",
+      "first_dependent_ledger": "20260723221339_subscription_webhook_unified",
+      "historical_evidence": "supabase/provenance/git-history/20260628_orcaly_consolidado.sql:103",
+      "production_signature_evidence": "columns, constraints and relations: public.plan_payments",
+      "modified_later": true,
+      "not_created_by_ledger_reason": "The 51 explicit replay CREATE TABLE declarations do not define this table.",
+      "definition_selection": "NOT_MATERIALIZED_GLOBAL_DERIVATION_GATE"
+    },
+    {
+      "identity": "public.can_manage_company(uuid)",
+      "type": "FUNCTION",
+      "classification": "UNKNOWN",
+      "required_existence": "FRONTIER_REQUIRED",
+      "decision": "FRONTIER_DECISION_REQUIRED",
+      "reason": "Ledger #7 unconditionally moves this existing function, then CREATE OR REPLACE overwrites its body. Required existence is proven; pre-ledger authorization semantics are not determined by the frozen head.",
+      "first_dependent_ledger": "20260728182610_orcaly_security_definer_functions",
+      "historical_evidence": "supabase/provenance/ledger/production/20260728182610_orcaly_security_definer_functions/ledger.sql; scoped full-ref Git searches found no matching earlier public CREATE declaration, not an exhaustive proof of absence",
+      "production_signature_evidence": "functions: orcaly_private.can_manage_company(p_company_id uuid); final definition SHA-256 cb2d03e987472375a555c3a4b4ffa99160b090e16aa8264ff43e2b03c457e7b5",
+      "modified_later": true,
+      "not_created_by_ledger_reason": "ALTER FUNCTION SET SCHEMA requires the PUBLIC identity to exist before the later private CREATE OR REPLACE; creating only the head private identity would not satisfy it.",
+      "ledger_replay_sha256": "c8d4bf2324a4c879ff61a340d4055b70c09ead6f17451caa8dd4f494a65843a8",
+      "preimage_models_not_implemented": [
+        "Engineered fail-closed deny-all body with the required signature; ledger #7 later replaces it. This would be a deliberate stub, not historical evidence.",
+        "Engineered public-schema adaptation of the final authorization predicate, with helper dependencies reversed. This would move the later policy earlier, not prove original semantics."
+      ],
+      "why_material": "Before ledger #7 the two models have different authorization behavior. The overwrite discards that difference; final-body equality alone cannot select the intended pre-ledger security model.",
+      "definition_selection": "NONE_PENDING_AGENT_2_AND_MIGRATION_OWNER_REVIEW"
+    }
+  ],
+  "not_classified_yet": "Remaining catalog objects and dependency closure; no complete/minimal frontier claim.",
+  "platform_boundary": "Platform-managed auth/storage/realtime/graphql/vault/cron definitions and roles are not frontier-owned. No platform definitions have been recreated.",
+  "data_boundary": "No business rows, auth identities, owners, production configuration, secrets or cron schedules have been materialized.",
+  "runtime": "NOT_EXECUTED"
+}

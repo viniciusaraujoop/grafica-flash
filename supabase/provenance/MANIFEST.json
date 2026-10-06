@@ -3,7 +3,7 @@
   "base_main": "9611d195290247694ad60d5aa2638ac8b96ecefb",
   "deterministic_order": "ASCII/codepoint path order",
   "hash_algorithm": "SHA-256 UTF-8 bytes",
-  "tree_digest": "95244302986dff8fdb0466ddab8ce0c73ccbdc613dedc2a7716df8792ab398d5",
+  "tree_digest": "061fdcadcc9cf499b70579eef83e449dd4a87874ca635579379d362f71c604a1",
   "self_excluded": true,
   "entries": [
     {
@@ -43,8 +43,18 @@
     },
     {
       "path": "supabase/provenance/frontier/DERIVATION_STATUS.json",
-      "sha256": "3009b454021e5cdf4109f6165dc9894fb63e855977645d6e6d5aff281328d164",
-      "bytes": 660
+      "sha256": "a402b569dcc7000836ba2749bb567928f8b603af8484b52bcc0da7ce44073e23",
+      "bytes": 1272
+    },
+    {
+      "path": "supabase/provenance/frontier/FRONTIER_DECISION_REQUIRED.md",
+      "sha256": "8415e09a93af8be3050ed564c5b436a8366a561a447438d77a02aaab04a8735b",
+      "bytes": 3866
+    },
+    {
+      "path": "supabase/provenance/frontier/FRONTIER_OBJECT_MATRIX.json",
+      "sha256": "ef1d8e6f094346e508da0cfb8aac18c6449ee789b06c5c336839ed399d7dbc2c",
+      "bytes": 7258
     },
     {
       "path": "supabase/provenance/git-history/20260628_notificacoes_inteligentes.sql",
