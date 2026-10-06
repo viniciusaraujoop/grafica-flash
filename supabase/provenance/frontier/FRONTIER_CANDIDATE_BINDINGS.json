@@ -1,0 +1,16 @@
+{
+  "kind": "FRONTIER_CANDIDATE_FILE_BINDINGS",
+  "status": "CANDIDATE_NOT_RUNTIME_CERTIFIED",
+  "files": [
+    {
+      "path": "supabase/frontier/production_base_frontier.sql",
+      "sha256": "88f491814a1e57e5558c3cb2756d7437c342c6c4a83707fdc02c3bcd9b1b8c17",
+      "bytes": 205612
+    },
+    {
+      "path": "supabase/frontier/FRONTIER.json",
+      "sha256": "55f38330bf2ee71bf62d347e93b1af4f56cc186dea42f0f9c05cb6d8c5f9bb2b",
+      "bytes": 2271
+    }
+  ]
+}

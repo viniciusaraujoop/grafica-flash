@@ -63,7 +63,7 @@ test('STATIC_VERIFIED: public identity moves before compatible replacement, no D
   assert.equal(plan.status, 'STATIC_VERIFIED_RUNTIME_PENDING');
   assert.ok(rows.slice(0, 6).every(r => !c.read(r.staged_replay_file).toString().includes('can_manage_company')));
 });
-test('STATIC_VERIFIED: new admin preimage gate evidenced; approved decision not generalized', () => {
+test('STATIC_VERIFIED: admin gate explicitly resolved, other six bodies are not stubbed', () => {
   assert.match(ledger7, /alter function public\.is_orcaly_admin\(\)\n  set schema orcaly_private;/);
   assert.ok(!/create(?: or replace)? function [\w.]*is_orcaly_admin/i.test(ledger7));
   assert.ok(ledger7.includes('or orcaly_private.is_orcaly_admin()'));
@@ -71,22 +71,20 @@ test('STATIC_VERIFIED: new admin preimage gate evidenced; approved decision not 
   assert.deepEqual(declarations.map(r => r.ordered_position), [26]);
   const matrix = c.json(prefix + 'FRONTIER_OBJECT_MATRIX.json');
   const gate = matrix.rows.find(r => r.identity === 'public.is_orcaly_admin()');
-  assert.equal(gate.decision, 'FRONTIER_DECISION_REQUIRED');
-  assert.equal(gate.stub_emitted, false);
-  assert.equal(gate.authoritative_later_replacements[0].ordered_position, 26);
-  assert.equal(matrix.rows.find(r => r.identity === 'public.can_manage_company(uuid)').decision, 'RESOLVED_STRUCTURAL_FAIL_CLOSED_PREIMAGE');
-  assert.equal(matrix.rows.filter(r => r.decision === 'FRONTIER_DECISION_REQUIRED').length, 1);
+  assert.match(gate.selection, /Explicit Founder-provided Agent 2/);
+  assert.equal(matrix.other_preimage_decisions_required, 0);
+  assert.equal(matrix.selected_preimage_count, 2);
 });
-test('STATIC_VERIFIED: incomplete frontier stays blocked, P3 and certified migrations unchanged', () => {
+test('STATIC_VERIFIED: candidate is not runtime-certified, P3 and certified migrations unchanged', () => {
   const d = c.json(prefix + 'DERIVATION_STATUS.json');
   assert.equal(d.entry_30_status, 'CLOSED_BY_P3');
-  assert.equal(d.candidate_materialized, false);
-  assert.equal(d.frontier_object_count, 0);
-  assert.equal(d.other_preimage_decisions_required, 1);
-  assert.ok(!d.blockers.some(x => x.includes('choose') && x.includes('can_manage_company')));
+  assert.equal(d.candidate_materialized, true);
+  assert.equal(d.frontier_object_count, 561);
+  assert.equal(d.other_preimage_decisions_required, 0);
+  assert.deepEqual(d.blockers, []);
   assert.equal(d.fixed_point, 'NOT_EXECUTED');
-  assert.equal(c.immutable().frontier_sha256, null);
-  for (const p of ['supabase/frontier/production_base_frontier.sql', 'supabase/frontier/FRONTIER.json']) assert.equal(fs.existsSync(path.join(c.ROOT, p)), false);
+  assert.equal(c.immutable().frontier_sha256, c.sha(c.read('supabase/frontier/production_base_frontier.sql')));
+  for (const p of ['supabase/frontier/production_base_frontier.sql', 'supabase/frontier/FRONTIER.json']) assert.equal(fs.existsSync(path.join(c.ROOT, p)), true);
   for (const r of rows) {
     const before = cp.execFileSync('git', ['-C', c.ROOT, 'show', checkpoint + ':' + r.staged_replay_file]);
     assert.deepEqual(c.read(r.staged_replay_file), before);

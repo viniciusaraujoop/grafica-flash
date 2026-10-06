@@ -40,7 +40,11 @@ test('exact 51 production forms only, immutable M1 pins, manifest and decoded pr
   assert.ok(rows.every(row => row.version < '20260929211421'));
   assert.equal(c.inspectText(s.frozen().text).length,0);
 });
-test('missing frontier fails closed; preparation cannot fabricate one', () => assert.throws(() => r.frontier(), /FRONTIER_NOT_DERIVED/));
+test('candidate frontier hash/metadata can be inspected without executing runtime', () => {
+  const candidate = r.frontier();
+  assert.equal(candidate.sha256, c.json('supabase/frontier/FRONTIER.json').sha256);
+  assert.equal(c.json('supabase/frontier/FRONTIER.json').derivation_status, 'CANDIDATE_NOT_RUNTIME_CERTIFIED');
+});
 test('64-bit catalog numeric values remain exact, strings unchanged', () => {
   assert.notDeepEqual(s.lossless('{"n":9223372036854775807}'),s.lossless('{"n":9223372036854775806}'));
   assert.equal(s.lossless('{"s":"123 \\\" text"}').s,'123 " text');

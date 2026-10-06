@@ -1,0 +1,93 @@
+{
+  "kind": "STATIC_POLICY_OID_CONTINUITY_PLAN",
+  "status": "STATIC_VERIFIED_RUNTIME_PENDING",
+  "selected_fragment": "supabase/provenance/frontier/IS_ORCALY_ADMIN_PREIMAGE.sql",
+  "selected_fragment_sha256": "2ced3605325918299307d7c01784c8b61e51cdd863b34ac35ae8064e7fe3ba1c",
+  "frontier_policy_count": 2,
+  "ledger_created_policy_count": 1,
+  "policies": [
+    {
+      "frozen": {
+        "cmd": "ALL",
+        "qual": "(orcaly_private.is_company_owner(company_id) OR orcaly_private.is_orcaly_admin())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "company_members",
+        "permissive": "PERMISSIVE",
+        "policyname": "Dono gerencia membros",
+        "schemaname": "public",
+        "with_check": "(orcaly_private.is_company_owner(company_id) OR orcaly_private.is_orcaly_admin())"
+      },
+      "frontier": {
+        "cmd": "ALL",
+        "qual": "(public.is_company_owner(company_id) OR public.is_orcaly_admin())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "company_members",
+        "permissive": "PERMISSIVE",
+        "policyname": "Dono gerencia membros",
+        "schemaname": "public",
+        "with_check": "(public.is_company_owner(company_id) OR public.is_orcaly_admin())"
+      },
+      "classification": "FRONTIER_REQUIRED"
+    },
+    {
+      "frozen": {
+        "cmd": "SELECT",
+        "qual": "(orcaly_private.is_company_owner(company_id) OR orcaly_private.is_company_member(company_id) OR orcaly_private.is_orcaly_admin())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "company_members",
+        "permissive": "PERMISSIVE",
+        "policyname": "Dono gerente e admin veem membros",
+        "schemaname": "public",
+        "with_check": null
+      },
+      "frontier": {
+        "cmd": "SELECT",
+        "qual": "(public.is_company_owner(company_id) OR public.is_company_member(company_id) OR public.is_orcaly_admin())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "company_members",
+        "permissive": "PERMISSIVE",
+        "policyname": "Dono gerente e admin veem membros",
+        "schemaname": "public",
+        "with_check": null
+      },
+      "classification": "FRONTIER_REQUIRED"
+    }
+  ],
+  "excluded": [
+    {
+      "frozen": {
+        "cmd": "SELECT",
+        "qual": "orcaly_private.is_orcaly_admin()",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "admin_users",
+        "permissive": "PERMISSIVE",
+        "policyname": "Admins veem admin users",
+        "schemaname": "public",
+        "with_check": null
+      },
+      "classification": "LEDGER_CREATED",
+      "ordered_position": 40
+    }
+  ],
+  "continuity": [
+    "Create PUBLIC constant-false identity once; create both company_members policies bound to that OID.",
+    "#7 moves SAME OID into PRIVATE; body remains FALSE through #25.",
+    "#26 CREATE OR REPLACE provides authoritative body on SAME OID; no DROP or policy rewrite."
+  ],
+  "architecture_findings": {
+    "pre_26_behavioral_dependency": "NONE",
+    "migrations_1_to_25_require_true_admin_result": false,
+    "indirect_can_manage_company_execution_before_26": "NONE",
+    "source": "Founder-provided Agent 2 resolution in current attached request; not a runtime claim"
+  }
+}

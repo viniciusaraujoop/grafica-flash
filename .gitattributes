@@ -4,3 +4,4 @@
 # EOF blank lines and the single-space prefix on blank context lines.
 supabase/provenance/** -text whitespace=-blank-at-eof,-blank-at-eol
 supabase/replay-forms/** -text whitespace=-blank-at-eof
+supabase/frontier/** -text whitespace=-blank-at-eof,-blank-at-eol

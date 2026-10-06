@@ -1,6 +1,6 @@
 {
   "architecture": "LEDGER-MIRROR + OUT-OF-BAND PRE-LEDGER FRONTIER",
-  "status": "BLOCKED_NEW_FRONTIER_DECISION_REQUIRED",
+  "status": "CANDIDATE_NOT_RUNTIME_CERTIFIED",
   "engineered_not_historical": true,
   "first_production_version": "20260723210120",
   "frozen_production_signature": "affd3c4f7a5155fcbedb9bcf9999477c2e3275a492710fd2859b98ba88f82be9",
@@ -11,16 +11,14 @@
     18,
     30
   ],
-  "input_checkpoint": "1bae161ef79415f2932bf9ad3018dfcfb80096d8",
+  "input_checkpoint": "293660c20714b51c616e3af1841a6aede82b1124",
   "entry_30_status": "CLOSED_BY_P3",
-  "candidate_materialized": false,
-  "frontier_object_count": 0,
+  "candidate_materialized": true,
+  "frontier_object_count": 561,
   "decision_matrix": "supabase/provenance/frontier/FRONTIER_OBJECT_MATRIX.json",
-  "decision_evidence": "supabase/provenance/frontier/RESUME_DECISION_EVIDENCE.md",
-  "agent2_architecture_escalation_required": true,
-  "blockers": [
-    "FRONTIER_DECISION_REQUIRED: public.is_orcaly_admin() is required by #7, not overwritten until #26, and referenced by #7 can_manage_company and company_members policies in the interim. No approved preimage selection or proven full pre-#26 behavioral unobservability; can_manage_company stub authorization must not be generalized."
-  ],
+  "decision_evidence": "supabase/provenance/frontier/RESUME_AFTER_ADMIN_DECISION.md",
+  "agent2_architecture_escalation_required": false,
+  "blockers": [],
   "application_scope": [
     "api",
     "orcaly_private",
@@ -29,16 +27,25 @@
   "platform_internals_recreation": false,
   "resolved_decisions": [
     {
+      "identity": "ledger #30",
+      "decision": "CLOSED_BY_P3"
+    },
+    {
       "identity": "public.can_manage_company(p_company_id uuid)",
       "decision": "STRUCTURAL_FAIL_CLOSED_PREIMAGE",
-      "fragment": "supabase/provenance/frontier/CAN_MANAGE_COMPANY_PREIMAGE.sql",
       "historical_body": "UNKNOWN"
     },
     {
-      "identity": "ledger #30",
-      "decision": "CLOSED_BY_P3"
+      "identity": "public.is_orcaly_admin()",
+      "decision": "STRUCTURAL_FAIL_CLOSED_PREIMAGE",
+      "historical_body": "UNKNOWN"
     }
   ],
-  "selected_preimage_count": 1,
-  "other_preimage_decisions_required": 1
+  "selected_preimage_count": 2,
+  "other_preimage_decisions_required": 0,
+  "frontier_sql": "supabase/frontier/production_base_frontier.sql",
+  "frontier_metadata": "supabase/frontier/FRONTIER.json",
+  "frontier_sha256": "88f491814a1e57e5558c3cb2756d7437c342c6c4a83707fdc02c3bcd9b1b8c17",
+  "agent4_review_required": true,
+  "production_signature_match": "NOT_EXECUTED"
 }

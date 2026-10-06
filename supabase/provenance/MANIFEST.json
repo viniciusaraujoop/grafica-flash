@@ -3,7 +3,7 @@
   "base_main": "9611d195290247694ad60d5aa2638ac8b96ecefb",
   "deterministic_order": "ASCII/codepoint path order",
   "hash_algorithm": "SHA-256 UTF-8 bytes",
-  "tree_digest": "1e772802a5cec3d61a0ee5574ab22358dfbec62ef265007f7079a5545644e69e",
+  "tree_digest": "5a0d3b6d68ceece55a5ea94bb73581c2e2d7fb825d4a1a9bd296e05d26c57fb7",
   "self_excluded": true,
   "entries": [
     {
@@ -13,8 +13,8 @@
     },
     {
       "path": "supabase/provenance/IMMUTABLE_HASHES.json",
-      "sha256": "da8572793c3243b18d44880f783d682e21f5bd49eb9cb6b8c43262691c3969ce",
-      "bytes": 1154
+      "sha256": "82214fe2aa3acd75f1a43e95696f2443f6ca541fe46d232ea6db0cb080b659f1",
+      "bytes": 1228
     },
     {
       "path": "supabase/provenance/README.md",
@@ -53,8 +53,13 @@
     },
     {
       "path": "supabase/provenance/frontier/DERIVATION_STATUS.json",
-      "sha256": "0a95c537ade068d2ce3799151e7d9b5a6ee6542ffbd5bb67b9096f56e7912457",
-      "bytes": 1693
+      "sha256": "fa6c5ef336acebdd734feafdf16d8d184d6f7a2a2d9a0749eb8fd1d1877347d6",
+      "bytes": 1715
+    },
+    {
+      "path": "supabase/provenance/frontier/FRONTIER_CANDIDATE_BINDINGS.json",
+      "sha256": "cd6295d749dd19d8a0252252314c041780bbe36435f7536be427bc485ae93c0d",
+      "bytes": 462
     },
     {
       "path": "supabase/provenance/frontier/FRONTIER_DECISION_REQUIRED.md",
@@ -63,13 +68,33 @@
     },
     {
       "path": "supabase/provenance/frontier/FRONTIER_OBJECT_MATRIX.json",
-      "sha256": "81b6e61771f8f98df52b1e4e63606802b246db151fc8a7dd280d42a43d098ddf",
-      "bytes": 15663
+      "sha256": "7eb0be13836ef1fc357bdcb09b2e9607acc7ffae1e3353dea337652d31776db7",
+      "bytes": 436488
+    },
+    {
+      "path": "supabase/provenance/frontier/IS_ORCALY_ADMIN_POLICY_PLAN.json",
+      "sha256": "2f3d41be1a2dd6dad0882517e8788750b27272ff2fa1c7b1f751b6e7dc25eb82",
+      "bytes": 3305
+    },
+    {
+      "path": "supabase/provenance/frontier/IS_ORCALY_ADMIN_PREIMAGE.sql",
+      "sha256": "2ced3605325918299307d7c01784c8b61e51cdd863b34ac35ae8064e7fe3ba1c",
+      "bytes": 712
+    },
+    {
+      "path": "supabase/provenance/frontier/RESUME_AFTER_ADMIN_DECISION.md",
+      "sha256": "2b641fc60676c04f9e5856aa8ac69bf1df98a7891779bd3a876211db028df613",
+      "bytes": 5947
     },
     {
       "path": "supabase/provenance/frontier/RESUME_DECISION_EVIDENCE.md",
-      "sha256": "274d4c4cf8a90e881bbc05f029524c77dda82db6ac65cf6f3e030bc37c982c63",
-      "bytes": 5466
+      "sha256": "63a787e46ca3ffd741365350437a469084313e5fdc52ce531f051e7f8973704c",
+      "bytes": 5707
+    },
+    {
+      "path": "supabase/provenance/frontier/STATIC_VALIDATION_RESULTS.json",
+      "sha256": "7586c35a4ea1f51769bd0c3ce95b8acdc034c8366280759ca4c4aa7e8a1c8055",
+      "bytes": 1177
     },
     {
       "path": "supabase/provenance/git-history/20260628_notificacoes_inteligentes.sql",

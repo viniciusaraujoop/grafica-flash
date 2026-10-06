@@ -22,6 +22,6 @@
       "sha256": "8ad806eaf22223c03fc1543526aae6b7fe43de613ef305de1738425374c297f8"
     }
   ],
-  "frontier_sha256": null,
-  "frontier_pin_status": "BLOCKED_NOT_DERIVED"
+  "frontier_sha256": "88f491814a1e57e5558c3cb2756d7437c342c6c4a83707fdc02c3bcd9b1b8c17",
+  "frontier_pin_status": "CANDIDATE_NOT_RUNTIME_CERTIFIED"
 }

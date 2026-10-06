@@ -1,5 +1,9 @@
 # P4 resume: approved preimage selected; next dependency decision required
 
+> HISTORICAL CHECKPOINT ONLY. The is_orcaly_admin decision below is now explicitly
+> resolved by the next Founder/Agent 2 attachment. Current status and candidate
+> are recorded in RESUME_AFTER_ADMIN_DECISION.md and DERIVATION_STATUS.json.
+
 Input local checkpoint: `1bae161ef79415f2932bf9ad3018dfcfb80096d8`.
 Mode: LOCAL_REPOSITORY_ONLY. P3 remains CLOSED. No runtime was executed.
 
