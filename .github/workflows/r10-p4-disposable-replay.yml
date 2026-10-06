@@ -1,0 +1,79 @@
+name: R10 P4 — DISPOSABLE LOCAL RUNTIME ONLY — NOT PRODUCTION — NOT P7
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact authorized R10 commit SHA (manual execution only)
+        required: true
+        type: string
+  push:
+    branches: [reconcile/r10-production-base-canonicalization]
+    paths:
+      - .github/workflows/r10-p4-disposable-replay.yml
+      - scripts/db/p4/**
+      - supabase/frontier/**
+      - supabase/provenance/catalog/**
+      - supabase/provenance/replay/**
+      - supabase/replay-forms/production/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r10-p4-disposable-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  disposable-replay:
+    if: >-
+      github.repository == 'viniciusaraujoop/grafica-flash' &&
+      github.ref == 'refs/heads/reconcile/r10-production-base-canonicalization' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      R10_EXPECTED_SHA: ${{ inputs.expected_sha }}
+    steps:
+      - name: Checkout exact workflow commit without persistent credentials
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Node runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Fail closed on remote environment before installing tools
+        run: node scripts/db/p4/runtime.cjs --preflight
+      - name: Static harness contracts (not runtime certification)
+        run: node --test scripts/db/r10-contract.test.cjs scripts/db/r10-p3-static.test.cjs scripts/db/p4/runtime.test.cjs
+      - name: Install pinned public CLI release — no Supabase account or token
+        shell: bash
+        run: |
+          set -euo pipefail
+          r10_cli_dir="$(mktemp -d "$RUNNER_TEMP/r10-cli-XXXXXX")"
+          test -n "$r10_cli_dir"
+          case "$r10_cli_dir" in "$RUNNER_TEMP"/r10-cli-*) ;; *) exit 1 ;; esac
+          curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
+            https://github.com/supabase/cli/releases/download/v2.120.0/supabase_2.120.0_linux_amd64.tar.gz \
+            --output "$r10_cli_dir/cli.tar.gz"
+          printf '%s  %s\n' '7074584113aa00495beeac661c41fb09f1ddd0a483cd7333894b0d080086dc6e' "$r10_cli_dir/cli.tar.gz" | sha256sum --check --status
+          tar -xzf "$r10_cli_dir/cli.tar.gz" -C "$r10_cli_dir" supabase
+          test "$($r10_cli_dir/supabase --version)" = '2.120.0'
+          printf '%s\n' "$r10_cli_dir" >> "$GITHUB_PATH"
+      - name: Local Docker / isolated scratch Supabase / frontier / 51 forms ONLY
+        run: node scripts/db/p4/runtime.cjs
+      - name: Privacy gate for exact evidence directory — never upload CLI logs or config
+        id: safe_evidence
+        if: always()
+        run: node scripts/db/p4/artifacts.cjs
+      - name: Upload reviewed disposable evidence only
+        if: always() && steps.safe_evidence.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: r10-p4-local-only-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/r10-p4-evidence/*.json
+          if-no-files-found: error
+          retention-days: 14

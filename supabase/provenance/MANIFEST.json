@@ -3,7 +3,7 @@
   "base_main": "9611d195290247694ad60d5aa2638ac8b96ecefb",
   "deterministic_order": "ASCII/codepoint path order",
   "hash_algorithm": "SHA-256 UTF-8 bytes",
-  "tree_digest": "916387c44530d98dba2938631beec6d4fb2431df2560972036562e684d43ce49",
+  "tree_digest": "95244302986dff8fdb0466ddab8ce0c73ccbdc613dedc2a7716df8792ab398d5",
   "self_excluded": true,
   "entries": [
     {
@@ -25,6 +25,11 @@
       "path": "supabase/provenance/catalog/META.json",
       "sha256": "17adf9db82c922fec7bb1ccd3f1a50518698a89952f3421fc412bda1941987ac",
       "bytes": 874
+    },
+    {
+      "path": "supabase/provenance/catalog/PRODUCTION_BASE_SIGNATURE.lossless.redacted.json",
+      "sha256": "09b3989cd3b34c11aa04ba7dcb4522297a0a2bd80936812a018e543041633626",
+      "bytes": 280039
     },
     {
       "path": "supabase/provenance/catalog/PRODUCTION_BASE_SIGNATURE.redacted.json",
