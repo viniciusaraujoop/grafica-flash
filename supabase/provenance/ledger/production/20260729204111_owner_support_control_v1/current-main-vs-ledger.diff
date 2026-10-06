@@ -1,0 +1,420 @@
+# Redacted archived current-main representation vs authoritative redacted executed representation.
+# This is a content diff, not an assertion that whitespace differences change schema.
+diff --git a/supabase/provenance/git-history/20260729212519_owner_support_control_v1.sql b/supabase/provenance/ledger/production/20260729204111_owner_support_control_v1/ledger.sql
+index d98d4dd..43dea1d 100644
+--- a/supabase/provenance/git-history/20260729212519_owner_support_control_v1.sql
++++ b/supabase/provenance/ledger/production/20260729204111_owner_support_control_v1/ledger.sql
+@@ -1,7 +1,4 @@
+ -- ORCALY_OWNER_SUPPORT_CONTROL_V1
+--- Controle do dono, equipe de suporte e revisao financeira de indicacoes.
+--- Esta migration nao contem senhas nem outros segredos de autenticacao.
+-
+ begin;
+ 
+ alter table public.platform_admins
+@@ -21,8 +18,7 @@ set role = case
+   else 'admin'
+ end,
+ permissions = case
+-  when lower(role) in ('super_admin', 'owner')
+-    then '{"all":true}'::jsonb
++  when lower(role) in ('super_admin', 'owner') then '{"all":true}'::jsonb
+   else coalesce(permissions, '{}'::jsonb)
+ end,
+ updated_at = now();
+@@ -49,13 +45,9 @@ select
+     else 'admin'
+   end,
+   a.ativo,
+-  coalesce(
+-    nullif(trim(a.nome), ''),
+-    split_part(a.email, '@', 1)
+-  ),
++  coalesce(nullif(trim(a.nome), ''), split_part(a.email, '@', 1)),
+   case
+-    when lower(a.role) = 'super_admin'
+-      then '{"all":true}'::jsonb
++    when lower(a.role) = 'super_admin' then '{"all":true}'::jsonb
+     else coalesce(a.permissions, '{}'::jsonb)
+   end,
+   coalesce(nullif(trim(a.area), ''), 'Plataforma'),
+@@ -67,10 +59,7 @@ from public.admin_users a
+ left join auth.users u
+   on lower(u.email) = lower(a.email)
+ on conflict (email) do update
+-set user_id = coalesce(
+-      excluded.user_id,
+-      public.platform_admins.user_id
+-    ),
++set user_id = coalesce(excluded.user_id, public.platform_admins.user_id),
+     nome = excluded.nome,
+     role = excluded.role,
+     is_active = excluded.is_active,
+@@ -80,11 +69,7 @@ set user_id = coalesce(
+     updated_at = now();
+ 
+ create index if not exists platform_admins_role_active_idx
+-  on public.platform_admins (
+-    role,
+-    is_active,
+-    created_at desc
+-  );
++  on public.platform_admins (role, is_active, created_at desc);
+ 
+ alter table public.affiliate_referrals
+   add column if not exists review_status text not null default 'pending',
+@@ -97,36 +82,20 @@ begin
+   if not exists (
+     select 1
+     from pg_constraint
+-    where conname =
+-      'affiliate_referrals_review_status_check'
+-      and conrelid =
+-        'public.affiliate_referrals'::regclass
++    where conname = 'affiliate_referrals_review_status_check'
++      and conrelid = 'public.affiliate_referrals'::regclass
+   ) then
+     alter table public.affiliate_referrals
+-      add constraint
+-        affiliate_referrals_review_status_check
+-      check (
+-        review_status in (
+-          'pending',
+-          'approved',
+-          'rejected',
+-          'flagged'
+-        )
+-      );
++      add constraint affiliate_referrals_review_status_check
++      check (review_status in ('pending','approved','rejected','flagged'));
+   end if;
+ end;
+ $$;
+ 
+ update public.affiliate_referrals
+ set review_status = 'approved',
+-    reviewed_at = coalesce(
+-      reviewed_at,
+-      created_at
+-    ),
+-    reviewed_by = coalesce(
+-      reviewed_by,
+-      'migration'
+-    )
++    reviewed_at = coalesce(reviewed_at, created_at),
++    reviewed_by = coalesce(reviewed_by, 'migration')
+ where review_status = 'pending'
+   and created_at < now();
+ 
+@@ -141,20 +110,14 @@ create or replace function public.release_affiliate_commissions_admin()
+ returns integer
+ language plpgsql
+ security definer
+-set search_path =
+-  pg_catalog,
+-  public,
+-  orcaly_private
++set search_path = pg_catalog, public, orcaly_private
+ as $$
+ declare
+   changed integer;
+ begin
+   update public.affiliate_commissions c
+   set status = 'available',
+-      available_at = coalesce(
+-        c.available_at,
+-        now()
+-      ),
++      available_at = coalesce(c.available_at, now()),
+       updated_at = now()
+   from public.affiliate_profiles p,
+        public.affiliate_referrals r
+@@ -171,13 +134,10 @@ begin
+ end;
+ $$;
+ 
+-revoke all
+-on function public.release_affiliate_commissions_admin()
+-from public, anon, authenticated;
+-
+-grant execute
+-on function public.release_affiliate_commissions_admin()
+-to service_role;
++revoke all on function public.release_affiliate_commissions_admin()
++  from public, anon, authenticated;
++grant execute on function public.release_affiliate_commissions_admin()
++  to service_role;
+ 
+ create or replace function public.review_affiliate_referral_admin(
+   p_referral_id uuid,
+@@ -188,23 +148,15 @@ create or replace function public.review_affiliate_referral_admin(
+ returns jsonb
+ language plpgsql
+ security definer
+-set search_path =
+-  pg_catalog,
+-  public,
+-  orcaly_private
++set search_path = pg_catalog, public, orcaly_private
+ as $$
+ declare
+   referral_row public.affiliate_referrals%rowtype;
+   commission_row public.affiliate_commissions%rowtype;
+   next_status text;
+ begin
+-  if p_decision not in (
+-    'approved',
+-    'rejected',
+-    'flagged'
+-  ) then
+-    raise exception
+-      'Decisão de indicação inválida.';
++  if p_decision not in ('approved', 'rejected', 'flagged') then
++    raise exception 'Decisão de indicação inválida.';
+   end if;
+ 
+   select *
+@@ -214,8 +166,7 @@ begin
+   for update;
+ 
+   if not found then
+-    raise exception
+-      'Indicação não encontrada.';
++    raise exception 'Indicação não encontrada.';
+   end if;
+ 
+   select *
+@@ -228,13 +179,10 @@ begin
+     next_status := referral_row.status;
+ 
+     if referral_row.status = 'rejected' then
+-      if referral_row.first_payment_reference
+-        is not null then
++      if referral_row.first_payment_reference is not null then
+         next_status := 'qualified';
+-      elsif referral_row.trial_ends_at
+-        is not null
+-        and referral_row.trial_ends_at > now()
+-      then
++      elsif referral_row.trial_ends_at is not null
++        and referral_row.trial_ends_at > now() then
+         next_status := 'trial';
+       else
+         next_status := 'payment_pending';
+@@ -245,15 +193,8 @@ begin
+     set review_status = 'approved',
+         status = next_status,
+         reviewed_at = now(),
+-        reviewed_by =
+-          lower(trim(p_actor_email)),
+-        review_note = nullif(
+-          left(
+-            trim(coalesce(p_note, '')),
+-            500
+-          ),
+-          ''
+-        ),
++        reviewed_by = lower(trim(p_actor_email)),
++        review_note = nullif(left(trim(coalesce(p_note, '')), 500), ''),
+         rejected_at = null,
+         rejection_reason = null,
+         updated_at = now()
+@@ -261,16 +202,11 @@ begin
+ 
+     if commission_row.id is not null
+       and commission_row.status = 'hold'
+-      and commission_row.hold_until
+-        is not null
+-      and commission_row.hold_until <= now()
+-    then
++      and commission_row.hold_until is not null
++      and commission_row.hold_until <= now() then
+       update public.affiliate_commissions
+       set status = 'available',
+-          available_at = coalesce(
+-            available_at,
+-            now()
+-          ),
++          available_at = coalesce(available_at, now()),
+           updated_at = now()
+       where id = commission_row.id;
+     end if;
+@@ -286,15 +222,8 @@ begin
+     update public.affiliate_referrals
+     set review_status = 'flagged',
+         reviewed_at = now(),
+-        reviewed_by =
+-          lower(trim(p_actor_email)),
+-        review_note = nullif(
+-          left(
+-            trim(coalesce(p_note, '')),
+-            500
+-          ),
+-          ''
+-        ),
++        reviewed_by = lower(trim(p_actor_email)),
++        review_note = nullif(left(trim(coalesce(p_note, '')), 500), ''),
+         updated_at = now()
+     where id = p_referral_id;
+ 
+@@ -306,42 +235,29 @@ begin
+   end if;
+ 
+   if commission_row.id is not null
+-    and commission_row.status = 'processing'
+-  then
+-    raise exception
+-      'A indicação possui pagamento em processamento.';
++    and commission_row.status = 'processing' then
++    raise exception 'A indicação possui pagamento em processamento.';
+   end if;
+ 
+   if commission_row.id is not null
+-    and commission_row.status = 'paid'
+-  then
++    and commission_row.status = 'paid' then
+     update public.affiliate_profiles
+     set debt_balance =
+-          debt_balance +
+-          commission_row.commission_amount,
++          debt_balance + commission_row.commission_amount,
+         updated_at = now()
+     where id = commission_row.affiliate_id;
+   end if;
+ 
+   if commission_row.id is not null
+-    and commission_row.status not in (
+-      'reversed',
+-      'rejected'
+-    )
+-  then
++    and commission_row.status not in ('reversed', 'rejected') then
+     update public.affiliate_commissions
+     set status = 'reversed',
+         reversed_at = now(),
+-        reversal_reason = coalesce(
+-          nullif(
+-            left(
+-              trim(coalesce(p_note, '')),
+-              500
+-            ),
+-            ''
++        reversal_reason =
++          coalesce(
++            nullif(left(trim(coalesce(p_note, '')), 500), ''),
++            'Indicação recusada pela administração.'
+           ),
+-          'Indicação recusada pela administração.'
+-        ),
+         updated_at = now()
+     where id = commission_row.id;
+   end if;
+@@ -350,26 +266,14 @@ begin
+   set review_status = 'rejected',
+       status = 'rejected',
+       reviewed_at = now(),
+-      reviewed_by =
+-        lower(trim(p_actor_email)),
+-      review_note = nullif(
+-        left(
+-          trim(coalesce(p_note, '')),
+-          500
+-        ),
+-        ''
+-      ),
++      reviewed_by = lower(trim(p_actor_email)),
++      review_note = nullif(left(trim(coalesce(p_note, '')), 500), ''),
+       rejected_at = now(),
+-      rejection_reason = coalesce(
+-        nullif(
+-          left(
+-            trim(coalesce(p_note, '')),
+-            500
+-          ),
+-          ''
++      rejection_reason =
++        coalesce(
++          nullif(left(trim(coalesce(p_note, '')), 500), ''),
++          'Indicação recusada pela administração.'
+         ),
+-        'Indicação recusada pela administração.'
+-      ),
+       updated_at = now()
+   where id = p_referral_id;
+ 
+@@ -377,29 +281,17 @@ begin
+     'ok', true,
+     'decision', 'rejected',
+     'referral_id', p_referral_id,
+-    'commission_reversed',
+-      commission_row.id is not null
++    'commission_reversed', commission_row.id is not null
+   );
+ end;
+ $$;
+ 
+-revoke all
+-on function public.review_affiliate_referral_admin(
+-  uuid,
+-  text,
+-  text,
+-  text
+-)
+-from public, anon, authenticated;
+-
+-grant execute
+-on function public.review_affiliate_referral_admin(
+-  uuid,
+-  text,
+-  text,
+-  text
+-)
+-to service_role;
++revoke all on function public.review_affiliate_referral_admin(
++  uuid,text,text,text
++) from public, anon, authenticated;
++grant execute on function public.review_affiliate_referral_admin(
++  uuid,text,text,text
++) to service_role;
+ 
+ create or replace function public.list_affiliate_payout_accounts_admin()
+ returns table (
+@@ -415,10 +307,7 @@ returns table (
+ )
+ language sql
+ security definer
+-set search_path =
+-  pg_catalog,
+-  public,
+-  orcaly_private
++set search_path = pg_catalog, public, orcaly_private
+ as $$
+   select
+     a.affiliate_id,
+@@ -434,21 +323,16 @@ as $$
+   order by a.updated_at desc;
+ $$;
+ 
+-revoke all
+-on function public.list_affiliate_payout_accounts_admin()
+-from public, anon, authenticated;
+-
+-grant execute
+-on function public.list_affiliate_payout_accounts_admin()
+-to service_role;
++revoke all on function public.list_affiliate_payout_accounts_admin()
++  from public, anon, authenticated;
++grant execute on function public.list_affiliate_payout_accounts_admin()
++  to service_role;
+ 
+ comment on table public.platform_admins is
+   'Equipe interna do Orcaly. Owner possui controle total; support usa permissoes granulares.';
+-
+ comment on column public.platform_admins.permissions is
+   'Permissoes administrativas granulares. Senhas nunca sao armazenadas nesta tabela.';
+-
+ comment on column public.affiliate_referrals.review_status is
+-  'Revisao administrativa da elegibilidade antes da liberacao financeira.';
++  'Revisao administrativa da elegibilidade da indicacao antes da liberacao financeira.';
+ 
+ commit;

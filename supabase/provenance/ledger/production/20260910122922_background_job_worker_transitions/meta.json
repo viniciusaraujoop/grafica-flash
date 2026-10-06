@@ -1,0 +1,68 @@
+{
+  "production_version": "20260910122922",
+  "production_name": "background_job_worker_transitions",
+  "ordered_ledger_index": 49,
+  "statement_count": 1,
+  "raw_ledger_sha256": "3ded09df5d80ad83016c37dca586b3bfff660b1b118478ec7c0873356897833a",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "CANONICAL_MATCH",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260910122922_background_job_worker_transitions.sql",
+      "commit": "f1c89c80329b09af48e9b245fffde2eba4640ff4",
+      "blob_sha": "7ecd935bc35602ac69da0801b5dfba9f938f9cdc",
+      "sha256": "7b26c0f3802e84fda9852385ff880a088e9afd31def95189a646a5fa98a774a7",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "7ecd935bc35602ac69da0801b5dfba9f938f9cdc",
+      "file": "supabase/migrations/20260910122922_background_job_worker_transitions.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "db27bd8041557fdbc729bb889c01d14b3c69205d",
+      "file": "scripts/fixtures/wealth-queue-baseline.sql",
+      "similarity": 0.6061946902654868
+    },
+    {
+      "oid": "967d688f2a4f1b42a4a402c0218da5e6dfb4d6c6",
+      "file": "supabase/migrations/20260929225302_m1a_event_fabric_failure_settlement_due_guard.sql",
+      "similarity": 0.5089820359281437
+    },
+    {
+      "oid": "6ae0f786a975c2c9695dc6148ebf954fc25efe7f",
+      "file": "supabase/migrations/20260926164000_wealth_recurrence_clock.sql",
+      "similarity": 0.49760765550239233
+    },
+    {
+      "oid": "a6f047f4e31c96dc32c89c04b117ffe75539589f",
+      "file": "supabase/migrations/20260929211421_m1a_event_fabric_safety_contract.sql",
+      "similarity": 0.37540453074433655
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260910122922_background_job_worker_transitions.sql",
+    "historical_file": "supabase/migrations/20260910122922_background_job_worker_transitions.sql",
+    "target_identity": "supabase/migrations/20260910122922_background_job_worker_transitions.sql"
+  },
+  "divergence_notes": "Content comparison preserves quoted literals and ordered SQL tokens; comments/formatting/case of unquoted identifiers ignored. Catalog presence is corroboration, not proof of byte identity or historical DML effects.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "3ded09df5d80ad83016c37dca586b3bfff660b1b118478ec7c0873356897833a",
+  "REDACTED_HASH": "3ded09df5d80ad83016c37dca586b3bfff660b1b118478ec7c0873356897833a",
+  "REDACTION_REASON": [],
+  "raw_bytes": 3382,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "3ded09df5d80ad83016c37dca586b3bfff660b1b118478ec7c0873356897833a",
+  "replay_form_sha256": "0a1ad6928a6d5dc0c608343ce03e73e55c84636a6a8ce48d8b366faea7130ec3",
+  "staged_replay_form": "supabase/replay-forms/production/20260910122922_background_job_worker_transitions.sql"
+}

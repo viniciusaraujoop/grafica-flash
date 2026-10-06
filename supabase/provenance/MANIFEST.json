@@ -1,0 +1,1200 @@
+{
+  "format_version": 1,
+  "base_main": "9611d195290247694ad60d5aa2638ac8b96ecefb",
+  "deterministic_order": "ASCII/codepoint path order",
+  "hash_algorithm": "SHA-256 UTF-8 bytes",
+  "tree_digest": "616f7d899a5e9615a92113bd3bb38c19ca7ceff27c3b37c388fe0742219b5b15",
+  "self_excluded": true,
+  "entries": [
+    {
+      "path": "supabase/provenance/ACTIVE_DIRECTORY_PLAN.json",
+      "sha256": "224a0274c0a2307cf99d2b1b79086fac38c249b02b644dcae4438ac4dab87e72",
+      "bytes": 71937
+    },
+    {
+      "path": "supabase/provenance/IMMUTABLE_HASHES.json",
+      "sha256": "da8572793c3243b18d44880f783d682e21f5bd49eb9cb6b8c43262691c3969ce",
+      "bytes": 1154
+    },
+    {
+      "path": "supabase/provenance/README.md",
+      "sha256": "26f07adbd00d16b38bfde222a234ba69ec51f91a74ef8d2b747571928faeb94e",
+      "bytes": 708
+    },
+    {
+      "path": "supabase/provenance/catalog/META.json",
+      "sha256": "17adf9db82c922fec7bb1ccd3f1a50518698a89952f3421fc412bda1941987ac",
+      "bytes": 874
+    },
+    {
+      "path": "supabase/provenance/catalog/PRODUCTION_BASE_SIGNATURE.redacted.json",
+      "sha256": "f7b323e00ee59e57e2d54bfb4fe1bc90333f0acee58ed64974ff882f26af9865",
+      "bytes": 291816
+    },
+    {
+      "path": "supabase/provenance/catalog/SIGNATURE_QUERY.sql",
+      "sha256": "102e6dd76d0a9e62098fabccd7d9761f16c36f20e0aa9ade4ed4609d2d466dfb",
+      "bytes": 12796
+    },
+    {
+      "path": "supabase/provenance/frontier/DERIVATION_STATUS.json",
+      "sha256": "3009b454021e5cdf4109f6165dc9894fb63e855977645d6e6d5aff281328d164",
+      "bytes": 660
+    },
+    {
+      "path": "supabase/provenance/git-history/20260628_notificacoes_inteligentes.sql",
+      "sha256": "a48fb748a83240438628343f63e6b7ca9b51adeb84bdf146dd76d09cf564666e",
+      "bytes": 6331
+    },
+    {
+      "path": "supabase/provenance/git-history/20260628_operacao_inteligente.sql",
+      "sha256": "095a57c52c62e69f1071cb918b812486ad3ac765861d22d6b3b2072fee9b8306",
+      "bytes": 5830
+    },
+    {
+      "path": "supabase/provenance/git-history/20260628_orcaly_consolidado.sql",
+      "sha256": "d05c6eba0b45bb6fdf7d4167cd549a29031dac5ff26cb2528897dab7ec639608",
+      "bytes": 14201
+    },
+    {
+      "path": "supabase/provenance/git-history/20260628_pedidos_pro_v2.sql",
+      "sha256": "4c3878e8794588c84db769929468aa6f59eb469551d13e7f60af996e2832754a",
+      "bytes": 3364
+    },
+    {
+      "path": "supabase/provenance/git-history/20260628_pedidos_produtos_pro.sql",
+      "sha256": "2b25539e4fa05fbab652ddda1d71ec26d224c63216209b1373ecbd1a32ac6c32",
+      "bytes": 4590
+    },
+    {
+      "path": "supabase/provenance/git-history/20260630_fix_cupons_loading.sql",
+      "sha256": "2cb626a090cd56ea8fd70f8f12580c854ce0a0899d5c795bbd48000ad849d0cc",
+      "bytes": 1379
+    },
+    {
+      "path": "supabase/provenance/git-history/20260630_painel_whatsapp_pro.sql",
+      "sha256": "545335126826261875cd9c491b05f78cc77a11bb0ca036637317bac7565f84f4",
+      "bytes": 4189
+    },
+    {
+      "path": "supabase/provenance/git-history/20260630_pre_validacao_orcaly.sql",
+      "sha256": "65c43c360a7a50c8beb502414553a3ec1046855cbf50109a0ebb8aa429aa06cc",
+      "bytes": 11705
+    },
+    {
+      "path": "supabase/provenance/git-history/20260630_whatsapp_pedidos_status.sql",
+      "sha256": "ff9e01db1901ccd594af29a3a0fa17d20063040fd14b410390915ee4e4909403",
+      "bytes": 5715
+    },
+    {
+      "path": "supabase/provenance/git-history/20260701_cadastro_onboarding_inteligente.sql",
+      "sha256": "9c95b7f90bc6a6b1bab3b6385599f2ff0ebabdd7cec416a14e6008026e388f69",
+      "bytes": 1617
+    },
+    {
+      "path": "supabase/provenance/git-history/20260701_modulos_por_segmento_food_mvp.sql",
+      "sha256": "a93d03b877f3caca776e749d2897c9a7179170c138c4a47050d69f3d6a5740f4",
+      "bytes": 5560
+    },
+    {
+      "path": "supabase/provenance/git-history/20260702_sites_premium_segmentos.sql",
+      "sha256": "a4b767500e4c412b5ea3fdea52f58fe156119ee3babeae83aa48681261d4acd0",
+      "bytes": 2197
+    },
+    {
+      "path": "supabase/provenance/git-history/20260704_financeiro_base_seguro.sql",
+      "sha256": "bb69650ae3b97362653e1752061be4de4dc874f3f3dd11f90d1643d10c8be0c0",
+      "bytes": 9807
+    },
+    {
+      "path": "supabase/provenance/git-history/20260705_food_operacao_funcional.sql",
+      "sha256": "6cb6bdffa3933a8f95b6d6c97500fb86cf098528be4d7e7c019c8fa67232a8be",
+      "bytes": 17219
+    },
+    {
+      "path": "supabase/provenance/git-history/20260706_assinatura_pix_avulso.sql",
+      "sha256": "f8a47de7d7e683a5dea4efc9818b35bd2e29202280bea5a4f8db0e9f71fd090f",
+      "bytes": 3171
+    },
+    {
+      "path": "supabase/provenance/git-history/20260706_marketplace_checkout_cupons_segmentos.sql",
+      "sha256": "81830bbf3ff3e4299d45164b9a1030be450cb2d82857a72d3cac8209b602fcce",
+      "bytes": 13549
+    },
+    {
+      "path": "supabase/provenance/git-history/20260706_marketplace_food_checkout.sql",
+      "sha256": "bf69055166f4c179d8579e4e80e681300824ea642930050718e30f9a4e6176e7",
+      "bytes": 28010
+    },
+    {
+      "path": "supabase/provenance/git-history/20260706_marketplace_mercado_pago_split.sql",
+      "sha256": "d64b00e2bfbaa7f93c556c35321d841c54838a9d488062e1c114f23fb07b3c08",
+      "bytes": 8518
+    },
+    {
+      "path": "supabase/provenance/git-history/20260716_estabilizacao_orcaly_fases_2_a_12.sql",
+      "sha256": "add3bdc8ad01f53000810a4c0268237375bc4debb75363cf286dbe16e6c89e5e",
+      "bytes": 5386
+    },
+    {
+      "path": "supabase/provenance/git-history/20260717_subscription_trial_cancellation.sql",
+      "sha256": "5c28b765dff7d2d7219a452e1ac02be53a3cc4182eee0d4ae81491c1ae8fdc08",
+      "bytes": 3876
+    },
+    {
+      "path": "supabase/provenance/git-history/20260723213000_checkout_asaas_pix_payout.sql",
+      "sha256": "45a6115b534f319f8453722cbe97ace85d5cda5685570b827ec772fa3171c2c7",
+      "bytes": 1869
+    },
+    {
+      "path": "supabase/provenance/git-history/20260723234500_subscription_webhook_unified.sql",
+      "sha256": "c38bd4ff66533b73c1475b99bfb8ae26a74b41cd578a486a755b0860f4f39cd8",
+      "bytes": 664
+    },
+    {
+      "path": "supabase/provenance/git-history/20260723_migracao_gradual_asaas_orcaly.sql",
+      "sha256": "7a302c54a3c45ec54a0e5090455e5a83fa6a425ab88a1a31df1bff771652d17d",
+      "bytes": 14687
+    },
+    {
+      "path": "supabase/provenance/git-history/20260728173219_orcaly_marketplace_stock_reservations.sql",
+      "sha256": "bcf6744dbf5eca5c61db436b6338ce2c0e490c2640b9d60d7de9904cc007fb59",
+      "bytes": 18303
+    },
+    {
+      "path": "supabase/provenance/git-history/20260728173500_orcaly_marketplace_stock_fk_indexes.sql",
+      "sha256": "fddbbf008a7c6c32e34886d81c27981e335f6b722beee445765a4bad6defecf8",
+      "bytes": 770
+    },
+    {
+      "path": "supabase/provenance/git-history/20260728174830_orcaly_internal_views_security.sql",
+      "sha256": "65dec5e153f9879ddebfe20f4cd6bef74f66c356825ac385eac82c0da4dd6068",
+      "bytes": 1496
+    },
+    {
+      "path": "supabase/provenance/git-history/20260728180403_orcaly_public_views_security.sql",
+      "sha256": "f641628718bf25e4cc276b1995ab2a8af37ef8389d98de4679eed6ff2dd85db5",
+      "bytes": 11788
+    },
+    {
+      "path": "supabase/provenance/git-history/20260728182610_orcaly_security_definer_functions.sql",
+      "sha256": "598a872b1bbbbe3f4f109b555d698bfec4d10c1e5ccc11fb20b0ac135aacaee5",
+      "bytes": 3835
+    },
+    {
+      "path": "supabase/provenance/git-history/20260728183312_orcaly_trigger_function_search_path.sql",
+      "sha256": "86a2aa1cd0fea1a4d14e97bf089221e32a1fe8285b71cce0067c5a248b04bf47",
+      "bytes": 1812
+    },
+    {
+      "path": "supabase/provenance/git-history/20260728184242_orcaly_storage_bucket_security.sql",
+      "sha256": "943badbfa0b1d1e454e2588746307024fab2288fa52b4f83c7c90c1ad88ae48d",
+      "bytes": 5094
+    },
+    {
+      "path": "supabase/provenance/git-history/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+      "sha256": "acdb22cfe1bdb4be5ba21cd4e772b30f9ee577d9b2e94658446ae11102fbb761",
+      "bytes": 1404
+    },
+    {
+      "path": "supabase/provenance/git-history/20260728224535_orcaly_mercado_pago_checkout_activation.sql.raw.json",
+      "sha256": "2686b8e4876df34916a3ffe444a471e56a9bba25ecfc3a8e644d1885a97db4ab",
+      "bytes": 2095
+    },
+    {
+      "path": "supabase/provenance/git-history/20260729133000_orcaly_security_hardening.sql",
+      "sha256": "14dbd62a3bd0825c6260c3aa06684061658914618e4e2a1c7d318fe278057c25",
+      "bytes": 7131
+    },
+    {
+      "path": "supabase/provenance/git-history/20260729165627_affiliate_program_sixty_percent.sql",
+      "sha256": "e15f9cb431d9294187a7b857e429cc4c66d10e7bec45ed0b6405b32d88ecaf1e",
+      "bytes": 30619
+    },
+    {
+      "path": "supabase/provenance/git-history/20260729182742_delivery_drivers_and_assignments.sql",
+      "sha256": "e3fe66e8f2426a4e2113e70d8f4bb764e7b7c883db2bae884ceea3c4c9c9c8d6",
+      "bytes": 5142
+    },
+    {
+      "path": "supabase/provenance/git-history/20260729212519_owner_support_control_v1.sql",
+      "sha256": "fe1cc736e83b75f5f4123ebfc66388f5abbb7dac4902d925dcda78b2093c7824",
+      "bytes": 10623
+    },
+    {
+      "path": "supabase/provenance/git-history/20260729214347_harden_platform_admin_owner_access_v1.sql",
+      "sha256": "00000c48b93f945ffbcd528a23d23de2b293aec4b9195b476121a4c6bfb026ec",
+      "bytes": 3151
+    },
+    {
+      "path": "supabase/provenance/git-history/20260730212000_unify_payment_domain_phase_1.sql",
+      "sha256": "05b5d8dcad771ed79d9ffd02fce84811787cc39eba7d94fe2b55b0d2b60b83f7",
+      "bytes": 2138
+    },
+    {
+      "path": "supabase/provenance/git-history/20260808031654_affiliate_partner_growth_hub.sql",
+      "sha256": "b3cede13d921f16a80426d08a38fcd7a72a922c5bc1176a4a4f30edd2ce9f5e3",
+      "bytes": 17932
+    },
+    {
+      "path": "supabase/provenance/git-history/20260808031810_affiliate_partner_growth_hub_indexes.sql",
+      "sha256": "b000f1aecb00a845438d8ae064c165a94e96a465bcea633097f07fc1df311d7d",
+      "bytes": 257
+    },
+    {
+      "path": "supabase/provenance/git-history/20260811230446_founder_program_database_foundation.sql",
+      "sha256": "219ab572096d0d8eae440b9f9a41c18f6cd71f8279354fdb1b473acce986ea62",
+      "bytes": 8302
+    },
+    {
+      "path": "supabase/provenance/git-history/20260811230525_founder_program_database_foundation_hardening.sql",
+      "sha256": "ebb71d12acdb1f1a47e9543d4d07b5162c82cc79c6d0bc5e68e69461c2aaeec0",
+      "bytes": 281
+    },
+    {
+      "path": "supabase/provenance/git-history/20260811231921_platform_admin_prospector_permissions_foundation.sql",
+      "sha256": "039c88b48fd4b030debbf8b7b9ba179d5b0a7bb01903bc5ed3a630f0934f4102",
+      "bytes": 2796
+    },
+    {
+      "path": "supabase/provenance/git-history/20260811235346_platform_admin_invites_and_activation_v1.sql",
+      "sha256": "7ae608891288195a90ce70ad514d7b3e2029c314285030c9e2c510ce037cf64e",
+      "bytes": 9461
+    },
+    {
+      "path": "supabase/provenance/git-history/20260812001520_sales_prospecting_crm_foundation_v1.sql",
+      "sha256": "742072dcc9c8087bef4cc17863cb21e31162088324a21a22620b92b3643c8ca8",
+      "bytes": 14023
+    },
+    {
+      "path": "supabase/provenance/git-history/20260812002052_sales_prospecting_crm_hardening_v1.sql",
+      "sha256": "f06fbd926121944e5d17e300e27cd33163cd0b1ba0d64291248e28670fdd7873",
+      "bytes": 6958
+    },
+    {
+      "path": "supabase/provenance/git-history/20260812003227_founder_invite_sales_integration_v1.sql",
+      "sha256": "8d3c14a8e8ba439a796b3415e82261d3d90020475ad8d7bd2d1a5cc3d43ebbec",
+      "bytes": 16911
+    },
+    {
+      "path": "supabase/provenance/git-history/20260812005359_founder_public_activation_trial_v1.sql",
+      "sha256": "c1bddd2addd0e96160d5c53f3807924405f4c4396ad23d7ec5f3a99d781c935a",
+      "bytes": 19925
+    },
+    {
+      "path": "supabase/provenance/git-history/20260812011742_founder_billing_lifecycle_v1.sql",
+      "sha256": "aa1cb9c787020e4ea8933c622f6fffa4ae56e60a4eed9666af4f55cf425c5e5d",
+      "bytes": 24678
+    },
+    {
+      "path": "supabase/provenance/git-history/20260812221532_founder_final_regression_hardening_v1.sql",
+      "sha256": "cc9ab581da60db07f8b6542c3ede37d48bef73301623c4475ed785e157179a09",
+      "bytes": 246
+    },
+    {
+      "path": "supabase/provenance/git-history/20260819221500_partner_portal_v2_indexes.sql",
+      "sha256": "8fdd5d0efb1ab197f6065fae31779194d0ea7b76ddccecd1677e4b714012e603",
+      "bytes": 751
+    },
+    {
+      "path": "supabase/provenance/git-history/20260819230000_admin_control_center_v2.sql",
+      "sha256": "1e740b281e2f5b462f68786699eb87b9fedaa2b2b3db3041b31e9a94eb661809",
+      "bytes": 7160
+    },
+    {
+      "path": "supabase/provenance/git-history/20260819234000_storefront_marketplace_v2.sql",
+      "sha256": "5a52f8ee5fff5dc4c079e4334aee43f35b6854862e85abd52a21de8d6aaf83c0",
+      "bytes": 2925
+    },
+    {
+      "path": "supabase/provenance/git-history/20260820230000_fix_logo_storage_schema_usage.sql",
+      "sha256": "8d2feab363cf3d81e99fa7763b2e67add470cf8541782c0daf96f7a6bbef8adc",
+      "bytes": 356
+    },
+    {
+      "path": "supabase/provenance/git-history/20260830143000_platform_evolution_3_observability.sql",
+      "sha256": "cd0aab2ef4f1a9c960a38ed293948f91939c1d7091ec154178c6a7f4529d2b00",
+      "bytes": 1813
+    },
+    {
+      "path": "supabase/provenance/git-history/20260830184500_fix_admin_users_rls_recursion.sql",
+      "sha256": "8232d325c73c95081ced10c62e9d3b1b04ae67a95ee4b466ab72a99295e6ce72",
+      "bytes": 1066
+    },
+    {
+      "path": "supabase/provenance/git-history/20260830_platform_evolution_3_qa_vault.sql",
+      "sha256": "820a0a56a525830acc8fe55b2660a6d5146eb01afad672e5eb790c7bf00f715e",
+      "bytes": 1031
+    },
+    {
+      "path": "supabase/provenance/git-history/20260907140500_orcaly_3_1_db_hardening_batch_1.sql",
+      "sha256": "56eef8ae2553e833f33ae6c8c34eb03aac339d5fc46cca3ffff9df44438f6455",
+      "bytes": 585
+    },
+    {
+      "path": "supabase/provenance/git-history/20260907142000_orcaly_3_1_admin_server_only_grants.sql",
+      "sha256": "691331aafa013b64615fb0290c3cc0e557ae5afbb07306f339d4b7edb9c85293",
+      "bytes": 913
+    },
+    {
+      "path": "supabase/provenance/git-history/20260907233000_orcaly_3_1_reliability_foundation.sql",
+      "sha256": "1b56415fd2b603aa4db3b128e6c241f5910894de5f745b5461c6066b775bd856",
+      "bytes": 16612
+    },
+    {
+      "path": "supabase/provenance/git-history/20260907234500_orcaly_3_1_customer_data_quality.sql",
+      "sha256": "4ee5cae3b523b66dd7616a90b486e4b869cc2d6ecf2290de21dfe396d807b304",
+      "bytes": 42237
+    },
+    {
+      "path": "supabase/provenance/git-history/20260908222500_orcaly_3_1_customer_data_quality_certification.sql",
+      "sha256": "dfcc7ba12185679362465f898c298bb6aa7c9901093b65d823877313ff6db19e",
+      "bytes": 714
+    },
+    {
+      "path": "supabase/provenance/git-history/20260908223500_orcaly_3_1_data_quality_rule_hardening.sql",
+      "sha256": "8515a173c3d662171d9a2df5971cc3fcb84be62b54810b496ace0b836aa1d370",
+      "bytes": 4356
+    },
+    {
+      "path": "supabase/provenance/git-history/20260910001442_integration_platform_foundation.sql",
+      "sha256": "0ed880af9825539fae95b45fcdd26ff103cacef9892caa186dca9be040d58843",
+      "bytes": 10787
+    },
+    {
+      "path": "supabase/provenance/git-history/20260910004555_integration_google_oauth_security.sql",
+      "sha256": "5e0dd7179e551e539b3a0967ba9af64d58257abf3f587b65f5257487a46af8f6",
+      "bytes": 5005
+    },
+    {
+      "path": "supabase/provenance/git-history/20260910122922_background_job_worker_transitions.sql",
+      "sha256": "7b26c0f3802e84fda9852385ff880a088e9afd31def95189a646a5fa98a774a7",
+      "bytes": 3383
+    },
+    {
+      "path": "supabase/provenance/git-history/20260910135326_company_timezone_foundation.sql",
+      "sha256": "ba5f57ac40cefa08e010579567d767c0c93b51e9495cb41be8dfd60634e3725b",
+      "bytes": 686
+    },
+    {
+      "path": "supabase/provenance/git-history/20260910150730_google_calendar_complete.sql",
+      "sha256": "6b25f5089318d5d13a47f579d4dbfbc54b75fbe731d04ca97c70090b83fa60d7",
+      "bytes": 1942
+    },
+    {
+      "path": "supabase/provenance/git-history/INDEX.json",
+      "sha256": "9d8db2bbf2eff0ba8110ecc236efd6338dd5bcf0f3a06cdedfb96883fc218e70",
+      "bytes": 43739
+    },
+    {
+      "path": "supabase/provenance/git-history/branch-only/20260821004000_orcaly_assistant_v2_analytics.sql",
+      "sha256": "22e562dcee0a776d2c92076fce6e6137f112cd836034a60fc087371ffa3beeb6",
+      "bytes": 1856
+    },
+    {
+      "path": "supabase/provenance/git-history/branch-only/20260823_whatsapp_cloud_api_v1.sql",
+      "sha256": "3ec0280dfbf071aadfbc38e6b61251f35f2c9b63e6611ef31b2f3e35e7444233",
+      "bytes": 2986
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260723210120_checkout_asaas_pix_payout_grafica_flash/ledger.sql",
+      "sha256": "3423e394e220c7e30933744a9495265ab11d25e1f000534e7016e0372b1ba64e",
+      "bytes": 1634
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260723210120_checkout_asaas_pix_payout_grafica_flash/meta.json",
+      "sha256": "bed6a3d63d8e79a6752070080dfc00fb16111feb3fefae0bd114e54478eb1ccc",
+      "bytes": 3493
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260723210120_checkout_asaas_pix_payout_grafica_flash/neutralization.json",
+      "sha256": "791c09a34a0aac57a3d3f48406713768106c563610ea6b9be385efb6b4081758",
+      "bytes": 1043
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260723221339_subscription_webhook_unified/ledger.sql",
+      "sha256": "23127a9fba81709c40fcb9d8286508267531ce434292fc54c46b50fbd2019809",
+      "bytes": 616
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260723221339_subscription_webhook_unified/meta.json",
+      "sha256": "5eba2bdc59101b13b91a482b68dcb975c16779e6d98c27ca2d84e6e595d9cab9",
+      "bytes": 3392
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728173219_orcaly_marketplace_stock_reservations/ledger.sql",
+      "sha256": "bcf6744dbf5eca5c61db436b6338ce2c0e490c2640b9d60d7de9904cc007fb59",
+      "bytes": 18303
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728173219_orcaly_marketplace_stock_reservations/meta.json",
+      "sha256": "5720134545aba8a2f502a119ddf1ba891e5afdc4103738b5ea5725e98f2341e0",
+      "bytes": 3491
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728173219_orcaly_marketplace_stock_reservations/neutralization.json",
+      "sha256": "ae02f3d72487b7334b47762fe4c23701781d6cbc5bcb393c534bbc8b7a743f9d",
+      "bytes": 817
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728173500_orcaly_marketplace_stock_fk_indexes/ledger.sql",
+      "sha256": "fddbbf008a7c6c32e34886d81c27981e335f6b722beee445765a4bad6defecf8",
+      "bytes": 770
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728173500_orcaly_marketplace_stock_fk_indexes/meta.json",
+      "sha256": "3b45844708725a7cee8be5cacb759ff9d0a0a3be846ffa608a86530d1dcae696",
+      "bytes": 3464
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728174830_orcaly_internal_views_security/ledger.sql",
+      "sha256": "65dec5e153f9879ddebfe20f4cd6bef74f66c356825ac385eac82c0da4dd6068",
+      "bytes": 1496
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728174830_orcaly_internal_views_security/meta.json",
+      "sha256": "1acd97a2e1c3eae870d25ea562c64d1e1c38cc91ab11a7b43ade561fc7ba6956",
+      "bytes": 3414
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728180403_orcaly_public_views_security/ledger.sql",
+      "sha256": "f641628718bf25e4cc276b1995ab2a8af37ef8389d98de4679eed6ff2dd85db5",
+      "bytes": 11788
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728180403_orcaly_public_views_security/meta.json",
+      "sha256": "1fab2eeb39955ec311177219410ab6c8e3b31d9e2a4a4e537e312b6330ed80f4",
+      "bytes": 3385
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728182610_orcaly_security_definer_functions/ledger.sql",
+      "sha256": "598a872b1bbbbe3f4f109b555d698bfec4d10c1e5ccc11fb20b0ac135aacaee5",
+      "bytes": 3835
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728182610_orcaly_security_definer_functions/meta.json",
+      "sha256": "b994a6723f8a253b255ff7ad0312d5dacd8420d4ab0692129f2150e953acfd3b",
+      "bytes": 3490
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728183312_orcaly_trigger_function_search_path/ledger.sql",
+      "sha256": "86a2aa1cd0fea1a4d14e97bf089221e32a1fe8285b71cce0067c5a248b04bf47",
+      "bytes": 1812
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728183312_orcaly_trigger_function_search_path/meta.json",
+      "sha256": "5018afcc51f2bea8ed1f2c6218904688f8da5c7773d150e77114032a810f06a6",
+      "bytes": 3427
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728184242_orcaly_storage_bucket_security/ledger.sql",
+      "sha256": "943badbfa0b1d1e454e2588746307024fab2288fa52b4f83c7c90c1ad88ae48d",
+      "bytes": 5094
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728184242_orcaly_storage_bucket_security/meta.json",
+      "sha256": "698d24d6212eb3bb5fc67c745e08f7d75354b60b1b8f3bebd0d34f5634b6e6e6",
+      "bytes": 3479
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728224535_orcaly_mercado_pago_checkout_activation/ledger.sql",
+      "sha256": "d6c5dfed80e5c74c1522057854b3bc40ce36a052cb48352d7259174d5bd329a9",
+      "bytes": 1360
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260728224535_orcaly_mercado_pago_checkout_activation/meta.json",
+      "sha256": "7676d6524484b2d619e2f228ac86c0c1ccd374f99ad0c2d64c091cd1b3f1d3d2",
+      "bytes": 3952
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729153535_orcaly_security_hardening_20260729/ledger.sql",
+      "sha256": "14dbd62a3bd0825c6260c3aa06684061658914618e4e2a1c7d318fe278057c25",
+      "bytes": 7131
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729153535_orcaly_security_hardening_20260729/meta.json",
+      "sha256": "ff0fdfbfda7ea5510a5a9a91c27a321bee4716cdbe9d17635c194275892b5e68",
+      "bytes": 3230
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729181400_delivery_drivers_and_assignments/current-main-vs-ledger.diff",
+      "sha256": "6aaa5b8bb9506e17b1538718af789930097926dfc596c2aa5b568216685130b8",
+      "bytes": 8114
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729181400_delivery_drivers_and_assignments/ledger.sql",
+      "sha256": "36bcdd15c477c901bb84d8069bb266cc24e98ec9032ee0d072c88df0443f9f14",
+      "bytes": 4945
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729181400_delivery_drivers_and_assignments/meta.json",
+      "sha256": "c21a4c94ea14b7579856a45597813b7981e849ee27a3b61d0d81978fd00951dc",
+      "bytes": 3735
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729191021_affiliate_program_sixty_percent/ledger.sql",
+      "sha256": "46a1b5fe57c663bf17470902241066d6f7c27bf6229962a9eb4a6de715c948ae",
+      "bytes": 24297
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729191021_affiliate_program_sixty_percent/meta.json",
+      "sha256": "43da553c3c028c62f8a8e6705dc528aaa43e4ef2bf28a49f06515e3c143e1a57",
+      "bytes": 3825
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729191143_affiliate_payout_account_service_functions/ledger.sql",
+      "sha256": "b7d318346bdc51199a5bc99b223c8874b47fd45e640d7eb4614e7ff14cfe44a1",
+      "bytes": 4951
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729191143_affiliate_payout_account_service_functions/meta.json",
+      "sha256": "a11016dc115e5a0423c3899721d8e495681466c91e663e0c845ebd1dbecf4ea5",
+      "bytes": 3275
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729191347_affiliate_payout_commission_lock_fix/ledger.sql",
+      "sha256": "4bd3a4abb4824f20e460a6bdfba7ed9142dd1b2f27eeda08465b40a9c5eafb52",
+      "bytes": 3495
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729191347_affiliate_payout_commission_lock_fix/meta.json",
+      "sha256": "de08fb05f870ecfd4910dec116d1fb9ae861473b5f1fa2c108b9edcbff3e044a",
+      "bytes": 3156
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729191437_affiliate_internal_tables_explicit_deny/ledger.sql",
+      "sha256": "fd5d252e7e1eb35b714018f207c8936f7d3876cca3cc230249bc9e47b03027fe",
+      "bytes": 916
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729191437_affiliate_internal_tables_explicit_deny/meta.json",
+      "sha256": "30ec543506a1e36ac0198031a96a37ccbdf9cbc5d65af960c6eecca3d5117ea9",
+      "bytes": 3223
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729204111_owner_support_control_v1/current-main-vs-ledger.diff",
+      "sha256": "6e10358eed69187e9b62fd0e1d345bfde4e535925dd456b932200c2be70aaafd",
+      "bytes": 12461
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729204111_owner_support_control_v1/ledger.sql",
+      "sha256": "b92dba87e0f5ddc2a509b0a3bf3cd0aa24091c5156d26e60025a7a0b60f70dd9",
+      "bytes": 9775
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729204111_owner_support_control_v1/meta.json",
+      "sha256": "358e62255a3c1ee96d873e179db1bce305817cd63c893e801c4b608d77cd10f1",
+      "bytes": 3703
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729213924_harden_platform_admin_owner_access_v1/current-main-vs-ledger.diff",
+      "sha256": "0095af015d3475280d5e4143625b252bd386085e0cb91682fafefcec50162952",
+      "bytes": 5065
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729213924_harden_platform_admin_owner_access_v1/ledger.sql",
+      "sha256": "d55d4c1006a1f1816a9b42b7e88bbf18187dc20f459a0caa10a0c77ecb604220",
+      "bytes": 3570
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729213924_harden_platform_admin_owner_access_v1/meta.json",
+      "sha256": "511c4f5c8e22fc412aafc0fa51933a05ffe9fddff7e39fcf47646e8b01c58294",
+      "bytes": 3826
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260729213924_harden_platform_admin_owner_access_v1/neutralization.json",
+      "sha256": "76b5dd7c26aeb2d8424f90d13575ca3fef0da53ccf0f6840bc5b8efd48edd279",
+      "bytes": 3650
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260808031654_affiliate_partner_growth_hub/ledger.sql",
+      "sha256": "b3cede13d921f16a80426d08a38fcd7a72a922c5bc1176a4a4f30edd2ce9f5e3",
+      "bytes": 17932
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260808031654_affiliate_partner_growth_hub/meta.json",
+      "sha256": "708dac21260c35f6db02b80214618354d23daf7c3b46ab34dcebe1d24303fbac",
+      "bytes": 3378
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260808032708_affiliate_partner_growth_hub_indexes/ledger.sql",
+      "sha256": "b000f1aecb00a845438d8ae064c165a94e96a465bcea633097f07fc1df311d7d",
+      "bytes": 257
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260808032708_affiliate_partner_growth_hub_indexes/meta.json",
+      "sha256": "af18e363d85e83bfa193858cb9c2f70f099a11be746315955eecac4d12679843",
+      "bytes": 3427
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260809185046_align_order_status_history_with_api/ledger.sql",
+      "sha256": "2c9a41597d30035308ac28598ea3502cfc2b258bf56642a161762a51c17ebf64",
+      "bytes": 243
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260809185046_align_order_status_history_with_api/meta.json",
+      "sha256": "0f1c86a8775cfae2428c4233b1e38392cfe27cea2e4a9a3ec6c77bd4099c20b7",
+      "bytes": 3189
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260809185653_pre_validation_core_index_cleanup/ledger.sql",
+      "sha256": "5d93e76aff0bef3fba29e58d26d0db2bc91eea97cdd719451a42dd9ecc993753",
+      "bytes": 3158
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260809185653_pre_validation_core_index_cleanup/meta.json",
+      "sha256": "8c168561403307e4c6aa03d1ff1448653a8d856c17a1646ff6ff297eb530fd25",
+      "bytes": 3226
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260809185723_pre_validation_remaining_fk_indexes/ledger.sql",
+      "sha256": "4a27f1f5d3199de12e43a140e28145e28c92a65aea8f28f0b545e6024e77142e",
+      "bytes": 1805
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260809185723_pre_validation_remaining_fk_indexes/meta.json",
+      "sha256": "e1ed53f8f284e2cbbef26541d680609dc3272185052dedaa7b54407f07bd6b0f",
+      "bytes": 3142
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260811230446_founder_program_database_foundation/ledger.sql",
+      "sha256": "bedceebcde59d0bbac9688251c70382168b9f85dc7ff7666823952ca65ca2aae",
+      "bytes": 8303
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260811230446_founder_program_database_foundation/meta.json",
+      "sha256": "f534ec50ceca0400e2ddac06c8c6af4b1bee72b63db4db13a381168265bcfe91",
+      "bytes": 3445
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260811230525_founder_program_database_foundation_hardening/ledger.sql",
+      "sha256": "c73cadb4f657c7acd18287b5f7c7062d3fdb0d68275543f7981f7fd79ae0f7b6",
+      "bytes": 282
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260811230525_founder_program_database_foundation_hardening/meta.json",
+      "sha256": "840aac374b9be9af1b740789a91e3f2377274f4e02618388d42621b0a051eafd",
+      "bytes": 3467
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260811231921_platform_admin_prospector_permissions_foundation/ledger.sql",
+      "sha256": "8865a521c04900ba69e3a9a51cfaae402be0675291d61fc3790816a7a54246b9",
+      "bytes": 2426
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260811231921_platform_admin_prospector_permissions_foundation/meta.json",
+      "sha256": "90ca85464eb74cb2ba26d89a4fe7ae4d26a109de8d222ea32e6c0f88607f8416",
+      "bytes": 3586
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260811235346_platform_admin_invites_and_activation_v1/ledger.sql",
+      "sha256": "7cb54f59b0dc92ea26a582e67c4e3eff48724a9176be3173b3e45fa1fd04ce4e",
+      "bytes": 8666
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260811235346_platform_admin_invites_and_activation_v1/meta.json",
+      "sha256": "3b383ef8dc32bad1ac14aca12738efd72e0730b5cb39ce83045ce9d5d1b561f6",
+      "bytes": 3460
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812001520_sales_prospecting_crm_foundation_v1/ledger.sql",
+      "sha256": "98c6c2e4246c9311688025f6fe114e677dd51ce0692d86396635b78124d72df6",
+      "bytes": 13780
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812001520_sales_prospecting_crm_foundation_v1/meta.json",
+      "sha256": "43204d3791f8a6a2b78c0ca5822d9a0c0128ed092e9b17eded870622326745ac",
+      "bytes": 3469
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812002052_sales_prospecting_crm_hardening_v1/ledger.sql",
+      "sha256": "28151f3ed0c45739cfcbbc85fdffe5b314ac8b4be022b7b341f17df2669fa22a",
+      "bytes": 6049
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812002052_sales_prospecting_crm_hardening_v1/meta.json",
+      "sha256": "505e11db57f5de4e8e367697cb2f4e83ebc77d1a8c92cebe967cf2233b36bc2c",
+      "bytes": 3458
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812003227_founder_invite_sales_integration_v1/ledger.sql",
+      "sha256": "e655af3e2871b96dab7a3c88dff0f86726098e2da5250a4789dc04adf9f86ad9",
+      "bytes": 17253
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812003227_founder_invite_sales_integration_v1/meta.json",
+      "sha256": "3fca3779edd2cc95ada7ae9bfe9afc9d7e0af286ac78c6a7dd132987d32f7d2d",
+      "bytes": 3834
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812005359_founder_public_activation_trial_v1/ledger.sql",
+      "sha256": "00764e48e70cf4e886e7ce793cba0d4ebbd4cf3280fb1fba14e75f81e88366f0",
+      "bytes": 16605
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812005359_founder_public_activation_trial_v1/meta.json",
+      "sha256": "dfa957584b411d3257de7adbe5964229ca3e8e231fe334aa42bf4bb285acb79c",
+      "bytes": 3443
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812011742_founder_billing_lifecycle_v1/ledger.sql",
+      "sha256": "ba0d0b028e5416ce094a900295ea120ea3e8b9e894a0a7770917ed59b8dd87ef",
+      "bytes": 23417
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812011742_founder_billing_lifecycle_v1/meta.json",
+      "sha256": "29e01401ca14b90baf9517a15487bd7c4fdaf6bc3f0bd3b8bc117f5f8f5bcdf3",
+      "bytes": 3403
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812221532_founder_final_regression_hardening_v1/ledger.sql",
+      "sha256": "cc9ab581da60db07f8b6542c3ede37d48bef73301623c4475ed785e157179a09",
+      "bytes": 246
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260812221532_founder_final_regression_hardening_v1/meta.json",
+      "sha256": "155f08591b8227078182084cde7a291c1c08e33b765a43daf01b3e9ae9eaa35a",
+      "bytes": 3451
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260820231839_fix_logo_storage_schema_usage/ledger.sql",
+      "sha256": "111cf23e190e9f166740b4c729b28df2046138ee329f890339acb0599066c319",
+      "bytes": 55
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260820231839_fix_logo_storage_schema_usage/meta.json",
+      "sha256": "659a2039a628429deef57d20ad5bb6e69a58d422a414c3e360f95b23df7f9b6a",
+      "bytes": 3345
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260821012633_orcaly_assistant_v2_analytics/ledger.sql",
+      "sha256": "bf9ed2aa436b21a87c2a3fde4645247dd624875c410c6d7596cc176af825c4ae",
+      "bytes": 1734
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260821012633_orcaly_assistant_v2_analytics/meta.json",
+      "sha256": "ca3bde49e2bd05cfa1b6d448829754d85c279aad3922405f34e4240f99d15f22",
+      "bytes": 3387
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260823163043_whatsapp_cloud_api_v1/ledger.sql",
+      "sha256": "64a9a61aaa34a7e5be27b5c8f20201a83c31ff9122fde1af1ac33321f76ecfb6",
+      "bytes": 2893
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260823163043_whatsapp_cloud_api_v1/meta.json",
+      "sha256": "a08770d0b45d928ca164f76592d62729e4802938f414829a0a94b9dd641c9608",
+      "bytes": 3296
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260830200818_platform_evolution_3_observability/ledger.sql",
+      "sha256": "9da310bbb9a8d83c128f49bde49dd3c90d7fa9fe567c8990230c9dd629aa4686",
+      "bytes": 1620
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260830200818_platform_evolution_3_observability/meta.json",
+      "sha256": "396dca3af796dfb2acd04b8ad7787d94d11c37075bd288ac0d796e7b7eea9fec",
+      "bytes": 3415
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260830201025_admin_control_center_v2/ledger.sql",
+      "sha256": "a4a52c77d286c0feecfcfb9fcd3fb86aa848e8170a316cbe84ef46fbfbe31984",
+      "bytes": 6446
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260830201025_admin_control_center_v2/meta.json",
+      "sha256": "b370ef7eab79a88d2d1efb322af7a726b979f33f7609866cdb90c91061e0b4d4",
+      "bytes": 3365
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260830211222_platform_evolution_3_qa_vault/ledger.sql",
+      "sha256": "e3e07713d7ec22dcc8d7f61035d57682ea2565885abd3f5bd55e178bf3a860ab",
+      "bytes": 813
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260830211222_platform_evolution_3_qa_vault/meta.json",
+      "sha256": "7e61a24a2ffc80594df2ab3f4d06faea609676e99c1c3fdf70005dba12164bac",
+      "bytes": 3373
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260830213641_fix_admin_users_rls_recursion/ledger.sql",
+      "sha256": "431850668e00286c3b96732f3d0d5ebbd69788ca245b09352c612b1454bc85cc",
+      "bytes": 975
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260830213641_fix_admin_users_rls_recursion/meta.json",
+      "sha256": "e65f64260f0aa63d4eeedde036b4d151114c522be3af58810bbd8cc5e5e7d7d2",
+      "bytes": 3404
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260907135613_orcaly_3_1_db_hardening_batch_1/ledger.sql",
+      "sha256": "522283aa76df93284c0bc8c7ed09fcb41e9ecdaa30d0730b90c1269b4c935c23",
+      "bytes": 329
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260907135613_orcaly_3_1_db_hardening_batch_1/meta.json",
+      "sha256": "bf40336960dff22dff4c678d742b301169f6b5cd68bc0db3dd86107eef9eebb5",
+      "bytes": 3439
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260907140405_orcaly_3_1_admin_server_only_grants/ledger.sql",
+      "sha256": "c5310e330483152687e50000e0c17e0a0a0984766ed5af164bbb45a7d0fdddb7",
+      "bytes": 561
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260907140405_orcaly_3_1_admin_server_only_grants/meta.json",
+      "sha256": "b165a588bc5d3664260e29df3fdc6b5c239ad7f6a8106a7dad2b76aaab874283",
+      "bytes": 3425
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260907232527_orcaly_3_1_reliability_foundation/ledger.sql",
+      "sha256": "fc69ed001185b1dcdc9026d87dbecf8573033abd96430b40367284a0a6b1fd37",
+      "bytes": 14782
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260907232527_orcaly_3_1_reliability_foundation/meta.json",
+      "sha256": "fa6840d624872198d9048e303f4f9fbc7c2dadbd2b4883072bc44623032f66f7",
+      "bytes": 3399
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260907233411_orcaly_3_1_customer_data_quality/current-main-vs-ledger.diff",
+      "sha256": "612dda4151daf8a67253d9694b1386f8da547b451e8ded16eadb0187f0b0202c",
+      "bytes": 83277
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260907233411_orcaly_3_1_customer_data_quality/ledger.sql",
+      "sha256": "8ec6ff8a0210b9cf72bb12e3e52c43e5b935dac0912ab91c852cdc6445d73ec6",
+      "bytes": 39734
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260907233411_orcaly_3_1_customer_data_quality/meta.json",
+      "sha256": "63c8ee3bab531e5e5fa71d544e6db546d02b5b3779f59045b236e6ee1226249a",
+      "bytes": 3945
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260908222043_orcaly_3_1_customer_data_quality_certification/ledger.sql",
+      "sha256": "3154e8922432f014d4a97fbe26c9ebcb92fc73d28ba3c8e07c084efb4c6ab01a",
+      "bytes": 477
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260908222043_orcaly_3_1_customer_data_quality_certification/meta.json",
+      "sha256": "f05216a79dbd8c892bd89ec62cce46a08529835f9a60953cef27b70863217d81",
+      "bytes": 3529
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260908222651_orcaly_3_1_data_quality_rule_hardening/ledger.sql",
+      "sha256": "7f21c7b4b940efb77b861278528ce0897630587c5e4379ed8516d12d7871def5",
+      "bytes": 3829
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260908222651_orcaly_3_1_data_quality_rule_hardening/meta.json",
+      "sha256": "b8d2e441737998a4e8f91136ef743e905656bf8641ed5f2095ee226dcfc893e7",
+      "bytes": 3500
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260910001442_integration_platform_foundation/ledger.sql",
+      "sha256": "a617cf3c2c32d54f1891847a34fa0f9603c47880f2f6c8897dbf3d1852de8082",
+      "bytes": 9630
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260910001442_integration_platform_foundation/meta.json",
+      "sha256": "44664d6cc234cae9942bdb09af9bcc8a099736ecd585814e28f39cd8c4fee908",
+      "bytes": 3377
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260910004555_integration_google_oauth_security/ledger.sql",
+      "sha256": "5e0dd7179e551e539b3a0967ba9af64d58257abf3f587b65f5257487a46af8f6",
+      "bytes": 5005
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260910004555_integration_google_oauth_security/meta.json",
+      "sha256": "4f4694408877db440f7bbcee76dd3b14561f4046872d7f6a6790d515ed6f5fcf",
+      "bytes": 3502
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260910122922_background_job_worker_transitions/ledger.sql",
+      "sha256": "7b26c0f3802e84fda9852385ff880a088e9afd31def95189a646a5fa98a774a7",
+      "bytes": 3383
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260910122922_background_job_worker_transitions/meta.json",
+      "sha256": "2e27019ddf87672d3f03e0d8a0b065633951fa0d219fc6242e65aa62797e5848",
+      "bytes": 3406
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260910135326_company_timezone_foundation/ledger.sql",
+      "sha256": "ba5f57ac40cefa08e010579567d767c0c93b51e9495cb41be8dfd60634e3725b",
+      "bytes": 686
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260910135326_company_timezone_foundation/meta.json",
+      "sha256": "3012324ce24a2f1673311ec8186b80cc06d6b2ee6b46cd66c701089733ccaa80",
+      "bytes": 3335
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260910150730_google_calendar_complete/ledger.sql",
+      "sha256": "a7f26c5eb65e6947c20c30a5661961105f0f8ac0c581e54d10d98919e759b717",
+      "bytes": 1762
+    },
+    {
+      "path": "supabase/provenance/ledger/production/20260910150730_google_calendar_complete/meta.json",
+      "sha256": "e3b043bde5a494504a83eea936f5e57eaed41f5011f1c09c0022a3dba6b046a8",
+      "bytes": 3339
+    },
+    {
+      "path": "supabase/provenance/ledger/production/INDEX.json",
+      "sha256": "66e6744f7617d554a2df763eccda1cb5eeda009ea2b6050e26636e3393124dfc",
+      "bytes": 39002
+    },
+    {
+      "path": "supabase/replay-forms/production/20260723210120_checkout_asaas_pix_payout_grafica_flash.sql",
+      "sha256": "00e40a322ee1eeef199cd4d889d09d4f6041fad474463bae804e1ac1a45d4ab7",
+      "bytes": 1688
+    },
+    {
+      "path": "supabase/replay-forms/production/20260723221339_subscription_webhook_unified.sql",
+      "sha256": "802088a60e2817e1407b9534c8183d63860af9c4d91be394fa7c6c088b57849e",
+      "bytes": 946
+    },
+    {
+      "path": "supabase/replay-forms/production/20260728173219_orcaly_marketplace_stock_reservations.sql",
+      "sha256": "90468c938ba4a901e8922b162baff6186c5a0026e4b0f6692759d3be6618a958",
+      "bytes": 18586
+    },
+    {
+      "path": "supabase/replay-forms/production/20260728173500_orcaly_marketplace_stock_fk_indexes.sql",
+      "sha256": "6c952a2837201921fd94db777d1dd6e6988dd9cd902d5bf664f48b0dfb2c706c",
+      "bytes": 1107
+    },
+    {
+      "path": "supabase/replay-forms/production/20260728174830_orcaly_internal_views_security.sql",
+      "sha256": "5c851b8f483aa87cf7e936b497a0d0d686cc7281e0fe996a3a6fb64162322e96",
+      "bytes": 1828
+    },
+    {
+      "path": "supabase/replay-forms/production/20260728180403_orcaly_public_views_security.sql",
+      "sha256": "6f540bf02db45697120d6e61507b165071e2cf0d44d9e710d1aed2d0793ad285",
+      "bytes": 12118
+    },
+    {
+      "path": "supabase/replay-forms/production/20260728182610_orcaly_security_definer_functions.sql",
+      "sha256": "c8d4bf2324a4c879ff61a340d4055b70c09ead6f17451caa8dd4f494a65843a8",
+      "bytes": 4170
+    },
+    {
+      "path": "supabase/replay-forms/production/20260728183312_orcaly_trigger_function_search_path.sql",
+      "sha256": "a3846e6f3dfe8476432f142a0067c73f45f1db29acfac9410178048d7caec401",
+      "bytes": 2149
+    },
+    {
+      "path": "supabase/replay-forms/production/20260728184242_orcaly_storage_bucket_security.sql",
+      "sha256": "829a03a765e03bc67c54c82c52a7455229d9de2d86e322dccd94b3c5febd3485",
+      "bytes": 5426
+    },
+    {
+      "path": "supabase/replay-forms/production/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+      "sha256": "2a306713520ccb94efff40f8ae85bf93e63100c6441facde277f81e6536e315c",
+      "bytes": 1701
+    },
+    {
+      "path": "supabase/replay-forms/production/20260729153535_orcaly_security_hardening_20260729.sql",
+      "sha256": "fa3f2a2ab19c7208f1e83a12a0b862ad6aee0f85e29169b43d0d8497f9621176",
+      "bytes": 7467
+    },
+    {
+      "path": "supabase/replay-forms/production/20260729181400_delivery_drivers_and_assignments.sql",
+      "sha256": "11af2eefe3e5b968a428ea2c998731293738e271bf35c03d65df1325ca2e0685",
+      "bytes": 5279
+    },
+    {
+      "path": "supabase/replay-forms/production/20260729191021_affiliate_program_sixty_percent.sql",
+      "sha256": "6c78a266ac8030c8385b371ef874ee024810ba77fa15f5b2894d3f23e03ba8c5",
+      "bytes": 24630
+    },
+    {
+      "path": "supabase/replay-forms/production/20260729191143_affiliate_payout_account_service_functions.sql",
+      "sha256": "1b33e1a4d762b487d25b8b8753a004dd580114b1a145c2adb1d1996ed20f56db",
+      "bytes": 5295
+    },
+    {
+      "path": "supabase/replay-forms/production/20260729191347_affiliate_payout_commission_lock_fix.sql",
+      "sha256": "16ec081051219c4e04a8b44a4045e18bd5094f0bb3c7d861272e8af88835f211",
+      "bytes": 3833
+    },
+    {
+      "path": "supabase/replay-forms/production/20260729191437_affiliate_internal_tables_explicit_deny.sql",
+      "sha256": "bbdaf66ab5a5690471b2550d1318958b1dc6a8cb668e1ef0523a83b97b820653",
+      "bytes": 1257
+    },
+    {
+      "path": "supabase/replay-forms/production/20260729204111_owner_support_control_v1.sql",
+      "sha256": "ba8e4419326e446e8732d1ade0bf63fb7575a2932364d2da9f4267b22fd49aa4",
+      "bytes": 10101
+    },
+    {
+      "path": "supabase/replay-forms/production/20260729213924_harden_platform_admin_owner_access_v1.sql",
+      "sha256": "bd2db9b6e962ff77459c16569ff5dc865337967f43e5337787cf9edc6b826264",
+      "bytes": 2009
+    },
+    {
+      "path": "supabase/replay-forms/production/20260808031654_affiliate_partner_growth_hub.sql",
+      "sha256": "4cf15b5807b8382110c4a10e041a19d2d4c486f1dca5d3f65245b4072d58bf8b",
+      "bytes": 18262
+    },
+    {
+      "path": "supabase/replay-forms/production/20260808032708_affiliate_partner_growth_hub_indexes.sql",
+      "sha256": "f6600a1bb6f58d061b55f43fb13ef03b6c3cbcfb6f746167aa4182b13a93acab",
+      "bytes": 595
+    },
+    {
+      "path": "supabase/replay-forms/production/20260809185046_align_order_status_history_with_api.sql",
+      "sha256": "6eee44ef42c5bcc9f0403ec23267e0efdf7735ba92331dfe2087aa70e4b9ebec",
+      "bytes": 580
+    },
+    {
+      "path": "supabase/replay-forms/production/20260809185653_pre_validation_core_index_cleanup.sql",
+      "sha256": "29635b80575bb69c2dbc346903f31971e5c6727738587b7a40ed8a196f5c9004",
+      "bytes": 3493
+    },
+    {
+      "path": "supabase/replay-forms/production/20260809185723_pre_validation_remaining_fk_indexes.sql",
+      "sha256": "497ce3ddc4fd5807b1c3658c6954da99a622132a21f994ac6f39dcae7e85518e",
+      "bytes": 2142
+    },
+    {
+      "path": "supabase/replay-forms/production/20260811230446_founder_program_database_foundation.sql",
+      "sha256": "720cea91a67ad8f04061f3686aed4a75160083d544fb62776a7ef6e2064896eb",
+      "bytes": 8640
+    },
+    {
+      "path": "supabase/replay-forms/production/20260811230525_founder_program_database_foundation_hardening.sql",
+      "sha256": "f6d255cbd4bb947fac86afb09cf62e0c54a6a6fadd89c900ae91adb918ac6d29",
+      "bytes": 629
+    },
+    {
+      "path": "supabase/replay-forms/production/20260811231921_platform_admin_prospector_permissions_foundation.sql",
+      "sha256": "bb866555b40145ab30480f825eab9b3133bd05d99aa0cf0a2727c2145635aa1a",
+      "bytes": 2776
+    },
+    {
+      "path": "supabase/replay-forms/production/20260811235346_platform_admin_invites_and_activation_v1.sql",
+      "sha256": "9a6ab4475331c145cee309ae56d0d46178d5564b4fa8fce3e8fb77ab2b434352",
+      "bytes": 9008
+    },
+    {
+      "path": "supabase/replay-forms/production/20260812001520_sales_prospecting_crm_foundation_v1.sql",
+      "sha256": "3c72ea2520e7391e3420f8c111203c925e9cf9fbffe033413f1f6773d31630d3",
+      "bytes": 14117
+    },
+    {
+      "path": "supabase/replay-forms/production/20260812002052_sales_prospecting_crm_hardening_v1.sql",
+      "sha256": "a3d83ad5cd3d45736224c9123001733bba85b6aa48707144569896baee0ee1d2",
+      "bytes": 6385
+    },
+    {
+      "path": "supabase/replay-forms/production/20260812005359_founder_public_activation_trial_v1.sql",
+      "sha256": "cde11e0e97b25f5906f5cc12c2ed506bd0ae3d91936a90f0b016df53474a35dd",
+      "bytes": 16941
+    },
+    {
+      "path": "supabase/replay-forms/production/20260812011742_founder_billing_lifecycle_v1.sql",
+      "sha256": "c49b8410495601a10fb5d3683990307f3667a7d2fca8a7c3f4282614e6fbf7ca",
+      "bytes": 23747
+    },
+    {
+      "path": "supabase/replay-forms/production/20260812221532_founder_final_regression_hardening_v1.sql",
+      "sha256": "3351c9274f37db4e3f39a318b15f8f294afbaf5c228b66edebd9726a92d1e789",
+      "bytes": 585
+    },
+    {
+      "path": "supabase/replay-forms/production/20260820231839_fix_logo_storage_schema_usage.sql",
+      "sha256": "821d6406169a384a390a2bc279906f837b0066aaedd1053c1c688b9ca6e91ec0",
+      "bytes": 386
+    },
+    {
+      "path": "supabase/replay-forms/production/20260821012633_orcaly_assistant_v2_analytics.sql",
+      "sha256": "6bb56fabe76ed66c65440bebf6c14a59cfa1b3ab719c2ba2212006c61a90a7ce",
+      "bytes": 2065
+    },
+    {
+      "path": "supabase/replay-forms/production/20260823163043_whatsapp_cloud_api_v1.sql",
+      "sha256": "34193efdbda351e6258a27f6f0f230b4fd09b65d9480989dcab90bb47a46673f",
+      "bytes": 3216
+    },
+    {
+      "path": "supabase/replay-forms/production/20260830200818_platform_evolution_3_observability.sql",
+      "sha256": "1c9eae9abd81d554b342f30b5cbea8daf433a5d17ddce8198e54be3840d334fe",
+      "bytes": 1956
+    },
+    {
+      "path": "supabase/replay-forms/production/20260830201025_admin_control_center_v2.sql",
+      "sha256": "f67463579504c57a828bd03a974c64195d944a99d182acae41691f5b8fcf50d5",
+      "bytes": 6771
+    },
+    {
+      "path": "supabase/replay-forms/production/20260830211222_platform_evolution_3_qa_vault.sql",
+      "sha256": "6e390e39c875838a7f7d10b4ce59bc27b5f62149f783e2fb0832be7a69d3b3bb",
+      "bytes": 1144
+    },
+    {
+      "path": "supabase/replay-forms/production/20260830213641_fix_admin_users_rls_recursion.sql",
+      "sha256": "bec4a95b4f912ef1750a3b2d1c00ec208585d57d7cce0dce9a5e44f47f29e621",
+      "bytes": 1306
+    },
+    {
+      "path": "supabase/replay-forms/production/20260907135613_orcaly_3_1_db_hardening_batch_1.sql",
+      "sha256": "3ce21e17db4450504f2c29403db198460e1e30d448c8695829c304b51b5a6b28",
+      "bytes": 662
+    },
+    {
+      "path": "supabase/replay-forms/production/20260907140405_orcaly_3_1_admin_server_only_grants.sql",
+      "sha256": "9324611e4fb344489dd01fd1fc1aa551ae7fc593fe6a40d52b60ea54b9a024ba",
+      "bytes": 898
+    },
+    {
+      "path": "supabase/replay-forms/production/20260907232527_orcaly_3_1_reliability_foundation.sql",
+      "sha256": "8259e21131e8b36c856bc848b5e20231e000f8bc66b51bfb9f1a2e36a4bc4760",
+      "bytes": 15117
+    },
+    {
+      "path": "supabase/replay-forms/production/20260907233411_orcaly_3_1_customer_data_quality.sql",
+      "sha256": "91746373a865d7981cc10dc7a086316c74000a1c3f9a59943b28c86247f778e3",
+      "bytes": 40068
+    },
+    {
+      "path": "supabase/replay-forms/production/20260908222043_orcaly_3_1_customer_data_quality_certification.sql",
+      "sha256": "a1b2f33f28eac935311d9766777abe55701aade8f38ad9c9dd07578cbfb7a228",
+      "bytes": 825
+    },
+    {
+      "path": "supabase/replay-forms/production/20260908222651_orcaly_3_1_data_quality_rule_hardening.sql",
+      "sha256": "b4a7073be34f1cadde8144aadfd9cc737878e0b49adbd347202306db24625d22",
+      "bytes": 4169
+    },
+    {
+      "path": "supabase/replay-forms/production/20260910001442_integration_platform_foundation.sql",
+      "sha256": "0c8bdd7d88905eb8f9ea97fc4a5302f42bdd408698bb033ccc2d9bd2f6d52a22",
+      "bytes": 9963
+    },
+    {
+      "path": "supabase/replay-forms/production/20260910004555_integration_google_oauth_security.sql",
+      "sha256": "08095cae57027bca76c454d5d2269c3091425632dbb5b574359ac3a713ac38c8",
+      "bytes": 5340
+    },
+    {
+      "path": "supabase/replay-forms/production/20260910122922_background_job_worker_transitions.sql",
+      "sha256": "0a1ad6928a6d5dc0c608343ce03e73e55c84636a6a8ce48d8b366faea7130ec3",
+      "bytes": 3718
+    },
+    {
+      "path": "supabase/replay-forms/production/20260910135326_company_timezone_foundation.sql",
+      "sha256": "8c5744d379c63d44985c2ec2df38c86da9f1afdaa41bb7913e1652b2c0df8831",
+      "bytes": 1015
+    },
+    {
+      "path": "supabase/replay-forms/production/20260910150730_google_calendar_complete.sql",
+      "sha256": "76541127cf4346a21b9cbd1bac710bfd0bae58deaceb48196796d86fd64a1b81",
+      "bytes": 2088
+    }
+  ]
+}

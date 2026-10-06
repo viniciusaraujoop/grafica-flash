@@ -1,0 +1,60 @@
+{
+  "production_version": "20260729191347",
+  "production_name": "affiliate_payout_commission_lock_fix",
+  "ordered_ledger_index": 15,
+  "statement_count": 1,
+  "raw_ledger_sha256": "2df134a30de0ad9b4106dbc82d8593568a22d531236069faefabc26e4982db6f",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "SQUASHED",
+  "historical_git_candidates": [],
+  "retrieval_only_candidates": [
+    {
+      "oid": "a1c12658e388bebcb7c04e8d5eadce29c34caa67",
+      "file": "supabase/migrations/20260729165627_affiliate_program_sixty_percent.sql",
+      "similarity": 0.36091954022988504
+    },
+    {
+      "oid": "967d688f2a4f1b42a4a402c0218da5e6dfb4d6c6",
+      "file": "supabase/migrations/20260929225302_m1a_event_fabric_failure_settlement_due_guard.sql",
+      "similarity": 0.3283582089552239
+    },
+    {
+      "oid": "9c22025c7fd9064afd1580ce5be194b7880dd1a5",
+      "file": "supabase/migrations/20260910004555_integration_google_oauth_security.sql",
+      "similarity": 0.3103448275862069
+    },
+    {
+      "oid": "d98d4dde15b78d0432cca839a2da22d30a6a3738",
+      "file": "supabase/migrations/20260729212519_owner_support_control_v1.sql",
+      "similarity": 0.2939297124600639
+    },
+    {
+      "oid": "7ecd935bc35602ac69da0801b5dfba9f938f9cdc",
+      "file": "supabase/migrations/20260910122922_background_job_worker_transitions.sql",
+      "similarity": 0.2832618025751073
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260729165627_affiliate_program_sixty_percent.sql",
+    "historical_file": "supabase/migrations/20260729165627_affiliate_program_sixty_percent.sql",
+    "target_identity": "supabase/migrations/20260729191347_affiliate_payout_commission_lock_fix.sql"
+  },
+  "divergence_notes": "Complete corrected create_affiliate_payout_admin function block token-identical in combined Git file. Fix locks individual commissions in subquery before SUM; function exists in production. This is a forward correction, not evidence of migration-ledger repair.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "2df134a30de0ad9b4106dbc82d8593568a22d531236069faefabc26e4982db6f",
+  "REDACTED_HASH": "2df134a30de0ad9b4106dbc82d8593568a22d531236069faefabc26e4982db6f",
+  "REDACTION_REASON": [],
+  "raw_bytes": 3494,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "2df134a30de0ad9b4106dbc82d8593568a22d531236069faefabc26e4982db6f",
+  "replay_form_sha256": "16ec081051219c4e04a8b44a4045e18bd5094f0bb3c7d861272e8af88835f211",
+  "staged_replay_form": "supabase/replay-forms/production/20260729191347_affiliate_payout_commission_lock_fix.sql"
+}

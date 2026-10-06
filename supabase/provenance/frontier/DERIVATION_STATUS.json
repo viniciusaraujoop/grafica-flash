@@ -1,0 +1,19 @@
+{
+  "architecture": "LEDGER-MIRROR + OUT-OF-BAND PRE-LEDGER FRONTIER",
+  "status": "BLOCKED_NOT_DERIVED",
+  "engineered_not_historical": true,
+  "first_production_version": "20260723210120",
+  "frozen_production_signature": "affd3c4f7a5155fcbedb9bcf9999477c2e3275a492710fd2859b98ba88f82be9",
+  "fixed_point": "NOT_EXECUTED",
+  "reviewed_allowlist": [],
+  "blockers": [
+    "No Docker-compatible runtime, WSL installation, Supabase CLI or PostgreSQL runtime available.",
+    "Entry #30 authorization-function identity decision pending."
+  ],
+  "application_scope": [
+    "api",
+    "orcaly_private",
+    "public"
+  ],
+  "platform_internals_recreation": false
+}

@@ -1,0 +1,68 @@
+{
+  "production_version": "20260728182610",
+  "production_name": "orcaly_security_definer_functions",
+  "ordered_ledger_index": 7,
+  "statement_count": 1,
+  "raw_ledger_sha256": "9f24d227b87a65e9e5bb8c063646e5d2092f5b7acf012194518e81d4cdf06281",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "CANONICAL_MATCH",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260728182610_orcaly_security_definer_functions.sql",
+      "commit": "755caa67ce4701fd87a3eace243ed5b78ea11b65",
+      "blob_sha": "47ae131aa256ee8e61804d6603438383c5ccd22d",
+      "sha256": "598a872b1bbbbe3f4f109b555d698bfec4d10c1e5ccc11fb20b0ac135aacaee5",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "47ae131aa256ee8e61804d6603438383c5ccd22d",
+      "file": "supabase/migrations/20260728182610_orcaly_security_definer_functions.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "4cb392d5338e55ae68e27fe628d4a392972e3acd",
+      "file": "supabase/migrations/20260830184500_fix_admin_users_rls_recursion.sql",
+      "similarity": 0.4838709677419355
+    },
+    {
+      "oid": "f855dcb4d3c7fede2cff982effffa4f54524890a",
+      "file": "supabase/migrations/20260811231921_platform_admin_prospector_permissions_foundation.sql",
+      "similarity": 0.37037037037037035
+    },
+    {
+      "oid": "3b011236e762a235be95ba3d575402c9a5e1c12b",
+      "file": "supabase/migrations/20260926153138_wealth_recurrence_rpc_boundary.sql",
+      "similarity": 0.36363636363636365
+    },
+    {
+      "oid": "e8227a7451d1bfbaae80a38feb561a4f4d66615b",
+      "file": ".orcaly-mp-checkout-backup-20260728200554/supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+      "similarity": 0.3445378151260504
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260728182610_orcaly_security_definer_functions.sql",
+    "historical_file": "supabase/migrations/20260728182610_orcaly_security_definer_functions.sql",
+    "target_identity": "supabase/migrations/20260728182610_orcaly_security_definer_functions.sql"
+  },
+  "divergence_notes": "Content comparison preserves quoted literals and ordered SQL tokens; comments/formatting/case of unquoted identifiers ignored. Catalog presence is corroboration, not proof of byte identity or historical DML effects.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "9f24d227b87a65e9e5bb8c063646e5d2092f5b7acf012194518e81d4cdf06281",
+  "REDACTED_HASH": "9f24d227b87a65e9e5bb8c063646e5d2092f5b7acf012194518e81d4cdf06281",
+  "REDACTION_REASON": [],
+  "raw_bytes": 3834,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "9f24d227b87a65e9e5bb8c063646e5d2092f5b7acf012194518e81d4cdf06281",
+  "replay_form_sha256": "c8d4bf2324a4c879ff61a340d4055b70c09ead6f17451caa8dd4f494a65843a8",
+  "staged_replay_form": "supabase/replay-forms/production/20260728182610_orcaly_security_definer_functions.sql"
+}

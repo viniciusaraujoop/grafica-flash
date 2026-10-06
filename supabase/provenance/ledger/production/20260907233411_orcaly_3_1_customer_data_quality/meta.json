@@ -1,0 +1,68 @@
+{
+  "production_version": "20260907233411",
+  "production_name": "orcaly_3_1_customer_data_quality",
+  "ordered_ledger_index": 44,
+  "statement_count": 1,
+  "raw_ledger_sha256": "80a9cebb016ffa89b699cdda0d52923b26463ca5a095d94403c40be67fbea96d",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "RETIMESTAMPED",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260907234500_orcaly_3_1_customer_data_quality.sql",
+      "commit": "28ad5c2170db7aa3294847cfa1083a2eb813f07a",
+      "blob_sha": "7ca6bef539ce9717abb384d3a8ae10dad3781a34",
+      "sha256": "4ee5cae3b523b66dd7616a90b486e4b869cc2d6ecf2290de21dfe396d807b304",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "7ca6bef539ce9717abb384d3a8ae10dad3781a34",
+      "file": "supabase/migrations/20260907234500_orcaly_3_1_customer_data_quality.sql",
+      "similarity": 0.9912023460410557
+    },
+    {
+      "oid": "16ca04a54e240a99b7423e95d663f1cc99470ae1",
+      "file": "supabase/migrations/20260908223500_orcaly_3_1_data_quality_rule_hardening.sql",
+      "similarity": 0.24273255813953487
+    },
+    {
+      "oid": "7bc9e0c6abcf2d9fe2d3e89962257c094d08773c",
+      "file": "supabase/migrations/20260907233000_orcaly_3_1_reliability_foundation.sql",
+      "similarity": 0.21315468940316687
+    },
+    {
+      "oid": "a6aec931824640f6b68ccbe5c162ee25c66ae415",
+      "file": "supabase/migrations/20260728173219_orcaly_marketplace_stock_reservations.sql",
+      "similarity": 0.1718377088305489
+    },
+    {
+      "oid": "9751b32f80ce0f413115523764def1c726698be5",
+      "file": "supabase/migrations/20260927170000_wealth_alert_center.sql",
+      "similarity": 0.16263940520446096
+    }
+  ],
+  "content_comparison_result": "DIFFERENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260907234500_orcaly_3_1_customer_data_quality.sql",
+    "historical_file": "supabase/migrations/20260907234500_orcaly_3_1_customer_data_quality.sql",
+    "target_identity": "supabase/migrations/20260907233411_orcaly_3_1_customer_data_quality.sql"
+  },
+  "divergence_notes": "Ledger wraps timeline_events_customer_profile_id_fkey creation in pg_constraint existence guard; Git creates FK unconditionally. Ledger orders duplicate UUID pairs with id::text, Git uses UUID comparator (same canonical UUID ordering, but different source expression). Live FK has ON DELETE SET NULL. Guard matters on an existing baseline, so do not certify whole replay equivalence without validation. Secondary local evidence: .local-qa/reconciliation/diffs/20260907233411-remote.sql (Git blob af388b62fda7562fca53259a6c4954ea2895003f, byte-identical to returned ledger SQL; Codex checkpoint tree refs, NO historical migration commit/author). Primary comparison above remains against the authentic migration candidate, not a later remote-SQL capture.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "80a9cebb016ffa89b699cdda0d52923b26463ca5a095d94403c40be67fbea96d",
+  "REDACTED_HASH": "80a9cebb016ffa89b699cdda0d52923b26463ca5a095d94403c40be67fbea96d",
+  "REDACTION_REASON": [],
+  "raw_bytes": 39733,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "80a9cebb016ffa89b699cdda0d52923b26463ca5a095d94403c40be67fbea96d",
+  "replay_form_sha256": "91746373a865d7981cc10dc7a086316c74000a1c3f9a59943b28c86247f778e3",
+  "staged_replay_form": "supabase/replay-forms/production/20260907233411_orcaly_3_1_customer_data_quality.sql"
+}

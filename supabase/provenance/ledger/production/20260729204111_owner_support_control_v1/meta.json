@@ -1,0 +1,68 @@
+{
+  "production_version": "20260729204111",
+  "production_name": "owner_support_control_v1",
+  "ordered_ledger_index": 17,
+  "statement_count": 1,
+  "raw_ledger_sha256": "e5ee138cc49f06d7d177e1b5918fcf397e93cfc5270e30a6cd74e9175aeaf106",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "RETIMESTAMPED",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260729212519_owner_support_control_v1.sql",
+      "commit": "a4a02143af59753779eaee8ae891f87313540505",
+      "blob_sha": "d98d4dde15b78d0432cca839a2da22d30a6a3738",
+      "sha256": "fe1cc736e83b75f5f4123ebfc66388f5abbb7dac4902d925dcda78b2093c7824",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "d98d4dde15b78d0432cca839a2da22d30a6a3738",
+      "file": "supabase/migrations/20260729212519_owner_support_control_v1.sql",
+      "similarity": 0.9959839357429718
+    },
+    {
+      "oid": "f855dcb4d3c7fede2cff982effffa4f54524890a",
+      "file": "supabase/migrations/20260811231921_platform_admin_prospector_permissions_foundation.sql",
+      "similarity": 0.3420074349442379
+    },
+    {
+      "oid": "8b9a0fda8315bd62519e547d88b221ffd08155b9",
+      "file": "supabase/migrations/20260729214347_harden_platform_admin_owner_access_v1.sql",
+      "similarity": 0.33783783783783783
+    },
+    {
+      "oid": "a1c12658e388bebcb7c04e8d5eadce29c34caa67",
+      "file": "supabase/migrations/20260729165627_affiliate_program_sixty_percent.sql",
+      "similarity": 0.30038022813688214
+    },
+    {
+      "oid": "e0f80e2c0c10973222b9a5ecb134236977256c5f",
+      "file": "supabase/migrations/20260811235346_platform_admin_invites_and_activation_v1.sql",
+      "similarity": 0.2971576227390181
+    }
+  ],
+  "content_comparison_result": "DIFFERENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260729212519_owner_support_control_v1.sql",
+    "historical_file": "supabase/migrations/20260729212519_owner_support_control_v1.sql",
+    "target_identity": "supabase/migrations/20260729204111_owner_support_control_v1.sql"
+  },
+  "divergence_notes": "Only normalized SQL difference is COMMENT ON COLUMN affiliate_referrals.review_status wording. No routine-body divergence found; do not misclassify formatting diff as payout runtime change. Secondary local evidence: .local-qa/reconciliation/diffs/20260729204111-remote.sql (Git blob d4aa4c608d876b63310a116696aa8c4a5867f1fb, byte-identical to returned ledger SQL; Codex checkpoint tree refs, NO historical migration commit/author). Primary comparison above remains against the authentic migration candidate, not a later remote-SQL capture.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "e5ee138cc49f06d7d177e1b5918fcf397e93cfc5270e30a6cd74e9175aeaf106",
+  "REDACTED_HASH": "e5ee138cc49f06d7d177e1b5918fcf397e93cfc5270e30a6cd74e9175aeaf106",
+  "REDACTION_REASON": [],
+  "raw_bytes": 9774,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "e5ee138cc49f06d7d177e1b5918fcf397e93cfc5270e30a6cd74e9175aeaf106",
+  "replay_form_sha256": "ba8e4419326e446e8732d1ade0bf63fb7575a2932364d2da9f4267b22fd49aa4",
+  "staged_replay_form": "supabase/replay-forms/production/20260729204111_owner_support_control_v1.sql"
+}

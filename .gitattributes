@@ -1,0 +1,6 @@
+# Only newly introduced evidence is byte-preserved across LF/CRLF checkouts.
+# Existing certified M1 migration attributes/content are untouched.
+# Historical SQL and unified-diff context preserve source whitespace, including
+# EOF blank lines and the single-space prefix on blank context lines.
+supabase/provenance/** -text whitespace=-blank-at-eof,-blank-at-eol
+supabase/replay-forms/** -text whitespace=-blank-at-eof

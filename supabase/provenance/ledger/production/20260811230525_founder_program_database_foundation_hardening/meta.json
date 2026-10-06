@@ -1,0 +1,68 @@
+{
+  "production_version": "20260811230525",
+  "production_name": "founder_program_database_foundation_hardening",
+  "ordered_ledger_index": 25,
+  "statement_count": 1,
+  "raw_ledger_sha256": "ebb71d12acdb1f1a47e9543d4d07b5162c82cc79c6d0bc5e68e69461c2aaeec0",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "CANONICAL_MATCH",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260811230525_founder_program_database_foundation_hardening.sql",
+      "commit": "ab3777333682d8b7c50975cd70da23e3bc636a48",
+      "blob_sha": "17454e3014c787ef0db276f56bd19a88333e5923",
+      "sha256": "ebb71d12acdb1f1a47e9543d4d07b5162c82cc79c6d0bc5e68e69461c2aaeec0",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "17454e3014c787ef0db276f56bd19a88333e5923",
+      "file": "supabase/migrations/20260811230525_founder_program_database_foundation_hardening.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "7fb2aeea799d39b522980447bb6074267a987344",
+      "file": "supabase/migrations/20260907142000_orcaly_3_1_admin_server_only_grants.sql",
+      "similarity": 0.6521739130434783
+    },
+    {
+      "oid": "ccf11046efb377d4ee6f7c77f40f59aba1eda3f1",
+      "file": "supabase/migrations/20260728183312_orcaly_trigger_function_search_path.sql",
+      "similarity": 0.3235294117647059
+    },
+    {
+      "oid": "f886571b0029f96ff7824b0874c76aa6fe496474",
+      "file": "supabase/migrations/20260728174830_orcaly_internal_views_security.sql",
+      "similarity": 0.24489795918367346
+    },
+    {
+      "oid": "3b011236e762a235be95ba3d575402c9a5e1c12b",
+      "file": "supabase/migrations/20260926153138_wealth_recurrence_rpc_boundary.sql",
+      "similarity": 0.21153846153846154
+    }
+  ],
+  "content_comparison_result": "MATCH",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260811230525_founder_program_database_foundation_hardening.sql",
+    "historical_file": "supabase/migrations/20260811230525_founder_program_database_foundation_hardening.sql",
+    "target_identity": "supabase/migrations/20260811230525_founder_program_database_foundation_hardening.sql"
+  },
+  "divergence_notes": "Content comparison preserves quoted literals and ordered SQL tokens; comments/formatting/case of unquoted identifiers ignored. Catalog presence is corroboration, not proof of byte identity or historical DML effects.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; EXACT_GIT_MATCH; HISTORICAL_COMMIT_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "ebb71d12acdb1f1a47e9543d4d07b5162c82cc79c6d0bc5e68e69461c2aaeec0",
+  "REDACTED_HASH": "ebb71d12acdb1f1a47e9543d4d07b5162c82cc79c6d0bc5e68e69461c2aaeec0",
+  "REDACTION_REASON": [],
+  "raw_bytes": 281,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "ebb71d12acdb1f1a47e9543d4d07b5162c82cc79c6d0bc5e68e69461c2aaeec0",
+  "replay_form_sha256": "f6d255cbd4bb947fac86afb09cf62e0c54a6a6fadd89c900ae91adb918ac6d29",
+  "staged_replay_form": "supabase/replay-forms/production/20260811230525_founder_program_database_foundation_hardening.sql"
+}

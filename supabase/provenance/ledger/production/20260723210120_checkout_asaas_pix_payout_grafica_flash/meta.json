@@ -1,0 +1,70 @@
+{
+  "production_version": "20260723210120",
+  "production_name": "checkout_asaas_pix_payout_grafica_flash",
+  "ordered_ledger_index": 1,
+  "statement_count": 1,
+  "raw_ledger_sha256": "40c685c299eba5dc672ebb023517c105062604fb1c9ab9e94ee170d8268f5f6e",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "RENAMED",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260723213000_checkout_asaas_pix_payout.sql",
+      "commit": "82deb67f8f58f9b7f94106ff4310b450060e5fb0",
+      "blob_sha": "de8b505eae5a8477819a676576ec85222105c25f",
+      "sha256": "52bcd4f8b8dfa96a6b11b7ac698dabc56a6909b1a38bab93307415a3d12606a0",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "de8b505eae5a8477819a676576ec85222105c25f",
+      "file": "supabase/migrations/20260723213000_checkout_asaas_pix_payout.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "e8227a7451d1bfbaae80a38feb561a4f4d66615b",
+      "file": ".orcaly-mp-checkout-backup-20260728200554/supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+      "similarity": 0.3025210084033613
+    },
+    {
+      "oid": "67c0d555b76268835aa2ba057719c5cc40f06573",
+      "file": "supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+      "similarity": 0.3025210084033613
+    },
+    {
+      "oid": "f2658b9b8fff48b56ec130f9415d741629a39093",
+      "file": "supabase/migrations/20260701_cadastro_onboarding_inteligente.sql",
+      "similarity": 0.29213483146067415
+    },
+    {
+      "oid": "ea071df913f52973fda9166617f4dc48102ed02f",
+      "file": "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql",
+      "similarity": 0.2907801418439716
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260723213000_checkout_asaas_pix_payout.sql",
+    "historical_file": "supabase/migrations/20260723213000_checkout_asaas_pix_payout.sql",
+    "target_identity": "supabase/migrations/20260723210120_checkout_asaas_pix_payout_grafica_flash.sql"
+  },
+  "divergence_notes": "Name shortened to checkout_asaas_pix_payout and version changed. Ordered SQL tokens identical, including quoted values. First ledger entry already requires marketplace_payment_settings/payment_payouts/companies; it is not a greenfield bootstrap.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "REVIEWABLE_REDACTED",
+  "RAW_HASH": "40c685c299eba5dc672ebb023517c105062604fb1c9ab9e94ee170d8268f5f6e",
+  "REDACTED_HASH": "77ada0f4de7f47ada5842548279e6035dd67803d0fa5b7c16c78f499a501e3b2",
+  "REDACTION_REASON": [
+    "TENANT_SPECIFIC_SLUG"
+  ],
+  "raw_bytes": 1615,
+  "redacted": true,
+  "replay_form_selection": "NEUTRALIZED",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": true,
+  "executable": false,
+  "replay_form_body_sha256": "694572873f383bb37e1a6b50c646509366df6e3f80ae19da5f004b517d644794",
+  "replay_form_sha256": "00e40a322ee1eeef199cd4d889d09d4f6041fad474463bae804e1ac1a45d4ab7",
+  "staged_replay_form": "supabase/replay-forms/production/20260723210120_checkout_asaas_pix_payout_grafica_flash.sql"
+}

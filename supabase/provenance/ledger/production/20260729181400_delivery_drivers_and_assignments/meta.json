@@ -1,0 +1,68 @@
+{
+  "production_version": "20260729181400",
+  "production_name": "delivery_drivers_and_assignments",
+  "ordered_ledger_index": 12,
+  "statement_count": 1,
+  "raw_ledger_sha256": "f06b7df4df89fcee994d1462de765d022e79f99004a55f232568001cfaefd68e",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "RETIMESTAMPED",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260729182742_delivery_drivers_and_assignments.sql",
+      "commit": "feee9a18e7fc1c360c2e840856b1549410c6df2d",
+      "blob_sha": "f21345f1d662e10b39fc41ce1260eee3534b42df",
+      "sha256": "e3fe66e8f2426a4e2113e70d8f4bb764e7b7c883db2bae884ceea3c4c9c9c8d6",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "f21345f1d662e10b39fc41ce1260eee3534b42df",
+      "file": "supabase/migrations/20260729182742_delivery_drivers_and_assignments.sql",
+      "similarity": 0.936046511627907
+    },
+    {
+      "oid": "003ab3c5d05eac10110936b0bb7ce2a3e624668c",
+      "file": "supabase/migrations/20260914213803_integration_public_api_keys.sql",
+      "similarity": 0.31313131313131315
+    },
+    {
+      "oid": "46fc5ff243b865340eec05f69dd9bc78565222a5",
+      "file": "supabase/migrations/20260819234000_storefront_marketplace_v2.sql",
+      "similarity": 0.27751196172248804
+    },
+    {
+      "oid": "ea071df913f52973fda9166617f4dc48102ed02f",
+      "file": "supabase/migrations/20260716_estabilizacao_orcaly_fases_2_a_12.sql",
+      "similarity": 0.2767857142857143
+    },
+    {
+      "oid": "7abb5c6712ae5fa1c0c29e70f1cf69a8f5983663",
+      "file": "supabase/migrations/20260705_food_operacao_funcional.sql",
+      "similarity": 0.2757475083056478
+    }
+  ],
+  "content_comparison_result": "DIFFERENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260729182742_delivery_drivers_and_assignments.sql",
+    "historical_file": "supabase/migrations/20260729182742_delivery_drivers_and_assignments.sql",
+    "target_identity": "supabase/migrations/20260729181400_delivery_drivers_and_assignments.sql"
+  },
+  "divergence_notes": "DDL/routines otherwise token-identical. Ledger has a different COMMENT ON TABLE delivery_assignments and an additional COMMENT ON COLUMN settlement_status; persisted catalog metadata cannot be called byte/whole-SQL equivalent. Secondary local evidence: .local-qa/reconciliation/diffs/20260729181400-remote.sql (Git blob 94907acc13ef0e3ec106a4fe397589d843fa1dd4, byte-identical to returned ledger SQL; Codex checkpoint tree refs, NO historical migration commit/author). Primary comparison above remains against the authentic migration candidate, not a later remote-SQL capture.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "f06b7df4df89fcee994d1462de765d022e79f99004a55f232568001cfaefd68e",
+  "REDACTED_HASH": "f06b7df4df89fcee994d1462de765d022e79f99004a55f232568001cfaefd68e",
+  "REDACTION_REASON": [],
+  "raw_bytes": 4944,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "f06b7df4df89fcee994d1462de765d022e79f99004a55f232568001cfaefd68e",
+  "replay_form_sha256": "11af2eefe3e5b968a428ea2c998731293738e271bf35c03d65df1325ca2e0685",
+  "staged_replay_form": "supabase/replay-forms/production/20260729181400_delivery_drivers_and_assignments.sql"
+}

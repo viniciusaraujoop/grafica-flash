@@ -1,0 +1,68 @@
+{
+  "production_version": "20260812001520",
+  "production_name": "sales_prospecting_crm_foundation_v1",
+  "ordered_ledger_index": 28,
+  "statement_count": 1,
+  "raw_ledger_sha256": "553a2c0bcc3729f9129a64b783d26227e421a4750d92ff42d6a91e79f827dc01",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "CANONICAL_MATCH",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260812001520_sales_prospecting_crm_foundation_v1.sql",
+      "commit": "ebefe07647fd90a42a6f9fe6df72a871771e65a5",
+      "blob_sha": "71b16d8bfdf58668497d69fe916f4f044d6299a4",
+      "sha256": "742072dcc9c8087bef4cc17863cb21e31162088324a21a22620b92b3643c8ca8",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "71b16d8bfdf58668497d69fe916f4f044d6299a4",
+      "file": "supabase/migrations/20260812001520_sales_prospecting_crm_foundation_v1.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "3069f35ccb2c6b573f5387280b28d5a9d7827c21",
+      "file": "supabase/migrations/20260812002052_sales_prospecting_crm_hardening_v1.sql",
+      "similarity": 0.6814814814814815
+    },
+    {
+      "oid": "0d6a3015b0e0d979773003a09dc7462f78d7d515",
+      "file": "supabase/migrations/20260812003227_founder_invite_sales_integration_v1.sql",
+      "similarity": 0.37066666666666664
+    },
+    {
+      "oid": "4125519efc68f388096f3650900823f72b45354d",
+      "file": "supabase/migrations/20260812005359_founder_public_activation_trial_v1.sql",
+      "similarity": 0.2774327122153209
+    },
+    {
+      "oid": "f855dcb4d3c7fede2cff982effffa4f54524890a",
+      "file": "supabase/migrations/20260811231921_platform_admin_prospector_permissions_foundation.sql",
+      "similarity": 0.26245847176079734
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260812001520_sales_prospecting_crm_foundation_v1.sql",
+    "historical_file": "supabase/migrations/20260812001520_sales_prospecting_crm_foundation_v1.sql",
+    "target_identity": "supabase/migrations/20260812001520_sales_prospecting_crm_foundation_v1.sql"
+  },
+  "divergence_notes": "Content comparison preserves quoted literals and ordered SQL tokens; comments/formatting/case of unquoted identifiers ignored. Catalog presence is corroboration, not proof of byte identity or historical DML effects.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "553a2c0bcc3729f9129a64b783d26227e421a4750d92ff42d6a91e79f827dc01",
+  "REDACTED_HASH": "553a2c0bcc3729f9129a64b783d26227e421a4750d92ff42d6a91e79f827dc01",
+  "REDACTION_REASON": [],
+  "raw_bytes": 13779,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "553a2c0bcc3729f9129a64b783d26227e421a4750d92ff42d6a91e79f827dc01",
+  "replay_form_sha256": "3c72ea2520e7391e3420f8c111203c925e9cf9fbffe033413f1f6773d31630d3",
+  "staged_replay_form": "supabase/replay-forms/production/20260812001520_sales_prospecting_crm_foundation_v1.sql"
+}

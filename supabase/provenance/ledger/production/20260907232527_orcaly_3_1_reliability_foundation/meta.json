@@ -1,0 +1,68 @@
+{
+  "production_version": "20260907232527",
+  "production_name": "orcaly_3_1_reliability_foundation",
+  "ordered_ledger_index": 43,
+  "statement_count": 1,
+  "raw_ledger_sha256": "562272f74087b9df01820ff474d996f40e8052ebfc54306d82a3d067802608a3",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "RETIMESTAMPED",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260907233000_orcaly_3_1_reliability_foundation.sql",
+      "commit": "fe56625a87fd60bc17f3ab0e5ba4749854a0f603",
+      "blob_sha": "7bc9e0c6abcf2d9fe2d3e89962257c094d08773c",
+      "sha256": "1b56415fd2b603aa4db3b128e6c241f5910894de5f745b5461c6066b775bd856",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "7bc9e0c6abcf2d9fe2d3e89962257c094d08773c",
+      "file": "supabase/migrations/20260907233000_orcaly_3_1_reliability_foundation.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "db27bd8041557fdbc729bb889c01d14b3c69205d",
+      "file": "scripts/fixtures/wealth-queue-baseline.sql",
+      "similarity": 0.3308457711442786
+    },
+    {
+      "oid": "a6f047f4e31c96dc32c89c04b117ffe75539589f",
+      "file": "supabase/migrations/20260929211421_m1a_event_fabric_safety_contract.sql",
+      "similarity": 0.3092105263157895
+    },
+    {
+      "oid": "6cc35f78adebee9de5973ec390788a7251039dcb",
+      "file": "supabase/migrations/20260929211421_m1a_event_fabric_safety_contract.sql",
+      "similarity": 0.3092105263157895
+    },
+    {
+      "oid": "7ecd935bc35602ac69da0801b5dfba9f938f9cdc",
+      "file": "supabase/migrations/20260910122922_background_job_worker_transitions.sql",
+      "similarity": 0.288135593220339
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260907233000_orcaly_3_1_reliability_foundation.sql",
+    "historical_file": "supabase/migrations/20260907233000_orcaly_3_1_reliability_foundation.sql",
+    "target_identity": "supabase/migrations/20260907232527_orcaly_3_1_reliability_foundation.sql"
+  },
+  "divergence_notes": "Content comparison preserves quoted literals and ordered SQL tokens; comments/formatting/case of unquoted identifiers ignored. Catalog presence is corroboration, not proof of byte identity or historical DML effects.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "562272f74087b9df01820ff474d996f40e8052ebfc54306d82a3d067802608a3",
+  "REDACTED_HASH": "562272f74087b9df01820ff474d996f40e8052ebfc54306d82a3d067802608a3",
+  "REDACTION_REASON": [],
+  "raw_bytes": 14781,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "562272f74087b9df01820ff474d996f40e8052ebfc54306d82a3d067802608a3",
+  "replay_form_sha256": "8259e21131e8b36c856bc848b5e20231e000f8bc66b51bfb9f1a2e36a4bc4760",
+  "staged_replay_form": "supabase/replay-forms/production/20260907232527_orcaly_3_1_reliability_foundation.sql"
+}

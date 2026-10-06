@@ -1,0 +1,68 @@
+{
+  "production_version": "20260823163043",
+  "production_name": "whatsapp_cloud_api_v1",
+  "ordered_ledger_index": 36,
+  "statement_count": 1,
+  "raw_ledger_sha256": "0abdd9de9ee3df7eeff9a13727d7074297a100aeefe3f6efa7ea2ba0e77e91df",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "RETIMESTAMPED",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260823_whatsapp_cloud_api_v1.sql",
+      "commit": "2d63b8391fbc222b6cdb95446f0fdf7c0e7975dc",
+      "blob_sha": "6124369e70f7ba4cc59ab134559bd865c336f58a",
+      "sha256": "3ec0280dfbf071aadfbc38e6b61251f35f2c9b63e6611ef31b2f3e35e7444233",
+      "main_ancestor": false
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "6124369e70f7ba4cc59ab134559bd865c336f58a",
+      "file": "supabase/migrations/20260823_whatsapp_cloud_api_v1.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "66ed1ea5e4330a819e70e11e06b39e9c57423e54",
+      "file": "supabase/migrations/20260910150730_google_calendar_complete.sql",
+      "similarity": 0.4264705882352941
+    },
+    {
+      "oid": "003ab3c5d05eac10110936b0bb7ce2a3e624668c",
+      "file": "supabase/migrations/20260914213803_integration_public_api_keys.sql",
+      "similarity": 0.37142857142857144
+    },
+    {
+      "oid": "b49109d0451df628d9c9a57b845320819f84984e",
+      "file": "supabase/migrations/20260821004000_orcaly_assistant_v2_analytics.sql",
+      "similarity": 0.3602941176470588
+    },
+    {
+      "oid": "89346c3902883b7bc426a3e2587df2b1b57bf859",
+      "file": "supabase/migrations/20260821004000_orcaly_assistant_v2_analytics.sql",
+      "similarity": 0.35766423357664234
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "NONE",
+    "historical_file": "supabase/migrations/20260823_whatsapp_cloud_api_v1.sql",
+    "target_identity": "supabase/migrations/20260823163043_whatsapp_cloud_api_v1.sql"
+  },
+  "divergence_notes": "Token-identical historical source on feat/whatsapp-cloud-api-v1, commit 2d63b839; eight-digit filename date changed to production fourteen-digit version. Not ancestor of main. WhatsApp tables materialized in production; source is branch-only, not unknowable.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "0abdd9de9ee3df7eeff9a13727d7074297a100aeefe3f6efa7ea2ba0e77e91df",
+  "REDACTED_HASH": "0abdd9de9ee3df7eeff9a13727d7074297a100aeefe3f6efa7ea2ba0e77e91df",
+  "REDACTION_REASON": [],
+  "raw_bytes": 2892,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "0abdd9de9ee3df7eeff9a13727d7074297a100aeefe3f6efa7ea2ba0e77e91df",
+  "replay_form_sha256": "34193efdbda351e6258a27f6f0f230b4fd09b65d9480989dcab90bb47a46673f",
+  "staged_replay_form": "supabase/replay-forms/production/20260823163043_whatsapp_cloud_api_v1.sql"
+}

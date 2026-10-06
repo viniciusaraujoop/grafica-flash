@@ -1,0 +1,20 @@
+{
+  "scope": "ENVIRONMENT_BOUND_SIDE_EFFECTS_ONLY",
+  "agent4_review_required": true,
+  "schema_effect_change": false,
+  "reason": "Omit tenant-specific payment configuration update.",
+  "removed_units": [
+    {
+      "RAW_HASH": "edaa93f4bdbe8e1eacb1842a65f16071325995fa4235bf5a066c1c990a45d652",
+      "REDACTED_HASH": "0e744a065905c5a54e058254db9651caa5242ac24be8fc709a2d76c89772899f",
+      "REDACTION_REASON": [
+        "TENANT_SPECIFIC_SLUG"
+      ],
+      "redacted_execution_record": "\n\nupdate public.marketplace_payment_settings\nset\n  is_active = false,\n  updated_at = now()\nwhere provider = 'mercado_pago'\n  and company_id in (\n    select id\n    from public.companies\n    where slug = '[REDACTED_TENANT_SLUG]'\n       or subdomain_slug = '[REDACTED_TENANT_SLUG]'\n  );"
+    }
+  ],
+  "explicit_diff": {
+    "removed": "supabase/provenance/ledger/production/20260723210120_checkout_asaas_pix_payout_grafica_flash/neutralization.json",
+    "replacement": "No replacement SQL; app DDL/routines/ACL statements preserved."
+  }
+}

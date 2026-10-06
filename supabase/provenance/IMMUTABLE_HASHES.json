@@ -1,0 +1,27 @@
+{
+  "base_main": "9611d195290247694ad60d5aa2638ac8b96ecefb",
+  "m1": [
+    {
+      "path": "supabase/migrations/20260929211421_m1a_event_fabric_safety_contract.sql",
+      "git_blob": "a6f047f4e31c96dc32c89c04b117ffe75539589f",
+      "sha256": "4bec9898e69a8feea2815649f45cb8e2ffd808fbe97dd87814b7f523743b8d07"
+    },
+    {
+      "path": "supabase/migrations/20260929222634_m1a_event_fabric_dispatch_eligibility_fix.sql",
+      "git_blob": "eecf69b692e88603ef28a9f7298e67fb1f029a14",
+      "sha256": "29d818394fc6e3c180bea4bdbc09848c2c9658238bb8c93266b42d577a8a652f"
+    },
+    {
+      "path": "supabase/migrations/20260929225302_m1a_event_fabric_failure_settlement_due_guard.sql",
+      "git_blob": "967d688f2a4f1b42a4a402c0218da5e6dfb4d6c6",
+      "sha256": "a5b724df00163c46d1e51b7b8d9b0b01db75bdfe09b07ecdccac3f185044c2ea"
+    },
+    {
+      "path": "supabase/migrations/20260930155522_m1b_shared_audit_contract.sql",
+      "git_blob": "8f6a683ddd546948e40f226cc9627a4a853a2e87",
+      "sha256": "8ad806eaf22223c03fc1543526aae6b7fe43de613ef305de1738425374c297f8"
+    }
+  ],
+  "frontier_sha256": null,
+  "frontier_pin_status": "BLOCKED_NOT_DERIVED"
+}

@@ -1,0 +1,70 @@
+{
+  "production_version": "20260729213924",
+  "production_name": "harden_platform_admin_owner_access_v1",
+  "ordered_ledger_index": 18,
+  "statement_count": 1,
+  "raw_ledger_sha256": "e83709ea064c8e19b550a9e16dda1716b821a090d7c123da16d0f38088b976db",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "RETIMESTAMPED",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260729214347_harden_platform_admin_owner_access_v1.sql",
+      "commit": "a4a02143af59753779eaee8ae891f87313540505",
+      "blob_sha": "8b9a0fda8315bd62519e547d88b221ffd08155b9",
+      "sha256": "7b5f680a21117f0f66a3395130a912cafe36260121caa54704d3da921e5241e9",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "8b9a0fda8315bd62519e547d88b221ffd08155b9",
+      "file": "supabase/migrations/20260729214347_harden_platform_admin_owner_access_v1.sql",
+      "similarity": 0.8802395209580839
+    },
+    {
+      "oid": "f855dcb4d3c7fede2cff982effffa4f54524890a",
+      "file": "supabase/migrations/20260811231921_platform_admin_prospector_permissions_foundation.sql",
+      "similarity": 0.4919786096256685
+    },
+    {
+      "oid": "d98d4dde15b78d0432cca839a2da22d30a6a3738",
+      "file": "supabase/migrations/20260729212519_owner_support_control_v1.sql",
+      "similarity": 0.3258785942492013
+    },
+    {
+      "oid": "7ecd935bc35602ac69da0801b5dfba9f938f9cdc",
+      "file": "supabase/migrations/20260910122922_background_job_worker_transitions.sql",
+      "similarity": 0.29831932773109243
+    },
+    {
+      "oid": "e0f80e2c0c10973222b9a5ecb134236977256c5f",
+      "file": "supabase/migrations/20260811235346_platform_admin_invites_and_activation_v1.sql",
+      "similarity": 0.2962962962962963
+    }
+  ],
+  "content_comparison_result": "DIFFERENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260729214347_harden_platform_admin_owner_access_v1.sql",
+    "historical_file": "supabase/migrations/20260729214347_harden_platform_admin_owner_access_v1.sql",
+    "target_identity": "supabase/migrations/20260729213924_harden_platform_admin_owner_access_v1.sql"
+  },
+  "divergence_notes": "Git omits final INSERT into admin_audit_logs, action platform_admin_access_hardened. Other normalized statements identical. This one-time audit DML is not schema; affected business/auth rows were not queried or reproduced. Secondary local evidence: .local-qa/reconciliation/diffs/20260729213924-remote.sql (Git blob 347c72406afab1dcc4a4ee46d7c2b52406990576, byte-identical to returned ledger SQL; Codex checkpoint tree refs, NO historical migration commit/author). Primary comparison above remains against the authentic migration candidate, not a later remote-SQL capture.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "REVIEWABLE_REDACTED",
+  "RAW_HASH": "e83709ea064c8e19b550a9e16dda1716b821a090d7c123da16d0f38088b976db",
+  "REDACTED_HASH": "1dccc4260f7a02f5521743ee68284df44022cdc89447a75e4588740719a0bd3f",
+  "REDACTION_REASON": [
+    "USER_SPECIFIC_EMAIL"
+  ],
+  "raw_bytes": 3569,
+  "redacted": true,
+  "replay_form_selection": "NEUTRALIZED",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": true,
+  "executable": false,
+  "replay_form_body_sha256": "9aa20ac600c34dd99719f5a25b769a51c8cbbfa2874a688470c39b81697aa315",
+  "replay_form_sha256": "bd2db9b6e962ff77459c16569ff5dc865337967f43e5337787cf9edc6b826264",
+  "staged_replay_form": "supabase/replay-forms/production/20260729213924_harden_platform_admin_owner_access_v1.sql"
+}

@@ -1,0 +1,168 @@
+# Redacted archived current-main representation vs authoritative redacted executed representation.
+# This is a content diff, not an assertion that whitespace differences change schema.
+diff --git a/supabase/provenance/git-history/20260729214347_harden_platform_admin_owner_access_v1.sql b/supabase/provenance/ledger/production/20260729213924_harden_platform_admin_owner_access_v1/ledger.sql
+index b81bc6b..bc66b9b 100644
+--- a/supabase/provenance/git-history/20260729214347_harden_platform_admin_owner_access_v1.sql
++++ b/supabase/provenance/ledger/production/20260729213924_harden_platform_admin_owner_access_v1/ledger.sql
+@@ -1,9 +1,9 @@
+--- ORCALY_PLATFORM_ADMIN_HARDENING_V1
+--- Mantem [REDACTED_OWNER_EMAIL] como unico owner ativo e fornece
+--- verificacao segura do acesso interno para o proxy do Next.js.
+-
+ begin;
+ 
++-- ORCALY_PLATFORM_ADMIN_HARDENING_V1
++-- Torna [REDACTED_OWNER_EMAIL] o unico DONO ativo e cria uma verificacao
++-- segura, baseada no banco, para paginas administrativas.
++
+ update public.platform_admins
+ set role = 'owner',
+     is_active = true,
+@@ -29,9 +29,7 @@ with revoked as (
+   returning user_id
+ )
+ update auth.users u
+-set raw_app_meta_data =
+-      coalesce(u.raw_app_meta_data, '{}'::jsonb)
+-      - 'orcaly_role',
++set raw_app_meta_data = coalesce(u.raw_app_meta_data, '{}'::jsonb) - 'orcaly_role',
+     updated_at = now()
+ where u.id in (
+   select user_id
+@@ -42,31 +40,20 @@ where u.id in (
+ update auth.users
+ set raw_app_meta_data =
+       coalesce(raw_app_meta_data, '{}'::jsonb)
+-      || jsonb_build_object(
+-        'orcaly_role',
+-        'owner'
+-      ),
++      || jsonb_build_object('orcaly_role', 'owner'),
+     updated_at = now()
+ where lower(email) = '[REDACTED_OWNER_EMAIL]';
+ 
+-alter table public.platform_admins
+-  enable row level security;
++alter table public.platform_admins enable row level security;
++revoke all on table public.platform_admins from anon, authenticated;
+ 
+-revoke all
+-on table public.platform_admins
+-from anon, authenticated;
++drop index if exists public.platform_admins_single_active_owner_uidx;
++create unique index platform_admins_single_active_owner_uidx
++  on public.platform_admins ((1))
++  where is_active = true
++    and lower(role) = 'owner';
+ 
+-drop index if exists
+-  public.platform_admins_single_active_owner_uidx;
+-
+-create unique index
+-  platform_admins_single_active_owner_uidx
+-on public.platform_admins ((1))
+-where is_active = true
+-  and lower(role) = 'owner';
+-
+-create or replace function
+-  public.get_my_platform_admin_access()
++create or replace function public.get_my_platform_admin_access()
+ returns table (
+   admin_id uuid,
+   admin_email text,
+@@ -84,54 +71,63 @@ as $$
+     p.id,
+     lower(p.email),
+     case
+-      when lower(p.role) in (
+-        'owner',
+-        'super_admin'
+-      ) then 'owner'
+-      when lower(p.role) in (
+-        'support',
+-        'suporte'
+-      ) then 'support'
+-      when lower(p.role) = 'finance'
+-        then 'finance'
++      when lower(p.role) in ('owner', 'super_admin') then 'owner'
++      when lower(p.role) in ('support', 'suporte') then 'support'
++      when lower(p.role) = 'finance' then 'finance'
+       else 'admin'
+     end,
+     p.is_active,
+     p.must_change_password,
+-    coalesce(
+-      p.permissions,
+-      '{}'::jsonb
+-    )
++    coalesce(p.permissions, '{}'::jsonb)
+   from public.platform_admins p
+   where p.user_id = auth.uid()
+     and p.is_active = true
+   order by
+     case
+-      when lower(p.role) in (
+-        'owner',
+-        'super_admin'
+-      ) then 0
+-      when lower(p.role) = 'admin'
+-        then 1
+-      when lower(p.role) = 'finance'
+-        then 2
++      when lower(p.role) in ('owner', 'super_admin') then 0
++      when lower(p.role) = 'admin' then 1
++      when lower(p.role) = 'finance' then 2
+       else 3
+     end,
+     p.created_at
+   limit 1;
+ $$;
+ 
+-revoke all
+-on function public.get_my_platform_admin_access()
+-from public, anon;
+-
+-grant execute
+-on function public.get_my_platform_admin_access()
+-to authenticated;
++revoke all on function public.get_my_platform_admin_access()
++  from public, anon;
++grant execute on function public.get_my_platform_admin_access()
++  to authenticated;
+ 
+-comment on function
+-  public.get_my_platform_admin_access()
+-is
++comment on function public.get_my_platform_admin_access() is
+   'Retorna somente o acesso administrativo ativo do usuario autenticado; usada pelo proxy antes de renderizar /admin.';
+ 
++insert into public.admin_audit_logs (
++  admin_email,
++  action,
++  target_type,
++  target_id,
++  target_label,
++  payload,
++  metadata,
++  created_at
++)
++values (
++  '[REDACTED_OWNER_EMAIL]',
++  'platform_admin_access_hardened',
++  'platform_admin',
++  null,
++  'Owner unico e verificacao de banco ativada',
++  jsonb_build_object(
++    'owner_email', '[REDACTED_OWNER_EMAIL]',
++    'database_check', true,
++    'single_active_owner', true
++  ),
++  jsonb_build_object(
++    'owner_email', '[REDACTED_OWNER_EMAIL]',
++    'database_check', true,
++    'single_active_owner', true
++  ),
++  now()
++);
++
+ commit;

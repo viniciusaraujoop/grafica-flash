@@ -1,0 +1,18 @@
+{
+  "frozen_signature_sha256": "affd3c4f7a5155fcbedb9bcf9999477c2e3275a492710fd2859b98ba88f82be9",
+  "source": "P0_PRODUCTION_BASE_SIGNATURE.json (private raw evidence retained outside repository)",
+  "redacted_payload_sha256": "fd80e63afacd3a9178bd773e2b84b622e486c7b2b0f19c97135622783bd76086",
+  "redactions": [
+    "USER_SPECIFIC_EMAIL"
+  ],
+  "representation": "Lossless base64+gzip of every frozen payload section AFTER redaction. Secret-scan must decode and inspect. Raw PostgreSQL digest representation deliberately not duplicated in public archive.",
+  "raw_payload_file_sha256": "49d8d21fea90e845191ebdd247270fa6280f8221928d08e05682a1b326311e94",
+  "query_sha256": "59303c8b9692349f679e67dc5fb580426d669829c683e94c1eaeb05ec35a0e1f",
+  "effective_privilege_roles": [
+    "anon",
+    "authenticated",
+    "service_role",
+    "postgres",
+    "pg_database_owner"
+  ]
+}

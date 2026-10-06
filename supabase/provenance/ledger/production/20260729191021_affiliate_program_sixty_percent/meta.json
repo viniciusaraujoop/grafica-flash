@@ -1,0 +1,68 @@
+{
+  "production_version": "20260729191021",
+  "production_name": "affiliate_program_sixty_percent",
+  "ordered_ledger_index": 13,
+  "statement_count": 1,
+  "raw_ledger_sha256": "34fd2f10331b4e9d892bfe350e925650c55e5ebca008c4141d4033203fdabf38",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "SQUASHED",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260729165627_affiliate_program_sixty_percent.sql",
+      "commit": "a4a02143af59753779eaee8ae891f87313540505",
+      "blob_sha": "a1c12658e388bebcb7c04e8d5eadce29c34caa67",
+      "sha256": "e15f9cb431d9294187a7b857e429cc4c66d10e7bec45ed0b6405b32d88ecaf1e",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "a1c12658e388bebcb7c04e8d5eadce29c34caa67",
+      "file": "supabase/migrations/20260729165627_affiliate_program_sixty_percent.sql",
+      "similarity": 0.8666666666666667
+    },
+    {
+      "oid": "d98d4dde15b78d0432cca839a2da22d30a6a3738",
+      "file": "supabase/migrations/20260729212519_owner_support_control_v1.sql",
+      "similarity": 0.31856540084388185
+    },
+    {
+      "oid": "e0f80e2c0c10973222b9a5ecb134236977256c5f",
+      "file": "supabase/migrations/20260811235346_platform_admin_invites_and_activation_v1.sql",
+      "similarity": 0.2524850894632207
+    },
+    {
+      "oid": "ce34d5b325ed3cfeca0c1290730957289e6cdcd8",
+      "file": "supabase/migrations/20260717_subscription_trial_cancellation.sql",
+      "similarity": 0.22695035460992907
+    },
+    {
+      "oid": "a6f047f4e31c96dc32c89c04b117ffe75539589f",
+      "file": "supabase/migrations/20260929211421_m1a_event_fabric_safety_contract.sql",
+      "similarity": 0.22676579925650558
+    }
+  ],
+  "content_comparison_result": "DIFFERENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260729165627_affiliate_program_sixty_percent.sql",
+    "historical_file": "supabase/migrations/20260729165627_affiliate_program_sixty_percent.sql",
+    "target_identity": "supabase/migrations/20260729191021_affiliate_program_sixty_percent.sql"
+  },
+  "divergence_notes": "Git combines this base and three follow-up ledger entries. commission_rate BETWEEN 0 AND 1 is logically equivalent to >=0 AND <=1. Original aggregate FOR UPDATE in create_affiliate_payout_admin is superseded by row 15; do not replay combined file plus follow-ups as four independent original sources. Secondary local evidence: .local-qa/reconciliation/diffs/20260729191021-remote.sql (Git blob 5f5bb2cb86e423b63b9fc65116d9cced8a9b3454, byte-identical to returned ledger SQL; Codex checkpoint tree refs, NO historical migration commit/author). Primary comparison above remains against the authentic migration candidate, not a later remote-SQL capture.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "34fd2f10331b4e9d892bfe350e925650c55e5ebca008c4141d4033203fdabf38",
+  "REDACTED_HASH": "34fd2f10331b4e9d892bfe350e925650c55e5ebca008c4141d4033203fdabf38",
+  "REDACTION_REASON": [],
+  "raw_bytes": 24296,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "34fd2f10331b4e9d892bfe350e925650c55e5ebca008c4141d4033203fdabf38",
+  "replay_form_sha256": "6c78a266ac8030c8385b371ef874ee024810ba77fa15f5b2894d3f23e03ba8c5",
+  "staged_replay_form": "supabase/replay-forms/production/20260729191021_affiliate_program_sixty_percent.sql"
+}

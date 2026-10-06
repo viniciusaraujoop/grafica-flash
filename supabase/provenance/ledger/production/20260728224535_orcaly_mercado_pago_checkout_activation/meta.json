@@ -1,0 +1,75 @@
+{
+  "production_version": "20260728224535",
+  "production_name": "orcaly_mercado_pago_checkout_activation",
+  "ordered_ledger_index": 10,
+  "statement_count": 1,
+  "raw_ledger_sha256": "6d4740c7420cad606866ae61d22df1c90b33e4bef7964e948f3b92cad39e441d",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "CANONICAL_MATCH",
+  "historical_git_candidates": [
+    {
+      "file": ".orcaly-mp-checkout-backup-20260728200554/supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+      "commit": "1517c0065379bfc4308ef2f0c666160ba080bc67",
+      "blob_sha": "e8227a7451d1bfbaae80a38feb561a4f4d66615b",
+      "sha256": "9be116b123203e55a67d88e959fd7d0e0134202d04faa2cd561079265320046a",
+      "main_ancestor": true
+    },
+    {
+      "file": "supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+      "commit": "535460bbeebc0f48b17f46d26ca1797865241f38",
+      "blob_sha": "67c0d555b76268835aa2ba057719c5cc40f06573",
+      "sha256": "ac0f504acb839a488b348c060b01be3daa8a5a37332fefbdf9e6205eb5ff76ca",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "e8227a7451d1bfbaae80a38feb561a4f4d66615b",
+      "file": ".orcaly-mp-checkout-backup-20260728200554/supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "67c0d555b76268835aa2ba057719c5cc40f06573",
+      "file": "supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "967d688f2a4f1b42a4a402c0218da5e6dfb4d6c6",
+      "file": "supabase/migrations/20260929225302_m1a_event_fabric_failure_settlement_due_guard.sql",
+      "similarity": 0.3873239436619718
+    },
+    {
+      "oid": "f855dcb4d3c7fede2cff982effffa4f54524890a",
+      "file": "supabase/migrations/20260811231921_platform_admin_prospector_permissions_foundation.sql",
+      "similarity": 0.363013698630137
+    },
+    {
+      "oid": "ce34d5b325ed3cfeca0c1290730957289e6cdcd8",
+      "file": "supabase/migrations/20260717_subscription_trial_cancellation.sql",
+      "similarity": 0.35502958579881655
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+    "historical_file": ".orcaly-mp-checkout-backup-20260728200554/supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+    "target_identity": "supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql"
+  },
+  "divergence_notes": "Content comparison preserves quoted literals and ordered SQL tokens; comments/formatting/case of unquoted identifiers ignored. Catalog presence is corroboration, not proof of byte identity or historical DML effects.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "6d4740c7420cad606866ae61d22df1c90b33e4bef7964e948f3b92cad39e441d",
+  "REDACTED_HASH": "6d4740c7420cad606866ae61d22df1c90b33e4bef7964e948f3b92cad39e441d",
+  "REDACTION_REASON": [],
+  "raw_bytes": 1359,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "6d4740c7420cad606866ae61d22df1c90b33e4bef7964e948f3b92cad39e441d",
+  "replay_form_sha256": "2a306713520ccb94efff40f8ae85bf93e63100c6441facde277f81e6536e315c",
+  "staged_replay_form": "supabase/replay-forms/production/20260728224535_orcaly_mercado_pago_checkout_activation.sql"
+}

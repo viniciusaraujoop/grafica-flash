@@ -1,0 +1,60 @@
+{
+  "production_version": "20260729191437",
+  "production_name": "affiliate_internal_tables_explicit_deny",
+  "ordered_ledger_index": 16,
+  "statement_count": 1,
+  "raw_ledger_sha256": "5ab91ed9df4543f120816b9043756c0c9fdc5fd297dae5c35885e8bd4ef322db",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "SQUASHED",
+  "historical_git_candidates": [],
+  "retrieval_only_candidates": [
+    {
+      "oid": "0af5bd9eefa7161dd009cfc252cf875fa551527b",
+      "file": "supabase/migrations/20260907140500_orcaly_3_1_db_hardening_batch_1.sql",
+      "similarity": 0.2631578947368421
+    },
+    {
+      "oid": "2f44fc38ebc505e5059a1dab103be987fdf74111",
+      "file": "supabase/migrations/20260812221532_founder_final_regression_hardening_v1.sql",
+      "similarity": 0.24390243902439024
+    },
+    {
+      "oid": "4cb392d5338e55ae68e27fe628d4a392972e3acd",
+      "file": "supabase/migrations/20260830184500_fix_admin_users_rls_recursion.sql",
+      "similarity": 0.23684210526315788
+    },
+    {
+      "oid": "cdf2b907ab0cdccd044a770dbb1aaacc1d6d0777",
+      "file": "supabase/migrations/20260808031810_affiliate_partner_growth_hub_indexes.sql",
+      "similarity": 0.23076923076923078
+    },
+    {
+      "oid": "a7777c67ba8ff92e3a46a07769e47426bd122a8c",
+      "file": "supabase/migrations/20260728173500_orcaly_marketplace_stock_fk_indexes.sql",
+      "similarity": 0.20930232558139536
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260729165627_affiliate_program_sixty_percent.sql",
+    "historical_file": "supabase/migrations/20260729165627_affiliate_program_sixty_percent.sql",
+    "target_identity": "supabase/migrations/20260729191437_affiliate_internal_tables_explicit_deny.sql"
+  },
+  "divergence_notes": "Four deny-client policy definitions and target tables are embedded in combined affiliate file; live policies are authenticated / ALL / USING false / WITH CHECK false. No standalone original Git file located. Deny policies are PERMISSIVE, so they are not independently proof against another permissive allow policy.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "5ab91ed9df4543f120816b9043756c0c9fdc5fd297dae5c35885e8bd4ef322db",
+  "REDACTED_HASH": "5ab91ed9df4543f120816b9043756c0c9fdc5fd297dae5c35885e8bd4ef322db",
+  "REDACTION_REASON": [],
+  "raw_bytes": 915,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "5ab91ed9df4543f120816b9043756c0c9fdc5fd297dae5c35885e8bd4ef322db",
+  "replay_form_sha256": "bbdaf66ab5a5690471b2550d1318958b1dc6a8cb668e1ef0523a83b97b820653",
+  "staged_replay_form": "supabase/replay-forms/production/20260729191437_affiliate_internal_tables_explicit_deny.sql"
+}

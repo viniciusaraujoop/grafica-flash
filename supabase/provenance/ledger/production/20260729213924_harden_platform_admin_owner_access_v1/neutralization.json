@@ -1,0 +1,44 @@
+{
+  "scope": "ENVIRONMENT_BOUND_SIDE_EFFECTS_ONLY",
+  "agent4_review_required": true,
+  "schema_effect_change": false,
+  "reason": "Do not establish real owner identities, modify auth metadata or emit production-person audit seed.",
+  "removed_units": [
+    {
+      "RAW_HASH": "51dd15a98e8e41cc0b7f62d605e4476cddda24693980f90be12a41d8af0ecbef",
+      "REDACTED_HASH": "ce8e5140129ed722b947d50a72e5773d935fef7c157e209ce2b038cfc37bfee2",
+      "REDACTION_REASON": [
+        "USER_SPECIFIC_EMAIL"
+      ],
+      "redacted_execution_record": "\n\n-- ORCALY_PLATFORM_ADMIN_HARDENING_V1\n-- Torna [REDACTED_OWNER_EMAIL] o unico DONO ativo e cria uma verificacao\n-- segura, baseada no banco, para paginas administrativas.\n\nupdate public.platform_admins\nset role = 'owner',\n    is_active = true,\n    permissions = '{\"all\":true}'::jsonb,\n    area = coalesce(nullif(trim(area), ''), 'Direcao'),\n    must_change_password = false,\n    updated_at = now()\nwhere lower(email) = '[REDACTED_OWNER_EMAIL]';"
+    },
+    {
+      "RAW_HASH": "e4bcf360fecd151d960aa97c956bb3db8e8fe04decbd3e4a50da144f9d7bb0ac",
+      "REDACTED_HASH": "fbde13a31553a30bd2f8ae0d9cd885944e78f0edb95a2450b336855b454134fc",
+      "REDACTION_REASON": [
+        "USER_SPECIFIC_EMAIL"
+      ],
+      "redacted_execution_record": "\n\nwith revoked as (\n  update public.platform_admins\n  set role = 'admin',\n      is_active = false,\n      permissions = '{}'::jsonb,\n      observacoes = concat_ws(\n        E'\\n',\n        nullif(trim(observacoes), ''),\n        'Acesso de owner revogado em 29/07/2026. O owner oficial e [REDACTED_OWNER_EMAIL].'\n      ),\n      updated_at = now()\n  where lower(email) <> '[REDACTED_OWNER_EMAIL]'\n    and lower(role) in ('owner', 'super_admin')\n  returning user_id\n)\nupdate auth.users u\nset raw_app_meta_data = coalesce(u.raw_app_meta_data, '{}'::jsonb) - 'orcaly_role',\n    updated_at = now()\nwhere u.id in (\n  select user_id\n  from revoked\n  where user_id is not null\n);"
+    },
+    {
+      "RAW_HASH": "5891b6c78427ac214a4c6e97b99086bdcb41c7b58dcfe9cce1aed76f088af055",
+      "REDACTED_HASH": "f5418ed9006a631313f48f5377224f9987c856df0ebd826db4ab6fe3a112fa63",
+      "REDACTION_REASON": [
+        "USER_SPECIFIC_EMAIL"
+      ],
+      "redacted_execution_record": "\n\nupdate auth.users\nset raw_app_meta_data =\n      coalesce(raw_app_meta_data, '{}'::jsonb)\n      || jsonb_build_object('orcaly_role', 'owner'),\n    updated_at = now()\nwhere lower(email) = '[REDACTED_OWNER_EMAIL]';"
+    },
+    {
+      "RAW_HASH": "022d01739dee397ec94fc185506ae6e4f27e9ba9713f37f36f728cee5f098d2c",
+      "REDACTED_HASH": "9aec34d5252fbe28d920b6436dbad557e2db043b5d5988341df47a8f5ab3a568",
+      "REDACTION_REASON": [
+        "USER_SPECIFIC_EMAIL"
+      ],
+      "redacted_execution_record": "\n\ninsert into public.admin_audit_logs (\n  admin_email,\n  action,\n  target_type,\n  target_id,\n  target_label,\n  payload,\n  metadata,\n  created_at\n)\nvalues (\n  '[REDACTED_OWNER_EMAIL]',\n  'platform_admin_access_hardened',\n  'platform_admin',\n  null,\n  'Owner unico e verificacao de banco ativada',\n  jsonb_build_object(\n    'owner_email', '[REDACTED_OWNER_EMAIL]',\n    'database_check', true,\n    'single_active_owner', true\n  ),\n  jsonb_build_object(\n    'owner_email', '[REDACTED_OWNER_EMAIL]',\n    'database_check', true,\n    'single_active_owner', true\n  ),\n  now()\n);"
+    }
+  ],
+  "explicit_diff": {
+    "removed": "supabase/provenance/ledger/production/20260729213924_harden_platform_admin_owner_access_v1/neutralization.json",
+    "replacement": "No replacement SQL; app DDL/routines/ACL statements preserved."
+  }
+}

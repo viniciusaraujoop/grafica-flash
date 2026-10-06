@@ -1,0 +1,62 @@
+{
+  "production_version": "20260809185723",
+  "production_name": "pre_validation_remaining_fk_indexes",
+  "ordered_ledger_index": 23,
+  "statement_count": 1,
+  "raw_ledger_sha256": "474eae3b48b8cc789f7f548f0b30af90e14b74f5eac10c8823efbb5146611af8",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "PRODUCTION_ONLY",
+  "historical_git_candidates": [],
+  "retrieval_only_candidates": [
+    {
+      "oid": "a7777c67ba8ff92e3a46a07769e47426bd122a8c",
+      "file": "supabase/migrations/20260728173500_orcaly_marketplace_stock_fk_indexes.sql",
+      "similarity": 0.19672131147540983
+    },
+    {
+      "oid": "cdf2b907ab0cdccd044a770dbb1aaacc1d6d0777",
+      "file": "supabase/migrations/20260808031810_affiliate_partner_growth_hub_indexes.sql",
+      "similarity": 0.1896551724137931
+    },
+    {
+      "oid": "0af5bd9eefa7161dd009cfc252cf875fa551527b",
+      "file": "supabase/migrations/20260907140500_orcaly_3_1_db_hardening_batch_1.sql",
+      "similarity": 0.1896551724137931
+    },
+    {
+      "oid": "2f44fc38ebc505e5059a1dab103be987fdf74111",
+      "file": "supabase/migrations/20260812221532_founder_final_regression_hardening_v1.sql",
+      "similarity": 0.18032786885245902
+    },
+    {
+      "oid": "5017519aab4d26fa687c4c0ca337a1bc0a342644",
+      "file": "supabase/migrations/20260723234500_subscription_webhook_unified.sql",
+      "similarity": 0.1791044776119403
+    }
+  ],
+  "content_comparison_result": "NO_GIT_SOURCE",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "NONE",
+    "historical_file": "supabase/baselines/20260926030809_production_schema_baseline.sql",
+    "target_identity": "supabase/migrations/20260809185723_pre_validation_remaining_fk_indexes.sql"
+  },
+  "divergence_notes": "No original migration SQL in reachable Git. Executed SQL recovered from production ledger. All 16 CREATE index names present in production. Later schema snapshots preserve materialized effects, not original migration source.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE; EVIDENCE_MISSING (original Git source only)",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "474eae3b48b8cc789f7f548f0b30af90e14b74f5eac10c8823efbb5146611af8",
+  "REDACTED_HASH": "474eae3b48b8cc789f7f548f0b30af90e14b74f5eac10c8823efbb5146611af8",
+  "REDACTION_REASON": [],
+  "raw_bytes": 1804,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "474eae3b48b8cc789f7f548f0b30af90e14b74f5eac10c8823efbb5146611af8",
+  "replay_form_sha256": "497ce3ddc4fd5807b1c3658c6954da99a622132a21f994ac6f39dcae7e85518e",
+  "staged_replay_form": "supabase/replay-forms/production/20260809185723_pre_validation_remaining_fk_indexes.sql",
+  "SOURCE": "PRODUCTION_LEDGER_STATEMENTS",
+  "AUTHORSHIP": "UNKNOWN"
+}

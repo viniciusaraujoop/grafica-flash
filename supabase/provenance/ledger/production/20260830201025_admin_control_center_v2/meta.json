@@ -1,0 +1,68 @@
+{
+  "production_version": "20260830201025",
+  "production_name": "admin_control_center_v2",
+  "ordered_ledger_index": 38,
+  "statement_count": 1,
+  "raw_ledger_sha256": "9e46721e37eaf2cc80e4ffed0a162a12b5ead618364d6811c02a3ac45f0e79a2",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "RETIMESTAMPED",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260819230000_admin_control_center_v2.sql",
+      "commit": "ce693159c7ef6a9c16d75d6280608d5576936181",
+      "blob_sha": "e97ed4d6d113ec5ab6a8357d8dbd3234b17527d1",
+      "sha256": "1e740b281e2f5b462f68786699eb87b9fedaa2b2b3db3041b31e9a94eb661809",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "e97ed4d6d113ec5ab6a8357d8dbd3234b17527d1",
+      "file": "supabase/migrations/20260819230000_admin_control_center_v2.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "8b553b15560897c38dfe1ac83da16dffbd476ab5",
+      "file": "supabase/migrations/20260819230000_admin_control_center_v2.sql",
+      "similarity": 0.48497854077253216
+    },
+    {
+      "oid": "e0f80e2c0c10973222b9a5ecb134236977256c5f",
+      "file": "supabase/migrations/20260811235346_platform_admin_invites_and_activation_v1.sql",
+      "similarity": 0.35
+    },
+    {
+      "oid": "f855dcb4d3c7fede2cff982effffa4f54524890a",
+      "file": "supabase/migrations/20260811231921_platform_admin_prospector_permissions_foundation.sql",
+      "similarity": 0.2730627306273063
+    },
+    {
+      "oid": "8b9a0fda8315bd62519e547d88b221ffd08155b9",
+      "file": "supabase/migrations/20260729214347_harden_platform_admin_owner_access_v1.sql",
+      "similarity": 0.26666666666666666
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260819230000_admin_control_center_v2.sql",
+    "historical_file": "supabase/migrations/20260819230000_admin_control_center_v2.sql",
+    "target_identity": "supabase/migrations/20260830201025_admin_control_center_v2.sql"
+  },
+  "divergence_notes": "Content comparison preserves quoted literals and ordered SQL tokens; comments/formatting/case of unquoted identifiers ignored. Catalog presence is corroboration, not proof of byte identity or historical DML effects.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "9e46721e37eaf2cc80e4ffed0a162a12b5ead618364d6811c02a3ac45f0e79a2",
+  "REDACTED_HASH": "9e46721e37eaf2cc80e4ffed0a162a12b5ead618364d6811c02a3ac45f0e79a2",
+  "REDACTION_REASON": [],
+  "raw_bytes": 6445,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "9e46721e37eaf2cc80e4ffed0a162a12b5ead618364d6811c02a3ac45f0e79a2",
+  "replay_form_sha256": "f67463579504c57a828bd03a974c64195d944a99d182acae41691f5b8fcf50d5",
+  "staged_replay_form": "supabase/replay-forms/production/20260830201025_admin_control_center_v2.sql"
+}

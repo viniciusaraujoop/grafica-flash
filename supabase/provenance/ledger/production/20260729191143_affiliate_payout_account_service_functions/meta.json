@@ -1,0 +1,60 @@
+{
+  "production_version": "20260729191143",
+  "production_name": "affiliate_payout_account_service_functions",
+  "ordered_ledger_index": 14,
+  "statement_count": 1,
+  "raw_ledger_sha256": "a7698846b98f7ba99601ecb7f86caa42babc54076a16eedf29338a4f3d50fc94",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "SQUASHED",
+  "historical_git_candidates": [],
+  "retrieval_only_candidates": [
+    {
+      "oid": "967d688f2a4f1b42a4a402c0218da5e6dfb4d6c6",
+      "file": "supabase/migrations/20260929225302_m1a_event_fabric_failure_settlement_due_guard.sql",
+      "similarity": 0.3611111111111111
+    },
+    {
+      "oid": "f855dcb4d3c7fede2cff982effffa4f54524890a",
+      "file": "supabase/migrations/20260811231921_platform_admin_prospector_permissions_foundation.sql",
+      "similarity": 0.33513513513513515
+    },
+    {
+      "oid": "d98d4dde15b78d0432cca839a2da22d30a6a3738",
+      "file": "supabase/migrations/20260729212519_owner_support_control_v1.sql",
+      "similarity": 0.3298611111111111
+    },
+    {
+      "oid": "e8227a7451d1bfbaae80a38feb561a4f4d66615b",
+      "file": ".orcaly-mp-checkout-backup-20260728200554/supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+      "similarity": 0.32934131736526945
+    },
+    {
+      "oid": "67c0d555b76268835aa2ba057719c5cc40f06573",
+      "file": "supabase/migrations/20260728224535_orcaly_mercado_pago_checkout_activation.sql",
+      "similarity": 0.32934131736526945
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260729165627_affiliate_program_sixty_percent.sql",
+    "historical_file": "supabase/migrations/20260729165627_affiliate_program_sixty_percent.sql",
+    "target_identity": "supabase/migrations/20260729191143_affiliate_payout_account_service_functions.sql"
+  },
+  "divergence_notes": "All three complete CREATE OR REPLACE FUNCTION blocks are token-identical inside combined affiliate migration; all three functions exist in production. No original standalone Git migration located. See object-corroboration.json for exact function comparisons and ledger for ACL statements.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "a7698846b98f7ba99601ecb7f86caa42babc54076a16eedf29338a4f3d50fc94",
+  "REDACTED_HASH": "a7698846b98f7ba99601ecb7f86caa42babc54076a16eedf29338a4f3d50fc94",
+  "REDACTION_REASON": [],
+  "raw_bytes": 4950,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "a7698846b98f7ba99601ecb7f86caa42babc54076a16eedf29338a4f3d50fc94",
+  "replay_form_sha256": "1b33e1a4d762b487d25b8b8753a004dd580114b1a145c2adb1d1996ed20f56db",
+  "staged_replay_form": "supabase/replay-forms/production/20260729191143_affiliate_payout_account_service_functions.sql"
+}

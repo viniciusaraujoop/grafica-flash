@@ -1,0 +1,68 @@
+{
+  "production_version": "20260728173500",
+  "production_name": "orcaly_marketplace_stock_fk_indexes",
+  "ordered_ledger_index": 4,
+  "statement_count": 1,
+  "raw_ledger_sha256": "68061e3a9cb79bd74bfe9df711bb087f3d4a1c620bfe52c5a5fd9f72e26aa0c4",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "CANONICAL_MATCH",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260728173500_orcaly_marketplace_stock_fk_indexes.sql",
+      "commit": "d378d11ad8c67651efe4f35ca44b5f77a24b0c40",
+      "blob_sha": "a7777c67ba8ff92e3a46a07769e47426bd122a8c",
+      "sha256": "fddbbf008a7c6c32e34886d81c27981e335f6b722beee445765a4bad6defecf8",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "a7777c67ba8ff92e3a46a07769e47426bd122a8c",
+      "file": "supabase/migrations/20260728173500_orcaly_marketplace_stock_fk_indexes.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "cdf2b907ab0cdccd044a770dbb1aaacc1d6d0777",
+      "file": "supabase/migrations/20260808031810_affiliate_partner_growth_hub_indexes.sql",
+      "similarity": 0.3548387096774194
+    },
+    {
+      "oid": "0af5bd9eefa7161dd009cfc252cf875fa551527b",
+      "file": "supabase/migrations/20260907140500_orcaly_3_1_db_hardening_batch_1.sql",
+      "similarity": 0.3548387096774194
+    },
+    {
+      "oid": "2f44fc38ebc505e5059a1dab103be987fdf74111",
+      "file": "supabase/migrations/20260812221532_founder_final_regression_hardening_v1.sql",
+      "similarity": 0.3235294117647059
+    },
+    {
+      "oid": "7ed46e061eef1a666b785e0a2e977de033b288e6",
+      "file": "supabase/migrations/20260908222500_orcaly_3_1_customer_data_quality_certification.sql",
+      "similarity": 0.28205128205128205
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260728173500_orcaly_marketplace_stock_fk_indexes.sql",
+    "historical_file": "supabase/migrations/20260728173500_orcaly_marketplace_stock_fk_indexes.sql",
+    "target_identity": "supabase/migrations/20260728173500_orcaly_marketplace_stock_fk_indexes.sql"
+  },
+  "divergence_notes": "Content comparison preserves quoted literals and ordered SQL tokens; comments/formatting/case of unquoted identifiers ignored. Catalog presence is corroboration, not proof of byte identity or historical DML effects.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "68061e3a9cb79bd74bfe9df711bb087f3d4a1c620bfe52c5a5fd9f72e26aa0c4",
+  "REDACTED_HASH": "68061e3a9cb79bd74bfe9df711bb087f3d4a1c620bfe52c5a5fd9f72e26aa0c4",
+  "REDACTION_REASON": [],
+  "raw_bytes": 769,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "68061e3a9cb79bd74bfe9df711bb087f3d4a1c620bfe52c5a5fd9f72e26aa0c4",
+  "replay_form_sha256": "6c952a2837201921fd94db777d1dd6e6988dd9cd902d5bf664f48b0dfb2c706c",
+  "staged_replay_form": "supabase/replay-forms/production/20260728173500_orcaly_marketplace_stock_fk_indexes.sql"
+}

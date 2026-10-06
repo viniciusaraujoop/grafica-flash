@@ -1,0 +1,68 @@
+{
+  "production_version": "20260910150730",
+  "production_name": "google_calendar_complete",
+  "ordered_ledger_index": 51,
+  "statement_count": 1,
+  "raw_ledger_sha256": "303d8983a5eb0c1953bc6b24537805becb23c8fe2b996194e402a2b80073e079",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "CANONICAL_MATCH",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260910150730_google_calendar_complete.sql",
+      "commit": "f1c89c80329b09af48e9b245fffde2eba4640ff4",
+      "blob_sha": "66ed1ea5e4330a819e70e11e06b39e9c57423e54",
+      "sha256": "6b25f5089318d5d13a47f579d4dbfbc54b75fbe731d04ca97c70090b83fa60d7",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "66ed1ea5e4330a819e70e11e06b39e9c57423e54",
+      "file": "supabase/migrations/20260910150730_google_calendar_complete.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "003ab3c5d05eac10110936b0bb7ce2a3e624668c",
+      "file": "supabase/migrations/20260914213803_integration_public_api_keys.sql",
+      "similarity": 0.43548387096774194
+    },
+    {
+      "oid": "6124369e70f7ba4cc59ab134559bd865c336f58a",
+      "file": "supabase/migrations/20260823_whatsapp_cloud_api_v1.sql",
+      "similarity": 0.4264705882352941
+    },
+    {
+      "oid": "b49109d0451df628d9c9a57b845320819f84984e",
+      "file": "supabase/migrations/20260821004000_orcaly_assistant_v2_analytics.sql",
+      "similarity": 0.4132231404958678
+    },
+    {
+      "oid": "89346c3902883b7bc426a3e2587df2b1b57bf859",
+      "file": "supabase/migrations/20260821004000_orcaly_assistant_v2_analytics.sql",
+      "similarity": 0.4098360655737705
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260910150730_google_calendar_complete.sql",
+    "historical_file": "supabase/migrations/20260910150730_google_calendar_complete.sql",
+    "target_identity": "supabase/migrations/20260910150730_google_calendar_complete.sql"
+  },
+  "divergence_notes": "Content comparison preserves quoted literals and ordered SQL tokens; comments/formatting/case of unquoted identifiers ignored. Catalog presence is corroboration, not proof of byte identity or historical DML effects.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "303d8983a5eb0c1953bc6b24537805becb23c8fe2b996194e402a2b80073e079",
+  "REDACTED_HASH": "303d8983a5eb0c1953bc6b24537805becb23c8fe2b996194e402a2b80073e079",
+  "REDACTION_REASON": [],
+  "raw_bytes": 1761,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "303d8983a5eb0c1953bc6b24537805becb23c8fe2b996194e402a2b80073e079",
+  "replay_form_sha256": "76541127cf4346a21b9cbd1bac710bfd0bae58deaceb48196796d86fd64a1b81",
+  "staged_replay_form": "supabase/replay-forms/production/20260910150730_google_calendar_complete.sql"
+}

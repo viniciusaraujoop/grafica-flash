@@ -1,0 +1,68 @@
+{
+  "production_version": "20260821012633",
+  "production_name": "orcaly_assistant_v2_analytics",
+  "ordered_ledger_index": 35,
+  "statement_count": 1,
+  "raw_ledger_sha256": "c92a6db4cbeb3673553e0ef812248c02bbad8c8b0c54c5add245403bd7925193",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "RETIMESTAMPED",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260821004000_orcaly_assistant_v2_analytics.sql",
+      "commit": "41d7dccaff7b8cf635798a136d50822e4207ea70",
+      "blob_sha": "89346c3902883b7bc426a3e2587df2b1b57bf859",
+      "sha256": "22e562dcee0a776d2c92076fce6e6137f112cd836034a60fc087371ffa3beeb6",
+      "main_ancestor": false
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "89346c3902883b7bc426a3e2587df2b1b57bf859",
+      "file": "supabase/migrations/20260821004000_orcaly_assistant_v2_analytics.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "b49109d0451df628d9c9a57b845320819f84984e",
+      "file": "supabase/migrations/20260821004000_orcaly_assistant_v2_analytics.sql",
+      "similarity": 0.9878048780487805
+    },
+    {
+      "oid": "6c7e17dfa6d8ec69b0a7657f88d5321caa6015e5",
+      "file": "supabase/migrations/20260830143000_platform_evolution_3_observability.sql",
+      "similarity": 0.4262295081967213
+    },
+    {
+      "oid": "66ed1ea5e4330a819e70e11e06b39e9c57423e54",
+      "file": "supabase/migrations/20260910150730_google_calendar_complete.sql",
+      "similarity": 0.4098360655737705
+    },
+    {
+      "oid": "003ab3c5d05eac10110936b0bb7ce2a3e624668c",
+      "file": "supabase/migrations/20260914213803_integration_public_api_keys.sql",
+      "similarity": 0.3821138211382114
+    }
+  ],
+  "content_comparison_result": "SEMANTIC_EQUIVALENT",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "NONE",
+    "historical_file": "supabase/migrations/20260821004000_orcaly_assistant_v2_analytics.sql",
+    "target_identity": "supabase/migrations/20260821012633_orcaly_assistant_v2_analytics.sql"
+  },
+  "divergence_notes": "Token-identical historical source on feat/orcaly-assistant-v2 / fix/assistant-v2-runtime-and-conversation, commit 41d7dcc includes fallback event fix. Not ancestor of current main; assistant_events exists in production. Earlier branch revision is not the ledger-equivalent source.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; SEMANTIC_EQUIVALENCE; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "c92a6db4cbeb3673553e0ef812248c02bbad8c8b0c54c5add245403bd7925193",
+  "REDACTED_HASH": "c92a6db4cbeb3673553e0ef812248c02bbad8c8b0c54c5add245403bd7925193",
+  "REDACTION_REASON": [],
+  "raw_bytes": 1733,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "c92a6db4cbeb3673553e0ef812248c02bbad8c8b0c54c5add245403bd7925193",
+  "replay_form_sha256": "6bb56fabe76ed66c65440bebf6c14a59cfa1b3ab719c2ba2212006c61a90a7ce",
+  "staged_replay_form": "supabase/replay-forms/production/20260821012633_orcaly_assistant_v2_analytics.sql"
+}

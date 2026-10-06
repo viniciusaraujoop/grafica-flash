@@ -1,0 +1,20 @@
+{
+  "scope": "ENVIRONMENT_BOUND_SIDE_EFFECTS_ONLY",
+  "agent4_review_required": true,
+  "schema_effect_change": false,
+  "reason": "Do not schedule a production stock-expiry cron job.",
+  "removed_units": [
+    {
+      "RAW_HASH": "664a8bd928d0f1d5e0511bcd3724be72a0026f871121c002a83c6acbe5c95f2e",
+      "REDACTED_HASH": "c180e45aa366bfb554de51211a7a2cc23f7f1ee72e254dd1cb7ccf4c0ba8a093",
+      "REDACTION_REASON": [
+        "ENVIRONMENT_BOUND_CRON_CONFIGURATION"
+      ],
+      "redacted_execution_record": "\n\n-- [REDACTED_ENVIRONMENT_BOUND_CRON_CONFIGURATION]"
+    }
+  ],
+  "explicit_diff": {
+    "removed": "supabase/provenance/ledger/production/20260728173219_orcaly_marketplace_stock_reservations/neutralization.json",
+    "replacement": "No replacement SQL; app DDL/routines/ACL statements preserved."
+  }
+}

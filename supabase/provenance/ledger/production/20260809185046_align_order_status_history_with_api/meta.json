@@ -1,0 +1,60 @@
+{
+  "production_version": "20260809185046",
+  "production_name": "align_order_status_history_with_api",
+  "ordered_ledger_index": 21,
+  "statement_count": 1,
+  "raw_ledger_sha256": "fde5b0436ab8a83eff662a069ef2fcab3ac6c1f7283d88f21a2c4477c66d525c",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "SQUASHED",
+  "historical_git_candidates": [],
+  "retrieval_only_candidates": [
+    {
+      "oid": "bfb2b06fcad31fa245c4bf50eb30162e465723d5",
+      "file": "supabase/migrations/20260910135326_company_timezone_foundation.sql",
+      "similarity": 0.22950819672131148
+    },
+    {
+      "oid": "f2658b9b8fff48b56ec130f9415d741629a39093",
+      "file": "supabase/migrations/20260701_cadastro_onboarding_inteligente.sql",
+      "similarity": 0.203125
+    },
+    {
+      "oid": "cdf2b907ab0cdccd044a770dbb1aaacc1d6d0777",
+      "file": "supabase/migrations/20260808031810_affiliate_partner_growth_hub_indexes.sql",
+      "similarity": 0.1951219512195122
+    },
+    {
+      "oid": "b216b81c535b6db82f5d28649de65e0c08774808",
+      "file": "supabase/migrations/20260702_sites_premium_segmentos.sql",
+      "similarity": 0.18840579710144928
+    },
+    {
+      "oid": "7ed46e061eef1a666b785e0a2e977de033b288e6",
+      "file": "supabase/migrations/20260908222500_orcaly_3_1_customer_data_quality_certification.sql",
+      "similarity": 0.1875
+    }
+  ],
+  "content_comparison_result": "NOT_COMPARABLE",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260628_pedidos_pro_v2.sql; supabase/migrations/20260630_pre_validacao_orcaly.sql",
+    "historical_file": "supabase/migrations/20260628_pedidos_pro_v2.sql",
+    "target_identity": "supabase/migrations/20260809185046_align_order_status_history_with_api.sql"
+  },
+  "divergence_notes": "No original ALTER/COMMENT migration located. Current main table bootstrap declares changed_by_email text, but does not preserve ledger comment or safe upgrade of a preexisting table. Production column is text and comment exactly matches ledger. Later baseline snapshots preserve materialized effect only; they are not authentic migration-source proof.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "fde5b0436ab8a83eff662a069ef2fcab3ac6c1f7283d88f21a2c4477c66d525c",
+  "REDACTED_HASH": "fde5b0436ab8a83eff662a069ef2fcab3ac6c1f7283d88f21a2c4477c66d525c",
+  "REDACTION_REASON": [],
+  "raw_bytes": 242,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "fde5b0436ab8a83eff662a069ef2fcab3ac6c1f7283d88f21a2c4477c66d525c",
+  "replay_form_sha256": "6eee44ef42c5bcc9f0403ec23267e0efdf7735ba92331dfe2087aa70e4b9ebec",
+  "staged_replay_form": "supabase/replay-forms/production/20260809185046_align_order_status_history_with_api.sql"
+}

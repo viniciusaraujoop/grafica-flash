@@ -1,0 +1,68 @@
+{
+  "production_version": "20260811230446",
+  "production_name": "founder_program_database_foundation",
+  "ordered_ledger_index": 24,
+  "statement_count": 1,
+  "raw_ledger_sha256": "219ab572096d0d8eae440b9f9a41c18f6cd71f8279354fdb1b473acce986ea62",
+  "ordered_ledger_digest": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+  "replay_classification": "CANONICAL_MATCH",
+  "historical_git_candidates": [
+    {
+      "file": "supabase/migrations/20260811230446_founder_program_database_foundation.sql",
+      "commit": "ab3777333682d8b7c50975cd70da23e3bc636a48",
+      "blob_sha": "657b7c68a7266acfe59e5f886d30d5d900b76420",
+      "sha256": "219ab572096d0d8eae440b9f9a41c18f6cd71f8279354fdb1b473acce986ea62",
+      "main_ancestor": true
+    }
+  ],
+  "retrieval_only_candidates": [
+    {
+      "oid": "657b7c68a7266acfe59e5f886d30d5d900b76420",
+      "file": "supabase/migrations/20260811230446_founder_program_database_foundation.sql",
+      "similarity": 1
+    },
+    {
+      "oid": "e0f80e2c0c10973222b9a5ecb134236977256c5f",
+      "file": "supabase/migrations/20260811235346_platform_admin_invites_and_activation_v1.sql",
+      "similarity": 0.35174418604651164
+    },
+    {
+      "oid": "0d6a3015b0e0d979773003a09dc7462f78d7d515",
+      "file": "supabase/migrations/20260812003227_founder_invite_sales_integration_v1.sql",
+      "similarity": 0.2937853107344633
+    },
+    {
+      "oid": "ce34d5b325ed3cfeca0c1290730957289e6cdcd8",
+      "file": "supabase/migrations/20260717_subscription_trial_cancellation.sql",
+      "similarity": 0.291970802919708
+    },
+    {
+      "oid": "f855dcb4d3c7fede2cff982effffa4f54524890a",
+      "file": "supabase/migrations/20260811231921_platform_admin_prospector_permissions_foundation.sql",
+      "similarity": 0.28063241106719367
+    }
+  ],
+  "content_comparison_result": "MATCH",
+  "rename_retimestamp_squash_mapping": {
+    "current_main_file": "supabase/migrations/20260811230446_founder_program_database_foundation.sql",
+    "historical_file": "supabase/migrations/20260811230446_founder_program_database_foundation.sql",
+    "target_identity": "supabase/migrations/20260811230446_founder_program_database_foundation.sql"
+  },
+  "divergence_notes": "Content comparison preserves quoted literals and ordered SQL tokens; comments/formatting/case of unquoted identifiers ignored. Catalog presence is corroboration, not proof of byte identity or historical DML effects.",
+  "authorship": "UNKNOWN",
+  "authorship_note": "Git candidate identity is not attribution of production execution or an agent owner.",
+  "evidence_level": "EXACT_LEDGER_MATCH; EXACT_GIT_MATCH; HISTORICAL_COMMIT_EVIDENCE; MATERIALIZED_SCHEMA_EVIDENCE",
+  "archive_representation": "RAW_EXECUTED_SQL_REPRESENTATION",
+  "RAW_HASH": "219ab572096d0d8eae440b9f9a41c18f6cd71f8279354fdb1b473acce986ea62",
+  "REDACTED_HASH": "219ab572096d0d8eae440b9f9a41c18f6cd71f8279354fdb1b473acce986ea62",
+  "REDACTION_REASON": [],
+  "raw_bytes": 8302,
+  "redacted": false,
+  "replay_form_selection": "VERBATIM_LEDGER",
+  "replay_status": "PREPARED_NOT_REPLAY_CERTIFIED",
+  "agent4_review_required": false,
+  "executable": false,
+  "replay_form_body_sha256": "219ab572096d0d8eae440b9f9a41c18f6cd71f8279354fdb1b473acce986ea62",
+  "replay_form_sha256": "720cea91a67ad8f04061f3686aed4a75160083d544fb62776a7ef6e2064896eb",
+  "staged_replay_form": "supabase/replay-forms/production/20260811230446_founder_program_database_foundation.sql"
+}
