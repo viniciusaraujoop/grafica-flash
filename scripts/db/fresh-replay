@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+// INCOMPLETE / FAIL CLOSED. This checkpoint never connects or executes SQL.
+try { require('./r10-contract.cjs').freshReplay(process.argv[2] || ''); }
+catch (error) { console.error(error.message); process.exitCode = 1; }

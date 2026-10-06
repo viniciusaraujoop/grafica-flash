@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+const c = require('./r10-contract.cjs');
+try {
+  const result = process.argv.includes('--plan-only')
+    ? { status: 'PLAN_ONLY_NOT_CANONICAL_CERTIFICATION', sources: c.plan().plan.actions.length, immutable: c.immutable().m1.length, manifest: c.manifest().entries.length }
+    : c.activeDirectory();
+  console.log(JSON.stringify(result));
+} catch (error) { console.error(error.message); process.exitCode = 1; }

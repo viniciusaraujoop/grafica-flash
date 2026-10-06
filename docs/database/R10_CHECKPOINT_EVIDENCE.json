@@ -1,0 +1,83 @@
+{
+  "status": "BLOCKED_PARTIAL_CHECKPOINT",
+  "base_main": "9611d195290247694ad60d5aa2638ac8b96ecefb",
+  "preflight": {
+    "main_sha_match": true,
+    "ledger_count": 51,
+    "ordered_ledger_sha256": "48d34e8fec27c3afc640b166306d5b2fb5f0e876daff22939a817638c93c699a",
+    "production_base_signature": "affd3c4f7a5155fcbedb9bcf9999477c2e3275a492710fd2859b98ba88f82be9",
+    "m1_pins_unchanged": true
+  },
+  "tests": {
+    "checkpoint": "11/11 PASS",
+    "manifest": "PASS",
+    "decoded_secret_scan": "PASS_NOT_SECURITY_CERTIFICATION",
+    "plan_sources": 71,
+    "planned_targets": 55,
+    "staged_replay_forms": 50,
+    "active_guard": "EXPECTED_REJECTION_count71_missing27_unexpected43",
+    "typecheck": "PASS_EXIT_0",
+    "tooling_eslint_no_ignore": "PASS_EXIT_0",
+    "npm_test": {
+      "exit_code": 1,
+      "error": "Explicit npm run typecheck failed with exit code null",
+      "location": "scripts/verify-m1a-event-fabric.mjs:411",
+      "process_probe": "spawnSync npm.cmd EINVAL",
+      "classification": "BASELINE_PREEXISTING_WINDOWS_PROCESS_EXECUTION",
+      "runtime": "node v24.16.0",
+      "verifier_changed": false
+    },
+    "build": {
+      "exit_code": 1,
+      "next_compile_executed": false,
+      "cause": "prebuild invokes npm test; same baseline process failure"
+    },
+    "fresh_replay": "NOT_EXECUTED",
+    "schema_signature_comparison": "NOT_EXECUTED",
+    "functions_search_path": "NOT_EXECUTED",
+    "grants_acl": "NOT_EXECUTED",
+    "rls_policies": "NOT_EXECUTED",
+    "indexes": "NOT_EXECUTED",
+    "constraints": "NOT_EXECUTED",
+    "views_triggers": "NOT_EXECUTED",
+    "migration_list": "NOT_EXECUTED",
+    "production_dry_run": "NOT_EXECUTED_SAFETY_UNCERTAIN"
+  },
+  "ci": {
+    "workflow_created": true,
+    "ci_executed": false,
+    "production_deploy_jobs": false,
+    "database_connection": false,
+    "active_guard_intentionally_fails_until_P6": true
+  },
+  "stop_conditions": {
+    "target_or_frozen_input_drift": false,
+    "m1_hash_changed": false,
+    "frontier_requires_business_users_or_secrets": "NOT_ASSESSED_NO_FRONTIER",
+    "fixed_point": "NOT_EXECUTED_NOT_CLAIMED",
+    "allowlist": [],
+    "unapproved_schema_effect_change": false,
+    "unsafe_sensitive_committed_material": false,
+    "owner_semantics_decision_pending": "ROW30",
+    "local_disposable_runtime_unavailable": true,
+    "neutralizations_pending_review": [
+      1,
+      3,
+      18
+    ]
+  },
+  "mutations": {
+    "production": "NONE",
+    "frozen_staging": "NONE",
+    "main": "NONE",
+    "active_migration_files": "NONE",
+    "repository": "AUTHORIZED_R10_BRANCH_ONLY",
+    "repair": "NO",
+    "include_all": "NO",
+    "push": "NO",
+    "pr": "NO",
+    "merge": "NO",
+    "cfr": "NO",
+    "p7": "NO"
+  }
+}

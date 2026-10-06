@@ -1,0 +1,19 @@
+#!/usr/bin/env node
+// Offline comparison only. No hosted connection and no allowlist bypass.
+const fs = require('node:fs');
+const c = require('./r10-contract.cjs');
+try {
+  c.manifest();
+  const expected = c.catalog();
+  if (!process.argv[2]) {
+    console.log(JSON.stringify({ frozen_production_signature: c.SIGNATURE, redacted_payload_sha256: expected.meta.redacted_payload_sha256, sections: Object.keys(expected.payload), comparison: 'NOT_EXECUTED', fixed_point: 'NOT_EXECUTED' }));
+  } else {
+    const actual = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+    const ordered = x => Array.isArray(x) ? x.map(ordered) : x && typeof x === 'object'
+      ? Object.fromEntries(Object.keys(x).sort().map(k => [k, ordered(x[k])])) : x;
+    if (JSON.stringify(ordered(actual)) !== JSON.stringify(ordered(expected.payload))) {
+      throw Error('REDACTED_CATALOG_DIFFERENT: no reviewed allowlist; not a raw production signature attestation');
+    }
+    console.log('REDACTED_CATALOG_MATCH_ONLY: local replay and raw PostgreSQL signature remain required');
+  }
+} catch (error) { console.error(error.message); process.exitCode = 1; }
