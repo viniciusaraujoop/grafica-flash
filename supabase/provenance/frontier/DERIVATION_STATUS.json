@@ -1,25 +1,44 @@
 {
   "architecture": "LEDGER-MIRROR + OUT-OF-BAND PRE-LEDGER FRONTIER",
-  "status": "BLOCKED_FRONTIER_DECISION_REQUIRED",
+  "status": "BLOCKED_NEW_FRONTIER_DECISION_REQUIRED",
   "engineered_not_historical": true,
   "first_production_version": "20260723210120",
   "frozen_production_signature": "affd3c4f7a5155fcbedb9bcf9999477c2e3275a492710fd2859b98ba88f82be9",
   "fixed_point": "NOT_EXECUTED",
-  "reviewed_allowlist": [1, 3, 18, 30],
-  "input_checkpoint": "8e5cc45839c3ffb38f141b522b51afb531ec4a21",
+  "reviewed_allowlist": [
+    1,
+    3,
+    18,
+    30
+  ],
+  "input_checkpoint": "1bae161ef79415f2932bf9ad3018dfcfb80096d8",
   "entry_30_status": "CLOSED_BY_P3",
   "candidate_materialized": false,
   "frontier_object_count": 0,
   "decision_matrix": "supabase/provenance/frontier/FRONTIER_OBJECT_MATRIX.json",
-  "decision_evidence": "supabase/provenance/frontier/FRONTIER_DECISION_REQUIRED.md",
+  "decision_evidence": "supabase/provenance/frontier/RESUME_DECISION_EVIDENCE.md",
   "agent2_architecture_escalation_required": true,
   "blockers": [
-    "FRONTIER_DECISION_REQUIRED: choose the engineered pre-ledger authorization-function preimage for public.can_manage_company(uuid). Ledger #7 requires its existence, moves it, then overwrites its body; the frozen head does not determine the earlier body. Two materially different preimage models remain unselected. No stub or fabricated history was materialized."
+    "FRONTIER_DECISION_REQUIRED: public.is_orcaly_admin() is required by #7, not overwritten until #26, and referenced by #7 can_manage_company and company_members policies in the interim. No approved preimage selection or proven full pre-#26 behavioral unobservability; can_manage_company stub authorization must not be generalized."
   ],
   "application_scope": [
     "api",
     "orcaly_private",
     "public"
   ],
-  "platform_internals_recreation": false
+  "platform_internals_recreation": false,
+  "resolved_decisions": [
+    {
+      "identity": "public.can_manage_company(p_company_id uuid)",
+      "decision": "STRUCTURAL_FAIL_CLOSED_PREIMAGE",
+      "fragment": "supabase/provenance/frontier/CAN_MANAGE_COMPANY_PREIMAGE.sql",
+      "historical_body": "UNKNOWN"
+    },
+    {
+      "identity": "ledger #30",
+      "decision": "CLOSED_BY_P3"
+    }
+  ],
+  "selected_preimage_count": 1,
+  "other_preimage_decisions_required": 1
 }

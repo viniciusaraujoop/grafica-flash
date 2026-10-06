@@ -1,5 +1,12 @@
 # P4 derivation decision gate — no candidate SQL
 
+> HISTORICAL CHECKPOINT RECORD, not the current blocker list.
+> The can_manage_company decision below was explicitly RESOLVED by the Founder-
+> supplied Agent 2 STRUCTURAL_FAIL_CLOSED_PREIMAGE decision in the resume request.
+> Current selected fragment, policy plan and the new is_orcaly_admin decision gate
+> are recorded in RESUME_DECISION_EVIDENCE.md and DERIVATION_STATUS.json.
+> Entry #30 remains CLOSED_BY_P3; no pending #30 decision is asserted here.
+
 Input checkpoint: `8e5cc45839c3ffb38f141b522b51afb531ec4a21`.
 All work was repository-only. No frontier SQL or descriptor was materialized;
 the frontier pin remains null, so the disposable runner still fails closed.

@@ -1,0 +1,398 @@
+{
+  "kind": "STATIC_POLICY_OID_CONTINUITY_PLAN",
+  "status": "STATIC_VERIFIED_RUNTIME_PENDING",
+  "frozen_raw_signature_sha256": "affd3c4f7a5155fcbedb9bcf9999477c2e3275a492710fd2859b98ba88f82be9",
+  "selected_fragment": "supabase/provenance/frontier/CAN_MANAGE_COMPANY_PREIMAGE.sql",
+  "selected_fragment_sha256": "c8ec048464fe43e3a5a5022bbcd959b9030e826cd51391dac7ef9eb5fa657a66",
+  "frontier_policy_count": 12,
+  "ledger_created_policy_count": 2,
+  "steps": [
+    "Create public.can_manage_company(p_company_id uuid) once, constant FALSE, postgres owner, no client EXECUTE.",
+    "Create twelve frontier policies binding the PUBLIC function OID.",
+    "Ledger #7 ALTER FUNCTION SET SCHEMA preserves the same OID.",
+    "Ledger #7 CREATE OR REPLACE supplies the authoritative postimage and ACLs; no DROP/rebind.",
+    "Ledger #12 creates the two delivery policies against the already moved PRIVATE identity."
+  ],
+  "policies": [
+    {
+      "frozen": {
+        "cmd": "UPDATE",
+        "qual": "orcaly_private.can_manage_company(id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "companies",
+        "permissive": "PERMISSIVE",
+        "policyname": "Dono e gerente editam empresa",
+        "schemaname": "public",
+        "with_check": "orcaly_private.can_manage_company(id)"
+      },
+      "frontier": {
+        "cmd": "UPDATE",
+        "qual": "public.can_manage_company(id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "companies",
+        "permissive": "PERMISSIVE",
+        "policyname": "Dono e gerente editam empresa",
+        "schemaname": "public",
+        "with_check": "public.can_manage_company(id)"
+      },
+      "evidence_level": "MATERIALIZED_SCHEMA_EVIDENCE",
+      "classification": "FRONTIER_REQUIRED"
+    },
+    {
+      "frozen": {
+        "cmd": "SELECT",
+        "qual": "orcaly_private.can_manage_company(id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "companies",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam empresa",
+        "schemaname": "public",
+        "with_check": null
+      },
+      "frontier": {
+        "cmd": "SELECT",
+        "qual": "public.can_manage_company(id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "companies",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam empresa",
+        "schemaname": "public",
+        "with_check": null
+      },
+      "evidence_level": "MATERIALIZED_SCHEMA_EVIDENCE",
+      "classification": "FRONTIER_REQUIRED"
+    },
+    {
+      "frozen": {
+        "cmd": "ALL",
+        "qual": "orcaly_private.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "company_proposal_settings",
+        "permissive": "PERMISSIVE",
+        "policyname": "Empresa gerencia config propostas",
+        "schemaname": "public",
+        "with_check": "orcaly_private.can_manage_company(company_id)"
+      },
+      "frontier": {
+        "cmd": "ALL",
+        "qual": "public.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "company_proposal_settings",
+        "permissive": "PERMISSIVE",
+        "policyname": "Empresa gerencia config propostas",
+        "schemaname": "public",
+        "with_check": "public.can_manage_company(company_id)"
+      },
+      "evidence_level": "MATERIALIZED_SCHEMA_EVIDENCE",
+      "classification": "FRONTIER_REQUIRED"
+    },
+    {
+      "frozen": {
+        "cmd": "ALL",
+        "qual": "orcaly_private.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "order_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam itens pedidos",
+        "schemaname": "public",
+        "with_check": "orcaly_private.can_manage_company(company_id)"
+      },
+      "frontier": {
+        "cmd": "ALL",
+        "qual": "public.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "order_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam itens pedidos",
+        "schemaname": "public",
+        "with_check": "public.can_manage_company(company_id)"
+      },
+      "evidence_level": "MATERIALIZED_SCHEMA_EVIDENCE",
+      "classification": "FRONTIER_REQUIRED"
+    },
+    {
+      "frozen": {
+        "cmd": "ALL",
+        "qual": "orcaly_private.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "orders",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam pedidos",
+        "schemaname": "public",
+        "with_check": "orcaly_private.can_manage_company(company_id)"
+      },
+      "frontier": {
+        "cmd": "ALL",
+        "qual": "public.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "orders",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam pedidos",
+        "schemaname": "public",
+        "with_check": "public.can_manage_company(company_id)"
+      },
+      "evidence_level": "MATERIALIZED_SCHEMA_EVIDENCE",
+      "classification": "FRONTIER_REQUIRED"
+    },
+    {
+      "frozen": {
+        "cmd": "ALL",
+        "qual": "orcaly_private.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "products",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam produtos",
+        "schemaname": "public",
+        "with_check": "orcaly_private.can_manage_company(company_id)"
+      },
+      "frontier": {
+        "cmd": "ALL",
+        "qual": "public.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "products",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam produtos",
+        "schemaname": "public",
+        "with_check": "public.can_manage_company(company_id)"
+      },
+      "evidence_level": "MATERIALIZED_SCHEMA_EVIDENCE",
+      "classification": "FRONTIER_REQUIRED"
+    },
+    {
+      "frozen": {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "proposal_events",
+        "permissive": "PERMISSIVE",
+        "policyname": "Empresa insere eventos propostas",
+        "schemaname": "public",
+        "with_check": "orcaly_private.can_manage_company(company_id)"
+      },
+      "frontier": {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "proposal_events",
+        "permissive": "PERMISSIVE",
+        "policyname": "Empresa insere eventos propostas",
+        "schemaname": "public",
+        "with_check": "public.can_manage_company(company_id)"
+      },
+      "evidence_level": "MATERIALIZED_SCHEMA_EVIDENCE",
+      "classification": "FRONTIER_REQUIRED"
+    },
+    {
+      "frozen": {
+        "cmd": "SELECT",
+        "qual": "orcaly_private.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "proposal_events",
+        "permissive": "PERMISSIVE",
+        "policyname": "Empresa ve eventos propostas",
+        "schemaname": "public",
+        "with_check": null
+      },
+      "frontier": {
+        "cmd": "SELECT",
+        "qual": "public.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "proposal_events",
+        "permissive": "PERMISSIVE",
+        "policyname": "Empresa ve eventos propostas",
+        "schemaname": "public",
+        "with_check": null
+      },
+      "evidence_level": "MATERIALIZED_SCHEMA_EVIDENCE",
+      "classification": "FRONTIER_REQUIRED"
+    },
+    {
+      "frozen": {
+        "cmd": "ALL",
+        "qual": "orcaly_private.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "proposal_events",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam eventos propostas",
+        "schemaname": "public",
+        "with_check": "orcaly_private.can_manage_company(company_id)"
+      },
+      "frontier": {
+        "cmd": "ALL",
+        "qual": "public.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "proposal_events",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam eventos propostas",
+        "schemaname": "public",
+        "with_check": "public.can_manage_company(company_id)"
+      },
+      "evidence_level": "MATERIALIZED_SCHEMA_EVIDENCE",
+      "classification": "FRONTIER_REQUIRED"
+    },
+    {
+      "frozen": {
+        "cmd": "ALL",
+        "qual": "orcaly_private.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "proposals",
+        "permissive": "PERMISSIVE",
+        "policyname": "Empresa gerencia propostas",
+        "schemaname": "public",
+        "with_check": "orcaly_private.can_manage_company(company_id)"
+      },
+      "frontier": {
+        "cmd": "ALL",
+        "qual": "public.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "proposals",
+        "permissive": "PERMISSIVE",
+        "policyname": "Empresa gerencia propostas",
+        "schemaname": "public",
+        "with_check": "public.can_manage_company(company_id)"
+      },
+      "evidence_level": "MATERIALIZED_SCHEMA_EVIDENCE",
+      "classification": "FRONTIER_REQUIRED"
+    },
+    {
+      "frozen": {
+        "cmd": "ALL",
+        "qual": "orcaly_private.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "proposals",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam propostas",
+        "schemaname": "public",
+        "with_check": "orcaly_private.can_manage_company(company_id)"
+      },
+      "frontier": {
+        "cmd": "ALL",
+        "qual": "public.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "proposals",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam propostas",
+        "schemaname": "public",
+        "with_check": "public.can_manage_company(company_id)"
+      },
+      "evidence_level": "MATERIALIZED_SCHEMA_EVIDENCE",
+      "classification": "FRONTIER_REQUIRED"
+    },
+    {
+      "frozen": {
+        "cmd": "ALL",
+        "qual": "orcaly_private.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "quote_templates",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam modelos orcamento",
+        "schemaname": "public",
+        "with_check": "orcaly_private.can_manage_company(company_id)"
+      },
+      "frontier": {
+        "cmd": "ALL",
+        "qual": "public.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "quote_templates",
+        "permissive": "PERMISSIVE",
+        "policyname": "Funcionarios acessam modelos orcamento",
+        "schemaname": "public",
+        "with_check": "public.can_manage_company(company_id)"
+      },
+      "evidence_level": "MATERIALIZED_SCHEMA_EVIDENCE",
+      "classification": "FRONTIER_REQUIRED"
+    }
+  ],
+  "excluded": [
+    {
+      "frozen": {
+        "cmd": "ALL",
+        "qual": "orcaly_private.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "delivery_assignments",
+        "permissive": "PERMISSIVE",
+        "policyname": "delivery_assignments_company_access",
+        "schemaname": "public",
+        "with_check": "orcaly_private.can_manage_company(company_id)"
+      },
+      "classification": "LEDGER_CREATED",
+      "ordered_position": 12,
+      "version": "20260729181400",
+      "replay_sha256": "11af2eefe3e5b968a428ea2c998731293738e271bf35c03d65df1325ca2e0685"
+    },
+    {
+      "frozen": {
+        "cmd": "ALL",
+        "qual": "orcaly_private.can_manage_company(company_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "delivery_drivers",
+        "permissive": "PERMISSIVE",
+        "policyname": "delivery_drivers_company_access",
+        "schemaname": "public",
+        "with_check": "orcaly_private.can_manage_company(company_id)"
+      },
+      "classification": "LEDGER_CREATED",
+      "ordered_position": 12,
+      "version": "20260729181400",
+      "replay_sha256": "11af2eefe3e5b968a428ea2c998731293738e271bf35c03d65df1325ca2e0685"
+    }
+  ],
+  "runtime_assertions": [
+    "Record the public function OID and each policy dependency before #7.",
+    "Verify the private OID equals the preimage OID after #7.",
+    "Verify twelve unchanged policy objects deparse the PRIVATE function reference.",
+    "Assert zero EXECUTE grants to any non-owner role before #7."
+  ]
+}
