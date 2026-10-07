@@ -10,10 +10,11 @@ function validateDiagnostic(value) {
   const exact = (v, keys) => {
     if (!v || typeof v !== 'object' || Array.isArray(v) || Object.keys(v).sort().join(',') !== keys.sort().join(',')) throw Error('DIAGNOSTIC_SCHEMA_INVALID');
   };
-  exact(value, ['stage','process_exit_code','process_signal','timed_out','duration_ms','classification','containers','network']);
+  exact(value, ['stage','process_exit_code','process_signal','timed_out','duration_ms','classification','cli_error_code','containers','network']);
   const text = JSON.stringify(value);
   if (c.inspectText(text).length || /eyJ[A-Za-z0-9_-]{10,}|sb_(?:secret|publishable)_|postgres(?:ql)?:\/\/|https?:\/\/|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|(?:password|access_token|refresh_token|service_role|anon_key)\s*[=:"]|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}/i.test(text)) throw Error('UNSAFE_DIAGNOSTIC');
   if (value.stage !== 'local-supabase-start' || !require('./runtime.cjs').START_CLASSES.includes(value.classification) ||
+      !require('./runtime.cjs').CLI_ERROR_ENUM.includes(value.cli_error_code) ||
       (value.process_exit_code !== null && (!Number.isInteger(value.process_exit_code) || value.process_exit_code < 0 || value.process_exit_code > 255)) ||
       (value.process_signal !== null && !['SIGTERM','SIGKILL','SIGINT','SIGABRT','SIGSEGV','SIGPIPE'].includes(value.process_signal)) ||
       typeof value.timed_out !== 'boolean' || !Number.isInteger(value.duration_ms) || value.duration_ms < 0 || value.duration_ms > 3600000 ||

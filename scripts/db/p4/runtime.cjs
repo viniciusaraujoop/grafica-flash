@@ -17,6 +17,28 @@ const START_CLASSES = ['CONFIG_VALIDATION_FAILURE','IMAGE_PULL_FAILURE','DOCKER_
   'DOCKER_NETWORK_FAILURE','PORT_BIND_FAILURE','DATABASE_CONTAINER_FAILURE','DATABASE_HEALTH_FAILURE',
   'AUTH_SETUP_FAILURE','STORAGE_SETUP_FAILURE','REALTIME_SETUP_FAILURE','POSTGREST_FAILURE','KONG_FAILURE',
   'POSTGRES_META_FAILURE','SERVICE_HEALTHCHECK_FAILURE','LOCAL_SUPABASE_START_UNKNOWN'];
+const CLI_ERROR_CODES = Object.freeze({
+  ContainerCreateError: 'CONTAINER_CREATE_ERROR', ContainerStartError: 'CONTAINER_START_ERROR',
+  HealthCheckTimeoutError: 'HEALTH_CHECK_TIMEOUT_ERROR', ImagePrepullError: 'IMAGE_PREPULL_ERROR',
+  NetworkCreateError: 'NETWORK_CREATE_ERROR', VolumeInspectError: 'VOLUME_INSPECT_ERROR',
+  VolumeCreateError: 'VOLUME_CREATE_ERROR', StartBackupVolumeExistsError: 'BACKUP_VOLUME_EXISTS_ERROR',
+  DbConfigLoadError: 'DB_CONFIG_LOAD_ERROR', DbSetupError: 'DB_SETUP_ERROR',
+  MigrationVaultError: 'MIGRATION_VAULT_ERROR', MigrationApplyError: 'MIGRATION_APPLY_ERROR',
+  MigrationSeedError: 'MIGRATION_SEED_ERROR',
+});
+const CLI_ERROR_ENUM = Object.freeze([...Object.values(CLI_ERROR_CODES), 'LOCAL_START_CLI_ERROR_UNKNOWN']);
+function cliErrorCode(stdout) {
+  // Untrusted envelope/prose stays memory-only. Never return source values or parser errors.
+  const unknown = 'LOCAL_START_CLI_ERROR_UNKNOWN';
+  if (typeof stdout !== 'string' || !stdout.trim() || Buffer.byteLength(stdout, 'utf8') > 65536) return unknown;
+  try {
+    const envelope = JSON.parse(stdout);
+    if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope) || envelope._tag !== 'Error' ||
+        !envelope.error || typeof envelope.error !== 'object' || Array.isArray(envelope.error) ||
+        typeof envelope.error.code !== 'string' || !Object.hasOwn(CLI_ERROR_CODES, envelope.error.code)) return unknown;
+    return CLI_ERROR_CODES[envelope.error.code];
+  } catch { return unknown; }
+}
 function classifyStart(result) {
   const text = String(result.stderr || '').slice(0, 65536) + String(result.stdout || '').slice(0, 65536);
   const rules = [
@@ -65,7 +87,7 @@ function startDiagnostic(result, duration) {
   return { stage: 'local-supabase-start', process_exit_code: Number.isInteger(result.status) ? result.status : null,
     process_signal: ['SIGTERM','SIGKILL','SIGINT','SIGABRT','SIGSEGV','SIGPIPE'].includes(result.signal) ? result.signal : null,
     timed_out: result.error?.code === 'ETIMEDOUT', duration_ms: Math.max(0, Math.min(3600000, Math.floor(duration))),
-    classification: classifyStart(result), containers: [], network: null };
+    classification: classifyStart(result), cli_error_code: cliErrorCode(result.stdout), containers: [], network: null };
 }
 function guardEnvironment(env, platform = process.platform) {
   for (const [key, value] of Object.entries(env)) {
@@ -180,7 +202,7 @@ function run() {
       'project_id = "' + project + '"\n[db]\nmajor_version = 17\nport = 54322\n[db.migrations]\nenabled = false\nschema_paths = []\n[db.seed]\nenabled = false\nsql_paths = []\n[studio]\nenabled = false\n[analytics]\nenabled = false\n[edge_runtime]\nenabled = false\n');
     docker(['network', 'create', '--internal', '--label', 'r10.disposable=' + project, network], null, 'create-internal-network'); networkOwned = true;
     startupAttempted = true;
-    command('supabase', ['--workdir', scratch, '--network-id', network, 'start', '--exclude', 'studio,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor'], null, 'local-supabase-start');
+    command('supabase', ['--output-format', 'json', '--workdir', scratch, '--network-id', network, 'start', '--exclude', 'studio,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor'], null, 'local-supabase-start');
     assertContainer();
     save('runtime-versions.json', { node: process.version, supabase_cli: cli, docker: docker(['version', '--format', '{{.Server.Version}}'], null, 'docker-version').trim(), postgres: sql('SELECT version();', 'postgres-version') });
     const fresh = JSON.parse(sql("SELECT json_build_object('server_address',inet_server_addr(),'database',current_database(),'user',current_user,'ledger_exists',to_regclass('supabase_migrations.schema_migrations') IS NOT NULL,'application_relations',(SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname IN ('public','api','orcaly_private') AND NOT EXISTS(SELECT 1 FROM pg_depend d WHERE d.classid='pg_class'::regclass AND d.objid=c.oid AND d.deptype='e')),'application_functions',(SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname IN ('public','api','orcaly_private') AND NOT EXISTS(SELECT 1 FROM pg_depend d WHERE d.classid='pg_proc'::regclass AND d.objid=p.oid AND d.deptype='e')),'application_types',(SELECT count(*) FROM pg_type t JOIN pg_namespace n ON n.oid=t.typnamespace WHERE n.nspname IN ('public','api','orcaly_private') AND NOT EXISTS(SELECT 1 FROM pg_depend d WHERE d.classid='pg_type'::regclass AND d.objid=t.oid AND d.deptype='e')));", 'fresh-state'));
@@ -235,7 +257,7 @@ function run() {
   if (attestation.status !== 'PASS_LOCAL_P4_ONLY') throw Error('DISPOSABLE_CLEANUP_OR_ATTESTATION_FAILED');
 }
 module.exports = { guardEnvironment, checkSql, frontier, replayRows, cleanChildEnvironment,
-  START_CLASSES, classifyStart, safeContainer, safeNetwork, startDiagnostic };
+  START_CLASSES, CLI_ERROR_ENUM, cliErrorCode, classifyStart, safeContainer, safeNetwork, startDiagnostic };
 if (require.main === module) {
   try { if (process.argv[2] === '--preflight') { guardEnvironment(process.env); replayRows(); console.log('LOCAL_DISPOSABLE_PREFLIGHT_PASS'); } else run(); }
   catch (error) { console.error(error.message); process.exitCode = 1; }

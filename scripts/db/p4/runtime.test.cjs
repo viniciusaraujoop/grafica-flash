@@ -24,6 +24,61 @@ for (const [text, expected] of [
   assert.equal(r.classifyStart({stdout:text}),expected);
 });
 const diagnosticFixture = () => r.startDiagnostic({status:1,stderr:'RAW_STDERR_CANARY',stdout:'RAW_STDOUT_CANARY'},123);
+const machineMappings = {
+  ContainerCreateError:'CONTAINER_CREATE_ERROR', ContainerStartError:'CONTAINER_START_ERROR',
+  HealthCheckTimeoutError:'HEALTH_CHECK_TIMEOUT_ERROR', ImagePrepullError:'IMAGE_PREPULL_ERROR',
+  NetworkCreateError:'NETWORK_CREATE_ERROR', VolumeInspectError:'VOLUME_INSPECT_ERROR',
+  VolumeCreateError:'VOLUME_CREATE_ERROR', StartBackupVolumeExistsError:'BACKUP_VOLUME_EXISTS_ERROR',
+  DbConfigLoadError:'DB_CONFIG_LOAD_ERROR', DbSetupError:'DB_SETUP_ERROR',
+  MigrationVaultError:'MIGRATION_VAULT_ERROR', MigrationApplyError:'MIGRATION_APPLY_ERROR',
+  MigrationSeedError:'MIGRATION_SEED_ERROR',
+};
+const envelope = code => JSON.stringify({_tag:'Error',error:{code}});
+for (const [code, expected] of Object.entries(machineMappings)) test('exact machine mapping: '+code, () => {
+  const d=r.startDiagnostic({status:1,stdout:envelope(code)},1);
+  assert.equal(d.cli_error_code,expected); a.validateDiagnostic(d);
+});
+for (const [index, code] of ['UnknownError','ContainerStartErrorExtra','containerstarterror','CONTAINERSTARTERROR',
+  'HealthCheckTimeout','arbitrary','',1,{},[],null,'toString','__proto__'].entries())
+  test('unknown machine code fails closed: '+index, () => {
+    assert.equal(r.cliErrorCode(envelope(code)),'LOCAL_START_CLI_ERROR_UNKNOWN');
+  });
+for (const [index, stdout] of ['', 'not JSON', envelope('DbSetupError')+'\n{}', '[]','null','"text"',
+  '{}','{"_tag":"Other","error":{"code":"DbSetupError"}}','{"_tag":"Error"}',
+  '{"_tag":"Error","error":[]}','{"_tag":"Error","error":null}',
+  '{"_tag":"Error","error":"text"}','{"_tag":"Error","error":{}}',
+  ' '.repeat(65537)+envelope('DbSetupError'), undefined, {},
+].entries()) test('malformed machine envelope fails closed: '+index, () => {
+  assert.equal(r.cliErrorCode(stdout),'LOCAL_START_CLI_ERROR_UNKNOWN');
+});
+for (const [index, hostile] of ['ozrasuktfthsvbqprtel','postgres://user:password@host/db',
+  'eyJ'+'a'.repeat(30)+'.token.signature','password=unsafe','person@example.test',
+  'access_token=unsafe','refresh_token=unsafe','x'.repeat(60000),'unsafe\n'.repeat(1000)].entries())
+  test('hostile prose discarded from machine envelope: '+index, () => {
+    const stdout=JSON.stringify({_tag:'Error',arbitrary:hostile,error:{code:'DbSetupError',message:hostile,detail:hostile,suggestion:hostile}});
+    const d=r.startDiagnostic({status:1,stdout,stderr:'RAW_STDERR_CANARY'},1);
+    assert.equal(d.cli_error_code,Buffer.byteLength(stdout)>65536?'LOCAL_START_CLI_ERROR_UNKNOWN':'DB_SETUP_ERROR');
+    a.validateDiagnostic(d);
+    assert(!JSON.stringify(d).includes(hostile));
+    assert.doesNotMatch(JSON.stringify(d),/CANARY|message|detail|suggestion|arbitrary|stdout|stderr/);
+  });
+test('machine code is stdout-only and supplementary; exact finite schema rejects everything else', () => {
+  assert.equal(r.startDiagnostic({status:1,stderr:envelope('DbSetupError')},1).cli_error_code,'LOCAL_START_CLI_ERROR_UNKNOWN');
+  assert.equal(r.startDiagnostic({status:1,stdout:envelope('DbSetupError'),stderr:envelope('ContainerStartError')},1).cli_error_code,'DB_SETUP_ERROR');
+  assert.deepEqual(r.CLI_ERROR_ENUM,[...Object.values(machineMappings),'LOCAL_START_CLI_ERROR_UNKNOWN']);
+  const d=diagnosticFixture();
+  assert.deepEqual(Object.keys(d).sort(),['stage','process_exit_code','process_signal','timed_out','duration_ms','classification','cli_error_code','containers','network'].sort());
+  for(const code of ['DbSetupError','DB_SETUP_ERROR_EXTRA',{},null,1]) assert.throws(()=>a.validateDiagnostic({...d,cli_error_code:code}));
+  const missing={...d};delete missing.cli_error_code;assert.throws(()=>a.validateDiagnostic(missing));
+});
+test('local start adds only global JSON output, keeping exact arguments and no debug/health bypass', () => {
+  const driver=fs.readFileSync(path.join(__dirname,'runtime.cjs'),'utf8');
+  const invocation=driver.split('\n').find(line=>line.includes("null, 'local-supabase-start');"));
+  assert.equal(invocation.trim(),"command('supabase', ['--output-format', 'json', '--workdir', scratch, '--network-id', network, 'start', '--exclude', 'studio,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor'], null, 'local-supabase-start');");
+  assert.equal((invocation.match(/--output-format/g)||[]).length,1);
+  assert.doesNotMatch(driver,/--debug|--ignore-health-check/);
+  assert.match(driver,/timeout: 15 \* 60 \* 1000/);
+});
 const projectFixture = 'r10p4-123-1';
 const containerFixture = () => ({Name:'/supabase_db_' + projectFixture,Config:{Image:'public.ecr.aws/supabase/postgres:17.0',Env:['PASSWORD=unsafe']},
   State:{Status:'exited',Running:false,ExitCode:1,OOMKilled:false,Dead:false,Health:{Status:'unhealthy'},Error:'unsafe'},
