@@ -11,6 +11,59 @@ const a = require('./artifacts.cjs');
 const fixture = () => ({ GITHUB_ACTIONS: 'true', RUNNER_ENVIRONMENT: 'github-hosted',
   GITHUB_REPOSITORY: 'viniciusaraujoop/grafica-flash', GITHUB_REF: 'refs/heads/reconcile/r10-production-base-canonicalization',
   GITHUB_EVENT_NAME: 'push', GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '1', GITHUB_SHA: 'a'.repeat(40) });
+for (const [text, expected] of [
+  ['invalid config','CONFIG_VALIDATION_FAILURE'],['image pull failed','IMAGE_PULL_FAILURE'],
+  ['docker permission denied','DOCKER_PERMISSION_FAILURE'],['network not found','DOCKER_NETWORK_FAILURE'],
+  ['address already in use','PORT_BIND_FAILURE'],['realtime initialization failed','REALTIME_SETUP_FAILURE'],
+  ['database startup failed','DATABASE_CONTAINER_FAILURE'],['database health failed','DATABASE_HEALTH_FAILURE'],
+  ['auth setup failed','AUTH_SETUP_FAILURE'],['storage setup failed','STORAGE_SETUP_FAILURE'],
+  ['postgrest error','POSTGREST_FAILURE'],['kong error','KONG_FAILURE'],['postgres-meta error','POSTGRES_META_FAILURE'],
+  ['service unhealthy','SERVICE_HEALTHCHECK_FAILURE'],['unrecognized opaque text','LOCAL_SUPABASE_START_UNKNOWN'],
+]) test('safe startup classification: ' + expected, () => {
+  assert.equal(r.classifyStart({stderr:text}),expected);
+  assert.equal(r.classifyStart({stdout:text}),expected);
+});
+const diagnosticFixture = () => r.startDiagnostic({status:1,stderr:'RAW_STDERR_CANARY',stdout:'RAW_STDOUT_CANARY'},123);
+const projectFixture = 'r10p4-123-1';
+const containerFixture = () => ({Name:'/supabase_db_' + projectFixture,Config:{Image:'public.ecr.aws/supabase/postgres:17.0',Env:['PASSWORD=unsafe']},
+  State:{Status:'exited',Running:false,ExitCode:1,OOMKilled:false,Dead:false,Health:{Status:'unhealthy'},Error:'unsafe'},
+  NetworkSettings:{Networks:{[projectFixture+'-internal']:{IPAddress:'unsafe'}}},Mounts:['unsafe']});
+const networkFixture = () => ({Name:projectFixture+'-internal',Driver:'bridge',Internal:true,Labels:{'r10.disposable':projectFixture},
+  Containers:{id:{Name:'supabase_db_'+projectFixture,IPv4Address:'unsafe'}},IPAM:{unsafe:true}});
+test('raw stdout/stderr and arbitrary process fields never leave structured diagnostic', () => {
+  const d = diagnosticFixture(); a.validateDiagnostic(d);
+  assert.doesNotMatch(JSON.stringify(d),/CANARY|stderr|stdout/);
+  assert.equal(r.startDiagnostic({status:null,signal:'SIGTERM',error:{code:'ETIMEDOUT',message:'unsafe'}},55).timed_out,true);
+});
+test('startup throw and diagnostic inspection remain fixed/bounded, never output-derived', () => {
+  const driver=fs.readFileSync(path.join(__dirname,'runtime.cjs'),'utf8');
+  assert.match(driver,/throw Error\('LOCAL_PROCESS_FAILED:' \+ stage\)/);
+  assert.doesNotMatch(driver,/console\.(?:log|error)\(result|save\([^;]*result\.(?:stdout|stderr)/);
+});
+test('container snapshot excludes unsafe fields and rejects unrelated identity/networks', () => {
+  const safe=r.safeContainer(containerFixture(),projectFixture);
+  assert.doesNotMatch(JSON.stringify(safe),/unsafe|Env|Mounts|IPAddress/);
+  for(const name of ['supabase_db_other','evil_'+projectFixture]) assert.throws(()=>r.safeContainer({...containerFixture(),Name:name},projectFixture));
+  assert.throws(()=>r.safeContainer({...containerFixture(),NetworkSettings:{Networks:{other:{}}}},projectFixture));
+});
+test('network snapshot excludes IPAM/labels and requires exact internal ownership', () => {
+  assert.doesNotMatch(JSON.stringify(r.safeNetwork(networkFixture(),projectFixture)),/unsafe|IPAM|Labels/);
+  for(const patch of [{Name:'other'},{Internal:false},{Labels:{}},{Containers:{x:{Name:'evil_'+projectFixture}}}])
+    assert.throws(()=>r.safeNetwork({...networkFixture(),...patch},projectFixture));
+});
+test('diagnostic schema rejects arbitrary fields at every depth', () => {
+  assert.throws(()=>a.validateDiagnostic({...diagnosticFixture(),stderr:'unsafe'}));
+  const d=diagnosticFixture();d.network=r.safeNetwork(networkFixture(),projectFixture);d.containers=[r.safeContainer(containerFixture(),projectFixture)];
+  a.validateDiagnostic(d);d.containers[0].state.error='unsafe';assert.throws(()=>a.validateDiagnostic(d));
+});
+for (const unsafe of ['ozrasuktfthsvbqprtel','zwxulgpjucxudadjdqov','postgres://user:password@host/db',
+  'eyJ'+'a'.repeat(30)+'.token.signature','sb_secret_fake','access_token=unsafe','refresh_token=unsafe',
+  'password=unsafe','person@example.test','00000000-0000-4000-8000-000000000001'])
+  test('unsafe diagnostic evidence rejected: fixture ' + unsafe.slice(0,3),()=>assert.throws(()=>a.validateDiagnostic({...diagnosticFixture(),classification:unsafe})));
+test('artifact allowlist adds diagnostic JSON only; unknown extensions remain denied', () => {
+  assert(a.allowed.has('local-start-diagnostic.json'));
+  for(const name of ['local-start-diagnostic.log','local-start-diagnostic.txt','.env','config.toml','docker.json']) assert(!a.allowed.has(name));
+});
 test('only exact GitHub-hosted R10 context is accepted', () => {
   assert.match(r.guardEnvironment(fixture(), 'linux'), /LOCAL/);
   for (const [key, value] of [['GITHUB_REF','refs/heads/main'],['RUNNER_ENVIRONMENT','self-hosted'],['GITHUB_REPOSITORY','other/repo'],['GITHUB_EVENT_NAME','pull_request']]) {

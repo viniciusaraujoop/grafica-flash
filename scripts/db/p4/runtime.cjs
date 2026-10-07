@@ -7,6 +7,60 @@ const sig = require('./signature.cjs');
 const PROTECTED = ['ozrasuktfthsvbqprtel', 'zwxulgpjucxudadjdqov'];
 const BRANCH = 'refs/heads/reconcile/r10-production-base-canonicalization';
 const SOCKET = 'unix:///var/run/docker.sock';
+const START_CLASSES = ['CONFIG_VALIDATION_FAILURE','IMAGE_PULL_FAILURE','DOCKER_PERMISSION_FAILURE',
+  'DOCKER_NETWORK_FAILURE','PORT_BIND_FAILURE','DATABASE_CONTAINER_FAILURE','DATABASE_HEALTH_FAILURE',
+  'AUTH_SETUP_FAILURE','STORAGE_SETUP_FAILURE','REALTIME_SETUP_FAILURE','POSTGREST_FAILURE','KONG_FAILURE',
+  'POSTGRES_META_FAILURE','SERVICE_HEALTHCHECK_FAILURE','LOCAL_SUPABASE_START_UNKNOWN'];
+function classifyStart(result) {
+  const text = String(result.stderr || '').slice(0, 65536) + String(result.stdout || '').slice(0, 65536);
+  const rules = [
+    [/config.*(?:invalid|failed|error)|failed to parse|invalid.*config/i, START_CLASSES[0]],
+    [/pull.*(?:failed|denied|error)|manifest unknown|failed to.*image/i, START_CLASSES[1]],
+    [/permission denied.*docker|docker.*permission denied/i, START_CLASSES[2]],
+    [/network.*(?:failed|error|not found)|failed to.*network/i, START_CLASSES[3]],
+    [/address already in use|port is already allocated|failed to bind/i, START_CLASSES[4]],
+    [/realtime.*(?:failed|error|unhealthy)/i, START_CLASSES[9]],
+    [/postgrest.*(?:failed|error|unhealthy)/i, START_CLASSES[10]],
+    [/postgres.meta.*(?:failed|error|unhealthy)/i, START_CLASSES[12]],
+    [/database.*(?:unhealthy|health.*fail)|postgres.*(?:unhealthy|health.*fail)/i, START_CLASSES[6]],
+    [/database.*(?:failed|error)|postgres.*(?:failed|error)/i, START_CLASSES[5]],
+    [/auth.*(?:failed|error|unhealthy)/i, START_CLASSES[7]],
+    [/storage.*(?:failed|error|unhealthy)/i, START_CLASSES[8]],
+    [/postgrest.*(?:failed|error|unhealthy)/i, START_CLASSES[10]],
+    [/kong.*(?:failed|error|unhealthy)/i, START_CLASSES[11]],
+    [/postgres.meta.*(?:failed|error|unhealthy)/i, START_CLASSES[12]],
+    [/health.?check.*(?:failed|error)|service.*unhealthy/i, START_CLASSES[13]],
+  ];
+  return rules.find(([pattern]) => pattern.test(text))?.[1] || START_CLASSES[14];
+}
+function safeContainer(raw, project) {
+  if (!/^r10p4-\d+-\d+$/.test(project)) throw Error('DIAGNOSTIC_PROJECT_INVALID');
+  const name = String(raw.Name || '').replace(/^\//, '');
+  if (!new RegExp('^supabase_(?:db|auth|storage|realtime|rest|kong|meta|studio|imgproxy|mailpit|edge_runtime|analytics|vector|pooler)_' + project + '$').test(name)) throw Error('UNRELATED_CONTAINER_REFUSED');
+  const networks = Object.keys(raw.NetworkSettings?.Networks || {});
+  if (networks.some(n => n !== project + '-internal')) throw Error('UNRELATED_NETWORK_REFUSED');
+  const state = raw.State || {}, health = state.Health?.Status;
+  const image = raw.Config?.Image;
+  if (typeof image !== 'string' || !/^public\.ecr\.aws\/supabase\/[a-z0-9._/-]+:[a-zA-Z0-9._-]+$/.test(image)) throw Error('DIAGNOSTIC_IMAGE_INVALID');
+  if (!['created','running','paused','restarting','removing','exited','dead'].includes(state.Status) ||
+      !['Running','OOMKilled','Dead'].every(k => typeof state[k] === 'boolean') || !Number.isInteger(state.ExitCode) ||
+      (health !== undefined && !['none','starting','healthy','unhealthy'].includes(health))) throw Error('DIAGNOSTIC_STATE_INVALID');
+  return { name, image, state: { status: state.Status, running: state.Running, exit_code: state.ExitCode,
+    oom_killed: state.OOMKilled, dead: state.Dead }, health: { status: health || 'none' }, network_names: networks };
+}
+function safeNetwork(raw, project) {
+  if (!/^r10p4-\d+-\d+$/.test(project) || raw.Name !== project + '-internal' ||
+      raw.Internal !== true || raw.Labels?.['r10.disposable'] !== project || raw.Driver !== 'bridge') throw Error('UNRELATED_NETWORK_REFUSED');
+  const names = Object.values(raw.Containers || {}).map(v => v.Name);
+  if (names.length > 32 || names.some(n => typeof n !== 'string' || !new RegExp('^supabase_(?:db|auth|storage|realtime|rest|kong|meta|studio|imgproxy|mailpit|edge_runtime|analytics|vector|pooler)_' + project + '$').test(n))) throw Error('UNRELATED_CONTAINER_REFUSED');
+  return { name: raw.Name, driver: raw.Driver, internal: true, container_names: names.sort() };
+}
+function startDiagnostic(result, duration) {
+  return { stage: 'local-supabase-start', process_exit_code: Number.isInteger(result.status) ? result.status : null,
+    process_signal: ['SIGTERM','SIGKILL','SIGINT','SIGABRT','SIGSEGV','SIGPIPE'].includes(result.signal) ? result.signal : null,
+    timed_out: result.error?.code === 'ETIMEDOUT', duration_ms: Math.max(0, Math.min(3600000, Math.floor(duration))),
+    classification: classifyStart(result), containers: [], network: null };
+}
 function guardEnvironment(env, platform = process.platform) {
   for (const [key, value] of Object.entries(env)) {
     let decoded = String(value);
@@ -70,7 +124,19 @@ function run() {
   };
   const childEnv = cleanChildEnvironment(env);
   const command = (name, args, input, stage) => {
+    const started = performance.now();
     const result = cp.spawnSync(name, args, { env: childEnv, input, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, timeout: 15 * 60 * 1000 });
+    if (stage === 'local-supabase-start' && (result.status !== 0 || result.error)) {
+      const diagnostic = startDiagnostic(result, performance.now() - started);
+      try {
+        const snapshot = JSON.parse(docker(['network', 'inspect', network], null, 'diagnostic-network'))[0];
+        diagnostic.network = safeNetwork(snapshot, project);
+        for (const name of diagnostic.network.container_names) {
+          try { diagnostic.containers.push(safeContainer(JSON.parse(docker(['inspect', name], null, 'diagnostic-container'))[0], project)); } catch { /* unavailable or unsafe: omit */ }
+        }
+      } catch { /* preserve original startup failure */ }
+      try { require('./artifacts.cjs').validateDiagnostic(diagnostic); save('local-start-diagnostic.json', diagnostic); } catch { /* never mask startup failure */ }
+    }
     if (result.status !== 0 || result.error) throw Error('LOCAL_PROCESS_FAILED:' + stage); // Never print raw CLI/SQL stderr or startup keys.
     return result.stdout;
   };
@@ -162,8 +228,9 @@ function run() {
   }
   if (attestation.status !== 'PASS_LOCAL_P4_ONLY') throw Error('DISPOSABLE_CLEANUP_OR_ATTESTATION_FAILED');
 }
+module.exports = { guardEnvironment, checkSql, frontier, replayRows, cleanChildEnvironment,
+  START_CLASSES, classifyStart, safeContainer, safeNetwork, startDiagnostic };
 if (require.main === module) {
   try { if (process.argv[2] === '--preflight') { guardEnvironment(process.env); replayRows(); console.log('LOCAL_DISPOSABLE_PREFLIGHT_PASS'); } else run(); }
   catch (error) { console.error(error.message); process.exitCode = 1; }
 }
-module.exports = { guardEnvironment, checkSql, frontier, replayRows, cleanChildEnvironment };
