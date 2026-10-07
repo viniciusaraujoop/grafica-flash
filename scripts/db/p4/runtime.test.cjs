@@ -30,6 +30,26 @@ const containerFixture = () => ({Name:'/supabase_db_' + projectFixture,Config:{I
   NetworkSettings:{Networks:{[projectFixture+'-internal']:{IPAddress:'unsafe'}}},Mounts:['unsafe']});
 const networkFixture = () => ({Name:projectFixture+'-internal',Driver:'bridge',Internal:true,Labels:{'r10.disposable':projectFixture},
   Containers:{id:{Name:'supabase_db_'+projectFixture,IPv4Address:'unsafe'}},IPAM:{unsafe:true}});
+for (const suffix of ['db','kong','auth','inbucket','realtime','rest','storage','imgproxy','pg_meta','studio','edge_runtime','analytics','vector','pooler'])
+  test('canonical suffix accepted by both snapshots: ' + suffix, () => {
+    const name='supabase_'+suffix+'_'+projectFixture;
+    assert.equal(r.safeContainer({...containerFixture(),Name:name},projectFixture).name,name);
+    assert.deepEqual(r.safeNetwork({...networkFixture(),Containers:{id:{Name:name}}},projectFixture).container_names,[name]);
+  });
+for (const suffix of ['meta','mailpit','unknown','helper','database_helper','arbitrary','foo','*','','db|helper','db.*','pg_meta_extra'])
+  test('noncanonical suffix rejected by both snapshots: ' + suffix, () => {
+    const name='supabase_'+suffix+'_'+projectFixture;
+    assert.throws(()=>r.safeContainer({...containerFixture(),Name:name},projectFixture));
+    assert.throws(()=>r.safeNetwork({...networkFixture(),Containers:{id:{Name:name}}},projectFixture));
+  });
+test('canonical service wrong project and additional network remain rejected', () => {
+  for(const suffix of ['db','pg_meta','inbucket']) {
+    const name='supabase_'+suffix+'_r10p4-124-1';
+    assert.throws(()=>r.safeContainer({...containerFixture(),Name:name},projectFixture));
+    assert.throws(()=>r.safeNetwork({...networkFixture(),Containers:{id:{Name:name}}},projectFixture));
+  }
+  assert.throws(()=>r.safeContainer({...containerFixture(),NetworkSettings:{Networks:{[projectFixture+'-internal']:{},other:{}}}},projectFixture));
+});
 test('raw stdout/stderr and arbitrary process fields never leave structured diagnostic', () => {
   const d = diagnosticFixture(); a.validateDiagnostic(d);
   assert.doesNotMatch(JSON.stringify(d),/CANARY|stderr|stdout/);

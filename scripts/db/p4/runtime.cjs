@@ -7,6 +7,12 @@ const sig = require('./signature.cjs');
 const PROTECTED = ['ozrasuktfthsvbqprtel', 'zwxulgpjucxudadjdqov'];
 const BRANCH = 'refs/heads/reconcile/r10-production-base-canonicalization';
 const SOCKET = 'unix:///var/run/docker.sock';
+const LOCAL_SERVICE_SUFFIXES = Object.freeze(['db','kong','auth','inbucket','realtime','rest','storage',
+  'imgproxy','pg_meta','studio','edge_runtime','analytics','vector','pooler']);
+function canonicalContainerName(name, project) {
+  // Fixed in-code tokens only; no Docker/config/environment-derived service authority.
+  return typeof name === 'string' && LOCAL_SERVICE_SUFFIXES.some(suffix => name === 'supabase_' + suffix + '_' + project);
+}
 const START_CLASSES = ['CONFIG_VALIDATION_FAILURE','IMAGE_PULL_FAILURE','DOCKER_PERMISSION_FAILURE',
   'DOCKER_NETWORK_FAILURE','PORT_BIND_FAILURE','DATABASE_CONTAINER_FAILURE','DATABASE_HEALTH_FAILURE',
   'AUTH_SETUP_FAILURE','STORAGE_SETUP_FAILURE','REALTIME_SETUP_FAILURE','POSTGREST_FAILURE','KONG_FAILURE',
@@ -36,7 +42,7 @@ function classifyStart(result) {
 function safeContainer(raw, project) {
   if (!/^r10p4-\d+-\d+$/.test(project)) throw Error('DIAGNOSTIC_PROJECT_INVALID');
   const name = String(raw.Name || '').replace(/^\//, '');
-  if (!new RegExp('^supabase_(?:db|auth|storage|realtime|rest|kong|meta|studio|imgproxy|mailpit|edge_runtime|analytics|vector|pooler)_' + project + '$').test(name)) throw Error('UNRELATED_CONTAINER_REFUSED');
+  if (!canonicalContainerName(name, project)) throw Error('UNRELATED_CONTAINER_REFUSED');
   const networks = Object.keys(raw.NetworkSettings?.Networks || {});
   if (networks.some(n => n !== project + '-internal')) throw Error('UNRELATED_NETWORK_REFUSED');
   const state = raw.State || {}, health = state.Health?.Status;
@@ -52,7 +58,7 @@ function safeNetwork(raw, project) {
   if (!/^r10p4-\d+-\d+$/.test(project) || raw.Name !== project + '-internal' ||
       raw.Internal !== true || raw.Labels?.['r10.disposable'] !== project || raw.Driver !== 'bridge') throw Error('UNRELATED_NETWORK_REFUSED');
   const names = Object.values(raw.Containers || {}).map(v => v.Name);
-  if (names.length > 32 || names.some(n => typeof n !== 'string' || !new RegExp('^supabase_(?:db|auth|storage|realtime|rest|kong|meta|studio|imgproxy|mailpit|edge_runtime|analytics|vector|pooler)_' + project + '$').test(n))) throw Error('UNRELATED_CONTAINER_REFUSED');
+  if (names.length > 32 || names.some(n => !canonicalContainerName(n, project))) throw Error('UNRELATED_CONTAINER_REFUSED');
   return { name: raw.Name, driver: raw.Driver, internal: true, container_names: names.sort() };
 }
 function startDiagnostic(result, duration) {
