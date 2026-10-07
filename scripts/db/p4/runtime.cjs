@@ -25,20 +25,32 @@ const CLI_ERROR_CODES = Object.freeze({
   DbConfigLoadError: 'DB_CONFIG_LOAD_ERROR', DbSetupError: 'DB_SETUP_ERROR',
   MigrationVaultError: 'MIGRATION_VAULT_ERROR', MigrationApplyError: 'MIGRATION_APPLY_ERROR',
   MigrationSeedError: 'MIGRATION_SEED_ERROR',
+  DbConnectError: 'DB_CONNECT_ERROR', StartWorkdirError: 'START_WORKDIR_ERROR',
+  StartConfigLoadError: 'START_CONFIG_LOAD_ERROR', StartInvalidConfigError: 'START_INVALID_CONFIG_ERROR',
+  DockerLifecycleInspectError: 'DOCKER_LIFECYCLE_INSPECT_ERROR', DockerLifecycleListError: 'DOCKER_LIFECYCLE_LIST_ERROR',
+  StatusDbInspectError: 'STATUS_DB_INSPECT_ERROR', StatusDbNotRunningError: 'STATUS_DB_NOT_RUNNING_ERROR',
+  StatusDbNotReadyError: 'STATUS_DB_NOT_READY_ERROR', StatusListError: 'STATUS_LIST_ERROR',
+  StatusInvalidConfigError: 'STATUS_INVALID_CONFIG_ERROR',
 });
 const CLI_ERROR_ENUM = Object.freeze([...Object.values(CLI_ERROR_CODES), 'LOCAL_START_CLI_ERROR_UNKNOWN']);
-function cliErrorCode(stdout) {
+const CLI_ERROR_PARSE_STATUS_ENUM = Object.freeze(['MACHINE_ERROR_RECOGNIZED','MACHINE_ERROR_UNRECOGNIZED_CODE',
+  'MACHINE_ERROR_INVALID_ENVELOPE','MACHINE_ERROR_INVALID_JSON','MACHINE_ERROR_STDOUT_EMPTY','MACHINE_ERROR_STDOUT_OVERSIZE']);
+function parseCliError(stdout) {
   // Untrusted envelope/prose stays memory-only. Never return source values or parser errors.
   const unknown = 'LOCAL_START_CLI_ERROR_UNKNOWN';
-  if (typeof stdout !== 'string' || !stdout.trim() || Buffer.byteLength(stdout, 'utf8') > 65536) return unknown;
+  const fail = status => ({cli_error_code: unknown, cli_error_parse_status: status});
+  if (typeof stdout !== 'string' || !stdout.trim()) return fail('MACHINE_ERROR_STDOUT_EMPTY');
+  if (Buffer.byteLength(stdout, 'utf8') > 65536) return fail('MACHINE_ERROR_STDOUT_OVERSIZE');
   try {
     const envelope = JSON.parse(stdout);
     if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope) || envelope._tag !== 'Error' ||
         !envelope.error || typeof envelope.error !== 'object' || Array.isArray(envelope.error) ||
-        typeof envelope.error.code !== 'string' || !Object.hasOwn(CLI_ERROR_CODES, envelope.error.code)) return unknown;
-    return CLI_ERROR_CODES[envelope.error.code];
-  } catch { return unknown; }
+        typeof envelope.error.code !== 'string') return fail('MACHINE_ERROR_INVALID_ENVELOPE');
+    if (!Object.hasOwn(CLI_ERROR_CODES, envelope.error.code)) return fail('MACHINE_ERROR_UNRECOGNIZED_CODE');
+    return {cli_error_code: CLI_ERROR_CODES[envelope.error.code], cli_error_parse_status: 'MACHINE_ERROR_RECOGNIZED'};
+  } catch { return fail('MACHINE_ERROR_INVALID_JSON'); }
 }
+function cliErrorCode(stdout) { return parseCliError(stdout).cli_error_code; }
 function classifyStart(result) {
   const text = String(result.stderr || '').slice(0, 65536) + String(result.stdout || '').slice(0, 65536);
   const rules = [
@@ -87,7 +99,7 @@ function startDiagnostic(result, duration) {
   return { stage: 'local-supabase-start', process_exit_code: Number.isInteger(result.status) ? result.status : null,
     process_signal: ['SIGTERM','SIGKILL','SIGINT','SIGABRT','SIGSEGV','SIGPIPE'].includes(result.signal) ? result.signal : null,
     timed_out: result.error?.code === 'ETIMEDOUT', duration_ms: Math.max(0, Math.min(3600000, Math.floor(duration))),
-    classification: classifyStart(result), cli_error_code: cliErrorCode(result.stdout), containers: [], network: null };
+    classification: classifyStart(result), ...parseCliError(result.stdout), containers: [], network: null };
 }
 function guardEnvironment(env, platform = process.platform) {
   for (const [key, value] of Object.entries(env)) {
@@ -257,7 +269,7 @@ function run() {
   if (attestation.status !== 'PASS_LOCAL_P4_ONLY') throw Error('DISPOSABLE_CLEANUP_OR_ATTESTATION_FAILED');
 }
 module.exports = { guardEnvironment, checkSql, frontier, replayRows, cleanChildEnvironment,
-  START_CLASSES, CLI_ERROR_ENUM, cliErrorCode, classifyStart, safeContainer, safeNetwork, startDiagnostic };
+  START_CLASSES, CLI_ERROR_ENUM, CLI_ERROR_PARSE_STATUS_ENUM, parseCliError, cliErrorCode, classifyStart, safeContainer, safeNetwork, startDiagnostic };
 if (require.main === module) {
   try { if (process.argv[2] === '--preflight') { guardEnvironment(process.env); replayRows(); console.log('LOCAL_DISPOSABLE_PREFLIGHT_PASS'); } else run(); }
   catch (error) { console.error(error.message); process.exitCode = 1; }

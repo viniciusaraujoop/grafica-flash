@@ -32,11 +32,55 @@ const machineMappings = {
   DbConfigLoadError:'DB_CONFIG_LOAD_ERROR', DbSetupError:'DB_SETUP_ERROR',
   MigrationVaultError:'MIGRATION_VAULT_ERROR', MigrationApplyError:'MIGRATION_APPLY_ERROR',
   MigrationSeedError:'MIGRATION_SEED_ERROR',
+  DbConnectError:'DB_CONNECT_ERROR', StartWorkdirError:'START_WORKDIR_ERROR',
+  StartConfigLoadError:'START_CONFIG_LOAD_ERROR', StartInvalidConfigError:'START_INVALID_CONFIG_ERROR',
+  DockerLifecycleInspectError:'DOCKER_LIFECYCLE_INSPECT_ERROR', DockerLifecycleListError:'DOCKER_LIFECYCLE_LIST_ERROR',
+  StatusDbInspectError:'STATUS_DB_INSPECT_ERROR', StatusDbNotRunningError:'STATUS_DB_NOT_RUNNING_ERROR',
+  StatusDbNotReadyError:'STATUS_DB_NOT_READY_ERROR', StatusListError:'STATUS_LIST_ERROR',
+  StatusInvalidConfigError:'STATUS_INVALID_CONFIG_ERROR',
 };
 const envelope = code => JSON.stringify({_tag:'Error',error:{code}});
+for (const code of ['DbConnectErrorExtra','dbconnecterror','DBCONNECTERROR','StartInvalidConfig',
+  'DockerLifecycleInspectErrorExtra','StatusDbReadyError','UnknownError','Error','constructor','toString','__proto__'])
+  test('new taxonomy exact unknown rejected: '+code, () => {
+    assert.deepEqual(r.parseCliError(envelope(code)),{cli_error_code:'LOCAL_START_CLI_ERROR_UNKNOWN',cli_error_parse_status:'MACHINE_ERROR_UNRECOGNIZED_CODE'});
+  });
+for (const [index, stdout, status] of [
+  [0,envelope('DbConnectError'),'MACHINE_ERROR_RECOGNIZED'],
+  [1,envelope('UnknownError'),'MACHINE_ERROR_UNRECOGNIZED_CODE'],
+  [2,'{"_tag":"Other","error":{"code":"DbConnectError"}}','MACHINE_ERROR_INVALID_ENVELOPE'],
+  [3,'{"_tag":"Error"}','MACHINE_ERROR_INVALID_ENVELOPE'],
+  [4,'{"_tag":"Error","error":[]}','MACHINE_ERROR_INVALID_ENVELOPE'],
+  [5,'{"_tag":"Error","error":{}}','MACHINE_ERROR_INVALID_ENVELOPE'],
+  [6,envelope(1),'MACHINE_ERROR_INVALID_ENVELOPE'],
+  [7,envelope({}),'MACHINE_ERROR_INVALID_ENVELOPE'],
+  [8,envelope([]),'MACHINE_ERROR_INVALID_ENVELOPE'],
+  [9,'not JSON','MACHINE_ERROR_INVALID_JSON'],
+  [10,envelope('DbConnectError')+'\n'+envelope('DbConnectError'),'MACHINE_ERROR_INVALID_JSON'],
+  [11,'','MACHINE_ERROR_STDOUT_EMPTY'],[12,' \n\t','MACHINE_ERROR_STDOUT_EMPTY'],
+  [13,'x'.repeat(65537),'MACHINE_ERROR_STDOUT_OVERSIZE'],
+  [14,undefined,'MACHINE_ERROR_STDOUT_EMPTY'],[15,{},'MACHINE_ERROR_STDOUT_EMPTY'],
+  [16,'null','MACHINE_ERROR_INVALID_ENVELOPE'],[17,'[]','MACHINE_ERROR_INVALID_ENVELOPE'],
+  [18,'"text"','MACHINE_ERROR_INVALID_ENVELOPE'],
+  [19,envelope('DbConnectError')+'é'.repeat(32769),'MACHINE_ERROR_STDOUT_OVERSIZE'],
+]) test('bounded parse status matrix: '+index, () => {
+  const result=r.parseCliError(stdout);
+  assert.equal(result.cli_error_parse_status,status);
+  assert.deepEqual(Object.keys(result).sort(),['cli_error_code','cli_error_parse_status']);
+  if(status!=='MACHINE_ERROR_RECOGNIZED') assert.equal(result.cli_error_code,'LOCAL_START_CLI_ERROR_UNKNOWN');
+});
+test('parse status enum/schema exact, no arbitrary state or omitted field', () => {
+  assert.deepEqual(r.CLI_ERROR_PARSE_STATUS_ENUM,['MACHINE_ERROR_RECOGNIZED','MACHINE_ERROR_UNRECOGNIZED_CODE',
+    'MACHINE_ERROR_INVALID_ENVELOPE','MACHINE_ERROR_INVALID_JSON','MACHINE_ERROR_STDOUT_EMPTY','MACHINE_ERROR_STDOUT_OVERSIZE']);
+  const d=diagnosticFixture();
+  for(const status of ['arbitrary',null,{},1,'machine_error_recognized']) assert.throws(()=>a.validateDiagnostic({...d,cli_error_parse_status:status}));
+  delete d.cli_error_parse_status;assert.throws(()=>a.validateDiagnostic(d));
+  assert.equal(r.startDiagnostic({status:1,stderr:envelope('DbConnectError')},1).cli_error_parse_status,'MACHINE_ERROR_STDOUT_EMPTY');
+});
 for (const [code, expected] of Object.entries(machineMappings)) test('exact machine mapping: '+code, () => {
   const d=r.startDiagnostic({status:1,stdout:envelope(code)},1);
   assert.equal(d.cli_error_code,expected); a.validateDiagnostic(d);
+  assert.equal(d.cli_error_parse_status,'MACHINE_ERROR_RECOGNIZED');
 });
 for (const [index, code] of ['UnknownError','ContainerStartErrorExtra','containerstarterror','CONTAINERSTARTERROR',
   'HealthCheckTimeout','arbitrary','',1,{},[],null,'toString','__proto__'].entries())
@@ -51,13 +95,15 @@ for (const [index, stdout] of ['', 'not JSON', envelope('DbSetupError')+'\n{}', 
 ].entries()) test('malformed machine envelope fails closed: '+index, () => {
   assert.equal(r.cliErrorCode(stdout),'LOCAL_START_CLI_ERROR_UNKNOWN');
 });
-for (const [index, hostile] of ['ozrasuktfthsvbqprtel','postgres://user:password@host/db',
+for (const [index, hostile] of ['ozrasuktfthsvbqprtel','zwxulgpjucxudadjdqov','00000000-0000-4000-8000-000000000001','postgres://user:password@host/db',
   'eyJ'+'a'.repeat(30)+'.token.signature','password=unsafe','person@example.test',
   'access_token=unsafe','refresh_token=unsafe','x'.repeat(60000),'unsafe\n'.repeat(1000)].entries())
   test('hostile prose discarded from machine envelope: '+index, () => {
     const stdout=JSON.stringify({_tag:'Error',arbitrary:hostile,error:{code:'DbSetupError',message:hostile,detail:hostile,suggestion:hostile}});
     const d=r.startDiagnostic({status:1,stdout,stderr:'RAW_STDERR_CANARY'},1);
     assert.equal(d.cli_error_code,Buffer.byteLength(stdout)>65536?'LOCAL_START_CLI_ERROR_UNKNOWN':'DB_SETUP_ERROR');
+    assert.equal(d.cli_error_parse_status,Buffer.byteLength(stdout)>65536?'MACHINE_ERROR_STDOUT_OVERSIZE':'MACHINE_ERROR_RECOGNIZED');
+    assert.deepEqual(r.parseCliError(stdout),{cli_error_code:d.cli_error_code,cli_error_parse_status:d.cli_error_parse_status});
     a.validateDiagnostic(d);
     assert(!JSON.stringify(d).includes(hostile));
     assert.doesNotMatch(JSON.stringify(d),/CANARY|message|detail|suggestion|arbitrary|stdout|stderr/);
@@ -67,7 +113,7 @@ test('machine code is stdout-only and supplementary; exact finite schema rejects
   assert.equal(r.startDiagnostic({status:1,stdout:envelope('DbSetupError'),stderr:envelope('ContainerStartError')},1).cli_error_code,'DB_SETUP_ERROR');
   assert.deepEqual(r.CLI_ERROR_ENUM,[...Object.values(machineMappings),'LOCAL_START_CLI_ERROR_UNKNOWN']);
   const d=diagnosticFixture();
-  assert.deepEqual(Object.keys(d).sort(),['stage','process_exit_code','process_signal','timed_out','duration_ms','classification','cli_error_code','containers','network'].sort());
+  assert.deepEqual(Object.keys(d).sort(),['stage','process_exit_code','process_signal','timed_out','duration_ms','classification','cli_error_code','cli_error_parse_status','containers','network'].sort());
   for(const code of ['DbSetupError','DB_SETUP_ERROR_EXTRA',{},null,1]) assert.throws(()=>a.validateDiagnostic({...d,cli_error_code:code}));
   const missing={...d};delete missing.cli_error_code;assert.throws(()=>a.validateDiagnostic(missing));
 });
