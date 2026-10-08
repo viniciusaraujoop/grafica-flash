@@ -322,6 +322,16 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    // Publication flags are explicit-only: an unrelated PATCH must not republish the site.
+    if (Object.prototype.hasOwnProperty.call(update, 'site_status') &&
+        update.site_status !== 'publicado' && update.site_status !== 'rascunho') {
+      return NextResponse.json({ error: 'Status de publicação inválido.' }, { status: 400 })
+    }
+    if (Object.prototype.hasOwnProperty.call(update, 'site_publico_ativo') &&
+        typeof update.site_publico_ativo !== 'boolean') {
+      return NextResponse.json({ error: 'Ativação do site inválida.' }, { status: 400 })
+    }
+
     if (Object.prototype.hasOwnProperty.call(body, 'subdomain_slug')) {
       const nextSubdomain = normalizeSubdomain(body.subdomain_slug || company.subdomain_slug || company.slug || company.nome)
       const validationError = validateSubdomain(nextSubdomain)
@@ -361,7 +371,6 @@ export async function PATCH(request: NextRequest) {
     update.instagram = cleanText(update.instagram)
     update.atendimento_horario = cleanText(update.atendimento_horario)
     update.atendimento_observacao = cleanText(update.atendimento_observacao)
-    update.site_status = ['publicado', 'rascunho'].includes(update.site_status) ? update.site_status : 'publicado'
     update.pix_tipo = ['telefone', 'email', 'cpf', 'cnpj', 'aleatoria'].includes(update.pix_tipo) ? update.pix_tipo : 'telefone'
     update.pix_key = cleanText(update.pix_key)
     update.pix_nome = cleanText(update.pix_nome)
@@ -371,7 +380,6 @@ export async function PATCH(request: NextRequest) {
     update.cobrar_sinal = Boolean(update.cobrar_sinal)
     update.percentual_sinal = Math.max(0, Math.min(100, Number(update.percentual_sinal || 0)))
     update.business_type = normalizeBusinessType(update.business_type || company.business_type || 'services')
-    update.site_publico_ativo = Boolean(update.site_publico_ativo ?? true)
     update.site_show_store = Boolean(update.site_show_store ?? true)
     update.site_show_about = Boolean(update.site_show_about ?? true)
     update.site_show_contact = Boolean(update.site_show_contact ?? true)
