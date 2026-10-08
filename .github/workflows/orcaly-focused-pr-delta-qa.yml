@@ -1,24 +1,19 @@
-name: Orçaly Focused PR Delta QA
+name: Orçaly Candidate PR Delta Tests (Informational)
 
 on:
   pull_request:
     branches: [main]
-    paths:
-      - '.github/workflows/main-site-v2.yml'
-      - '.github/workflows/storefront-marketplace-v2.yml'
-      - '.github/workflows/orcaly-focused-pr-delta-qa.yml'
-      - 'scripts/ci/verify-focused-pr-delta.cjs'
-      - 'scripts/ci/verify-focused-pr-delta.test.cjs'
 
 permissions:
   contents: read
 
 jobs:
-  immutable-pr-boundary:
+  candidate-static-tests:
+    name: candidate-static-tests (not a trusted security gate)
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - name: Checkout PR for isolated offline tests
+      - name: Checkout candidate code for unprivileged offline tests
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 pinned
         with:
           persist-credentials: false
@@ -30,8 +25,10 @@ jobs:
         run: |
           node --check scripts/ci/verify-focused-pr-delta.cjs
           node --check scripts/ci/verify-focused-pr-delta.test.cjs
+          node --check scripts/ci/verify-trusted-pr-boundary.cjs
+          node --check scripts/ci/verify-trusted-pr-boundary.test.cjs
       - name: Offline negative tests
-        run: node --test scripts/ci/verify-focused-pr-delta.test.cjs
+        run: node --test scripts/ci/verify-focused-pr-delta.test.cjs scripts/ci/verify-trusted-pr-boundary.test.cjs
       - name: Assert domain QA workflows use exact PR SHA
         run: |
           node - <<'JS'
