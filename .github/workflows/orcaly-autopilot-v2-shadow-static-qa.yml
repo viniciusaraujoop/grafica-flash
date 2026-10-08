@@ -1,0 +1,37 @@
+name: Orçaly Autopilot V2 Shadow Static QA
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/orcaly-autopilot-v2-shadow.yml'
+      - '.github/workflows/orcaly-autopilot-v2-shadow-static-qa.yml'
+      - 'scripts/automation/autopilot-v2-shadow.cjs'
+      - 'scripts/automation/autopilot-v2-shadow.test.cjs'
+      - 'docs/automation/autopilot-v2-shadow-policy.json'
+      - 'docs/automation/autopilot-v2-shadow.md'
+
+permissions:
+  contents: read
+
+jobs:
+  shadow-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout without repository credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 pinned
+        with:
+          persist-credentials: false
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 pinned
+        with:
+          node-version: 24
+      - name: Syntax check
+        run: |
+          node --check scripts/automation/autopilot-v2-shadow.cjs
+          node --check scripts/automation/autopilot-v2-shadow.test.cjs
+      - name: No-network safety tests
+        run: node --test scripts/automation/autopilot-v2-shadow.test.cjs
+      - name: Whitespace
+        run: git diff --check
