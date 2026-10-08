@@ -385,6 +385,7 @@ export default function ProdutosPage() {
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [mensagem, setMensagem] = useState('')
+  const [erroCarregamento, setErroCarregamento] = useState('')
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState<StatusFiltro>('todos')
   const [filtroCategoria, setFiltroCategoria] = useState('Todas')
@@ -394,44 +395,37 @@ export default function ProdutosPage() {
 
   async function carregarDados() {
     setCarregando(true)
-    setMensagem('')
-
-    const { data: sessaoData } = await supabase.auth.getSession()
-    const usuario = sessaoData.session?.user
-
-    if (!usuario) {
-      router.push('/login')
-      return
-    }
-
-    let empresaData: Empresa
+    setErroCarregamento('')
 
     try {
+      const { data: sessaoData, error: sessaoError } = await supabase.auth.getSession()
+      if (sessaoError) throw sessaoError
+
+      if (!sessaoData.session?.user) {
+        router.push('/login')
+        return
+      }
+
       const current = await getCurrentCompanyClient()
-      empresaData = current.company as Empresa
-    } catch (error) {
-      setMensagem(error instanceof Error ? error.message : 'Nenhuma empresa vinculada a esta conta.')
+      const empresaData = current.company as Empresa
+      if (!empresaData?.id) throw new Error('Empresa não encontrada.')
+
+      const { data: itensData, error: itensError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('company_id', empresaData.id)
+        .eq('arquivado', false)
+        .order('created_at', { ascending: false })
+
+      if (itensError) throw itensError
+
+      setEmpresa(empresaData)
+      setItens((itensData || []) as ItemCatalogo[])
+    } catch {
+      setErroCarregamento('Não foi possível carregar o catálogo. Verifique sua conexão e tente novamente.')
+    } finally {
       setCarregando(false)
-      return
     }
-
-    setEmpresa(empresaData)
-
-    const { data: itensData, error: itensError } = await supabase
-      .from('products')
-      .select('*')
-      .eq('company_id', empresaData.id)
-      .eq('arquivado', false)
-      .order('created_at', { ascending: false })
-
-    if (itensError) {
-      setMensagem(`Erro ao carregar catálogo: ${itensError.message}`)
-      setCarregando(false)
-      return
-    }
-
-    setItens((itensData || []) as ItemCatalogo[])
-    setCarregando(false)
   }
 
   async function enviarImagem(arquivo: File) {
@@ -774,6 +768,26 @@ export default function ProdutosPage() {
     )
   }
 
+  if (erroCarregamento) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4 py-8 text-[#071b3a]">
+        <section role="alert" aria-labelledby="catalog-load-error" className="w-full max-w-lg rounded-[2rem] border border-red-100 bg-white p-6 text-center shadow-xl shadow-blue-950/5 sm:p-8">
+          {mensagem ? <p role="status" className="mb-4 rounded-xl bg-blue-50 p-3 text-sm font-bold text-[#05245c]">{mensagem}</p> : null}
+          <h1 id="catalog-load-error" className="text-2xl font-black">Não foi possível carregar o catálogo</h1>
+          <p className="mt-3 text-sm font-medium leading-6 text-slate-600">{erroCarregamento}</p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <button type="button" onClick={() => void carregarDados()} className="min-h-11 rounded-xl bg-[#05245c] px-5 py-3 text-sm font-black text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#05245c]">
+              Tentar novamente
+            </button>
+            <Link href="/painel" className="inline-flex min-h-11 items-center rounded-xl border border-blue-100 px-5 py-3 text-sm font-black text-[#05245c]">
+              Voltar ao painel
+            </Link>
+          </div>
+        </section>
+      </main>
+    )
+  }
+
   // ORCALY_PRODUCTS_MARKETPLACE_UI_V3
   function scrollToForm() {
     document.getElementById('editor-item')?.scrollIntoView({
@@ -859,7 +873,7 @@ export default function ProdutosPage() {
 
       <section className="mx-auto w-full max-w-[1540px] px-4 py-6 sm:px-6 lg:px-8">
         {mensagem ? (
-          <div className="mb-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold leading-6 text-[#05245c]">
+          <div role="status" aria-live="polite" className="mb-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold leading-6 text-[#05245c]">
             {mensagem}
           </div>
         ) : null}

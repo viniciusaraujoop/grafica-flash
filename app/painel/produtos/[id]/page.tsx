@@ -46,12 +46,15 @@ export default function ProdutoDetalhePage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [loadFailure, setLoadFailure] = useState<'not_found' | 'denied' | 'unauthorized' | 'technical' | null>(null)
 
   const businessConfig = useMemo(() => getBusinessTypeConfig(product?.business_type), [product?.business_type])
 
   async function load() {
     setLoading(true)
     setError('')
+    setLoadFailure(null)
+    setProduct(null)
 
     try {
       const accessToken = await getAccessTokenClient()
@@ -63,18 +66,25 @@ export default function ProdutoDetalhePage() {
 
       const payload = await response.json().catch(() => ({}))
 
-      if (!response.ok) throw new Error(payload.error || 'Erro ao carregar produto.')
+      if (!response.ok) {
+        if (response.status === 404) { setLoadFailure('not_found'); return }
+        if (response.status === 403) { setLoadFailure('denied'); return }
+        if (response.status === 401) { setLoadFailure('unauthorized'); return }
+        throw new Error('Erro ao carregar produto.')
+      }
+      if (!payload.product?.id) throw new Error('Resposta incompleta do produto.')
 
       setProduct(payload.product)
       setImageLines(parseLines(payload.product?.image_urls))
       setAddonsText(jsonString(payload.product?.addons || payload.product?.adicionais, []))
       setVariationsText(jsonString(payload.product?.variations || payload.product?.variacoes, []))
       setExtrasText(jsonString(payload.product?.extras, {}))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar produto.')
+    } catch {
+      setLoadFailure('technical')
+      setError('Não foi possível carregar o produto. Verifique sua conexão e tente novamente.')
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -166,7 +176,36 @@ export default function ProdutoDetalhePage() {
   }
 
   if (!product) {
-    return <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff]"><div className="rounded-[2rem] bg-white p-8 font-black shadow-xl">Produto não encontrado.</div></main>
+    const title = loadFailure === 'not_found'
+      ? 'Produto ou empresa não encontrado'
+      : loadFailure === 'denied'
+        ? 'Acesso negado ao produto'
+        : loadFailure === 'unauthorized'
+          ? 'Entre na sua conta para continuar'
+          : 'Não foi possível carregar o produto'
+
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4 py-8 text-[#071b3a]">
+        <section role={loadFailure === 'technical' ? 'alert' : 'status'} className="w-full max-w-lg rounded-[2rem] border border-blue-100 bg-white p-6 text-center shadow-xl shadow-blue-950/5 sm:p-8">
+          <h1 className="text-2xl font-black">{title}</h1>
+          <p className="mt-3 text-sm font-medium leading-6 text-slate-600">
+            {loadFailure === 'technical' ? error : loadFailure === 'denied'
+              ? 'Sua conta não possui permissão para acessar este produto.'
+              : loadFailure === 'unauthorized' ? 'Sua sessão não foi reconhecida.'
+                : 'Confira o endereço ou volte ao catálogo.'}
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            {loadFailure === 'technical' ? (
+              <button type="button" onClick={() => void load()} className="min-h-11 rounded-xl bg-[#05245c] px-5 py-3 text-sm font-black text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#05245c]">Tentar novamente</button>
+            ) : null}
+            {loadFailure === 'unauthorized' ? (
+              <Link href="/login" className="inline-flex min-h-11 items-center rounded-xl bg-[#05245c] px-5 py-3 text-sm font-black text-white">Entrar</Link>
+            ) : null}
+            <Link href="/painel/produtos" className="inline-flex min-h-11 items-center rounded-xl border border-blue-100 px-5 py-3 text-sm font-black text-[#05245c]">Voltar ao catálogo</Link>
+          </div>
+        </section>
+      </main>
+    )
   }
 
   return (
