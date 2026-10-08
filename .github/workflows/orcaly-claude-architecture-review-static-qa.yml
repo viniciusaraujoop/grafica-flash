@@ -1,0 +1,32 @@
+name: Orçaly Claude Architecture Review Static QA
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/orcaly-claude-architecture-review-v1.yml'
+      - '.github/workflows/orcaly-claude-architecture-review-static-qa.yml'
+      - 'scripts/automation/verify-claude-architecture-review-v1.cjs'
+
+permissions:
+  contents: read
+
+jobs:
+  static-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout proposed workflow without credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 pinned
+        with:
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 pinned
+        with:
+          node-version: 24
+      - name: JavaScript static syntax
+        run: node --check scripts/automation/verify-claude-architecture-review-v1.cjs
+      - name: Workflow contract and embedded scripts
+        run: node scripts/automation/verify-claude-architecture-review-v1.cjs
+      - name: Diff whitespace check
+        run: git diff --check
