@@ -21,8 +21,6 @@ jobs:
   qa:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    env:
-      STOREFRONT_BASE_SHA: 2023780f4ae622a1d1da7c84a8a77d7460f3f014
     steps:
       - uses: actions/checkout@v4
         with:
@@ -58,16 +56,16 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ci-build-placeholder
           NEXT_PUBLIC_APP_URL: https://ci.orcaly.invalid
         run: npm run build
-      - name: Protected payment diff check
-        run: |
-          touched="$(git diff --name-only "$STOREFRONT_BASE_SHA...HEAD" | grep -E '^(lib/payments/|lib/mercado-pago|app/api/checkout/|components/checkout/CheckoutClient\.tsx|app/api/marketplace/coupon|app/api/marketplace/payments/)' || true)"
-          if [ -n "$touched" ]; then
-            echo "Protected payment/checkout files changed:"
-            echo "$touched"
-            exit 1
-          fi
-      - name: Diff whitespace check
-        run: git diff --check "$STOREFRONT_BASE_SHA...HEAD"
+      - name: Exact-SHA PR protected paths and whitespace guard
+        if: github.event_name == 'pull_request'
+        env:
+          ORCALY_QA_SCOPE: storefront
+          ORCALY_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          ORCALY_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/ci/verify-focused-pr-delta.cjs
+      - name: Manual QA run has no PR-delta certification
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "::notice::Manual QA checks are informational; no PR head/base was provided for protected diff certification."
       - name: Dependency audit baseline
         continue-on-error: true
         run: npm audit --audit-level=high
