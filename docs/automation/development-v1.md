@@ -63,3 +63,43 @@ Para centralizar tarefas sensíveis, criar um **repositório privado de coordena
 
 Implementação inicial entregue somente em `automation/development-v1` e apresentada para revisão em draft PR. **Nenhum merge na main ou execução foi autorizada por esta entrega.**
 
+
+
+## V1.1: Codex agent pilot (isolated and OFF until reviewed)
+
+A draft PR also proposes these files:
+
+- `.github/workflows/orcaly-codex-agent-pilot.yml`: founder-only manual dispatch of a public, founder-authored mission Issue. The task must be labeled by its GitHub Issue form as `CODE_CHANGE_PROPOSAL`.
+- `scripts/automation/validate-codex-pilot.cjs`: strict allowlist for `docs/automation/*.md` only, maximum 3 files, 16 KiB/file and 32 KiB patch, rejecting secrets, symlinks, deleted files, renamed files, paths outside scope and unexpected untracked changes.
+- `scripts/automation/validate-codex-pilot.test.cjs`: temporary-repository negative and positive tests for the patch gate.
+- `.github/workflows/orcaly-codex-pilot-static-qa.yml`: fast unit checks, no external API key or database.
+
+### Permission separation
+
+The Codex job has only `contents:read` and `issues:read` GitHub permissions, checks out an immutable main SHA with `persist-credentials:false`, and runs `openai/codex-action@v1` with the workspace sandbox and `drop-sudo`. It cannot directly push a branch or open a PR. The GitHub API key used for model calls is configured only as an Actions secret and is consumed by the official action.
+
+The separate publication job has `contents:write` and `pull-requests:write` only after the first job has completed. It verifies that main has not advanced, applies the small patch to a fresh checkout, re-runs an immutable copy of the validator and publishes a **draft PR only**.
+
+**No automated merge, CI approval, deployment or Supabase access is permitted.**
+
+### Prerequisites before first real AI execution
+
+1. Review and approve this draft PR, all static checks and the workflow security boundaries. Until merger into `main`, its `workflow_dispatch` cannot be used.
+2. In the OpenAI API platform create a separate project, configure model rate limits, a low monthly **enforced hard spend limit** and usage alerts. API consumption is billed separately from ChatGPT subscriptions.
+3. Generate a project-scoped restricted API key for that project.
+4. In the repository open **Settings > Secrets and variables > Actions > New repository secret**, create **`ORCALY_CODEX_API_KEY`**, and paste the key there. NEVER put the key in GitHub Issues, documentation, code, logs or ChatGPT.
+5. For the draft PR publication flow, GitHub repository Settings > Actions > General > Workflow permissions must allow Actions to create pull requests. Only enable this after reviewing the workflow and retaining PR review requirements. If disabled, publishing a PR will fail closed.
+6. Create a new **public, non-sensitive** `[AGENT]` Issue with `CODE_CHANGE_PROPOSAL` and a documentation task under `docs/automation/`. Do not ask the pilot to touch app, R10, scripts or database.
+7. After explicit founder approval of pilot execution, open **Actions > Orçaly Codex Agent Pilot - Founder Dispatch > Run workflow**, select `main`, enter the Issue number. The workflow refuses actors other than the configured repository founder.
+8. Inspect the generated draft PR and approve CI workflows when GitHub requests it. GitHub-token-created PR runs can require additional approval.
+9. Stop after one test mission; review cost, branch protections, artifacts and security evidence before expanding scope.
+
+### Scope limitations
+
+- GitHub Issues and PRs here are public. This pilot cannot handle security vulnerabilities, privileged production identifiers, secrets, credentials or personal client data. Use a separate private coordination repository for those tasks.
+- This is **not yet a multi-agent autonomous system** and will not automatically route Agent 2/3/4/5/6/7/8 messages; it only proves a narrow Issue → Codex → bounded patch → draft PR flow.
+- Manual founder dispatch is a deliberate cost and permission gate, not a failure of automation.
+- GitHub Actions timeouts and serialization limit work per run but are not financial hard caps. A project enforced hard spend limit and billing monitoring are required.
+- Failures to publish a PR may leave a harmless isolated branch needing manual cleanup; no branch cleanup is automatic.
+- Independent Agent 4 review and founder merge authorization remain prerequisites.
+
