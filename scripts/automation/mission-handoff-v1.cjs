@@ -93,10 +93,18 @@ function reportHandoff({policy,issue,prs,runs,reviews,repository='',windows={}}=
     : 'RUNNING_OR_QUEUED';
   if (gate === 'FAIL') return {...prRef,phase:'BLOCKED_EXACT_SHA_CI',gate,gate_run_id:validNumber(run.id)?run.id:null};
   if (gate !== 'PASS') return {...prRef,phase:'WAITING_FOR_EXACT_SHA_CI',gate,gate_run_id:validNumber(run.id)?run.id:null};
-  const humanApproved=reviews.some(review =>
-    review.user?.login === policy.founder_login &&
-    review.state === 'APPROVED' && review.commit_id === pr.head.sha);
-  const phase=humanApproved ? 'READY_FOR_FOUNDER_MERGE_DECISION' : 'READY_FOR_HUMAN_REVIEW';
+  // Full review evidence is required above. A single APPROVED from the past
+  // cannot override a later review or a still-open CHANGES_REQUESTED.
+  // Conservatively require that NO recorded review requests changes,
+  // even if an approval was submitted later; an owner must reconcile objections.
+  const unresolvedChanges=reviews.some(review=>review.state === 'CHANGES_REQUESTED');
+  const founderReviews=reviews.filter(review=>review.user?.login === policy.founder_login);
+  const latestFounderReview=founderReviews.at(-1);
+  const humanApproved=!unresolvedChanges &&
+    latestFounderReview?.state === 'APPROVED' &&
+    latestFounderReview.commit_id === pr.head.sha;
+  const phase=unresolvedChanges ? 'BLOCKED_REVIEW_CHANGES_REQUESTED' :
+    humanApproved ? 'READY_FOR_FOUNDER_MERGE_DECISION' : 'READY_FOR_HUMAN_REVIEW';
   return {...prRef,phase,gate,gate_run_id:validNumber(run.id)?run.id:null,
     recommendation:'NO_MERGE_WITHOUT_EXPLICIT_FOUNDER_ACTION'};
 }

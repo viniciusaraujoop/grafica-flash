@@ -62,6 +62,45 @@ test('CI for another commit, branch or event is not accepted',()=>{
  a.runs[0].event='pull_request';a.runs[0].status='in_progress';a.runs[0].conclusion=null;
  assert.equal(reportHandoff(a).phase,'WAITING_FOR_EXACT_SHA_CI');
 });
+test('old founder APPROVED cannot overrule later CHANGES_REQUESTED on same SHA',()=>{
+ const a=args();a.runs[0].conclusion='success';
+ a.reviews=[
+  {user:{login:'viniciusaraujoop'},state:'APPROVED',commit_id:sha},
+  {user:{login:'reviewer'},state:'CHANGES_REQUESTED',commit_id:sha}
+ ];
+ const r=reportHandoff(a);
+ assert.equal(r.phase,'BLOCKED_REVIEW_CHANGES_REQUESTED');
+ assert.equal(r.gate,'PASS');
+ assert.equal(r.merge_performed,false);
+ assert.equal(r.next_mission_dispatched,false);
+});
+test('founder review superseded by CHANGES_REQUESTED is not authorized',()=>{
+ const a=args();a.runs[0].conclusion='success';
+ a.reviews=[
+  {user:{login:'viniciusaraujoop'},state:'APPROVED',commit_id:sha},
+  {user:{login:'viniciusaraujoop'},state:'CHANGES_REQUESTED',commit_id:sha}
+ ];
+ assert.equal(reportHandoff(a).phase,'BLOCKED_REVIEW_CHANGES_REQUESTED');
+});
+test('approval after a change request alone cannot silently clear objection',()=>{
+ const a=args();a.runs[0].conclusion='success';
+ a.reviews=[
+  {user:{login:'reviewer'},state:'CHANGES_REQUESTED',commit_id:sha},
+  {user:{login:'viniciusaraujoop'},state:'APPROVED',commit_id:sha}
+ ];
+ assert.equal(reportHandoff(a).phase,'BLOCKED_REVIEW_CHANGES_REQUESTED');
+});
+test('latest founder review must be an exact-SHA APPROVED',()=>{
+ const a=args();a.runs[0].conclusion='success';
+ a.reviews=[
+  {user:{login:'viniciusaraujoop'},state:'APPROVED',commit_id:sha},
+  {user:{login:'viniciusaraujoop'},state:'DISMISSED',commit_id:sha}
+ ];
+ assert.equal(reportHandoff(a).phase,'READY_FOR_HUMAN_REVIEW');
+ a.reviews=[{user:{login:'viniciusaraujoop'},state:'APPROVED',commit_id:sha}];
+ assert.equal(reportHandoff(a).phase,'READY_FOR_FOUNDER_MERGE_DECISION');
+});
+
 test('merged PR never triggers an automatic new mission',()=>{
  const a=args();a.prs[0].merged_at='2026-10-08T03:00:00Z';
  const r=reportHandoff(a);
