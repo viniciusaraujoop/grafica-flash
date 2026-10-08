@@ -43,6 +43,11 @@ jobs:
       - name: Security static checks
         run: npm run security:check
 
+      - name: Runtime dependency lockfile regression and negative tests
+        run: |
+          node scripts/verify-runtime-lock-security.cjs
+          node --test scripts/verify-runtime-lock-security.test.cjs
+
       - name: Dependency security gate
         run: npm run security:dependencies
 
