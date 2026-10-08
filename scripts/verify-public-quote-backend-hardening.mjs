@@ -27,7 +27,7 @@ const NextResponse = {
   },
 }
 
-function loadTs(path, deps) {
+function loadTs(path, deps, context = {}) {
   const compiled = ts.transpileModule(readFileSync(path, 'utf8'), {
     fileName: path,
     reportDiagnostics: true,
@@ -47,7 +47,7 @@ function loadTs(path, deps) {
       if (!Object.hasOwn(deps, id)) throw new Error('Unexpected dependency: ' + id)
       return deps[id]
     },
-    console, Date, TextDecoder, Number,
+    console, Date, TextDecoder, Number, ...context,
   }, { filename: path })
   return module.exports
 }
@@ -195,3 +195,178 @@ assert.equal(h.rateCalls[0].identity, 'my-shop', 'rate limit must not trust a sp
 total++
 console.log('PASS duplicate behavior documented: TWO INSERTs, NOT beta-safe')
 console.log('PASS ' + total + ' offline checks. Remaining blocker: database-backed idempotency and atomic publication guarantee.')
+
+
+// BE01_PUBLICATION_PARTIAL_PATCH_HOTFIX: authenticated PATCH, mocked DB only.
+// Real route code is transpiled in the same VM harness; no network or database.
+const settingsCompanyId = '22222222-2222-4222-8222-222222222222'
+const settingsUserId = '11111111-1111-4111-8111-111111111111'
+
+function settingsHarness(options = {}) {
+  const company = {
+    id: settingsCompanyId,
+    nome: 'Empresa Original',
+    site_status: 'rascunho',
+    site_publico_ativo: false,
+    ...(options.company || {}),
+  }
+  const writes = []
+  const mfaCalls = []
+  const audits = []
+
+  const db = {
+    auth: {
+      async getUser(token) {
+        return {
+          data: { user: options.authenticated === false || token !== 'valid-token'
+            ? null
+            : { id: settingsUserId, email: 'owner@example.com' } },
+          error: null,
+        }
+      },
+    },
+    from(table) {
+      if (table === 'companies') {
+        return {
+          select() {
+            return {
+              or() {
+                return { async maybeSingle() { return { data: options.member ? null : company, error: null } } }
+              },
+              eq() {
+                return { async maybeSingle() { return { data: company, error: null } } }
+              },
+            }
+          },
+          update(payload) {
+            writes.push({ ...payload })
+            return {
+              eq() {
+                return {
+                  select() {
+                    return {
+                      async single() {
+                        Object.assign(company, payload)
+                        return { data: { ...company }, error: null }
+                      },
+                    }
+                  },
+                }
+              },
+            }
+          },
+        }
+      }
+      if (table === 'company_members') {
+        return {
+          select() {
+            return {
+              eq() { return this },
+              async maybeSingle() {
+                return { data: options.member ? {
+                  company_id: settingsCompanyId, cargo: 'funcionario', status: 'ativo',
+                } : null, error: null }
+              },
+            }
+          },
+        }
+      }
+      throw new Error('Unexpected settings table: ' + table)
+    },
+  }
+
+  const { PATCH } = loadTs('app/api/company/settings/route.ts', {
+    'next/server': { NextResponse },
+    '@supabase/supabase-js': { createClient: () => db },
+    '@/lib/business-types': { normalizeBusinessType: (value) => value },
+    '@/lib/company-url': { getCompanyPublicUrl: (slug) => '/site/' + slug },
+    '@/lib/security/mfa': {
+      async requireMfaStepUpForRequest(_request, purpose) {
+        mfaCalls.push(purpose)
+        return options.mfaDenied
+          ? { allowed: false, error: 'MFA obrigatório.', reason: 'mfa_step_up_required', status: 403 }
+          : { allowed: true }
+      },
+    },
+    '@/lib/security/privileged-actions': {
+      getSensitiveSettingsFields(body) {
+        if (!body || typeof body !== 'object') return []
+        return Object.keys(body).filter((key) => ['pix_key', 'pix_tipo', 'aceita_pix'].includes(key))
+      },
+    },
+    '@/lib/security/privileged-audit': {
+      async recordPrivilegedAudit(_db, _request, entry) { audits.push(entry) },
+    },
+  }, { process: { env: { NEXT_PUBLIC_SUPABASE_URL: 'https://invalid.local', SUPABASE_SERVICE_ROLE_KEY: 'test-only' } } })
+
+  async function patch(body) {
+    return PATCH({
+      headers: {
+        get(name) { return name === 'authorization' && options.authenticated !== false ? 'Bearer valid-token' : null },
+      },
+      async json() { return body },
+    })
+  }
+  return { patch, company, writes, mfaCalls, audits }
+}
+
+async function checkSettings(name, options, payload, expectedStatus, expectedPublication = {}) {
+  const h = settingsHarness(options)
+  const before = { site_status: h.company.site_status, site_publico_ativo: h.company.site_publico_ativo }
+  const response = await h.patch(payload)
+  assert.equal(response.status, expectedStatus, name + ' HTTP')
+  if (expectedStatus === 200) {
+    assert.equal(h.writes.length, 1, name + ' single update')
+    for (const field of ['site_status', 'site_publico_ativo']) {
+      if (!Object.hasOwn(payload, field)) {
+        assert.equal(Object.hasOwn(h.writes[0], field), false, name + ' omitted ' + field)
+        assert.equal(h.company[field], before[field], name + ' preserved ' + field)
+      } else {
+        assert.equal(h.company[field], expectedPublication[field], name + ' explicit ' + field)
+      }
+    }
+  } else {
+    assert.equal(h.writes.length, 0, name + ' must not update')
+    assert.equal(h.company.site_status, before.site_status, name + ' status unchanged')
+    assert.equal(h.company.site_publico_ativo, before.site_publico_ativo, name + ' activation unchanged')
+  }
+  total++
+  console.log('PASS ' + name)
+  return h
+}
+
+await checkSettings('name PATCH preserves draft', {}, { nome: 'Empresa Nova' }, 200)
+await checkSettings('unrelated PATCH preserves disabled site', { company: { site_status: 'publicado' } }, { nome: 'Empresa Nova' }, 200)
+await checkSettings('omitted flags never included in update', {}, { instagram: 'social' }, 200)
+await checkSettings('explicit publication both fields', {}, { site_status: 'publicado', site_publico_ativo: true }, 200, { site_status: 'publicado', site_publico_ativo: true })
+await checkSettings('explicit unpublish and disable', { company: { site_status: 'publicado', site_publico_ativo: true } }, { site_status: 'rascunho', site_publico_ativo: false }, 200, { site_status: 'rascunho', site_publico_ativo: false })
+await checkSettings('explicit publication status only preserves activation', {}, { site_status: 'publicado' }, 200, { site_status: 'publicado' })
+await checkSettings('explicit activation only preserves draft', {}, { site_publico_ativo: true }, 200, { site_publico_ativo: true })
+
+for (const [name, payload] of [
+  ['null status', { site_status: null }],
+  ['uppercase status', { site_status: 'PUBLICADO' }],
+  ['status with whitespace', { site_status: ' publicado ' }],
+  ['status boolean', { site_status: true }],
+  ['unknown status', { site_status: 'archived' }],
+  ['null activation', { site_publico_ativo: null }],
+  ['activation as string false', { site_publico_ativo: 'false' }],
+  ['activation as string true', { site_publico_ativo: 'true' }],
+  ['activation as number', { site_publico_ativo: 1 }],
+  ['activation as object', { site_publico_ativo: {} }],
+  ['valid status and invalid activation', { site_status: 'publicado', site_publico_ativo: 'true' }],
+  ['invalid status and valid activation', { site_status: 'unknown', site_publico_ativo: true }],
+]) {
+  await checkSettings('reject malformed ' + name, {}, payload, 400)
+}
+
+await checkSettings('unauthenticated PATCH denied', { authenticated: false }, { site_status: 'publicado' }, 401)
+await checkSettings('member without owner rights denied', { member: true }, { site_status: 'publicado' }, 403)
+const deniedMfa = await checkSettings('sensitive settings still require MFA', { mfaDenied: true }, { site_status: 'publicado', pix_key: 'sample' }, 403)
+assert.deepEqual(deniedMfa.mfaCalls, ['pix.update'])
+assert.equal(deniedMfa.audits.length, 1)
+const successfulMfa = await checkSettings('sensitive settings still accept authorized MFA', {}, { site_status: 'publicado', pix_key: 'sample' }, 200, { site_status: 'publicado' })
+assert.deepEqual(successfulMfa.mfaCalls, ['pix.update'])
+assert.equal(successfulMfa.audits.length, 1)
+
+console.log('PASS ' + total + ' total offline checks (public quote + settings publication hotfix).')
