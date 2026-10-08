@@ -29,7 +29,12 @@ function assertReadOnlyContract(policy) {
   if (!Array.isArray(policy.prototype_missions) || policy.prototype_missions.length !== 1 ||
       policy.prototype_missions[0]?.issue_number !== 23 ||
       policy.prototype_missions[0]?.expected_branch !== 'docs/issue-23-agent-handoff-lifecycle' ||
-      policy.prototype_missions[0]?.allowed_path_prefix !== 'docs/automation/') {
+      policy.prototype_missions[0]?.allowed_path_prefix !== 'docs/automation/' ||
+      policy.prototype_missions[0]?.classification !== 'PUBLIC_DOCS_PROPOSAL' ||
+      policy.prototype_missions[0]?.require_exact_sha_gate !== true ||
+      policy.prototype_missions[0]?.manual_merge_required !== true ||
+      policy.repository !== 'viniciusaraujoop/grafica-flash' ||
+      policy.founder_login !== 'viniciusaraujoop') {
     throw Error('HANDOFF_ALLOWLIST_MISMATCH');
   }
 }
