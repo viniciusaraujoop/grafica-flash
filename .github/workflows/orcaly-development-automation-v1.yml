@@ -1,0 +1,91 @@
+name: Orçaly Development Automation V1 - PR Intake
+
+# Apenas classificação de alterações. Sem deploy, merges, escrita em PRs ou acesso a bancos.
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+      - ready_for_review
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: orcaly-development-v1-pr-intake
+  cancel-in-progress: false
+
+jobs:
+  read-only-triage:
+    name: Classify PR and report founder review gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Inspect changed paths without checkout or external secrets
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.setFailed('PR_EVENT_REQUIRED');
+              return;
+            }
+            const changed = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+            // GitHub limits PR file listings to 3000; fail closed for large diffs.
+            const truncated = changed.length >= 3000;
+            const paths = changed.map(file => file.filename);
+            const sensitive = [
+              ['DATABASE_OR_MIGRATIONS', /^(supabase\/|scripts\/db\/)/],
+              ['AUTH_OR_SECURITY', /^(lib\/security\/|lib\/auth|app\/api\/auth\/|proxy\.ts$)/],
+              ['BILLING_OR_PAYMENTS', /^(lib\/(?:billing|payments?)\/|app\/api\/(?:payments?|billing)\/)/],
+              ['AUTOMATION_OR_WORKFLOWS', /^(\.github\/workflows\/|\.github\/CODEOWNERS$)/],
+              ['DEPENDENCIES', /^(package(?:-lock)?\.json$|npm-shrinkwrap\.json$)/],
+              ['SERVER_JOBS', /^(app\/api\/cron\/|lib\/event-fabric\/)/],
+              ['ENVIRONMENT_OR_SECRETS', /(^|\/)(?:\.env(?:\.|$)|.*(?:secret|credential|private-key).*)/i],
+            ];
+            const areas = [
+              ['FRONTEND', /^(app\/|components\/|styles\/)/],
+              ['BACKEND', /^(app\/api\/|lib\/)/],
+              ['DATABASE', /^(supabase\/|scripts\/db\/)/],
+              ['QA_OR_CI', /^(\.github\/|scripts\/|tests?\/)/],
+              ['DOCUMENTATION', /^(docs\/|README\.md$)/],
+            ];
+            const matchedSensitive = sensitive
+              .filter(([, rule]) => paths.some(path => rule.test(path)))
+              .map(([name]) => name);
+            const matchedAreas = areas
+              .filter(([, rule]) => paths.some(path => rule.test(path)))
+              .map(([name]) => name);
+            const requiresFounderReview = truncated || matchedSensitive.length > 0;
+            const status = requiresFounderReview
+              ? 'FOUNDER_REVIEW_REQUIRED'
+              : 'HUMAN_REVIEW_REQUIRED';
+            // Do not read PR body, run PR code, or print raw API/error payloads.
+            const safe = value => String(value).replace(/[^a-zA-Z0-9_./-]/g, '_').slice(0, 160);
+            const list = paths.slice(0, 30).map(safe);
+            await core.summary
+              .addHeading('Orçaly Development Automation V1')
+              .addRaw('**Mode:** READ_ONLY_TRIAGE\n\n')
+              .addRaw('**Status:** ' + status + '\n\n')
+              .addRaw('**PR:** #' + pr.number + '\n\n')
+              .addRaw('**Files inspected:** ' + paths.length + (truncated ? ' (API_LIMIT_REACHED)' : '') + '\n\n')
+              .addRaw('**Areas:** ' + (matchedAreas.join(', ') || 'OTHER') + '\n\n')
+              .addRaw('**Sensitive categories:** ' + (matchedSensitive.join(', ') || 'NONE') + '\n\n')
+              .addHeading('Changed paths (sanitized preview)', 3)
+              .addList(list.length ? list : ['No changed paths returned'])
+              .addRaw('\nNo approval, merge, deployment, workflow dispatch, database connection or agent execution was performed.\n')
+              .write();
+            if (requiresFounderReview) {
+              core.warning('FOUNDER_REVIEW_REQUIRED: inspect this PR before any protected operation. This check is advisory until branch rules enforce it.');
+            }
+            core.info('AUTOMATION_V1_STATUS=' + status);
