@@ -1,0 +1,70 @@
+name: Orçaly Runtime Dependency Lock Repair Probe
+
+# Temporary zero-secret readonly lockfile regeneration evidence.
+# Guarded to the founder-created dedicated remediation PR.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - package.json
+      - package-lock.json
+      - '.github/workflows/orcaly-runtime-lock-repair-probe.yml'
+permissions:
+  contents: read
+
+jobs:
+  regenerate-lock-evidence:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login == 'viniciusaraujoop' &&
+      github.event.pull_request.head.ref == 'security/dependency-audit-runtime-fix'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout branch without write token
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 pinned
+        with:
+          persist-credentials: false
+      - name: Set up Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 pinned
+        with:
+          node-version: 22
+      - name: Regenerate deterministic lockfile without lifecycle scripts
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund --offline=false
+      - name: Verify dependency resolution before emitting evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'JS'
+          const fs=require('fs');
+          const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+          const names=['node_modules/sharp','node_modules/source-map-js'];
+          for(const name of names){
+            const v=lock.packages?.[name]?.version;
+            const expected=name==='node_modules/sharp'?'0.35.5':'1.2.2';
+            if(v!==expected)throw Error('UNEXPECTED_DEP_VERSION '+name+' '+v);
+            const p=lock.packages[name];
+            if(!p.integrity?.startsWith('sha512-'))throw Error('MISSING_INTEGRITY '+name);
+            console.log('ORCALY_RESOLUTION_VALID',name,v);
+          }
+          for(const [k,p] of Object.entries(lock.packages||{})){
+            if(k.startsWith('node_modules/@img/sharp-') && !k.includes('libvips') && p.version!=='0.35.5'){
+              throw Error('SHARP_BINARY_VERSION_MISMATCH '+k+' '+p.version);
+            }
+          }
+          JS
+      - name: Show bounded lockfile for manual GitHub connector commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'JS'
+          const fs=require('fs');
+          const json=JSON.stringify(JSON.parse(fs.readFileSync('package-lock.json','utf8')));
+          if(json.length>650000)throw Error('LOCKFILE_TOO_LARGE');
+          const width=3000;
+          console.log('ORCALY_LOCK_BEGIN total='+Math.ceil(json.length/width)+' bytes='+json.length);
+          for(let i=0;i<json.length;i+=width){
+            console.log('ORCALY_LOCK_CHUNK_'+String(i/width).padStart(4,'0')+'__'+json.slice(i,i+width));
+          }
+          console.log('ORCALY_LOCK_END');
+          JS
