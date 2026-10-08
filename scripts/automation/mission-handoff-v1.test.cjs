@@ -9,7 +9,7 @@ const policy={
   mode:'SHADOW_ONLY',repository:repo,founder_login:'viniciusaraujoop',
   autonomous_paid_execution_enabled:false,api_keys_used:false,write_permissions_required:false,
   limits:{automatic_merges:false,production_changes:false,monthly_usd:null,per_mission_usd:null,concurrent_paid_executors:0},
-  prototype_missions:[{issue_number:23,expected_branch:'docs/issue-23-agent-handoff-lifecycle',allowed_path_prefix:'docs/automation/'}]
+  prototype_missions:[{issue_number:23,expected_branch:'docs/issue-23-agent-handoff-lifecycle',allowed_path_prefix:'docs/automation/',classification:'PUBLIC_DOCS_PROPOSAL',require_exact_sha_gate:true,manual_merge_required:true}]
 };
 const issue={number:23,state:'open',title:'[AGENT] Documentar o ciclo de handoff',user:{login:'viniciusaraujoop'}};
 const pr={number:37,state:'open',draft:true,merged_at:null,head:{ref:'docs/issue-23-agent-handoff-lifecycle',sha,repo:{full_name:repo}},base:{ref:'main',repo:{full_name:repo}}};
