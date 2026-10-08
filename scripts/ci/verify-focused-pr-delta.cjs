@@ -8,8 +8,8 @@
 const { spawnSync } = require('node:child_process');
 
 const PROTECTED = Object.freeze({
-  main_site: /^(?:lib\/payments\/|lib\/mercado-pago(?:\/|$)|app\/api\/checkout\/|components\/checkout\/CheckoutClient\.tsx$|app\/api\/marketplace\/coupon(?:\/|$)|app\/api\/marketplace\/payments\/|app\/cadastro\/|app\/login\/)/,
-  storefront: /^(?:lib\/payments\/|lib\/mercado-pago(?:\/|$)|app\/api\/checkout\/|components\/checkout\/CheckoutClient\.tsx$|app\/api\/marketplace\/coupon(?:\/|$)|app\/api\/marketplace\/payments\/)/,
+  main_site: /^(?:lib\/payments\/|lib\/mercado-pago|app\/api\/checkout\/|components\/checkout\/CheckoutClient\.tsx$|app\/api\/marketplace\/coupon(?:\/|$)|app\/api\/marketplace\/payments\/|app\/cadastro\/|app\/login\/)/,
+  storefront: /^(?:lib\/payments\/|lib\/mercado-pago|app\/api\/checkout\/|components\/checkout\/CheckoutClient\.tsx$|app\/api\/marketplace\/coupon(?:\/|$)|app\/api\/marketplace\/payments\/)/,
 });
 
 function git(args, cwd = process.cwd()) {
