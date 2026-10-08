@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "mode": "SHADOW_ONLY",
+  "repository": "viniciusaraujoop/grafica-flash",
+  "founder_login": "viniciusaraujoop",
+  "monitoring_enabled_after_merge": true,
+  "autonomous_paid_execution_enabled": false,
+  "api_keys_used": false,
+  "write_permissions_required": false,
+  "prototype_missions": [
+    {
+      "issue_number": 23,
+      "classification": "PUBLIC_DOCS_PROPOSAL",
+      "allowed_path_prefix": "docs/automation/",
+      "executor_proposal": "codex_low",
+      "reason": "Safe sample only, not approved for AI execution"
+    }
+  ],
+  "blocked_patterns": [
+    "r10",
+    "p4",
+    "migration",
+    "supabase",
+    "production",
+    "billing",
+    "pricing",
+    "secrets",
+    "security hotfix",
+    "auth",
+    "rls",
+    "consent"
+  ],
+  "decision_planner": {
+    "model": "gpt-6-astra",
+    "reasoning_effort": "high",
+    "enabled": false,
+    "api_required": true,
+    "max_calls_per_approved_mission": 1
+  },
+  "cheap_executor": {
+    "provider": "Codex",
+    "reasoning_effort_simple": "low",
+    "reasoning_effort_normal": "medium",
+    "enabled": false,
+    "max_attempts": 2
+  },
+  "reviewer": {
+    "provider": "Claude",
+    "enabled": false,
+    "mode": "READ_ONLY"
+  },
+  "limits": {
+    "monthly_usd": null,
+    "per_mission_usd": null,
+    "concurrent_paid_executors": 0,
+    "automatic_merges": false,
+    "production_changes": false
+  },
+  "rules": [
+    "Never infer permission from an Issue or PR.",
+    "No paid execution without separate founder budget and scope approval.",
+    "No background GPT-6 ChatGPT inference via GitHub.",
+    "Publish proposals only; an Issue is not execution evidence."
+  ]
+}
