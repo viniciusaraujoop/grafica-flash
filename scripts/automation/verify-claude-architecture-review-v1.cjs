@@ -57,7 +57,7 @@ for (let i = 0; i < lines.length; i++) {
 }
 assert.equal(scripts.length, 2, 'Expected two fixed trusted github-script blocks');
 for (let i=0; i<scripts.length; i++) {
-  new vm.Script(scripts[i], {filename: 'github-script-' + i});
+  new vm.Script('(async function githubScript() {\n' + scripts[i] + '\n})', {filename: 'github-script-' + i});
 }
 const actionPin = workflow.match(/uses: anthropics\/claude-code-action@([0-9a-f]{40})/);
 assert.ok(actionPin, 'Must pin Claude action by commit SHA');
