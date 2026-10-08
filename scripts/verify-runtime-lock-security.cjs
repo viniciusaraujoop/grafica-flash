@@ -14,6 +14,29 @@ function checkRuntimeLock(pkg, lock){
   const entries=lock.packages;
   if(!entries || !entries[''])fail('LOCK_PACKAGES_MISSING');
   if(entries[''].dependencies?.next!==pkg.dependencies.next)fail('ROOT_LOCK_MISMATCH');
+  // SEC-31-01: pin the approved libvips platforms and optional dependency contracts.
+  const libvipsPlatforms=["darwin-arm64","darwin-x64","linux-arm","linux-arm64","linux-ppc64","linux-riscv64","linux-s390x","linux-x64","linuxmusl-arm64","linuxmusl-x64"];
+  const libvipsNames=libvipsPlatforms.map(platform=>'@img/sharp-libvips-'+platform);
+  const libvipsKeys=new Set(libvipsNames.map(name=>'node_modules/'+name));
+  const sharpOptional=entries['node_modules/sharp']?.optionalDependencies;
+  const declared=Object.keys(sharpOptional||{}).filter(name=>name.startsWith('@img/sharp-libvips-')).sort();
+  if(declared.join(',')!==[...libvipsNames].sort().join(',') ||
+    libvipsNames.some(name=>sharpOptional[name]!=='1.3.4'))fail('SHARP_LIBVIPS_OPTIONAL_DRIFT');
+  for(const name of libvipsNames){
+    const key='node_modules/'+name, dep=entries[key];
+    if(!dep)fail('SHARP_LIBVIPS_REQUIRED_MISSING '+key);
+    if(dep.version!=='1.3.4')fail('SHARP_LIBVIPS_VERSION_MISMATCH '+key);
+    const archive=name.slice('@img/'.length);
+    if(dep.resolved!=='https://registry.npmjs.org/'+name+'/-/'+archive+'-1.3.4.tgz' ||
+      !/^sha512-[A-Za-z0-9+/]{86}==$/.test(String(dep.integrity||'')))fail('SHARP_LIBVIPS_REGISTRY_INTEGRITY '+key);
+    const platform=name.slice('@img/sharp-libvips-'.length);
+    if(entries['node_modules/@img/sharp-'+platform]?.optionalDependencies?.[name]!=='1.3.4'){
+      fail('SHARP_NATIVE_LIBVIPS_DRIFT '+key);
+    }
+  }
+  if(Object.keys(entries).some(key=>key.startsWith('node_modules/@img/sharp-libvips-')&&!libvipsKeys.has(key))){
+    fail('SHARP_LIBVIPS_UNEXPECTED_ENTRY');
+  }
   let sharpFound=0,mapFound=0,binFound=0;
   for(const [key,dep] of Object.entries(entries)){
     if(key==='node_modules/sharp' || key.endsWith('/node_modules/sharp')){
@@ -41,7 +64,7 @@ function checkRuntimeLock(pkg, lock){
     }
   }
   if(sharpFound<1||mapFound<1||binFound<10)fail('REQUIRED_PACKAGES_MISSING');
-  return {sharp:sharpFound,source_map:mapFound,native:binFound};
+  return {sharp:sharpFound,source_map:mapFound,native:binFound,libvips:libvipsNames.length};
 }
 
 if(require.main===module){
