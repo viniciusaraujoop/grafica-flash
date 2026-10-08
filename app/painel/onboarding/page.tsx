@@ -56,6 +56,48 @@ function statusClass(done: boolean, active: boolean) {
   return 'bg-slate-100 text-slate-500'
 }
 
+const ONBOARDING_CHECK_KEYS = [
+  'company_data', 'segment', 'logo', 'products',
+  'site_config', 'test_order', 'publish',
+] as const
+
+function isOnboardingPayload(value: unknown): value is OnboardingPayload {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+
+  const payload = value as Partial<OnboardingPayload>
+  const { company, counts, checks, progress } = payload
+
+  if (!company || typeof company !== 'object' || Array.isArray(company) ||
+      typeof company.id !== 'string' || !company.id.trim()) return false
+
+  if (!counts || typeof counts !== 'object' || Array.isArray(counts) ||
+      ![counts.products, counts.orders, counts.coupons].every(
+        (count) => Number.isSafeInteger(count) && count >= 0
+      )) return false
+
+  if (!checks || typeof checks !== 'object' || Array.isArray(checks) ||
+      !ONBOARDING_CHECK_KEYS.every((key) => typeof checks[key] === 'boolean')) return false
+
+  if (checks.products !== (counts.products > 0) ||
+      checks.test_order !== (counts.orders > 0)) return false
+
+  if (company.site_publico_ativo != null && typeof company.site_publico_ativo !== 'boolean') return false
+  if (company.slug != null && typeof company.slug !== 'string') return false
+
+  const sitePublicado = company.site_publico_ativo === true &&
+    typeof company.slug === 'string' && company.slug.trim().length > 0
+  if (checks.publish !== sitePublicado) return false
+
+  if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return false
+
+  const doneCount = ONBOARDING_CHECK_KEYS.filter((key) => checks[key]).length
+  return progress.total === ONBOARDING_CHECK_KEYS.length &&
+    progress.doneCount === doneCount &&
+    Number.isSafeInteger(progress.percent) &&
+    progress.percent >= 0 && progress.percent <= 100 &&
+    progress.percent === Math.round((doneCount / ONBOARDING_CHECK_KEYS.length) * 100)
+}
+
 export default function OnboardingGuiadoPage() {
   const [token, setToken] = useState('')
   const [data, setData] = useState<OnboardingPayload | null>(null)
@@ -63,31 +105,47 @@ export default function OnboardingGuiadoPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [loadFailure, setLoadFailure] = useState<'unauthorized' | 'not_found' | 'unavailable' | null>(null)
 
   async function load() {
     setLoading(true)
     setError('')
+    setLoadFailure(null)
+    setData(null)
 
     try {
-      const accessToken = await getAccessTokenClient()
+      let accessToken: string
+      try {
+        accessToken = await getAccessTokenClient()
+      } catch {
+        setLoadFailure('unauthorized')
+        return
+      }
       setToken(accessToken)
 
       const response = await fetch('/api/onboarding/status', {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
 
-      const payload = await response.json().catch(() => ({}))
-
-      if (!response.ok) {
-        throw new Error(payload.error || 'Erro ao carregar onboarding.')
+      if (response.status === 401) {
+        setLoadFailure('unauthorized')
+        return
       }
+      if (response.status === 404) {
+        setLoadFailure('not_found')
+        return
+      }
+      if (!response.ok) throw new Error('Resposta indisponível.')
+
+      const payload: unknown = await response.json().catch(() => null)
+      if (!isOnboardingPayload(payload)) throw new Error('Dados inválidos.')
 
       setData(payload)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar onboarding.')
+    } catch {
+      setLoadFailure('unavailable')
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -215,9 +273,46 @@ export default function OnboardingGuiadoPage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4">
-        <div className="rounded-[2rem] bg-white p-8 font-black text-[#071b3a] shadow-xl shadow-blue-950/5">
+        <div role="status" aria-live="polite" className="rounded-[2rem] bg-white p-8 font-black text-[#071b3a] shadow-xl shadow-blue-950/5">
           Carregando onboarding...
         </div>
+      </main>
+    )
+  }
+
+  if (!data) {
+    const unauthorized = loadFailure === 'unauthorized'
+    const companyMissing = loadFailure === 'not_found'
+
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4 py-8 text-[#071b3a]">
+        <section role="alert" aria-labelledby="onboarding-error-title" className="w-full max-w-lg rounded-[2rem] border border-red-100 bg-white p-6 text-center shadow-xl shadow-blue-950/5 sm:p-8">
+          <h1 id="onboarding-error-title" className="text-2xl font-black tracking-[-0.04em]">
+            {unauthorized ? 'Sua sessão expirou ou não foi autorizada' : companyMissing ? 'Empresa não encontrada' : 'Não foi possível carregar o onboarding'}
+          </h1>
+          <p className="mt-3 text-sm font-medium leading-6 text-slate-600">
+            {unauthorized
+              ? 'Entre novamente para continuar a configuração da empresa.'
+              : companyMissing
+                ? 'Não foi possível localizar uma empresa vinculada à sua conta. Volte ao painel para verificar seu acesso.'
+                : 'Os dados estão temporariamente indisponíveis. Verifique sua conexão e tente novamente.'}
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            {unauthorized ? (
+              <Link href="/login?next=%2Fpainel%2Fonboarding" className="inline-flex min-h-11 items-center rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#05245c]">
+                Entrar novamente
+              </Link>
+            ) : null}
+            {!unauthorized && !companyMissing ? (
+              <button type="button" onClick={() => void load()} className="min-h-11 rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white transition hover:bg-[#031a43] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#05245c]">
+                Tentar novamente
+              </button>
+            ) : null}
+            <Link href="/painel" className="inline-flex min-h-11 items-center rounded-2xl border border-blue-100 bg-white px-5 py-3 text-sm font-black text-[#05245c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#05245c]">
+              Voltar ao painel
+            </Link>
+          </div>
+        </section>
       </main>
     )
   }
