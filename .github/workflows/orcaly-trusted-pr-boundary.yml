@@ -1,0 +1,37 @@
+name: Orçaly Trusted PR Boundary
+
+# BOOTSTRAP: not an independent gate until merged into protected main
+# AND required under GitHub branch rules; candidate version is not trusted.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review, edited]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  trusted-pr-boundary:
+    name: trusted-pr-boundary
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout immutable protected-base verifier
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted
+          persist-credentials: false
+      - name: Checkout candidate PR commit as data only
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/head
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify event pair, protected files and all marketing links
+        env:
+          ORCALY_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          ORCALY_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          ORCALY_CANDIDATE_DIR: candidate
+        run: node trusted/scripts/ci/verify-trusted-pr-boundary.cjs
