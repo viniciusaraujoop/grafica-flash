@@ -73,7 +73,7 @@ jobs:
         run: node scripts/ci/verify-focused-pr-delta.cjs
       - name: Dead-link source invariant (full marketing tree)
         run: |
-          if grep -R -n -E 'href=["'"']#(["'"']|$)|javascript:void' app/page.tsx app/solucoes components/marketing; then
+          if grep -R -n -E "href=['\"]#(['\"]|$)|javascript:void" app/page.tsx app/solucoes components/marketing; then
             echo "Dead marketing link found"
             exit 1
           fi
