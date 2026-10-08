@@ -57,7 +57,13 @@ export default function ProdutoDetalhePage() {
     setProduct(null)
 
     try {
-      const accessToken = await getAccessTokenClient()
+      let accessToken: string
+      try {
+        accessToken = await getAccessTokenClient()
+      } catch {
+        setLoadFailure('unauthorized')
+        return
+      }
       setToken(accessToken)
 
       const response = await fetch(`/api/products/${id}`, {
@@ -81,7 +87,7 @@ export default function ProdutoDetalhePage() {
       setExtrasText(jsonString(payload.product?.extras, {}))
     } catch {
       setLoadFailure('technical')
-      setError('Não foi possível carregar o produto. Verifique sua conexão e tente novamente.')
+      setError('Não foi possível carregar o produto agora. Tente novamente.')
     } finally {
       setLoading(false)
     }
