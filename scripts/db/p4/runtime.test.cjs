@@ -77,6 +77,29 @@ test('parse status enum/schema exact, no arbitrary state or omitted field', () =
   delete d.cli_error_parse_status;assert.throws(()=>a.validateDiagnostic(d));
   assert.equal(r.startDiagnostic({status:1,stderr:envelope('DbConnectError')},1).cli_error_parse_status,'MACHINE_ERROR_STDOUT_EMPTY');
 });
+test('diagnostic code/status contract rejects both contradictory directions', () => {
+  const d = diagnosticFixture();
+  assert.throws(() => a.validateDiagnostic({...d,
+    cli_error_code:'LOCAL_START_CLI_ERROR_UNKNOWN', cli_error_parse_status:'MACHINE_ERROR_RECOGNIZED'}), /DIAGNOSTIC_SCHEMA_INVALID/);
+  for (const status of r.CLI_ERROR_PARSE_STATUS_ENUM.filter(s => s !== 'MACHINE_ERROR_RECOGNIZED')) {
+    assert.throws(() => a.validateDiagnostic({...d,
+      cli_error_code:'DB_CONNECT_ERROR', cli_error_parse_status:status}), /DIAGNOSTIC_SCHEMA_INVALID/, status);
+  }
+});
+test('diagnostic code/status contract accepts all valid parser outcome categories', () => {
+  const stdoutCases = [envelope('DbConnectError'), envelope('UnknownError'),
+    '{"_tag":"Error"}', 'not JSON', '', 'x'.repeat(65537)];
+  const expectedStatuses = r.CLI_ERROR_PARSE_STATUS_ENUM;
+  const observedStatuses = new Set();
+  for (const stdout of stdoutCases) {
+    const d = r.startDiagnostic({status:1,stdout},1);
+    assert.doesNotThrow(() => a.validateDiagnostic(d));
+    observedStatuses.add(d.cli_error_parse_status);
+    assert.equal(d.cli_error_parse_status === 'MACHINE_ERROR_RECOGNIZED',
+      d.cli_error_code !== 'LOCAL_START_CLI_ERROR_UNKNOWN');
+  }
+  assert.deepEqual([...observedStatuses].sort(), [...expectedStatuses].sort());
+});
 for (const [code, expected] of Object.entries(machineMappings)) test('exact machine mapping: '+code, () => {
   const d=r.startDiagnostic({status:1,stdout:envelope(code)},1);
   assert.equal(d.cli_error_code,expected); a.validateDiagnostic(d);

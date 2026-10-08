@@ -20,6 +20,10 @@ function validateDiagnostic(value) {
       (value.process_signal !== null && !['SIGTERM','SIGKILL','SIGINT','SIGABRT','SIGSEGV','SIGPIPE'].includes(value.process_signal)) ||
       typeof value.timed_out !== 'boolean' || !Number.isInteger(value.duration_ms) || value.duration_ms < 0 || value.duration_ms > 3600000 ||
       !Array.isArray(value.containers) || value.containers.length > 32) throw Error('DIAGNOSTIC_SCHEMA_INVALID');
+  // An enumerated code and parsing status must also form a coherent pair.
+  const recognized = value.cli_error_parse_status === 'MACHINE_ERROR_RECOGNIZED';
+  const unknownCode = value.cli_error_code === 'LOCAL_START_CLI_ERROR_UNKNOWN';
+  if (recognized === unknownCode) throw Error('DIAGNOSTIC_SCHEMA_INVALID');
   const projectOf = name => {
     const match = /_(r10p4-\d+-\d+)$/.exec(name);
     if (!match) throw Error('DIAGNOSTIC_IDENTITY_INVALID');
