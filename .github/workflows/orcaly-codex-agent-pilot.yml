@@ -165,9 +165,11 @@ jobs:
           patch="$RUNNER_TEMP/codex-patch/orcaly-codex.patch"
           test -s "$patch" || { echo "EMPTY_PATCH_BLOCKED"; exit 1; }
           test "$(wc -c < "$patch")" -le 32768 || { echo "PATCH_OVERSIZE_BLOCKED"; exit 1; }
+          # Save the trusted validator BEFORE applying any agent-produced patch.
+          cp scripts/automation/validate-codex-pilot.cjs "$RUNNER_TEMP/trusted-codex-validator.cjs"
           git apply --index --check "$patch"
           git apply --index "$patch"
-          node scripts/automation/validate-codex-pilot.cjs
+          node "$RUNNER_TEMP/trusted-codex-validator.cjs"
           git diff --cached --check
           branch="automation/codex-issue-${ISSUE_NUMBER}-run-${RUN_NUMBER}"
           git switch -c "$branch"
