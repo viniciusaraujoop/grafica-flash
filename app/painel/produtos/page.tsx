@@ -396,12 +396,14 @@ export default function ProdutosPage() {
   async function carregarDados() {
     setCarregando(true)
     setErroCarregamento('')
+    let redirecionandoParaLogin = false
 
     try {
       const { data: sessaoData, error: sessaoError } = await supabase.auth.getSession()
       if (sessaoError) throw sessaoError
 
       if (!sessaoData.session?.user) {
+        redirecionandoParaLogin = true
         router.push('/login')
         return
       }
@@ -424,7 +426,7 @@ export default function ProdutosPage() {
     } catch {
       setErroCarregamento('Não foi possível carregar o catálogo. Verifique sua conexão e tente novamente.')
     } finally {
-      setCarregando(false)
+      if (!redirecionandoParaLogin) setCarregando(false)
     }
   }
 
