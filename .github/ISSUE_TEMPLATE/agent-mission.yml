@@ -1,0 +1,79 @@
+name: "Orçaly - Missão de agente (sem informações sigilosas)"
+description: "Abrir uma missão pública rastreável para um agente. Não inclua segredos nem dados internos."
+title: "[AGENT] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Segurança e escopo
+        Este repositório é público. Nunca cole credenciais, dados de clientes, dumps, logs brutos,
+        identificadores privados, relatórios de vulnerabilidades ainda não tratados ou evidências
+        internas sensíveis. Use uma central privada para esses materiais.
+        Criar uma Issue não executa um agente e não concede autorização para alterar produção.
+  - type: dropdown
+    id: owner
+    attributes:
+      label: "Agente responsável"
+      options:
+        - "Agent 1 - Wealth / Intelligence"
+        - "Agent 2 - Arquitetura"
+        - "Agent 3 - Qualidade / QA"
+        - "Agent 4 - Segurança"
+        - "Agent 5 - Frontend"
+        - "Agent 6 - Estratégia comercial"
+        - "Agent 7 - Produto"
+        - "Agent 8 - Design visual"
+        - "Codex - Implementação"
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: "Natureza da missão"
+      options:
+        - "READ_ONLY_REVIEW"
+        - "DESIGN_PREPARATION"
+        - "STATIC_TESTS"
+        - "CODE_CHANGE_PROPOSAL"
+        - "FOUNDER_DECISION_REQUIRED"
+    validations:
+      required: true
+  - type: input
+    id: sha
+    attributes:
+      label: "Branch e SHA alvo"
+      description: "Informe o SHA exato, se houver; caso contrário, escreva N/A."
+      placeholder: "main @ <SHA>"
+    validations:
+      required: true
+  - type: textarea
+    id: objective
+    attributes:
+      label: "Objetivo e evidências de entrada"
+      description: "Use apenas dados que podem aparecer em um repositório público."
+      placeholder: "O que deve ser verificado ou produzido?"
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: "Escopo permitido e proibições"
+      placeholder: "Arquivos permitidos, limites de execução, proibições explícitas."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "Critérios de aceite e evidências esperadas"
+      placeholder: "PASS/BLOCKED, testes, links de PR e SHA, sem dados sensíveis."
+    validations:
+      required: true
+  - type: checkboxes
+    id: governance
+    attributes:
+      label: "Governança"
+      options:
+        - label: "Esta Issue não autoriza merge, deploy, acesso a banco de produção/staging ou alteração de preços."
+          required: true
+        - label: "Confirmei que o conteúdo não inclui informações sigilosas."
+          required: true
