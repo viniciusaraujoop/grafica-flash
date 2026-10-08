@@ -284,7 +284,7 @@ function settingsHarness(options = {}) {
       async requireMfaStepUpForRequest(_request, purpose) {
         mfaCalls.push(purpose)
         return options.mfaDenied
-          ? { allowed: false, error: 'MFA obrigatório.', reason: 'mfa_step_up_required', status: 403 }
+          ? { allowed: false, error: 'MFA obrigatório.', reason: 'mfa_step_up_required', status: 403, state: { currentLevel: 'aal1' } }
           : { allowed: true }
       },
     },
