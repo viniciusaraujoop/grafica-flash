@@ -1326,7 +1326,7 @@ export default function ProdutosPage() {
           item={ofertaItem}
           companyId={empresa.id}
           onClose={() => setOfertaItem(null)}
-          onSaved={carregarDados}
+          onSaved={async () => { await carregarDados() }}
         />
       ) : null}
 
@@ -1335,7 +1335,7 @@ export default function ProdutosPage() {
           item={opcoesItem}
           companyId={empresa.id}
           onClose={() => setOpcoesItem(null)}
-          onSaved={carregarDados}
+          onSaved={async () => { await carregarDados() }}
         />
       ) : null}
     </main>
