@@ -1,0 +1,70 @@
+name: Orçaly Autopilot V2 Shadow Dispatcher
+
+# Only checks founder-authored public documentation mission eligibility.
+# NO paid models, no GitHub writes, no agent execution, no migrations.
+on:
+  schedule:
+    - cron: '43 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+
+concurrency:
+  group: orcaly-autopilot-v2-shadow
+  cancel-in-progress: false
+
+jobs:
+  propose-only:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.actor == 'viniciusaraujoop')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Checkout trusted main without persistent credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 pinned
+        with:
+          persist-credentials: false
+      - name: Read public issue metadata and produce safe proposals
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7 pinned
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const policy = JSON.parse(fs.readFileSync(
+              path.join(process.env.GITHUB_WORKSPACE,'docs/automation/autopilot-v2-shadow-policy.json'),
+              'utf8'
+            ));
+            const {assertPolicy,project,summary} = require(
+              path.join(process.env.GITHUB_WORKSPACE,'scripts/automation/autopilot-v2-shadow.cjs')
+            );
+            assertPolicy(policy); // fail closed BEFORE any GitHub API call.
+            if (policy.repository !== context.repo.owner + '/' + context.repo.repo ||
+                context.ref !== 'refs/heads/main') {
+              core.setFailed('TRUSTED_REPOSITORY_OR_REF_REQUIRED');
+              return;
+            }
+            const issuesByNumber = {};
+            for (const m of policy.prototype_missions) {
+              try {
+                const {data: issue} = await github.rest.issues.get({
+                  owner:context.repo.owner, repo:context.repo.repo, issue_number:m.issue_number
+                });
+                // Deliberately never read/display body/comments/labels or private attachments.
+                issuesByNumber[m.issue_number] = {
+                  number: issue.number, title: issue.title, state: issue.state,
+                  user:{login:issue.user?.login},
+                  pull_request:Boolean(issue.pull_request)
+                };
+              } catch (err) {
+                if (err?.status !== 404) throw err;
+              }
+            }
+            const report = project({
+              policy, issuesByNumber,
+              expectedRepo:context.repo.owner + '/' + context.repo.repo,
+              date:new Date().toISOString()
+            });
+            await core.summary.addRaw(summary(report)).write();
+            core.info('ORCALY_SHADOW_DISPATCH_NO_PAID_AI proposals=' + report.candidates.length);
