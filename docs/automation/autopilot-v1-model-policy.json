@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "status": "PROPOSED_INACTIVE_FOR_PAID_AI",
+  "policy_goal": "Maximum reasoning quality for founder/architecture decisions, low cost for bounded repetitive coding",
+  "interactive_coordinator": {
+    "surface": "ChatGPT conversation",
+    "model_family": "GPT-6",
+    "preferred_reasoning_effort": "high",
+    "runs_unattended": false,
+    "counts_as_openai_api_credit": false,
+    "note": "Interactive model effort depends on user-selected ChatGPT settings. Cannot orchestrate unattended GitHub jobs from a chat subscription."
+  },
+  "future_autonomous_planner": {
+    "enabled": false,
+    "provider": "OpenAI API",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "high",
+    "allowed_missions": ["architecture_review", "risk_assessment", "complex_dependency_resolution", "mission_planning"],
+    "max_calls_per_mission": 1,
+    "api_budget_required": true,
+    "founder_approval_required": true
+  },
+  "future_simple_classification": {
+    "enabled": false,
+    "provider": "OpenAI API",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "low",
+    "note": "Optional; deterministic GitHub filters should be preferred whenever sufficient."
+  },
+  "future_codex_executor": {
+    "enabled": false,
+    "provider": "Codex API action",
+    "reasoning_effort_for_bounded_tasks": "low",
+    "reasoning_effort_for_normal_implementation": "medium",
+    "high_effort_requires_specific_approval": true,
+    "sandbox": "isolated_branch",
+    "auto_merge": false,
+    "auto_production": false,
+    "max_attempts_per_mission": 2
+  },
+  "future_claude_reviewer": {
+    "enabled": false,
+    "provider": "Anthropic API",
+    "mode": "read_only",
+    "founder_approval_required": true
+  },
+  "safety": {
+    "paid_ai_dispatch_enabled": false,
+    "autonomous_code_dispatch_enabled": false,
+    "monthly_budget_usd": null,
+    "max_spend_per_mission_usd": null,
+    "concurrent_paid_executors": 0,
+    "api_spend_limit_must_be_confirmed_outside_repo": true,
+    "require_explicit_authorization_before_merge": true,
+    "require_explicit_authorization_for_r10_migrations_deploy_secrets_pricing": true,
+    "do_not_log_secrets": true
+  }
+}
