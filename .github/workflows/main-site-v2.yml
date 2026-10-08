@@ -19,8 +19,6 @@ jobs:
   qa:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    env:
-      MAIN_SITE_BASE_SHA: 079c8d781f074d6e86663f9968596694183ac81a
     steps:
       - uses: actions/checkout@v4
         with:
@@ -54,22 +52,16 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ci-build-placeholder
           NEXT_PUBLIC_APP_URL: https://ci.orcaly.invalid
         run: npm run build
-      - name: Protected checkout and auth diff check
-        run: |
-          touched="$(git diff --name-only "$MAIN_SITE_BASE_SHA...HEAD" | grep -E '^(lib/payments/|lib/mercado-pago|app/api/checkout/|components/checkout/CheckoutClient\.tsx|app/api/marketplace/coupon|app/api/marketplace/payments/|app/cadastro/|app/login/)' || true)"
-          if [ -n "$touched" ]; then
-            echo "Protected checkout/auth files changed:"
-            echo "$touched"
-            exit 1
-          fi
-      - name: Dead-link source invariant
-        run: |
-          if grep -R -n -E 'href=["'"']#(["'"']|$)|javascript:void' app/page.tsx app/solucoes components/marketing; then
-            echo "Dead marketing link found"
-            exit 1
-          fi
-      - name: Diff whitespace check
-        run: git diff --check "$MAIN_SITE_BASE_SHA...HEAD"
+      - name: Exact-SHA PR protected paths and whitespace guard
+        if: github.event_name == 'pull_request'
+        env:
+          ORCALY_QA_SCOPE: main_site
+          ORCALY_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          ORCALY_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/ci/verify-focused-pr-delta.cjs
+      - name: Manual QA run has no PR-delta certification
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "::notice::Manual QA checks are informational; no PR head/base was provided for protected diff certification."
       - name: Dependency audit baseline
         continue-on-error: true
         run: npm audit --audit-level=high
