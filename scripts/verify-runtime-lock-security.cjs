@@ -32,9 +32,9 @@ function checkRuntimeLock(pkg, lock){
       binFound++;
       if(dep.version!=='0.35.5')fail('SHARP_NATIVE_BINARY_MISMATCH '+key);
     }
-    if((key.includes('/node_modules/sharp') ||
-      key.startsWith('node_modules/@img/sharp-') ||
-      key.includes('/node_modules/source-map-js')) &&
+    if((key==='node_modules/sharp' || key.endsWith('/node_modules/sharp') ||
+      key.startsWith('node_modules/@img/sharp-') && !key.includes('libvips') ||
+      key==='node_modules/source-map-js' || key.endsWith('/node_modules/source-map-js')) &&
       (!/^sha512-[A-Za-z0-9+/=]+$/.test(String(dep.integrity||'')) ||
         !String(dep.resolved||'').startsWith('https://registry.npmjs.org/'))){
       fail('MISSING_REGISTRY_INTEGRITY '+key);
