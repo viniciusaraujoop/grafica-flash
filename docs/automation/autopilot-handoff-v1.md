@@ -38,6 +38,6 @@ Estados observáveis: `PENDING_NO_PR`, `WAITING_FOR_EXACT_SHA_CI`, `BLOCKED_EXAC
 
 A integração #33 requer a revisão independente dos Agents 3/4 e decisão explícita de merge. Este handoff é uma PR empilhada sobre a branch de integração, para não alterar o SHA já enviado à revisão.
 
-Um despachante que faça o Codex Cloud começar sozinho exigiria integração oficialmente suportada, permissões suficientes, autenticação e limites do serviço. Caso se use API paga, requer orçamento mensal e por missão aprovado. O ChatGPT Plus por si só não garante execução ilimitada.
+Um despachante que faça o Codex Cloud começar sozinho exigiria integração oficialmente suportada, permissões suficientes, autenticação e limites do serviço. Caso se use API paga, requer orçamento mensal e por missão aprovado. O ChatGPT Plus por si só não garante execução ilimitada. Além disso, as automações de projeto executadas localmente no aplicativo Codex dependem de o PC estar ligado, com o Codex em execução e o projeto disponível. Uma tarefa já iniciada no Codex Cloud pode continuar com o PC desligado; não trate isso como prova de que a próxima tarefa Cloud iniciará sozinha.
 
 **Quality Gate PASS != autorização para merge, deploy ou próxima missão.**
