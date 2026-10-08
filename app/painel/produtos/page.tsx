@@ -385,6 +385,8 @@ export default function ProdutosPage() {
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [mensagem, setMensagem] = useState('')
+  const [confirmacaoSalvamento, setConfirmacaoSalvamento] = useState('')
+  const [erroCarregamento, setErroCarregamento] = useState<'sessao' | 'empresa' | 'catalogo' | null>(null)
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState<StatusFiltro>('todos')
   const [filtroCategoria, setFiltroCategoria] = useState('Todas')
@@ -394,44 +396,50 @@ export default function ProdutosPage() {
 
   async function carregarDados() {
     setCarregando(true)
+    setErroCarregamento(null)
     setMensagem('')
-
-    const { data: sessaoData } = await supabase.auth.getSession()
-    const usuario = sessaoData.session?.user
-
-    if (!usuario) {
-      router.push('/login')
-      return
-    }
-
-    let empresaData: Empresa
+    let redirecionandoParaLogin = false
+    let etapa: 'sessao' | 'empresa' | 'catalogo' = 'sessao'
 
     try {
+      const { data: sessaoData, error: sessaoError } = await supabase.auth.getSession()
+      if (sessaoError) throw sessaoError
+
+      if (!sessaoData.session?.user) {
+        redirecionandoParaLogin = true
+        router.push('/login')
+        return false
+      }
+
+      etapa = 'empresa'
       const current = await getCurrentCompanyClient()
-      empresaData = current.company as Empresa
-    } catch (error) {
-      setMensagem(error instanceof Error ? error.message : 'Nenhuma empresa vinculada a esta conta.')
-      setCarregando(false)
-      return
+      const empresaData = current.company as Empresa
+      if (!empresaData?.id) throw new Error('Empresa não disponível.')
+
+      etapa = 'catalogo'
+      const { data: itensData, error: itensError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('company_id', empresaData.id)
+        .eq('arquivado', false)
+        .order('created_at', { ascending: false })
+
+      if (itensError) throw itensError
+
+      setEmpresa(empresaData)
+      setItens((itensData || []) as ItemCatalogo[])
+      setConfirmacaoSalvamento((atual) =>
+        atual === 'Item salvo com sucesso. Não foi possível atualizar a lista agora.'
+          ? 'Item salvo com sucesso.'
+          : atual
+      )
+      return true
+    } catch {
+      setErroCarregamento(etapa)
+      return false
+    } finally {
+      if (!redirecionandoParaLogin) setCarregando(false)
     }
-
-    setEmpresa(empresaData)
-
-    const { data: itensData, error: itensError } = await supabase
-      .from('products')
-      .select('*')
-      .eq('company_id', empresaData.id)
-      .eq('arquivado', false)
-      .order('created_at', { ascending: false })
-
-    if (itensError) {
-      setMensagem(`Erro ao carregar catálogo: ${itensError.message}`)
-      setCarregando(false)
-      return
-    }
-
-    setItens((itensData || []) as ItemCatalogo[])
-    setCarregando(false)
   }
 
   async function enviarImagem(arquivo: File) {
@@ -573,6 +581,7 @@ export default function ProdutosPage() {
 
     if (!empresa) return
 
+    setConfirmacaoSalvamento('')
     const precoNumero = numeroDoCampo(preco)
     const valorMinimoNumero = numeroDoCampo(valorMinimo)
     const percentualSinalNumero = numeroDoCampo(percentualSinalProduto)
@@ -646,7 +655,6 @@ export default function ProdutosPage() {
           return
         }
 
-        setMensagem('Item atualizado com sucesso.')
       } else {
         const { error } = await supabase.from('products').insert({
           company_id: empresa.id,
@@ -661,11 +669,16 @@ export default function ProdutosPage() {
           return
         }
 
-        setMensagem('Item cadastrado com sucesso.')
       }
 
+      const edicaoSalva = Boolean(editandoId)
       limparFormulario()
-      await carregarDados()
+      const listaAtualizada = await carregarDados()
+      setConfirmacaoSalvamento(
+        listaAtualizada
+          ? edicaoSalva ? 'Item atualizado com sucesso.' : 'Item cadastrado com sucesso.'
+          : 'Item salvo com sucesso. Não foi possível atualizar a lista agora.'
+      )
     } catch (erro) {
       const textoErro = erro instanceof Error ? erro.message : 'Erro desconhecido.'
 
@@ -677,6 +690,7 @@ export default function ProdutosPage() {
 
   async function alternarAtivo(item: ItemCatalogo) {
     if (!empresa) return
+    setConfirmacaoSalvamento('')
 
     const proximoStatus = !Boolean(item.ativo)
     const { error } = await supabase
@@ -701,6 +715,7 @@ export default function ProdutosPage() {
     const confirmar = confirm('Remover este item do catálogo? O histórico de pedidos será preservado.')
 
     if (!confirmar) return
+    setConfirmacaoSalvamento('')
 
     const { error } = await supabase
       .from('products')
@@ -769,6 +784,51 @@ export default function ProdutosPage() {
         <div className="rounded-[2rem] border border-blue-50 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
           <img src="/logo-orcaly.png" alt="Orçaly" className="mx-auto mb-6 h-14 w-auto object-contain" />
           <p className="font-bold text-slate-500">Carregando catálogo...</p>
+        </div>
+      </main>
+    )
+  }
+
+  if (erroCarregamento) {
+    const sessaoIndisponivel = erroCarregamento === 'sessao'
+    const empresaIndisponivel = erroCarregamento === 'empresa'
+
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4 py-8 text-[#071b3a]">
+        <div className="w-full max-w-lg space-y-3">
+          {confirmacaoSalvamento ? (
+            <p role="status" aria-live="polite" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-800">
+              {confirmacaoSalvamento}
+            </p>
+          ) : null}
+          <section role="alert" aria-labelledby="catalog-load-error" className="rounded-[2rem] border border-red-100 bg-white p-6 text-center shadow-xl shadow-blue-950/5 sm:p-8">
+            <h1 id="catalog-load-error" className="text-2xl font-black">
+              {sessaoIndisponivel ? 'Não foi possível verificar sua sessão' :
+                empresaIndisponivel ? 'Não foi possível verificar sua empresa' :
+                  'Não foi possível carregar o catálogo'}
+            </h1>
+            <p className="mt-3 text-sm font-medium leading-6 text-slate-600">
+              {sessaoIndisponivel
+                ? 'Entre novamente para acessar seu catálogo.'
+                : empresaIndisponivel
+                  ? 'Não foi possível confirmar a empresa vinculada à sua conta. Tente novamente ou volte ao painel.'
+                  : 'Não foi possível atualizar a lista de produtos agora. Tente novamente.'}
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              {sessaoIndisponivel ? (
+                <Link href="/login?next=%2Fpainel%2Fprodutos" className="inline-flex min-h-11 items-center rounded-xl bg-[#05245c] px-5 py-3 text-sm font-black text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#05245c]">
+                  Entrar novamente
+                </Link>
+              ) : (
+                <button type="button" onClick={() => void carregarDados()} className="min-h-11 rounded-xl bg-[#05245c] px-5 py-3 text-sm font-black text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#05245c]">
+                  Tentar novamente
+                </button>
+              )}
+              <Link href="/painel" className="inline-flex min-h-11 items-center rounded-xl border border-blue-100 px-5 py-3 text-sm font-black text-[#05245c]">
+                Voltar ao painel
+              </Link>
+            </div>
+          </section>
         </div>
       </main>
     )
@@ -858,8 +918,13 @@ export default function ProdutosPage() {
       </section>
 
       <section className="mx-auto w-full max-w-[1540px] px-4 py-6 sm:px-6 lg:px-8">
+        {confirmacaoSalvamento ? (
+          <div role="status" aria-live="polite" className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold leading-6 text-emerald-800">
+            {confirmacaoSalvamento}
+          </div>
+        ) : null}
         {mensagem ? (
-          <div className="mb-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold leading-6 text-[#05245c]">
+          <div role="alert" className="mb-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold leading-6 text-[#05245c]">
             {mensagem}
           </div>
         ) : null}
@@ -1261,7 +1326,7 @@ export default function ProdutosPage() {
           item={ofertaItem}
           companyId={empresa.id}
           onClose={() => setOfertaItem(null)}
-          onSaved={carregarDados}
+          onSaved={async () => { await carregarDados() }}
         />
       ) : null}
 
@@ -1270,7 +1335,7 @@ export default function ProdutosPage() {
           item={opcoesItem}
           companyId={empresa.id}
           onClose={() => setOpcoesItem(null)}
-          onSaved={carregarDados}
+          onSaved={async () => { await carregarDados() }}
         />
       ) : null}
     </main>
