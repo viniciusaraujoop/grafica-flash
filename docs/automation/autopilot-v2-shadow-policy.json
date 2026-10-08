@@ -13,7 +13,10 @@
       "classification": "PUBLIC_DOCS_PROPOSAL",
       "allowed_path_prefix": "docs/automation/",
       "executor_proposal": "codex_low",
-      "reason": "Safe sample only, not approved for AI execution"
+      "reason": "Safe sample only, not approved for AI execution",
+      "expected_branch": "docs/issue-23-agent-handoff-lifecycle",
+      "require_exact_sha_gate": true,
+      "manual_merge_required": true
     }
   ],
   "blocked_patterns": [

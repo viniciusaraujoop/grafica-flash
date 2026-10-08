@@ -10,6 +10,8 @@ on:
 permissions:
   contents: read
   issues: read
+  pull-requests: read
+  actions: read
 
 concurrency:
   group: orcaly-autopilot-v2-shadow
@@ -68,3 +70,43 @@ jobs:
             });
             await core.summary.addRaw(summary(report)).write();
             core.info('ORCALY_SHADOW_DISPATCH_NO_PAID_AI proposals=' + report.candidates.length);
+            // Completed documentation PRs are observed, never dispatched.
+            // Read exact repo/commit and machine statuses; no PR/Issue bodies or review text.
+            const {assertReadOnlyContract,reportHandoff,renderHandoffSummary} = require(
+              path.join(process.env.GITHUB_WORKSPACE,'scripts/automation/mission-handoff-v1.cjs')
+            );
+            assertReadOnlyContract(policy);
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const {data:recentPrs} = await github.rest.pulls.list({
+              owner,repo,state:'all',per_page:100
+            });
+            const expected=policy.prototype_missions[0].expected_branch;
+            const matches=recentPrs.filter(pr=>pr.head?.ref===expected &&
+              pr.head?.repo?.full_name===owner+'/'+repo && pr.base?.ref==='main');
+            let runData=[],reviewData=[];
+            if (matches.length===1) {
+              const [{data:runResponse},{data:reviews}]=await Promise.all([
+                github.rest.actions.listWorkflowRunsForRepo({
+                  owner,repo,head_sha:matches[0].head.sha,per_page:100
+                }),
+                github.rest.pulls.listReviews({
+                  owner,repo,pull_number:matches[0].number,per_page:100
+                })
+              ]);
+              runData=(runResponse.workflow_runs||[]).map(run=>({
+                id:run.id,name:run.name,event:run.event,status:run.status,
+                conclusion:run.conclusion,head_sha:run.head_sha,head_branch:run.head_branch,
+                created_at:run.created_at
+              }));
+              reviewData=reviews.map(rev=>({
+                user:{login:rev.user?.login},state:rev.state,commit_id:rev.commit_id
+              }));
+            }
+            const handoff=reportHandoff({
+              policy,issue:issuesByNumber[23],prs:recentPrs,
+              runs:runData,reviews:reviewData,repository:owner+'/'+repo,
+              windows:{prs_complete:recentPrs.length<100,
+                runs_complete:runData.length<100,reviews_complete:reviewData.length<100}
+            });
+            await core.summary.addRaw(renderHandoffSummary(handoff)).write();
+            core.info('ORCALY_HANDOFF_PHASE='+handoff.phase);

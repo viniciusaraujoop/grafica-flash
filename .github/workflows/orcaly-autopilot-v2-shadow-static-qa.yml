@@ -2,12 +2,14 @@ name: Orçaly Autopilot V2 Shadow Static QA
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, integrate/autopilot-no-cost-staging]
     paths:
       - '.github/workflows/orcaly-autopilot-v2-shadow.yml'
       - '.github/workflows/orcaly-autopilot-v2-shadow-static-qa.yml'
       - 'scripts/automation/autopilot-v2-shadow.cjs'
       - 'scripts/automation/autopilot-v2-shadow.test.cjs'
+      - 'scripts/automation/mission-handoff-v1.cjs'
+      - 'scripts/automation/mission-handoff-v1.test.cjs'
       - 'docs/automation/autopilot-v2-shadow-policy.json'
       - 'docs/automation/autopilot-v2-shadow.md'
 
@@ -31,7 +33,11 @@ jobs:
         run: |
           node --check scripts/automation/autopilot-v2-shadow.cjs
           node --check scripts/automation/autopilot-v2-shadow.test.cjs
+          node --check scripts/automation/mission-handoff-v1.cjs
+          node --check scripts/automation/mission-handoff-v1.test.cjs
       - name: No-network safety tests
-        run: node --test scripts/automation/autopilot-v2-shadow.test.cjs
+        run: |
+          node --test scripts/automation/autopilot-v2-shadow.test.cjs
+          node --test scripts/automation/mission-handoff-v1.test.cjs
       - name: Whitespace
         run: git diff --check
