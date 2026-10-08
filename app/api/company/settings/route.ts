@@ -292,6 +292,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Dados de configuração inválidos.' }, { status: 400 })
+    }
     const sensitiveFields = getSensitiveSettingsFields(body)
 
     if (sensitiveFields.length > 0) {
@@ -320,6 +323,17 @@ export async function PATCH(request: NextRequest) {
       if (Object.prototype.hasOwnProperty.call(body, field)) {
         update[field] = body[field]
       }
+    }
+
+    const hasUpdate = (field: string) => Object.prototype.hasOwnProperty.call(update, field)
+
+    // Publication requires an explicit, correctly typed value.
+    if (hasUpdate('site_status') &&
+        update.site_status !== 'publicado' && update.site_status !== 'rascunho') {
+      return NextResponse.json({ error: 'Status de publicação inválido.' }, { status: 400 })
+    }
+    if (hasUpdate('site_publico_ativo') && typeof update.site_publico_ativo !== 'boolean') {
+      return NextResponse.json({ error: 'Ativação do site inválida.' }, { status: 400 })
     }
 
     if (Object.prototype.hasOwnProperty.call(body, 'subdomain_slug')) {
@@ -354,27 +368,28 @@ export async function PATCH(request: NextRequest) {
       delete update.subdomain_slug
     }
 
-    update.nome = cleanText(update.nome || company.nome)
-    update.whatsapp = cleanText(update.whatsapp)
-    update.cidade = cleanText(update.cidade)
-    update.estado = cleanText(update.estado).toUpperCase().slice(0, 2)
-    update.instagram = cleanText(update.instagram)
-    update.atendimento_horario = cleanText(update.atendimento_horario)
-    update.atendimento_observacao = cleanText(update.atendimento_observacao)
-    update.site_status = ['publicado', 'rascunho'].includes(update.site_status) ? update.site_status : 'publicado'
-    update.pix_tipo = ['telefone', 'email', 'cpf', 'cnpj', 'aleatoria'].includes(update.pix_tipo) ? update.pix_tipo : 'telefone'
-    update.pix_key = cleanText(update.pix_key)
-    update.pix_nome = cleanText(update.pix_nome)
-    update.pix_cidade = cleanText(update.pix_cidade)
-    update.aceita_pix = Boolean(update.aceita_pix)
-    update.aceita_cartao = Boolean(update.aceita_cartao)
-    update.cobrar_sinal = Boolean(update.cobrar_sinal)
-    update.percentual_sinal = Math.max(0, Math.min(100, Number(update.percentual_sinal || 0)))
-    update.business_type = normalizeBusinessType(update.business_type || company.business_type || 'services')
-    update.site_publico_ativo = Boolean(update.site_publico_ativo ?? true)
-    update.site_show_store = Boolean(update.site_show_store ?? true)
-    update.site_show_about = Boolean(update.site_show_about ?? true)
-    update.site_show_contact = Boolean(update.site_show_contact ?? true)
+    // A PATCH updates only supplied fields. Never materialize defaults for omitted
+    // financial, publication, or ordinary settings: doing so bypasses MFA coverage.
+    if (hasUpdate('nome')) update.nome = cleanText(update.nome || company.nome)
+    for (const field of ['whatsapp', 'cidade', 'instagram', 'atendimento_horario', 'atendimento_observacao', 'pix_key', 'pix_nome', 'pix_cidade']) {
+      if (hasUpdate(field)) update[field] = cleanText(update[field])
+    }
+    if (hasUpdate('estado')) update.estado = cleanText(update.estado).toUpperCase().slice(0, 2)
+    if (hasUpdate('pix_tipo')) {
+      update.pix_tipo = ['telefone', 'email', 'cpf', 'cnpj', 'aleatoria'].includes(update.pix_tipo) ? update.pix_tipo : 'telefone'
+    }
+    for (const field of ['aceita_pix', 'aceita_cartao', 'cobrar_sinal']) {
+      if (hasUpdate(field)) update[field] = Boolean(update[field])
+    }
+    if (hasUpdate('percentual_sinal')) {
+      update.percentual_sinal = Math.max(0, Math.min(100, Number(update.percentual_sinal || 0)))
+    }
+    if (hasUpdate('business_type')) {
+      update.business_type = normalizeBusinessType(update.business_type || company.business_type || 'services')
+    }
+    for (const field of ['site_show_store', 'site_show_about', 'site_show_contact']) {
+      if (hasUpdate(field)) update[field] = Boolean(update[field] ?? true)
+    }
     update.updated_at = new Date().toISOString()
 
     const { data, error } = await supabaseAdmin
