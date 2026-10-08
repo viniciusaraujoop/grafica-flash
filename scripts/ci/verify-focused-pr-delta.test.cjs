@@ -17,6 +17,8 @@ function fixture() {
   const commit=msg=>{git('add','-A');git('commit','-qm',msg);return git('rev-parse','HEAD');};
   git('init','-q');put('docs/readme.md','baseline\n');
   put('app/login/page.tsx','login base\n');
+  put('lib/mercado-pago.ts','sdk baseline\n');
+  put('lib/mercado-pago/nested.ts','nested baseline\n');
   put('components/checkout/CheckoutClient.tsx','checkout base\n');
   const base=commit('base');
   return {dir,git,put,commit,base,dispose:()=>fs.rmSync(dir,{recursive:true,force:true})};
@@ -62,3 +64,34 @@ test('nonexistent, identical or malformed SHA fail closed',()=>withFixture(f=>{
  assert.throws(()=>verify({base:f.base,head,scope:'unknown',cwd:f.dir}),/PR_DIFF_INVALID_INPUT/);
 }));
 console.log('ORCALY_FOCUSED_PR_DELTA_TESTS_PASS');
+
+test('mercado-pago.ts update or deletion fails for both scopes',()=>{
+ for(const action of ['update','delete'])withFixture(f=>{
+  if(action==='update')f.put('lib/mercado-pago.ts','modified SDK\\n');
+  else f.git('rm','lib/mercado-pago.ts');
+  const head=f.commit(action);
+  for(const scope of ['main_site','storefront'])
+   assert.throws(()=>verify({base:f.base,head,scope,cwd:f.dir}),/PROTECTED_SCOPE_CHANGED/);
+ });
+});
+test('mercado-pago.ts rename-out, rename-in, and directory update are blocked',()=>{
+ withFixture(f=>{
+  f.git('mv','lib/mercado-pago.ts','docs/payment.ts');
+  const head=f.commit('rename-out');
+  for(const scope of ['main_site','storefront'])
+   assert.throws(()=>verify({base:f.base,head,scope,cwd:f.dir}),/PROTECTED_SCOPE_CHANGED/);
+ });
+ withFixture(f=>{
+  f.put('docs/another.ts','sdk\\n');f.commit('source');
+  f.git('mv','docs/another.ts','lib/mercado-pago-v2.ts');
+  const head=f.commit('rename-in');
+  for(const scope of ['main_site','storefront'])
+   assert.throws(()=>verify({base:f.base,head,scope,cwd:f.dir}),/PROTECTED_SCOPE_CHANGED/);
+ });
+ withFixture(f=>{
+  f.put('lib/mercado-pago/nested.ts','changed nested\\n');
+  const head=f.commit('nested');
+  for(const scope of ['main_site','storefront'])
+   assert.throws(()=>verify({base:f.base,head,scope,cwd:f.dir}),/PROTECTED_SCOPE_CHANGED/);
+ });
+});
