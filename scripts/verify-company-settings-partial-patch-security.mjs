@@ -254,4 +254,88 @@ await check('unauthenticated PATCH denied', { nome: 'Intruso', pix_key: 'exfiltr
 await check('nonowner member denied even for explicit publication', { site_status: 'publicado' }, { role: 'funcionario' }, 403)
 await check('nonowner member denied for explicit PIX change', { pix_key: 'exfiltrada' }, { role: 'funcionario' }, 403)
 
+
+// FIN-01 — explicit booleans, no Boolean(value) coercion.
+for (const field of ['aceita_pix', 'aceita_cartao', 'cobrar_sinal']) {
+  for (const value of [true, false]) {
+    const accepted = await check('FIN-01 accept ' + field + ' ' + value,
+      { [field]: value }, {}, 200, { [field]: value })
+    assert.equal(accepted.calls.updates[0][field], value)
+    assert.deepEqual(accepted.calls.mfa, ['pix.update'])
+    assert.equal(accepted.calls.audit[0].result, 'success')
+  }
+  for (const [kind, value] of [
+    ['string true', 'true'], ['string false', 'false'], ['string zero', '0'],
+    ['number one', 1], ['number zero', 0], ['null', null],
+    ['array', []], ['object', {}],
+  ]) {
+    const denied = await check('FIN-01 reject ' + field + ': ' + kind,
+      { nome: 'Should not update', [field]: value }, {}, 400)
+    assert.equal(denied.calls.mfa.length, 0)
+    assert.equal(denied.calls.audit.length, 0)
+  }
+}
+
+// FIN-02 — exact canonical PIX type, no fallback.
+for (const value of ['telefone', 'email', 'cpf', 'cnpj', 'aleatoria']) {
+  const accepted = await check('FIN-02 accept ' + value,
+    { pix_tipo: value }, {}, 200, { pix_tipo: value })
+  assert.deepEqual(accepted.calls.mfa, ['pix.update'])
+  assert.equal(accepted.calls.audit[0].result, 'success')
+}
+for (const [kind, value] of [
+  ['empty', ''], ['uppercase', 'CPF'], ['whitespace', ' cpf '],
+  ['unknown', 'chave'], ['null', null], ['number', 1],
+  ['boolean', true], ['array', []], ['object', {}],
+]) {
+  const denied = await check('FIN-02 reject ' + kind,
+    { cidade: 'Should not update', pix_tipo: value }, {}, 400)
+  assert.equal(denied.calls.mfa.length, 0)
+}
+
+// FIN-03 — JSON number, finite, 0..100, at most two decimal places.
+// Provenance: orders.percentual_sinal numeric(5,2) in the 20260706 migration.
+// Confirm companies.percentual_sinal schema precision before beta certification.
+for (const value of [0, 100, 1, 12.34, 0.01, 99.99, 10.5, 0.29]) {
+  const accepted = await check('FIN-03 accept ' + value,
+    { percentual_sinal: value }, {}, 200, { percentual_sinal: value })
+  assert.equal(accepted.calls.updates[0].percentual_sinal, value)
+  assert.deepEqual(accepted.calls.mfa, ['pix.update'])
+  assert.equal(accepted.calls.audit[0].result, 'success')
+}
+for (const [kind, value] of [
+  ['below minimum', -0.01], ['above maximum', 100.01], ['over max', 101],
+  ['negative', -1], ['string', '50'], ['string zero', '0'],
+  ['null', null], ['false', false], ['array', []], ['object', {}],
+  ['three decimals', 12.345], ['tiny fraction', 0.001],
+  ['near max', 99.999], ['sub-cent', 0.00000001],
+  ['NaN mock', Number.NaN], ['Infinity mock', Infinity],
+]) {
+  const denied = await check('FIN-03 reject ' + kind,
+    { nome: 'Should not update', percentual_sinal: value }, {}, 400)
+  assert.equal(denied.calls.mfa.length, 0)
+  assert.equal(denied.calls.audit.length, 0)
+}
+
+// One malformed financial field aborts the entire PATCH (not just that field).
+for (const [name, payload] of [
+  ['invalid percentage, valid PIX/publication', { percentual_sinal: 101, pix_key: 'new@pix', site_status: 'publicado' }],
+  ['invalid boolean, valid percentage', { cobrar_sinal: 'false', percentual_sinal: 25, nome: 'Should not update' }],
+  ['invalid type, valid boolean/publication', { pix_tipo: 'invalid', aceita_pix: true, site_publico_ativo: true }],
+]) {
+  const denied = await check('FIN atomic abort ' + name, payload, {}, 400)
+  assert.equal(denied.calls.updates.length, 0)
+}
+
+// Explicit authorized values still require step-up, even false / zero.
+for (const [name, payload] of [
+  ['false flag', { aceita_pix: false }],
+  ['zero percent', { percentual_sinal: 0 }],
+  ['valid type', { pix_tipo: 'cpf' }],
+]) {
+  const denied = await check('FIN MFA still required ' + name, payload, { denyMfa: true }, 403)
+  assert.deepEqual(denied.calls.mfa, ['pix.update'])
+  assert.equal(denied.calls.audit[0].result, 'denied')
+}
+
 console.log('PASS ' + passed + ' offline company-settings security regression checks. No real database or network.');
