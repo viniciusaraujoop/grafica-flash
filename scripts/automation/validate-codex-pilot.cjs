@@ -52,6 +52,10 @@ function main() {
     }
     const raw = fs.readFileSync(file);
     if (raw.includes(0) || raw.toString('utf8').includes('\uFFFD')) throw Error('NON_TEXT_FILE');
+    const text = raw.toString('utf8');
+    if (/sb_(?:secret|publishable)_[a-zA-Z0-9_-]{10,}|postgres(?:ql)?:\/\/|https?:\/\/[^\s]+\.supabase\.co\b|(?:password|access_token|refresh_token|service_role)\s*[=:]|\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b|eyJ[A-Za-z0-9_-]{20,}/i.test(text)) {
+      throw Error('SENSITIVE_CONTENT_BLOCKED');
+    }
   }
   const patch = exec('diff', '--cached', '--no-ext-diff', '--binary', '--no-renames');
   if (Buffer.byteLength(patch, 'utf8') > 32768 || patch.includes('GIT binary patch') ||
