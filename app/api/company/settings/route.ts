@@ -336,6 +336,24 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Ativação do site inválida.' }, { status: 400 })
     }
 
+    // FIN-01–03: reject malformed explicit financial values before MFA or UPDATE.
+    for (const field of ['aceita_pix', 'aceita_cartao', 'cobrar_sinal']) {
+      if (hasUpdate(field) && typeof update[field] !== 'boolean') {
+        return NextResponse.json({ error: 'Configuração financeira booleana inválida.' }, { status: 400 })
+      }
+    }
+    if (hasUpdate('pix_tipo') &&
+        !['telefone', 'email', 'cpf', 'cnpj', 'aleatoria'].includes(update.pix_tipo)) {
+      return NextResponse.json({ error: 'Tipo de chave PIX inválido.' }, { status: 400 })
+    }
+    if (hasUpdate('percentual_sinal')) {
+      const percent = update.percentual_sinal
+      if (typeof percent !== 'number' || !Number.isFinite(percent) || percent < 0 || percent > 100 ||
+          !/^\\d+(?:\\.\\d{1,2})?$/.test(String(percent))) {
+        return NextResponse.json({ error: 'Percentual de sinal inválido.' }, { status: 400 })
+      }
+    }
+
     if (Object.prototype.hasOwnProperty.call(body, 'subdomain_slug')) {
       const nextSubdomain = normalizeSubdomain(body.subdomain_slug || company.subdomain_slug || company.slug || company.nome)
       const validationError = validateSubdomain(nextSubdomain)
@@ -375,15 +393,6 @@ export async function PATCH(request: NextRequest) {
       if (hasUpdate(field)) update[field] = cleanText(update[field])
     }
     if (hasUpdate('estado')) update.estado = cleanText(update.estado).toUpperCase().slice(0, 2)
-    if (hasUpdate('pix_tipo')) {
-      update.pix_tipo = ['telefone', 'email', 'cpf', 'cnpj', 'aleatoria'].includes(update.pix_tipo) ? update.pix_tipo : 'telefone'
-    }
-    for (const field of ['aceita_pix', 'aceita_cartao', 'cobrar_sinal']) {
-      if (hasUpdate(field)) update[field] = Boolean(update[field])
-    }
-    if (hasUpdate('percentual_sinal')) {
-      update.percentual_sinal = Math.max(0, Math.min(100, Number(update.percentual_sinal || 0)))
-    }
     if (hasUpdate('business_type')) {
       update.business_type = normalizeBusinessType(update.business_type || company.business_type || 'services')
     }
