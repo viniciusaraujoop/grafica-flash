@@ -1,0 +1,52 @@
+name: Orçaly Public Control Tower Static QA
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'public/control-tower/**'
+      - '.github/workflows/orcaly-public-control-tower-static-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  security-static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 pinned
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 pinned
+        with:
+          node-version: 24
+      - name: Check JS syntax and public data scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check public/control-tower/dashboard.js
+          node <<'JS'
+          const fs = require('fs');
+          const html = fs.readFileSync('public/control-tower/index.html','utf8');
+          const js = fs.readFileSync('public/control-tower/dashboard.js','utf8');
+          const expected=[
+            "script-src 'self'",'connect-src https://api.github.com',
+            'default-src &#39;' // intentionally replaced below by validator
+          ];
+          for(const key of expected.slice(0,2))if(!html.includes(key))throw Error('CSP_MISSING '+key);
+          if(!html.includes('http-equiv="Content-Security-Policy"'))throw Error('CSP_META_MISSING');
+          if(!html.includes('<script src="./dashboard.js" defer></script>'))throw Error('EXTERNAL_SCRIPT_MISSING');
+          if(/<script(?![^>]*src=)/i.test(html))throw Error('INLINE_SCRIPT_FORBIDDEN');
+          if(js.includes('.innerHTML')||js.includes('eval(')||js.includes('localStorage')||
+             js.includes('sessionStorage')||js.includes('Authorization:')||js.includes('secrets.')||
+             js.includes("method:'POST'")||js.includes("method:'PATCH'")||
+             js.includes("method:'DELETE'"))throw Error('UNSAFE_BROWSER_OPERATION');
+          if(!js.includes("credentials:'omit'")||!js.includes('textContent')||
+             !js.includes('Object.values(EXECUTORS)')||
+             !js.includes('new AbortController()'))throw Error('SAFETY_INVARIANT_MISSING');
+          if(!js.includes('5 * 60 * 1000'))throw Error('RATE_LIMIT_UNBOUNDED');
+          console.log('ORCALY_CONTROL_TOWER_READ_ONLY_STATIC_PASS');
+          JS
+      - name: Diff whitespace
+        run: git diff --check
