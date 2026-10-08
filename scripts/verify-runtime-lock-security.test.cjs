@@ -28,6 +28,12 @@ test('old native sharp package version is blocked',()=>{
 test('missing sha512 integrity is blocked',()=>{
   assert.throws(mutate((p,l)=>{delete l.packages['node_modules/source-map-js'].integrity}),/MISSING_REGISTRY_INTEGRITY/);
 });
+test('missing root sharp sha512 integrity is blocked',()=>{
+  assert.throws(mutate((p,l)=>{delete l.packages['node_modules/sharp'].integrity}),/MISSING_REGISTRY_INTEGRITY/);
+});
+test('missing native sharp binary sha512 integrity is blocked',()=>{
+  assert.throws(mutate((p,l)=>{delete l.packages['node_modules/@img/sharp-linux-x64'].integrity}),/MISSING_REGISTRY_INTEGRITY/);
+});
 test('root override bypass is blocked',()=>{
   assert.throws(mutate((p,l)=>{delete p.overrides['source-map-js']}),/PATCHED_OVERRIDES_REQUIRED/);
 });
