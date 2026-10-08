@@ -67,6 +67,7 @@ export default function OnboardingGuiadoPage() {
   async function load() {
     setLoading(true)
     setError('')
+    setData(null)
 
     try {
       const accessToken = await getAccessTokenClient()
@@ -78,16 +79,20 @@ export default function OnboardingGuiadoPage() {
 
       const payload = await response.json().catch(() => ({}))
 
-      if (!response.ok) {
-        throw new Error(payload.error || 'Erro ao carregar onboarding.')
+      if (!response.ok || !payload?.company?.id || !payload?.counts || !payload?.checks || !payload?.progress ||
+          !Number.isFinite(payload.progress.percent) || !Number.isFinite(payload.progress.doneCount) ||
+          !Number.isFinite(payload.progress.total) || !Number.isFinite(payload.counts.products) ||
+          !Number.isFinite(payload.counts.orders) || !Number.isFinite(payload.counts.coupons)) {
+        throw new Error('Dados de onboarding indisponíveis.')
       }
 
-      setData(payload)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar onboarding.')
+      setData(payload as OnboardingPayload)
+    } catch {
+      setData(null)
+      setError('Não foi possível carregar o onboarding. Verifique sua conexão e tente novamente.')
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -215,9 +220,30 @@ export default function OnboardingGuiadoPage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4">
-        <div className="rounded-[2rem] bg-white p-8 font-black text-[#071b3a] shadow-xl shadow-blue-950/5">
+        <div role="status" aria-live="polite" className="rounded-[2rem] bg-white p-8 font-black text-[#071b3a] shadow-xl shadow-blue-950/5">
           Carregando onboarding...
         </div>
+      </main>
+    )
+  }
+
+  if (!data) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8ff] px-4 py-8 text-[#071b3a]">
+        <section role="alert" aria-labelledby="onboarding-error-title" className="w-full max-w-lg rounded-[2rem] border border-red-100 bg-white p-6 text-center shadow-xl shadow-blue-950/5 sm:p-8">
+          <h1 id="onboarding-error-title" className="text-2xl font-black tracking-[-0.04em]">Não foi possível carregar o onboarding</h1>
+          <p className="mt-3 text-sm font-medium leading-6 text-slate-600">
+            {error || 'Os dados da empresa não estão disponíveis. Tente novamente.'}
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <button type="button" onClick={() => void load()} className="min-h-11 rounded-2xl bg-[#05245c] px-5 py-3 text-sm font-black text-white transition hover:bg-[#031a43] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#05245c]">
+              Tentar novamente
+            </button>
+            <Link href="/painel" className="inline-flex min-h-11 items-center rounded-2xl border border-blue-100 bg-white px-5 py-3 text-sm font-black text-[#05245c]">
+              Voltar ao painel
+            </Link>
+          </div>
+        </section>
       </main>
     )
   }
