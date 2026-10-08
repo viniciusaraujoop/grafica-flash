@@ -1,0 +1,33 @@
+name: Orçaly Codex Pilot Static QA
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/orcaly-codex-agent-pilot.yml'
+      - '.github/workflows/orcaly-codex-pilot-static-qa.yml'
+      - 'scripts/automation/validate-codex-pilot.cjs'
+      - 'scripts/automation/validate-codex-pilot.test.cjs'
+
+permissions:
+  contents: read
+
+jobs:
+  policy-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout PR without write credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Static JavaScript syntax
+        run: |
+          node --check scripts/automation/validate-codex-pilot.cjs
+          node --check scripts/automation/validate-codex-pilot.test.cjs
+      - name: Isolated temporary-repository tests (no secrets or databases)
+        run: node --test scripts/automation/validate-codex-pilot.test.cjs
