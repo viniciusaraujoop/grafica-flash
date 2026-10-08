@@ -1,0 +1,48 @@
+name: Orçaly Focused PR Delta QA
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/main-site-v2.yml'
+      - '.github/workflows/storefront-marketplace-v2.yml'
+      - '.github/workflows/orcaly-focused-pr-delta-qa.yml'
+      - 'scripts/ci/verify-focused-pr-delta.cjs'
+      - 'scripts/ci/verify-focused-pr-delta.test.cjs'
+
+permissions:
+  contents: read
+
+jobs:
+  immutable-pr-boundary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout PR for isolated offline tests
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 pinned
+        with:
+          persist-credentials: false
+      - name: Setup node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 pinned
+        with:
+          node-version: 24
+      - name: Syntax checks
+        run: |
+          node --check scripts/ci/verify-focused-pr-delta.cjs
+          node --check scripts/ci/verify-focused-pr-delta.test.cjs
+      - name: Offline negative tests
+        run: node --test scripts/ci/verify-focused-pr-delta.test.cjs
+      - name: Assert domain QA workflows use exact PR SHA
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          for(const name of ['main-site-v2.yml','storefront-marketplace-v2.yml']){
+            const s=fs.readFileSync('.github/workflows/'+name,'utf8');
+            if(!s.includes('github.event.pull_request.base.sha') ||
+               !s.includes('github.event.pull_request.head.sha') ||
+               !s.includes('node scripts/ci/verify-focused-pr-delta.cjs') ||
+               !s.includes("if: github.event_name == 'pull_request'") ||
+               /MAIN_SITE_BASE_SHA:|STOREFRONT_BASE_SHA:/.test(s))throw Error('DOMAIN_GUARD_NOT_SCOPE_SAFE '+name);
+          }
+          console.log('ORCALY_FOCUSED_PR_DELTA_WORKFLOW_CONTRACT_PASS');
+          JS
