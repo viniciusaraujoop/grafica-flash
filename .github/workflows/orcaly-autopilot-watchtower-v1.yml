@@ -1,0 +1,71 @@
+name: Orçaly Autopilot Watchtower V1
+
+# Scheduled surveillance of GitHub evidence, NOT autonomous AI development.
+# GitHub only executes scheduled workflows from the default branch after merge.
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+  issues: read
+
+concurrency:
+  group: orcaly-autopilot-watchtower-v1
+  cancel-in-progress: false
+
+jobs:
+  evidence-status:
+    if: github.event_name == 'schedule' || github.actor == 'viniciusaraujoop'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout trusted default-branch code (no write credentials)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 pinned
+        with:
+          persist-credentials: false
+      - name: Collect metadata and classify only verified run evidence
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7 pinned
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const {buildReport, renderSummary} = require(
+              path.join(process.env.GITHUB_WORKSPACE, 'scripts/automation/autopilot-watchtower-v1.cjs')
+            );
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            // Bounded public metadata. Never retrieve issue/PR bodies or file contents.
+            const [issueResult, prResult, runResult] = await Promise.all([
+              github.rest.issues.listForRepo({owner, repo, state: 'open', per_page: 100}),
+              github.rest.pulls.list({owner, repo, state: 'open', per_page: 100}),
+              github.rest.actions.listWorkflowRunsForRepo({owner, repo, per_page: 100})
+            ]);
+            const report = buildReport({
+              issues: issueResult.data,
+              prs: prResult.data,
+              runs: runResult.data.workflow_runs || [],
+              generatedAt: new Date().toISOString(),
+              repo: owner + '/' + repo
+            });
+            const dest = path.join(process.env.RUNNER_TEMP, 'orcaly-autopilot-watchtower.json');
+            fs.writeFileSync(dest, JSON.stringify(report, null, 2) + '\n', {mode: 0o600});
+            await core.summary.addRaw(renderSummary(report)).write();
+            core.info('ORCALY_WATCHTOWER_READ_ONLY_STATUS recorded');
+            core.info('ACTIVE_AI_RUNS=' + report.active_ai_runs_observed);
+            core.info('QUEUED_AI_RUNS=' + report.queued_ai_runs_observed);
+            if (issueResult.data.length === 100 || prResult.data.length === 100 ||
+                (runResult.data.workflow_runs || []).length === 100) {
+              core.warning('EVIDENCE_WINDOW_PARTIAL: pagination window cap reached');
+            }
+      - name: Archive sanitized status snapshot
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4 pinned
+        with:
+          name: orcaly-autopilot-watchtower-${{ github.run_id }}
+          path: ${{ runner.temp }}/orcaly-autopilot-watchtower.json
+          retention-days: 2
+          if-no-files-found: error

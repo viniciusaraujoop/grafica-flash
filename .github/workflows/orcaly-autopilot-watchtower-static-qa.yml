@@ -1,0 +1,35 @@
+name: Orçaly Autopilot Watchtower Static QA
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/orcaly-autopilot-watchtower-v1.yml'
+      - '.github/workflows/orcaly-autopilot-watchtower-static-qa.yml'
+      - 'scripts/automation/autopilot-watchtower-v1.cjs'
+      - 'scripts/automation/autopilot-watchtower-v1.test.cjs'
+      - 'docs/automation/autopilot-v1-model-policy.json'
+      - 'docs/automation/autopilot-v1.md'
+
+permissions:
+  contents: read
+
+jobs:
+  offline-policy-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 pinned
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4 pinned
+        with:
+          node-version: 24
+      - name: Static syntax
+        run: |
+          node --check scripts/automation/autopilot-watchtower-v1.cjs
+          node --check scripts/automation/autopilot-watchtower-v1.test.cjs
+      - name: No-network evidence and policy tests
+        run: node --test scripts/automation/autopilot-watchtower-v1.test.cjs
+      - name: Diff whitespace check
+        run: git diff --check
