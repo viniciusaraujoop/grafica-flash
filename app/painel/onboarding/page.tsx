@@ -78,6 +78,16 @@ function isOnboardingPayload(value: unknown): value is OnboardingPayload {
   if (!checks || typeof checks !== 'object' || Array.isArray(checks) ||
       !ONBOARDING_CHECK_KEYS.every((key) => typeof checks[key] === 'boolean')) return false
 
+  if (checks.products !== (counts.products > 0) ||
+      checks.test_order !== (counts.orders > 0)) return false
+
+  if (company.site_publico_ativo != null && typeof company.site_publico_ativo !== 'boolean') return false
+  if (company.slug != null && typeof company.slug !== 'string') return false
+
+  const sitePublicado = company.site_publico_ativo === true &&
+    typeof company.slug === 'string' && company.slug.trim().length > 0
+  if (checks.publish !== sitePublicado) return false
+
   if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return false
 
   const doneCount = ONBOARDING_CHECK_KEYS.filter((key) => checks[key]).length
