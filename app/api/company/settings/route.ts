@@ -295,6 +295,24 @@ export async function PATCH(request: NextRequest) {
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return NextResponse.json({ error: 'Dados de configuração inválidos.' }, { status: 400 })
     }
+    // FIN-01–03: reject malformed financial values before MFA or UPDATE.
+    for (const field of ['aceita_pix', 'aceita_cartao', 'cobrar_sinal']) {
+      if (Object.prototype.hasOwnProperty.call(body, field) && typeof body[field] !== 'boolean') {
+        return NextResponse.json({ error: 'Configuração financeira booleana inválida.' }, { status: 400 })
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'pix_tipo') &&
+        !['telefone', 'email', 'cpf', 'cnpj', 'aleatoria'].includes(body.pix_tipo)) {
+      return NextResponse.json({ error: 'Tipo de chave PIX inválido.' }, { status: 400 })
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'percentual_sinal')) {
+      const percent = body.percentual_sinal
+      if (typeof percent !== 'number' || !Number.isFinite(percent) || percent < 0 || percent > 100 ||
+          !/^\d+(?:\.\d{1,2})?$/.test(String(percent))) {
+        return NextResponse.json({ error: 'Percentual de sinal inválido.' }, { status: 400 })
+      }
+    }
+
     const sensitiveFields = getSensitiveSettingsFields(body)
 
     if (sensitiveFields.length > 0) {
@@ -334,24 +352,6 @@ export async function PATCH(request: NextRequest) {
     }
     if (hasUpdate('site_publico_ativo') && typeof update.site_publico_ativo !== 'boolean') {
       return NextResponse.json({ error: 'Ativação do site inválida.' }, { status: 400 })
-    }
-
-    // FIN-01–03: reject malformed explicit financial values before MFA or UPDATE.
-    for (const field of ['aceita_pix', 'aceita_cartao', 'cobrar_sinal']) {
-      if (hasUpdate(field) && typeof update[field] !== 'boolean') {
-        return NextResponse.json({ error: 'Configuração financeira booleana inválida.' }, { status: 400 })
-      }
-    }
-    if (hasUpdate('pix_tipo') &&
-        !['telefone', 'email', 'cpf', 'cnpj', 'aleatoria'].includes(update.pix_tipo)) {
-      return NextResponse.json({ error: 'Tipo de chave PIX inválido.' }, { status: 400 })
-    }
-    if (hasUpdate('percentual_sinal')) {
-      const percent = update.percentual_sinal
-      if (typeof percent !== 'number' || !Number.isFinite(percent) || percent < 0 || percent > 100 ||
-          !/^\\d+(?:\\.\\d{1,2})?$/.test(String(percent))) {
-        return NextResponse.json({ error: 'Percentual de sinal inválido.' }, { status: 400 })
-      }
     }
 
     if (Object.prototype.hasOwnProperty.call(body, 'subdomain_slug')) {
