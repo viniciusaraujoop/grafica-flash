@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- Standalone Node.js CJS CI helper. */
 'use strict';
 const test=require('node:test');
 const assert=require('node:assert/strict');
