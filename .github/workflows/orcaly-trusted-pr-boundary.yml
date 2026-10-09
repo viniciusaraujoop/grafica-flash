@@ -1,0 +1,81 @@
+name: Orçaly Trusted PR Boundary
+
+# BOOTSTRAP: not an independent gate until merged into protected main
+# AND required under GitHub branch rules; candidate version is not trusted.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review, edited]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  trusted-pr-boundary:
+    name: trusted-pr-boundary
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout immutable protected-base verifier
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted
+          persist-credentials: false
+      - name: Fetch candidate Git objects without checkout
+        shell: bash
+        env:
+          ORCALY_PR_NUMBER: ${{ github.event.pull_request.number }}
+          ORCALY_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          ORCALY_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::SEC_BOOT_02A_$1" >&2; exit 1; }
+          [[ ${GITHUB_REPOSITORY:-} == "viniciusaraujoop/grafica-flash" ]] || fail REPOSITORY
+          [[ ${GITHUB_EVENT_NAME:-} == "pull_request_target" ]] || fail EVENT
+          [[ ${ORCALY_PR_NUMBER:-} =~ ^[1-9][0-9]{0,9}$ ]] || fail NUMBER
+          [[ ${ORCALY_PR_BASE_SHA:-} =~ ^[0-9a-f]{40}$ ]] || fail BASE_SHA
+          [[ ${ORCALY_PR_HEAD_SHA:-} =~ ^[0-9a-f]{40}$ ]] || fail HEAD_SHA
+          [[ $ORCALY_PR_BASE_SHA != $ORCALY_PR_HEAD_SHA ]] || fail IDENTICAL_SHA
+          [[ ! -e candidate && ! -L candidate ]] || fail CANDIDATE_EXISTS
+
+          # All candidate objects are fetched from the base repository, never the fork.
+          # The empty template prevents inherited Git hooks. No candidate checkout occurs.
+          scratch="$(mktemp -d "${RUNNER_TEMP:?}/orcaly-git-XXXXXXXX")"
+          mkdir -p "$scratch/home" "$scratch/xdg" "$scratch/template"
+          isolated_git() {
+            env -i PATH=/usr/bin:/bin HOME="$scratch/home" XDG_CONFIG_HOME="$scratch/xdg" \
+              GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null \
+              GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/bin/false \
+              GIT_TEMPLATE_DIR="$scratch/template" \
+              /usr/bin/git -c protocol.file.allow=never -c protocol.ext.allow=never \
+                -c protocol.git.allow=never -c protocol.ssh.allow=never \
+                -c protocol.https.allow=always -c credential.helper= \
+                -c core.hooksPath=/dev/null "$@"
+          }
+
+          isolated_git init -q candidate
+          isolated_git -C candidate remote add origin \
+            https://github.com/viniciusaraujoop/grafica-flash.git
+          isolated_git -C candidate fetch --no-tags --no-recurse-submodules \
+            origin "+refs/heads/main:refs/remotes/origin/main" \
+                   "+refs/pull/${ORCALY_PR_NUMBER}/head:refs/remotes/origin/pr-head"
+
+          fetched_base="$(isolated_git -C candidate rev-parse --verify 'refs/remotes/origin/main^{commit}')" || fail FETCH_BASE
+          fetched_head="$(isolated_git -C candidate rev-parse --verify 'refs/remotes/origin/pr-head^{commit}')" || fail FETCH_HEAD
+          [[ $fetched_base == $ORCALY_PR_BASE_SHA ]] || fail BASE_MISMATCH
+          [[ $fetched_head == $ORCALY_PR_HEAD_SHA ]] || fail HEAD_MISMATCH
+          [[ $(isolated_git -C candidate cat-file -t "$fetched_base") == commit ]] || fail BASE_TYPE
+          [[ $(isolated_git -C candidate cat-file -t "$fetched_head") == commit ]] || fail HEAD_TYPE
+          isolated_git -C candidate merge-base "$fetched_base" "$fetched_head" >/dev/null || fail NO_MERGE_BASE
+          isolated_git -C candidate update-ref HEAD "$fetched_head"
+          [[ $(isolated_git -C candidate rev-parse HEAD) == $ORCALY_PR_HEAD_SHA ]] || fail HEAD_REF
+          unexpected="$(find candidate -mindepth 1 -maxdepth 1 ! -name .git -print -quit)" || fail WORKTREE_SCAN
+          [[ -z "$unexpected" ]] || fail WORKTREE_MATERIALIZED
+          echo "ORCALY_FORK_OBJECT_FETCH_PASS base=$fetched_base head=$fetched_head"
+      - name: Verify event pair, protected files and all marketing links
+        env:
+          ORCALY_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          ORCALY_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          ORCALY_CANDIDATE_DIR: candidate
+        run: node trusted/scripts/ci/verify-trusted-pr-boundary.cjs
