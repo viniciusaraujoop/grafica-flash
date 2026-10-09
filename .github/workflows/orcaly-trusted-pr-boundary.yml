@@ -70,7 +70,8 @@ jobs:
           isolated_git -C candidate merge-base "$fetched_base" "$fetched_head" >/dev/null || fail NO_MERGE_BASE
           isolated_git -C candidate update-ref HEAD "$fetched_head"
           [[ $(isolated_git -C candidate rev-parse HEAD) == $ORCALY_PR_HEAD_SHA ]] || fail HEAD_REF
-          [[ -z $(find candidate -mindepth 1 -maxdepth 1 ! -name .git -print -quit) ]] || fail WORKTREE_MATERIALIZED
+          unexpected="$(find candidate -mindepth 1 -maxdepth 1 ! -name .git -print -quit)" || fail WORKTREE_SCAN
+          [[ -z "$unexpected" ]] || fail WORKTREE_MATERIALIZED
           echo "ORCALY_FORK_OBJECT_FETCH_PASS base=$fetched_base head=$fetched_head"
       - name: Verify event pair, protected files and all marketing links
         env:
