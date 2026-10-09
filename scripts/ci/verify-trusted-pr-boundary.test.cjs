@@ -349,3 +349,14 @@ test('SEC-BOOT-02A workflow: trusted checkout and verifier invocation are untouc
  assert.doesNotMatch(source,/allow-unsafe-pr-checkout: true/);
  assert.doesNotMatch(source,/Checkout candidate PR commit as data only/);
 });
+
+test('SEC-BOOT-02A workflow: find traversal error must fail closed',()=>useFetchFixture(x=>{
+ x.setHead();
+ const bin=path.join(x.root,'bin');fs.mkdirSync(bin);
+ const fakeFind=path.join(bin,'find');
+ fs.writeFileSync(fakeFind,'#!/bin/sh\nexit 19\n');
+ fs.chmodSync(fakeFind,0o755);
+ const result=x.run({PATH:bin+path.delimiter+process.env.PATH});
+ assertFetchFailure(result,'find error');
+ assert.match(result.stderr,/SEC_BOOT_02A_WORKTREE_SCAN/);
+}));
