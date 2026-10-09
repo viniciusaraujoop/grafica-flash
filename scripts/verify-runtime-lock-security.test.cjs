@@ -83,3 +83,73 @@ test('libvips cannot use sha1 or truncated SHA512',()=>{
   }
 });
 console.log('ORCALY_RUNTIME_LOCK_SECURITY_NEGATIVE_TESTS_DONE');
+
+/* INT-SEC-01: cross-platform, exact-origin and approved SHA-512 attestation.
+ * The approved digests live in the independent verifier, NOT in the mutated lock.
+ * Mutations here touch ONLY the candidate lock under test.
+ */
+const protectedKeys=Object.keys(baseLock.packages).filter(k=>
+  k==='node_modules/sharp'||k==='node_modules/source-map-js'||
+  k.startsWith('node_modules/@img/sharp-')).sort();
+assert.equal(protectedKeys.length,28,'approved cross-platform fixture count');
+const sameLengthAlternative=sri=>{
+  assert.match(sri,/^sha512-[A-Za-z0-9+/]{86}==$/);
+  const i='sha512-'.length;
+  return sri.slice(0,i)+(sri[i]==='A'?'B':'A')+sri.slice(i+1);
+};
+for(const key of protectedKeys){
+  const label=key.replace('node_modules/','');
+  test('INT-SEC-01: canonical tarball path cannot change for '+label,()=>{
+    assert.throws(mutate((p,l)=>l.packages[key].resolved+= '?mirror=evil'),
+      /APPROVED_ORIGIN_DRIFT|SHARP_LIBVIPS_REGISTRY_INTEGRITY/);
+  });
+  test('INT-SEC-01: plausible SHA512 replacement rejected for '+label,()=>{
+    assert.throws(mutate((p,l)=>l.packages[key].integrity=sameLengthAlternative(l.packages[key].integrity)),
+      /APPROVED_INTEGRITY_DRIFT|SHARP_LIBVIPS_REGISTRY_INTEGRITY/);
+  });
+  test('INT-SEC-01: absent approved entry rejected for '+label,()=>{
+    assert.throws(mutate((p,l)=>delete l.packages[key]),
+      /APPROVED_ENTRY_MISSING|SHARP_LIBVIPS_REQUIRED_MISSING|SHARP_NATIVE_LIBVIPS_DRIFT|SHARP_LIBVIPS_OPTIONAL_DRIFT|REQUIRED_PACKAGES_MISSING/);
+  });
+  test('INT-SEC-01: platform metadata cannot change for '+label,()=>{
+    assert.throws(mutate((p,l)=>l.packages[key].os=['aix']),
+      /APPROVED_PLATFORM_DRIFT/);
+  });
+  test('INT-SEC-01: CPU metadata cannot change for '+label,()=>{
+    assert.throws(mutate((p,l)=>l.packages[key].cpu=['arbitrary']),
+      /APPROVED_PLATFORM_DRIFT/);
+  });
+  test('INT-SEC-01: optional marker cannot change for '+label,()=>{
+    assert.throws(mutate((p,l)=>l.packages[key].optional=!l.packages[key].optional),
+      /APPROVED_PLATFORM_DRIFT/);
+  });
+}
+test('INT-SEC-01: extra macOS, Linux, Windows, and nested shadow package entries rejected',()=>{
+  for(const k of [
+    'node_modules/@img/sharp-win32-ppc64',
+    'node_modules/@img/sharp-linux-x86',
+    'node_modules/@img/sharp-darwin-ia32',
+    'node_modules/fake/node_modules/@img/sharp-win32-x64',
+    'node_modules/fake/node_modules/source-map-js',
+    'node_modules/fake/node_modules/sharp',
+  ]){
+    assert.throws(mutate((p,l)=>{
+      const template=k.endsWith('/source-map-js')?'node_modules/source-map-js':
+        k.endsWith('/sharp')?'node_modules/sharp':'node_modules/@img/sharp-win32-x64';
+      l.packages[k]=structuredClone(l.packages[template]);
+    }),
+      /APPROVED_ENTRY_EXTRA|SHARP_LIBVIPS_UNEXPECTED_ENTRY/);
+  }
+});
+test('INT-SEC-01: sharp root optional graph cannot gain an unapproved native',()=>{
+  assert.throws(mutate((p,l)=>l.packages['node_modules/sharp'].optionalDependencies['@img/sharp-win32-ppc64']='0.35.5'),
+    /APPROVED_OPTIONAL_DRIFT/);
+});
+test('INT-SEC-01: platform package cannot introduce an unexpected dependency',()=>{
+  assert.throws(mutate((p,l)=>l.packages['node_modules/@img/sharp-linux-x64'].optionalDependencies['@img/sharp-libvips-win32-x64']='1.3.4'),
+    /APPROVED_OPTIONAL_DRIFT/);
+});
+test('INT-SEC-01: native package cannot falsely claim alternate libc',()=>{
+  assert.throws(mutate((p,l)=>l.packages['node_modules/@img/sharp-linuxmusl-x64'].libc=['glibc']),
+    /APPROVED_PLATFORM_DRIFT/);
+});
