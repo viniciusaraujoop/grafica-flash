@@ -73,10 +73,33 @@ jobs:
         run: node scripts/ci/verify-focused-pr-delta.cjs
       - name: Dead-link source invariant (full marketing tree)
         run: |
-          if grep -R -n -E "href=['\"]#(['\"]|$)|javascript:void" app/page.tsx app/solucoes components/marketing; then
-            echo "Dead marketing link found"
-            exit 1
-          fi
+          for surface in app/page.tsx app/solucoes components/marketing; do
+            if [ "$surface" = "app/page.tsx" ]; then
+              if [ ! -f "$surface" ]; then
+                echo "::error::Required marketing source file unavailable: $surface"
+                exit 1
+              fi
+            elif [ ! -d "$surface" ]; then
+              echo "::error::Required marketing source directory unavailable: $surface"
+              exit 1
+            fi
+          done
+
+          grep_status=0
+          grep -R -n -E "href=['\"]#(['\"]|$)|javascript:void" app/page.tsx app/solucoes components/marketing || grep_status=$?
+          case "$grep_status" in
+            0)
+              echo "::error::Dead marketing link found"
+              exit 1
+              ;;
+            1)
+              echo "Marketing dead-link invariant PASS"
+              ;;
+            *)
+              echo "::error::Marketing dead-link scan failed (grep exit $grep_status)"
+              exit 1
+              ;;
+          esac
       - name: Dependency audit baseline
         continue-on-error: true
         run: npm audit --audit-level=high
