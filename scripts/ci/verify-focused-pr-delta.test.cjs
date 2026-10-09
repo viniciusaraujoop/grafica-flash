@@ -95,3 +95,107 @@ test('mercado-pago.ts rename-out, rename-in, and directory update are blocked',(
    assert.throws(()=>verify({base:f.base,head,scope,cwd:f.dir}),/PROTECTED_SCOPE_CHANGED/);
  });
 });
+
+
+// PR32-QA-03: execute the exact Bash block from the checked-in workflow.
+// This is intentionally not a reimplementation of its dead-link policy.
+const {spawnSync}=require('node:child_process');
+const workflowPath=path.join(__dirname,'../../.github/workflows/main-site-v2.yml');
+function marketingWorkflowScript(){
+ const source=fs.readFileSync(workflowPath,'utf8');
+ const marker='      - name: Dead-link source invariant (full marketing tree)\n        run: |\n';
+ const start=source.indexOf(marker);
+ assert.notEqual(start,-1,'marketing dead-link check must exist in Main Site workflow');
+ const block=[];
+ for(const line of source.slice(start+marker.length).split('\n')){
+  if(line.startsWith('          '))block.push(line.slice(10));
+  else if(line.trim()==='')block.push('');
+  else break;
+ }
+ assert.ok(block.length>0,'workflow script must not be empty');
+ return block.join('\n');
+}
+function withMarketingFixture(fn){
+ return withFixture(f=>{
+  f.put('app/page.tsx','<a href="/inicio">ok</a>\n');
+  f.put('app/solucoes/page.tsx','<a href="/solucoes">ok</a>\n');
+  f.put('components/marketing/MainSite.tsx','<a href="/produto">ok</a>\n');
+  const scan=(env={})=>spawnSync('bash',['--noprofile','--norc','-e','-o','pipefail','-c',marketingWorkflowScript()],{
+   cwd:f.dir,encoding:'utf8',env:{...process.env,...env}
+  });
+  return fn(f,scan);
+ });
+}
+function assertWorkflowRejects(result,label){
+ assert.notEqual(result.status,0,label+' must fail closed: '+result.stdout+' '+result.stderr);
+ assert.equal(result.error,undefined,label+' must execute Bash');
+}
+test('PR32-QA-03: clean, fully readable marketing tree passes',()=>withMarketingFixture((f,scan)=>{
+ const result=scan();
+ assert.equal(result.status,0,result.stdout+' '+result.stderr);
+ assert.match(result.stdout,/marketing dead-link invariant PASS/i);
+}));
+test('PR32-QA-03: href="#" is blocked',()=>withMarketingFixture((f,scan)=>{
+ f.put('app/page.tsx','<a href="#">placeholder</a>\n');
+ const result=scan();
+ assertWorkflowRejects(result,'href hash');
+ assert.match(result.stdout,/Dead marketing link found/);
+}));
+test('PR32-QA-03: javascript:void is blocked',()=>withMarketingFixture((f,scan)=>{
+ f.put('app/solucoes/page.tsx','<a href="javascript:void(0)">bad</a>\n');
+ const result=scan();
+ assertWorkflowRejects(result,'javascript link');
+ assert.match(result.stdout,/Dead marketing link found/);
+}));
+test('PR32-QA-03: dead link plus broken symlink cannot become false PASS',{
+ skip:process.platform==='win32'
+},()=>withMarketingFixture((f,scan)=>{
+ f.put('components/marketing/MainSite.tsx','<a href="#">bad</a>\n');
+ fs.symlinkSync('missing-destination.tsx',path.join(f.dir,'components/marketing/broken.tsx'));
+ assertWorkflowRejects(scan(),'dead link and dangling symlink');
+}));
+test('PR32-QA-03: broken symlink without dead link fails closed',{
+ skip:process.platform==='win32'
+},()=>withMarketingFixture((f,scan)=>{
+ fs.symlinkSync('missing-destination.tsx',path.join(f.dir,'components/marketing/broken.tsx'));
+ const result=scan();
+ assertWorkflowRejects(result,'dangling symlink');
+ assert.match(result.stdout+result.stderr,/Marketing dead-link scan failed|grep.*No such file/i);
+}));
+test('PR32-QA-03: missing mandatory marketing file and directories are rejected',()=>withMarketingFixture((f,scan)=>{
+ for(const target of ['app/page.tsx','app/solucoes','components/marketing']){
+  // Test each absent input in its own fresh tree without altering the source.
+  const folder=path.join(f.dir,target);
+  const removed=target==='app/page.tsx'?fs.readFileSync(folder,'utf8'):null;
+  if(target==='app/page.tsx')fs.unlinkSync(folder);
+  else fs.renameSync(folder,folder+'.moved');
+  const result=scan();
+  assertWorkflowRejects(result,'missing '+target);
+  assert.match(result.stdout,/Required marketing source/);
+  if(target==='app/page.tsx')fs.writeFileSync(folder,removed);
+  else fs.renameSync(folder+'.moved',folder);
+ }
+}));
+test('PR32-QA-03: unreadable marketing source fails closed',{
+ skip:process.platform==='win32'||(typeof process.getuid==='function'&&process.getuid()===0)
+},()=>withMarketingFixture((f,scan)=>{
+ const file=path.join(f.dir,'components/marketing/MainSite.tsx');
+ fs.chmodSync(file,0);
+ try{
+  const result=scan();
+  assertWorkflowRejects(result,'unreadable marketing file');
+  assert.match(result.stdout+result.stderr,/Marketing dead-link scan failed|Permission denied/i);
+ }finally{fs.chmodSync(file,0o644)}
+}));
+test('PR32-QA-03: unexpected grep execution error also fails closed',{
+ skip:process.platform==='win32'
+},()=>withMarketingFixture((f,scan)=>{
+ const bin=path.join(f.dir,'bin');
+ fs.mkdirSync(bin);
+ const stub=path.join(bin,'grep');
+ fs.writeFileSync(stub,'#!/bin/sh\nexit 42\n');
+ fs.chmodSync(stub,0o755);
+ const result=scan({PATH:bin+path.delimiter+process.env.PATH});
+ assertWorkflowRejects(result,'grep exit 42');
+ assert.match(result.stdout,/grep exit 42/);
+}));
