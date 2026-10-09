@@ -306,15 +306,39 @@ test('SEC-BOOT-02A workflow: Git config helpers, rewrites and environment ignore
  assert.equal(fs.existsSync(marker),false);
  assert.equal(x.runGit('-C',path.join(x.workspace,'candidate'),'rev-parse','HEAD'),head);
 }));
-test('SEC-BOOT-02A workflow: network fetch cannot execute candidate pre-push hooks',()=>useFetchFixture(x=>{
- const marker=path.join(x.root,'prepush-ran');
- fs.writeFileSync(path.join(x.f.dir,'.git/hooks/pre-push'),'#!/bin/sh\ntouch '+marker+'\n');
- fs.chmodSync(path.join(x.f.dir,'.git/hooks/pre-push'),0o755);
- const head=x.setHead();
+function verifyFetchedCandidate(x){
+ const head=x.env.ORCALY_PR_HEAD_SHA;
+ return verifyTrusted({
+  base:x.f.base,head,cwd:path.join(x.workspace,'candidate'),
+  eventName:'pull_request_target',
+  event:{number:32,repository:{full_name:'owner/repo'},pull_request:{
+   number:32,base:{ref:'main',sha:x.f.base,repo:{full_name:'owner/repo'}},
+   head:{sha:head}
+  }}
+ });
+}
+test('SEC-BOOT-02A workflow: fetched bare Git objects certify clean PR with trusted verifier',()=>useFetchFixture(x=>{
+ x.setHead();
  const r=x.run();
  assert.equal(r.status,0,r.stdout+' '+r.stderr);
- assert.equal(x.runGit('-C',path.join(x.workspace,'candidate'),'rev-parse','HEAD'),head);
+ assert.equal(verifyFetchedCandidate(x).status,'TRUSTED_PR_BOUNDARY_PASS');
+ assert.deepEqual(fs.readdirSync(path.join(x.workspace,'candidate')),['.git']);
 }));
+test('SEC-BOOT-02A workflow: trusted verifier still rejects protected auth/payment/CI edits',()=>{
+ for(const [target,expected] of [
+  ['app/login/page.tsx',/TRUSTED_PROTECTED_PATH/],
+  ['lib/mercado-pago.ts',/TRUSTED_PROTECTED_PATH/],
+  ['components/checkout/CheckoutClient.tsx',/TRUSTED_PROTECTED_PATH/],
+  ['.github/workflows/orcaly-trusted-pr-boundary.yml',/TRUSTED_POLICY_TAMPER/]
+ ])useFetchFixture(x=>{
+  x.f.put(target,'unsafe change\n');
+  x.setHead('docs and protected delta\n');
+  const r=x.run();
+  assert.equal(r.status,0,r.stdout+' '+r.stderr);
+  assert.throws(()=>verifyFetchedCandidate(x),expected,'trusted base guard rejects '+target);
+  assert.deepEqual(fs.readdirSync(path.join(x.workspace,'candidate')),['.git']);
+ });
+});
 test('SEC-BOOT-02A workflow: trusted checkout and verifier invocation are untouched',()=>{
  const source=fs.readFileSync(path.join(__dirname,'../../.github/workflows/orcaly-trusted-pr-boundary.yml'),'utf8');
  assert.match(source,/uses: actions\/checkout@11d5960a326750d5838078e36cf38b85af677262/);
