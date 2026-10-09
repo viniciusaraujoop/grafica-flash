@@ -85,6 +85,19 @@ jobs:
             fi
           done
 
+          # GNU grep -R may silently skip unreadable children. Check traversal first.
+          # -L follows valid symlinks and exposes dangling ones as -type l.
+          if unreadable=$(find -L app/page.tsx app/solucoes components/marketing \
+              \( -type l -o ! -readable \) -print -quit); then
+            if [ -n "$unreadable" ]; then
+              echo "::error::Unreadable or dangling marketing source: $unreadable"
+              exit 1
+            fi
+          else
+            echo "::error::Marketing source traversal failed"
+            exit 1
+          fi
+
           grep_status=0
           grep -R -n -E "href=['\"]#(['\"]|$)|javascript:void" app/page.tsx app/solucoes components/marketing || grep_status=$?
           case "$grep_status" in
