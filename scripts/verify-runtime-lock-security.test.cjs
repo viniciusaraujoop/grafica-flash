@@ -133,7 +133,11 @@ test('INT-SEC-01: extra macOS, Linux, Windows, and nested shadow package entries
     'node_modules/fake/node_modules/source-map-js',
     'node_modules/fake/node_modules/sharp',
   ]){
-    assert.throws(mutate((p,l)=>l.packages[k]=structuredClone(l.packages['node_modules/sharp'])),
+    assert.throws(mutate((p,l)=>{
+      const template=k.endsWith('/source-map-js')?'node_modules/source-map-js':
+        k.endsWith('/sharp')?'node_modules/sharp':'node_modules/@img/sharp-win32-x64';
+      l.packages[k]=structuredClone(l.packages[template]);
+    }),
       /APPROVED_ENTRY_EXTRA|SHARP_LIBVIPS_UNEXPECTED_ENTRY/);
   }
 });
