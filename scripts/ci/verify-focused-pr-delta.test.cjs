@@ -160,7 +160,7 @@ test('PR32-QA-03: broken symlink without dead link fails closed',{
  fs.symlinkSync('missing-destination.tsx',path.join(f.dir,'components/marketing/broken.tsx'));
  const result=scan();
  assertWorkflowRejects(result,'dangling symlink');
- assert.match(result.stdout+result.stderr,/Marketing dead-link scan failed|grep.*No such file/i);
+ assert.match(result.stdout+result.stderr,/Marketing dead-link scan failed|Unreadable or dangling marketing source|grep.*No such file/i);
 }));
 test('PR32-QA-03: missing mandatory marketing file and directories are rejected',()=>withMarketingFixture((f,scan)=>{
  for(const target of ['app/page.tsx','app/solucoes','components/marketing']){
@@ -184,7 +184,7 @@ test('PR32-QA-03: unreadable marketing source fails closed',{
  try{
   const result=scan();
   assertWorkflowRejects(result,'unreadable marketing file');
-  assert.match(result.stdout+result.stderr,/Marketing dead-link scan failed|Permission denied/i);
+  assert.match(result.stdout+result.stderr,/Marketing dead-link scan failed|Unreadable or dangling marketing source|Permission denied/i);
  }finally{fs.chmodSync(file,0o644)}
 }));
 test('PR32-QA-03: unexpected grep execution error also fails closed',{
