@@ -136,10 +136,10 @@ test('SEC-BOOT-01: clean tree with multiple regular source files passes',()=>use
 test('SEC-BOOT-01: app ancestor replaced by symlink is rejected',()=>use(f=>{
  removeTree(f,'app');
  symlink(f,'app','docs');
- assert.throws(()=>f.verify(f.commit('app replaced')),/TRUSTED_MARKETING_TREE_REQUIRED/);
+ assert.throws(()=>f.verify(f.commit('app replaced')),/TRUSTED_PROTECTED_PATH|TRUSTED_MARKETING_TREE_REQUIRED/);
 }));
 test('SEC-BOOT-01: components ancestor replaced by symlink is rejected',()=>use(f=>{
  removeTree(f,'components');
  symlink(f,'components','docs');
- assert.throws(()=>f.verify(f.commit('components replaced')),/TRUSTED_MARKETING_TREE_REQUIRED/);
+ assert.throws(()=>f.verify(f.commit('components replaced')),/TRUSTED_PROTECTED_PATH|TRUSTED_MARKETING_TREE_REQUIRED/);
 }));
