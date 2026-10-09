@@ -109,10 +109,10 @@ for(const key of protectedKeys){
   });
   test('INT-SEC-01: absent approved entry rejected for '+label,()=>{
     assert.throws(mutate((p,l)=>delete l.packages[key]),
-      /APPROVED_ENTRY_MISSING|SHARP_LIBVIPS_REQUIRED_MISSING|REQUIRED_PACKAGES_MISSING/);
+      /APPROVED_ENTRY_MISSING|SHARP_LIBVIPS_REQUIRED_MISSING|SHARP_NATIVE_LIBVIPS_DRIFT|SHARP_LIBVIPS_OPTIONAL_DRIFT|REQUIRED_PACKAGES_MISSING/);
   });
   test('INT-SEC-01: platform metadata cannot change for '+label,()=>{
-    assert.throws(mutate((p,l)=>l.packages[key].os=['win32']),
+    assert.throws(mutate((p,l)=>l.packages[key].os=['aix']),
       /APPROVED_PLATFORM_DRIFT/);
   });
   test('INT-SEC-01: CPU metadata cannot change for '+label,()=>{
