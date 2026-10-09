@@ -193,9 +193,11 @@ test('PR32-QA-03: unexpected grep execution error also fails closed',{
  const bin=path.join(f.dir,'bin');
  fs.mkdirSync(bin);
  const stub=path.join(bin,'grep');
- fs.writeFileSync(stub,'#!/bin/sh\nexit 42\n');
  fs.chmodSync(stub,0o755);
- const result=scan({PATH:bin+path.delimiter+process.env.PATH});
- assertWorkflowRejects(result,'grep exit 42');
- assert.match(result.stdout,/grep exit 42/);
+ for(const code of [2,42]){
+  fs.writeFileSync(stub,'#!/bin/sh\nexit '+code+'\n');
+  const result=scan({PATH:bin+path.delimiter+process.env.PATH});
+  assertWorkflowRejects(result,'grep exit '+code);
+  assert.match(result.stdout,new RegExp('grep exit '+code));
+ }
 }));
