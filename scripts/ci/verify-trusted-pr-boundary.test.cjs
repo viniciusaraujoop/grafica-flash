@@ -35,3 +35,111 @@ test('tampering with trusted guard, PR checker, workflow or attributes fails',()
 test('marketing invariant checks all three locations even when unchanged',()=>{for(const p of ['app/page.tsx','app/solucoes/index.tsx','components/marketing/Page.tsx'])for(const link of ['href="#"','javascript:void(0)'])use(f=>{f.put(p,link+'\n');assert.throws(()=>f.verify(f.commit('dead-link')),/TRUSTED_DEAD_LINK/)})});
 test('whitespace is checked without executing candidate',()=>use(f=>{f.put('docs/intro.md','bad whitespace  \n');assert.throws(()=>f.verify(f.commit('white')),/TRUSTED_GIT_FAILED/)}));
 test('forged event or old head and invalid SHA fail closed',()=>use(f=>{f.put('docs/intro.md','ok2\n');const head=f.commit('ok');assert.throws(()=>f.verify('a'.repeat(40)),/TRUSTED_HEAD_MISMATCH/);assert.throws(()=>f.verify('bad'),/TRUSTED_INVALID_CONTEXT/);assert.throws(()=>verifyTrusted({base:f.base,head,cwd:f.dir,eventName:'workflow_dispatch',event:{}}),/TRUSTED_INVALID_CONTEXT/);assert.throws(()=>verifyTrusted({base:f.base,head,cwd:f.dir,eventName:'pull_request_target',event:{number:123}}),/TRUSTED_EVENT_MISMATCH/)}));
+
+
+// SEC-BOOT-01 regression: real Git objects, not filesystem-only imitations.
+function removeTree(f,root){
+ f.git('rm','-r','-q','--',root);
+}
+function symlink(f,p,target){
+ const dest=path.join(f.dir,p);
+ fs.mkdirSync(path.dirname(dest),{recursive:true});
+ fs.symlinkSync(target,dest);
+}
+test('SEC-BOOT-01: missing app/page.tsx is rejected',()=>use(f=>{
+ f.git('rm','-q','--','app/page.tsx');
+ assert.throws(()=>f.verify(f.commit('removed page')),/TRUSTED_MARKETING_FILE_REQUIRED/);
+}));
+test('SEC-BOOT-01: empty app/solucoes after tracked file deletion is rejected',()=>use(f=>{
+ removeTree(f,'app/solucoes');
+ assert.throws(()=>f.verify(f.commit('removed solucoes')),/TRUSTED_MARKETING_TREE_REQUIRED|TRUSTED_MARKETING_SOURCE_REQUIRED/);
+}));
+test('SEC-BOOT-01: empty components/marketing after tracked file deletion is rejected',()=>use(f=>{
+ removeTree(f,'components/marketing');
+ assert.throws(()=>f.verify(f.commit('removed marketing')),/TRUSTED_MARKETING_TREE_REQUIRED|TRUSTED_MARKETING_SOURCE_REQUIRED/);
+}));
+test('SEC-BOOT-01: all three mandatory surfaces removed is rejected',()=>use(f=>{
+ f.git('rm','-q','--','app/page.tsx');
+ removeTree(f,'app/solucoes');
+ removeTree(f,'components/marketing');
+ assert.throws(()=>f.verify(f.commit('all removed')),/TRUSTED_MARKETING_(?:FILE|TREE|SOURCE)_REQUIRED/);
+}));
+test('SEC-BOOT-01: page replaced with Git 120000 symlink is rejected',()=>use(f=>{
+ f.git('rm','-q','--','app/page.tsx');
+ symlink(f,'app/page.tsx','../docs/intro.md');
+ assert.throws(()=>f.verify(f.commit('page symlink')),/TRUSTED_MARKETING_FILE_REQUIRED/);
+}));
+test('SEC-BOOT-01: app/solucoes root replaced by symlink is rejected',()=>use(f=>{
+ removeTree(f,'app/solucoes');
+ symlink(f,'app/solucoes','../docs');
+ assert.throws(()=>f.verify(f.commit('solucoes symlink')),/TRUSTED_MARKETING_TREE_REQUIRED/);
+}));
+test('SEC-BOOT-01: components/marketing root replaced by symlink is rejected',()=>use(f=>{
+ removeTree(f,'components/marketing');
+ symlink(f,'components/marketing','../../docs');
+ assert.throws(()=>f.verify(f.commit('marketing symlink')),/TRUSTED_MARKETING_TREE_REQUIRED/);
+}));
+test('SEC-BOOT-01: marketing child dangling symlink is rejected',()=>use(f=>{
+ symlink(f,'components/marketing/broken.tsx','file-that-does-not-exist.tsx');
+ assert.throws(()=>f.verify(f.commit('dangling')),/TRUSTED_MARKETING_OBJECT_INVALID/);
+}));
+test('SEC-BOOT-01: marketing child valid symlink is rejected, even alongside real files',()=>use(f=>{
+ symlink(f,'components/marketing/link.tsx','Page.tsx');
+ assert.throws(()=>f.verify(f.commit('link')),/TRUSTED_MARKETING_OBJECT_INVALID/);
+}));
+test('SEC-BOOT-01: nested solutions symlink is rejected',()=>use(f=>{
+ symlink(f,'app/solucoes/nested.tsx','index.tsx');
+ assert.throws(()=>f.verify(f.commit('nested link')),/TRUSTED_MARKETING_OBJECT_INVALID/);
+}));
+test('SEC-BOOT-01: Git 160000 commit gitlink is rejected without checkout',{
+ skip:process.platform==='win32'
+},()=>use(f=>{
+ f.git('update-index','--add','--cacheinfo','160000,'+f.base+',components/marketing/submodule');
+ f.git('commit','-qm','gitlink');
+ const head=f.git('rev-parse','HEAD');
+ assert.throws(()=>f.verify(head),/TRUSTED_MARKETING_OBJECT_INVALID/);
+}));
+test('SEC-BOOT-01: Git 160000 replaces entire marketing subtree',{
+ skip:process.platform==='win32'
+},()=>use(f=>{
+ removeTree(f,'components/marketing');
+ f.git('update-index','--add','--cacheinfo','160000,'+f.base+',components/marketing');
+ f.git('commit','-qm','gitlink root');
+ const head=f.git('rev-parse','HEAD');
+ assert.throws(()=>f.verify(head),/TRUSTED_MARKETING_TREE_REQUIRED/);
+}));
+test('SEC-BOOT-01: data file alone cannot satisfy mandatory TS/JS source',()=>use(f=>{
+ removeTree(f,'app/solucoes');
+ f.put('app/solucoes/README.md','just text\n');
+ assert.throws(()=>f.verify(f.commit('readme only')),/TRUSTED_MARKETING_SOURCE_REQUIRED/);
+}));
+test('SEC-BOOT-01: data file alone cannot satisfy marketing source',()=>use(f=>{
+ removeTree(f,'components/marketing');
+ f.put('components/marketing/photo.svg','<svg></svg>\n');
+ assert.throws(()=>f.verify(f.commit('svg only')),/TRUSTED_MARKETING_SOURCE_REQUIRED/);
+}));
+test('SEC-BOOT-01: a dead link in an untouched regular file is detected',()=>use(f=>{
+ f.put('components/marketing/Another.tsx','<a href="#" />\n');
+ const head1=f.commit('old dead-link');
+ f.put('docs/intro.md','changed docs\n');
+ const head2=f.commit('docs-only');
+ assert.throws(()=>f.verify(head2),/TRUSTED_DEAD_LINK/);
+}));
+test('SEC-BOOT-01: clean tree with multiple regular source files passes',()=>use(f=>{
+ f.put('components/marketing/Nested.tsx','export const safe=true;\n');
+ f.put('app/solucoes/other.ts','export const safe=true;\n');
+ f.put('docs/intro.md','updated\n');
+ const result=f.verify(f.commit('legit sources'));
+ assert.equal(result.status,'TRUSTED_PR_BOUNDARY_PASS');
+ assert.ok(result.inspected_marketing_files>=5);
+}));
+test('SEC-BOOT-01: app ancestor replaced by symlink is rejected',()=>use(f=>{
+ removeTree(f,'app');
+ symlink(f,'app','docs');
+ assert.throws(()=>f.verify(f.commit('app replaced')),/TRUSTED_MARKETING_TREE_REQUIRED/);
+}));
+test('SEC-BOOT-01: components ancestor replaced by symlink is rejected',()=>use(f=>{
+ removeTree(f,'components');
+ symlink(f,'components','docs');
+ assert.throws(()=>f.verify(f.commit('components replaced')),/TRUSTED_MARKETING_TREE_REQUIRED/);
+}));

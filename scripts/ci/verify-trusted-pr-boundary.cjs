@@ -40,14 +40,55 @@ function verifyTrusted({base,head,cwd,event,eventName}) {
   if(paths.some(p=>POLICY.test(p))) throw new Error('TRUSTED_POLICY_TAMPER '+paths.filter(p=>POLICY.test(p)).slice(0,8).join(','));
   // No candidate scripts run. Native diff checks this exact PR delta.
   git(['-c','core.whitespace=trailing-space,space-before-tab','diff','--no-ext-diff','--check',base+'...'+head],cwd);
-  // Check full marketing tree, including unchanged sources.
-  const sourcePaths=git(['ls-tree','-r','--name-only','-z',head],cwd).split('\0').filter(Boolean)
-    .filter(p=>p==='app/page.tsx'||p.startsWith('app/solucoes/')||p.startsWith('components/marketing/'));
-  for(const p of sourcePaths) {
-    const body=git(['show',head+':'+p],cwd);
-    if(DEAD_LINK.test(body)) throw new Error('TRUSTED_DEAD_LINK '+p);
+  // SEC-BOOT-01: validate *object types and modes* in the complete HEAD tree.
+  // -t includes ancestor trees; -r traverses subdirectories; -z preserves
+  // literal file names. Candidate contents are read only as immutable Git blobs.
+  const treeRecords=git(['ls-tree','--full-tree','-r','-t','-z',head],cwd)
+    .split('\0').filter(Boolean);
+  const entries=new Map();
+  for(const record of treeRecords) {
+    const match=/^([0-7]{6}) (blob|tree|commit) ([a-f0-9]{40})\t([^\0]+)$/.exec(record);
+    if(!match) throw new Error('TRUSTED_TREE_RECORD_INVALID');
+    const [,mode,type,oid,name]=match;
+    if(entries.has(name)) throw new Error('TRUSTED_TREE_DUPLICATE');
+    entries.set(name,{mode,type,oid});
   }
-  return {status:'TRUSTED_PR_BOUNDARY_PASS',changed_files:paths.length,inspected_marketing_files:sourcePaths.length,head};
+  const isRegular=e=>!!e && e.type==='blob' && (e.mode==='100644'||e.mode==='100755');
+  const isTree=e=>!!e && e.type==='tree' && e.mode==='040000';
+  // Check parents too: a symlink at app/ or components/ can shadow whole roots.
+  for(const root of ['app','components','app/solucoes','components/marketing']) {
+    if(!isTree(entries.get(root))) throw new Error('TRUSTED_MARKETING_TREE_REQUIRED '+root);
+  }
+  if(!isRegular(entries.get('app/page.tsx'))) {
+    throw new Error('TRUSTED_MARKETING_FILE_REQUIRED app/page.tsx');
+  }
+  const eligible=/\.(?:[cm]?[jt]s|[jt]sx)$/i;
+  const filePaths=[];
+  const counts={'app/solucoes':0,'components/marketing':0};
+  for(const [name,entry] of entries) {
+    const scoped=name==='app/page.tsx' ||
+      name==='app/solucoes'||name.startsWith('app/solucoes/') ||
+      name==='components/marketing'||name.startsWith('components/marketing/');
+    if(!scoped) continue;
+    if(entry.type==='tree') {
+      if(!isTree(entry)) throw new Error('TRUSTED_MARKETING_OBJECT_INVALID '+name);
+      continue;
+    }
+    if(!isRegular(entry)) throw new Error('TRUSTED_MARKETING_OBJECT_INVALID '+name);
+    filePaths.push({name,oid:entry.oid});
+    for(const root of Object.keys(counts)) {
+      if(name.startsWith(root+'/') && eligible.test(name)) counts[root]++;
+    }
+  }
+  for(const [root,count] of Object.entries(counts)) {
+    if(count<1) throw new Error('TRUSTED_MARKETING_SOURCE_REQUIRED '+root);
+  }
+  for(const {name,oid} of filePaths) {
+    // A blob OID is immutable; never follow candidate symlinks or execute code.
+    const body=git(['cat-file','blob',oid],cwd);
+    if(DEAD_LINK.test(body)) throw new Error('TRUSTED_DEAD_LINK '+name);
+  }
+  return {status:'TRUSTED_PR_BOUNDARY_PASS',changed_files:paths.length,inspected_marketing_files:filePaths.length,head};
 }
 if(require.main===module) {
   try {
